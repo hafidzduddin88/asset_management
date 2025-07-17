@@ -8,7 +8,10 @@ from datetime import timedelta
 from app.database.database import get_db
 from app.database.models import User
 from app.utils.auth import verify_password, create_access_token, get_password_hash
-from app.config import get_settings
+from app.config import load_config
+
+# Load configuration
+config = load_config()
 
 router = APIRouter(tags=["authentication"])
 templates = Jinja2Templates(directory="app/templates")
@@ -40,7 +43,7 @@ async def login_form(
         )
     
     # Create access token
-    access_token_expires = timedelta(minutes=get_settings().JWT_EXPIRATION)
+    access_token_expires = timedelta(minutes=60 * 24)  # 24 hours
     access_token = create_access_token(
         data={"sub": user.username, "role": user.role},
         expires_delta=access_token_expires
@@ -52,7 +55,7 @@ async def login_form(
         key="access_token",
         value=access_token,
         httponly=True,
-        max_age=get_settings().JWT_EXPIRATION * 60,
+        max_age=60 * 60 * 24,  # 24 hours
         samesite="lax"
     )
     
@@ -73,7 +76,7 @@ async def login_for_access_token(
             headers={"WWW-Authenticate": "Bearer"},
         )
     
-    access_token_expires = timedelta(minutes=get_settings().JWT_EXPIRATION)
+    access_token_expires = timedelta(minutes=60 * 24)  # 24 hours
     access_token = create_access_token(
         data={"sub": user.username, "role": user.role},
         expires_delta=access_token_expires

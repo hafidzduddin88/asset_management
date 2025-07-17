@@ -5,6 +5,31 @@ import os
 import shutil
 import sys
 
+def ensure_directories():
+    """Ensure required directories exist."""
+    print("📁 Ensuring required directories exist...")
+    
+    dirs_to_create = [
+        "app/static/css",
+        "app/static/js",
+        "app/static/img",
+        "app/templates/components",
+        "app/templates/layouts",
+        "app/templates/assets",
+        "app/templates/asset_management",
+        "app/templates/approvals",
+        "app/templates/damage",
+        "app/templates/relocation",
+        "app/templates/export"
+    ]
+    
+    for dir_path in dirs_to_create:
+        try:
+            os.makedirs(dir_path, exist_ok=True)
+            print(f"  ✓ Ensured {dir_path} exists")
+        except Exception as e:
+            print(f"  ✗ Failed to create {dir_path}: {e}")
+
 def clean_build():
     print("🧹 Cleaning up unnecessary files...")
     
@@ -55,4 +80,5 @@ docs/
     print("\n✅ Cleanup complete!")
 
 if __name__ == "__main__":
+    ensure_directories()
     clean_build()

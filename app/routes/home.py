@@ -4,8 +4,10 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
 from app.database.database import get_db
-from app.database.models import Asset, Approval, User, AssetStatus, ApprovalStatus
-from app.utils.auth import get_current_active_user
+from app.database.models import User, Approval, ApprovalStatus
+from app.database.dependencies import get_current_active_user
+from app.utils.sheets import get_all_assets
+from app.utils.flash import get_flash
 
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
@@ -18,11 +20,14 @@ async def home(
 ):
     """Home page / Dashboard."""
     
+    # Get assets from Google Sheets
+    assets = get_all_assets()
+    
     # Get dashboard stats
-    total_assets = db.query(Asset).count()
-    active_assets = db.query(Asset).filter(Asset.status == AssetStatus.ACTIVE).count()
-    damaged_assets = db.query(Asset).filter(Asset.status == AssetStatus.DAMAGED).count()
-    disposed_assets = db.query(Asset).filter(Asset.status == AssetStatus.DISPOSED).count()
+    total_assets = len(assets)
+    active_assets = len([a for a in assets if a.get('Status') == 'Active'])
+    damaged_assets = len([a for a in assets if a.get('Status') == 'Damaged'])
+    disposed_assets = len([a for a in assets if a.get('Status') == 'Disposed'])
     
     # Get pending approvals (for admins)
     pending_approvals = []
@@ -35,13 +40,11 @@ async def home(
             .all()
         )
     
-    # Get recent assets
-    recent_assets = (
-        db.query(Asset)
-        .order_by(Asset.created_at.desc())
-        .limit(5)
-        .all()
-    )
+    # Get recent assets (sort by ID in reverse to get newest first)
+    recent_assets = sorted(assets, key=lambda x: x.get('ID', '0'), reverse=True)[:5]
+    
+    # Get flash messages
+    flash = get_flash(request)
     
     return templates.TemplateResponse(
         "dashboard_modern.html",
@@ -54,5 +57,6 @@ async def home(
             "disposed_assets": disposed_assets,
             "pending_approvals": pending_approvals,
             "recent_assets": recent_assets,
+            "flash": flash
         },
     )
