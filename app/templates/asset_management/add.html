@@ -1,0 +1,329 @@
+{% extends "layouts/modern_layout.html" %}
+
+{% block title %}Add New Asset - Asset Management{% endblock %}
+
+{% block head %}
+<style>
+    .required-field::after {
+        content: "*";
+        color: red;
+        margin-left: 4px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="py-6">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h1 class="text-2xl font-semibold text-gray-900">Add New Asset</h1>
+        
+        {% if error %}
+        <div class="mt-4 rounded-md bg-red-50 p-4">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <svg class="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                    </svg>
+                </div>
+                <div class="ml-3">
+                    <h3 class="text-sm font-medium text-red-800">{{ error }}</h3>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        <form method="POST" enctype="multipart/form-data" class="mt-6 space-y-6 bg-white shadow sm:rounded-lg p-6">
+            <div x-data="assetForm()" x-init="initializeForm()">
+                <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
+                    <!-- Item Name -->
+                    <div class="sm:col-span-3">
+                        <label for="item_name" class="block text-sm font-medium text-gray-700 required-field">Item Name</label>
+                        <div class="mt-1">
+                            <input type="text" name="item_name" id="item_name" required
+                                class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                                value="{{ form_data.item_name if form_data else '' }}">
+                        </div>
+                    </div>
+                    
+                    <!-- Category -->
+                    <div class="sm:col-span-3">
+                        <label for="category" class="block text-sm font-medium text-gray-700 required-field">Category</label>
+                        <div class="mt-1">
+                            <select name="category" id="category" required x-on:change="updateTypes()"
+                                class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                                <option value="">Select Category</option>
+                                {% for category in dropdown_options.categories %}
+                                <option value="{{ category }}" {% if form_data and form_data.category == category %}selected{% endif %}>
+                                    {{ category }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Type -->
+                    <div class="sm:col-span-3">
+                        <label for="type" class="block text-sm font-medium text-gray-700 required-field">Type</label>
+                        <div class="mt-1">
+                            <select name="type" id="type" required
+                                class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                                <option value="">Select Type</option>
+                                <template x-for="type in filteredTypes" :key="type.Type">
+                                    <option :value="type.Type" x-text="type.Type"></option>
+                                </template>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Manufacture -->
+                    <div class="sm:col-span-3">
+                        <label for="manufacture" class="block text-sm font-medium text-gray-700">Manufacture</label>
+                        <div class="mt-1">
+                            <input type="text" name="manufacture" id="manufacture"
+                                class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                                value="{{ form_data.manufacture if form_data else '' }}">
+                        </div>
+                    </div>
+                    
+                    <!-- Model -->
+                    <div class="sm:col-span-3">
+                        <label for="model" class="block text-sm font-medium text-gray-700">Model</label>
+                        <div class="mt-1">
+                            <input type="text" name="model" id="model"
+                                class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                                value="{{ form_data.model if form_data else '' }}">
+                        </div>
+                    </div>
+                    
+                    <!-- Serial Number -->
+                    <div class="sm:col-span-3">
+                        <label for="serial_number" class="block text-sm font-medium text-gray-700">Serial Number</label>
+                        <div class="mt-1">
+                            <input type="text" name="serial_number" id="serial_number"
+                                class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                                value="{{ form_data.serial_number if form_data else '' }}">
+                        </div>
+                    </div>
+                    
+                    <!-- Company -->
+                    <div class="sm:col-span-3">
+                        <label for="company" class="block text-sm font-medium text-gray-700 required-field">Company</label>
+                        <div class="mt-1">
+                            <select name="company" id="company" required
+                                class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                                <option value="">Select Company</option>
+                                {% for company in dropdown_options.companies %}
+                                <option value="{{ company }}" {% if form_data and form_data.company == company %}selected{% endif %}>
+                                    {{ company }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Bisnis Unit -->
+                    <div class="sm:col-span-3">
+                        <label for="bisnis_unit" class="block text-sm font-medium text-gray-700">Bisnis Unit</label>
+                        <div class="mt-1">
+                            <input type="text" name="bisnis_unit" id="bisnis_unit"
+                                class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                                value="{{ form_data.bisnis_unit if form_data else '' }}">
+                        </div>
+                    </div>
+                    
+                    <!-- Location -->
+                    <div class="sm:col-span-3">
+                        <label for="location" class="block text-sm font-medium text-gray-700 required-field">Location</label>
+                        <div class="mt-1">
+                            <select name="location" id="location" required x-on:change="updateRooms()"
+                                class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                                <option value="">Select Location</option>
+                                {% for location in dropdown_options.locations.keys() %}
+                                <option value="{{ location }}" {% if form_data and form_data.location == location %}selected{% endif %}>
+                                    {{ location }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Room -->
+                    <div class="sm:col-span-3">
+                        <label for="room" class="block text-sm font-medium text-gray-700 required-field">Room</label>
+                        <div class="mt-1">
+                            <select name="room" id="room" required
+                                class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                                <option value="">Select Room</option>
+                                <template x-for="room in filteredRooms" :key="room">
+                                    <option :value="room" x-text="room"></option>
+                                </template>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Notes -->
+                    <div class="sm:col-span-6">
+                        <label for="notes" class="block text-sm font-medium text-gray-700">Notes</label>
+                        <div class="mt-1">
+                            <textarea name="notes" id="notes" rows="3"
+                                class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md">{{ form_data.notes if form_data else '' }}</textarea>
+                        </div>
+                    </div>
+                    
+                    <!-- Item Condition -->
+                    <div class="sm:col-span-3">
+                        <label for="item_condition" class="block text-sm font-medium text-gray-700">Item Condition</label>
+                        <div class="mt-1">
+                            <select name="item_condition" id="item_condition"
+                                class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                                <option value="">Select Condition</option>
+                                <option value="New" {% if form_data and form_data.item_condition == 'New' %}selected{% endif %}>New</option>
+                                <option value="Good" {% if form_data and form_data.item_condition == 'Good' %}selected{% endif %}>Good</option>
+                                <option value="Fair" {% if form_data and form_data.item_condition == 'Fair' %}selected{% endif %}>Fair</option>
+                                <option value="Poor" {% if form_data and form_data.item_condition == 'Poor' %}selected{% endif %}>Poor</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Purchase Date -->
+                    <div class="sm:col-span-3">
+                        <label for="purchase_date" class="block text-sm font-medium text-gray-700 required-field">Purchase Date</label>
+                        <div class="mt-1">
+                            <input type="date" name="purchase_date" id="purchase_date" required
+                                class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                                value="{{ form_data.purchase_date if form_data else '' }}">
+                        </div>
+                    </div>
+                    
+                    <!-- Purchase Cost -->
+                    <div class="sm:col-span-3">
+                        <label for="purchase_cost" class="block text-sm font-medium text-gray-700 required-field">Purchase Cost</label>
+                        <div class="mt-1">
+                            <input type="number" name="purchase_cost" id="purchase_cost" required step="0.01"
+                                class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                                value="{{ form_data.purchase_cost if form_data else '' }}">
+                        </div>
+                    </div>
+                    
+                    <!-- Warranty -->
+                    <div class="sm:col-span-3">
+                        <label for="warranty" class="block text-sm font-medium text-gray-700">Warranty</label>
+                        <div class="mt-1">
+                            <input type="text" name="warranty" id="warranty"
+                                class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                                value="{{ form_data.warranty if form_data else '' }}">
+                        </div>
+                    </div>
+                    
+                    <!-- Supplier -->
+                    <div class="sm:col-span-3">
+                        <label for="supplier" class="block text-sm font-medium text-gray-700">Supplier</label>
+                        <div class="mt-1">
+                            <input type="text" name="supplier" id="supplier"
+                                class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                                value="{{ form_data.supplier if form_data else '' }}">
+                        </div>
+                    </div>
+                    
+                    <!-- Journal -->
+                    <div class="sm:col-span-3">
+                        <label for="journal" class="block text-sm font-medium text-gray-700">Journal</label>
+                        <div class="mt-1">
+                            <input type="text" name="journal" id="journal"
+                                class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                                value="{{ form_data.journal if form_data else '' }}">
+                        </div>
+                    </div>
+                    
+                    <!-- Owner -->
+                    <div class="sm:col-span-3">
+                        <label for="owner" class="block text-sm font-medium text-gray-700 required-field">Owner</label>
+                        <div class="mt-1">
+                            <select name="owner" id="owner" required
+                                class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                                <option value="">Select Owner</option>
+                                {% for owner in dropdown_options.owners %}
+                                <option value="{{ owner }}" {% if form_data and form_data.owner == owner %}selected{% endif %}>
+                                    {{ owner }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Photo -->
+                    <div class="sm:col-span-6">
+                        <label for="photo" class="block text-sm font-medium text-gray-700">Photo</label>
+                        <div class="mt-1">
+                            <input type="file" name="photo" id="photo" accept="image/*"
+                                class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300">
+                        </div>
+                        <p class="mt-2 text-sm text-gray-500">Upload a photo of the asset (optional).</p>
+                    </div>
+                </div>
+                
+                <div class="mt-6 flex justify-end">
+                    <a href="/assets" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                        Cancel
+                    </a>
+                    <button type="submit" class="ml-3 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                        Save
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function assetForm() {
+        return {
+            types: {{ dropdown_options.types|tojson }},
+            locations: {{ dropdown_options.locations|tojson }},
+            filteredTypes: [],
+            filteredRooms: [],
+            
+            initializeForm() {
+                // Initialize types dropdown based on selected category
+                this.updateTypes();
+                
+                // Initialize rooms dropdown based on selected location
+                this.updateRooms();
+                
+                // Set initial values if form data exists
+                {% if form_data %}
+                    // Set type if form data exists
+                    if ("{{ form_data.type }}") {
+                        setTimeout(() => {
+                            document.getElementById('type').value = "{{ form_data.type }}";
+                        }, 100);
+                    }
+                    
+                    // Set room if form data exists
+                    if ("{{ form_data.room }}") {
+                        setTimeout(() => {
+                            document.getElementById('room').value = "{{ form_data.room }}";
+                        }, 100);
+                    }
+                {% endif %}
+            },
+            
+            updateTypes() {
+                const category = document.getElementById('category').value;
+                this.filteredTypes = category 
+                    ? this.types.filter(type => type.Category === category)
+                    : [];
+            },
+            
+            updateRooms() {
+                const location = document.getElementById('location').value;
+                this.filteredRooms = location && this.locations[location] 
+                    ? this.locations[location] 
+                    : [];
+            }
+        }
+    }
+</script>
+{% endblock %}

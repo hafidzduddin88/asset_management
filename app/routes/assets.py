@@ -3,11 +3,13 @@ from fastapi import APIRouter, Depends, Request, Form, HTTPException, status
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
-from typing import Optional
+from typing import Optional, List
 
 from app.database.database import get_db
-from app.database.models import Asset, User, AssetStatus
+from app.database.models import User
 from app.database.dependencies import get_current_active_user
+from app.utils.sheets import get_all_assets, get_asset_by_id, get_dropdown_options
+from app.utils.flash import get_flash
 
 router = APIRouter(tags=["assets"])
 templates = Jinja2Templates(directory="app/templates")
@@ -23,62 +25,71 @@ async def list_assets(
     current_user: User = Depends(get_current_active_user)
 ):
     """List assets with optional filtering."""
-    query = db.query(Asset)
+    # Get all assets from Google Sheets
+    all_assets = get_all_assets()
     
     # Apply filters
+    filtered_assets = all_assets
+    
     if status:
-        query = query.filter(Asset.status == status)
+        filtered_assets = [a for a in filtered_assets if a.get('Status') == status]
     if category:
-        query = query.filter(Asset.category == category)
+        filtered_assets = [a for a in filtered_assets if a.get('Category') == category]
     if location:
-        query = query.filter(Asset.location == location)
+        filtered_assets = [a for a in filtered_assets if a.get('Location') == location]
     if search:
-        query = query.filter(
-            Asset.name.ilike(f"%{search}%") | 
-            Asset.asset_tag.ilike(f"%{search}%") |
-            Asset.description.ilike(f"%{search}%")
-        )
+        search = search.lower()
+        filtered_assets = [a for a in filtered_assets if 
+            search in str(a.get('Item Name', '')).lower() or
+            search in str(a.get('Asset Tag', '')).lower() or
+            search in str(a.get('Notes', '')).lower() or
+            search in str(a.get('Serial Number', '')).lower()
+        ]
     
-    # Get assets
-    assets = query.order_by(Asset.created_at.desc()).all()
+    # Get dropdown options for filters
+    dropdown_options = get_dropdown_options()
     
-    # Get filter options
-    categories = db.query(Asset.category).distinct().all()
-    locations = db.query(Asset.location).distinct().all()
+    # Get flash messages
+    flash = get_flash(request)
     
     return templates.TemplateResponse(
         "assets/list.html",
         {
             "request": request,
             "user": current_user,
-            "assets": assets,
-            "categories": [c[0] for c in categories if c[0]],
-            "locations": [l[0] for l in locations if l[0]],
-            "statuses": [s.value for s in AssetStatus],
+            "assets": filtered_assets,
+            "categories": dropdown_options['categories'],
+            "locations": list(dropdown_options['locations'].keys()),
+            "statuses": ['Active', 'Damaged', 'Repaired', 'Disposed'],
             "selected_status": status,
             "selected_category": category,
             "selected_location": location,
-            "search": search
+            "search": search,
+            "flash": flash
         }
     )
 
 @router.get("/assets/{asset_id}", response_class=HTMLResponse)
 async def asset_detail(
     request: Request,
-    asset_id: int,
+    asset_id: str,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
     """Asset detail page."""
-    asset = db.query(Asset).filter(Asset.id == asset_id).first()
+    asset = get_asset_by_id(asset_id)
     if not asset:
         return RedirectResponse(url="/assets", status_code=status.HTTP_303_SEE_OTHER)
+    
+    # Get flash messages
+    flash = get_flash(request)
     
     return templates.TemplateResponse(
         "assets/detail.html",
         {
             "request": request,
             "user": current_user,
-            "asset": asset
+            "asset": asset,
+            "flash": flash
         }
     )

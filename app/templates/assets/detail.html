@@ -1,0 +1,207 @@
+{% extends "layouts/modern_layout.html" %}
+
+{% block title %}{{ asset['Item Name'] }} - Asset Management{% endblock %}
+
+{% block content %}
+<div class="py-6">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center">
+                <a href="/assets" class="mr-4 text-primary-600 hover:text-primary-900">
+                    <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                    </svg>
+                </a>
+                <h1 class="text-2xl font-semibold text-gray-900">Asset Details</h1>
+            </div>
+            <div class="flex space-x-3">
+                {% if user.role == 'admin' %}
+                <a href="/assets/{{ asset['ID'] }}/edit" class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                    <svg class="-ml-1 mr-2 h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                    Edit
+                </a>
+                {% endif %}
+                
+                <div x-data="{ open: false }" class="relative">
+                    <button @click="open = !open" type="button" class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                        <svg class="-ml-1 mr-2 h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+                        </svg>
+                        Actions
+                    </button>
+                    <div x-show="open" 
+                         @click.away="open = false"
+                         x-transition:enter="transition ease-out duration-100"
+                         x-transition:enter-start="transform opacity-0 scale-95"
+                         x-transition:enter-end="transform opacity-100 scale-100"
+                         x-transition:leave="transition ease-in duration-75"
+                         x-transition:leave-start="transform opacity-100 scale-100"
+                         x-transition:leave-end="transform opacity-0 scale-95"
+                         class="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none"
+                         role="menu"
+                         aria-orientation="vertical"
+                         aria-labelledby="options-menu"
+                         x-cloak>
+                        <div class="py-1" role="none">
+                            <a href="/assets/{{ asset['ID'] }}/relocate" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900" role="menuitem">Relocate</a>
+                            <a href="/assets/{{ asset['ID'] }}/report-damage" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900" role="menuitem">Report Damage</a>
+                            {% if asset['Status'] == 'Damaged' %}
+                            <a href="/assets/{{ asset['ID'] }}/repair" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900" role="menuitem">Mark as Repaired</a>
+                            {% endif %}
+                            {% if user.role == 'admin' %}
+                            <a href="/assets/{{ asset['ID'] }}/dispose" class="block px-4 py-2 text-sm text-red-600 hover:bg-gray-100 hover:text-red-900" role="menuitem">Dispose</a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="mt-6 bg-white shadow overflow-hidden sm:rounded-lg">
+            <div class="px-4 py-5 sm:px-6 flex justify-between items-center">
+                <div>
+                    <h3 class="text-lg leading-6 font-medium text-gray-900">{{ asset['Item Name'] }}</h3>
+                    <p class="mt-1 max-w-2xl text-sm text-gray-500">{{ asset['Asset Tag'] }}</p>
+                </div>
+                <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full 
+                    {% if asset['Status'] == 'Active' %}bg-green-100 text-green-800
+                    {% elif asset['Status'] == 'Damaged' %}bg-red-100 text-red-800
+                    {% elif asset['Status'] == 'Repaired' %}bg-yellow-100 text-yellow-800
+                    {% elif asset['Status'] == 'Disposed' %}bg-gray-100 text-gray-800
+                    {% else %}bg-blue-100 text-blue-800{% endif %}">
+                    {{ asset['Status'] }}
+                </span>
+            </div>
+            
+            <div class="border-t border-gray-200">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 px-4 py-5 sm:p-6">
+                    <!-- Asset Photo -->
+                    <div class="md:col-span-1">
+                        <div class="aspect-w-1 aspect-h-1 bg-gray-200 rounded-lg overflow-hidden">
+                            {% if asset['Photo URL'] %}
+                            <img src="{{ asset['Photo URL'] }}" alt="{{ asset['Item Name'] }}" class="w-full h-full object-center object-cover">
+                            {% else %}
+                            <div class="w-full h-full flex items-center justify-center bg-gray-100">
+                                <svg class="h-24 w-24 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Asset Details -->
+                    <div class="md:col-span-2">
+                        <dl class="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
+                            <div class="sm:col-span-1">
+                                <dt class="text-sm font-medium text-gray-500">Category</dt>
+                                <dd class="mt-1 text-sm text-gray-900">{{ asset['Category'] }}</dd>
+                            </div>
+                            <div class="sm:col-span-1">
+                                <dt class="text-sm font-medium text-gray-500">Type</dt>
+                                <dd class="mt-1 text-sm text-gray-900">{{ asset['Type'] }}</dd>
+                            </div>
+                            <div class="sm:col-span-1">
+                                <dt class="text-sm font-medium text-gray-500">Manufacture</dt>
+                                <dd class="mt-1 text-sm text-gray-900">{{ asset['Manufacture'] or 'N/A' }}</dd>
+                            </div>
+                            <div class="sm:col-span-1">
+                                <dt class="text-sm font-medium text-gray-500">Model</dt>
+                                <dd class="mt-1 text-sm text-gray-900">{{ asset['Model'] or 'N/A' }}</dd>
+                            </div>
+                            <div class="sm:col-span-1">
+                                <dt class="text-sm font-medium text-gray-500">Serial Number</dt>
+                                <dd class="mt-1 text-sm text-gray-900">{{ asset['Serial Number'] or 'N/A' }}</dd>
+                            </div>
+                            <div class="sm:col-span-1">
+                                <dt class="text-sm font-medium text-gray-500">Company</dt>
+                                <dd class="mt-1 text-sm text-gray-900">{{ asset['Company'] }}</dd>
+                            </div>
+                            <div class="sm:col-span-1">
+                                <dt class="text-sm font-medium text-gray-500">Bisnis Unit</dt>
+                                <dd class="mt-1 text-sm text-gray-900">{{ asset['Bisnis Unit'] or 'N/A' }}</dd>
+                            </div>
+                            <div class="sm:col-span-1">
+                                <dt class="text-sm font-medium text-gray-500">Owner</dt>
+                                <dd class="mt-1 text-sm text-gray-900">{{ asset['Owner'] }}</dd>
+                            </div>
+                            <div class="sm:col-span-1">
+                                <dt class="text-sm font-medium text-gray-500">Location</dt>
+                                <dd class="mt-1 text-sm text-gray-900">{{ asset['Location'] }}</dd>
+                            </div>
+                            <div class="sm:col-span-1">
+                                <dt class="text-sm font-medium text-gray-500">Room</dt>
+                                <dd class="mt-1 text-sm text-gray-900">{{ asset['Room'] }}</dd>
+                            </div>
+                            <div class="sm:col-span-1">
+                                <dt class="text-sm font-medium text-gray-500">Item Condition</dt>
+                                <dd class="mt-1 text-sm text-gray-900">{{ asset['Item Condition'] or 'N/A' }}</dd>
+                            </div>
+                            <div class="sm:col-span-1">
+                                <dt class="text-sm font-medium text-gray-500">Purchase Date</dt>
+                                <dd class="mt-1 text-sm text-gray-900">{{ asset['Purchase Date'] }}</dd>
+                            </div>
+                            <div class="sm:col-span-2">
+                                <dt class="text-sm font-medium text-gray-500">Notes</dt>
+                                <dd class="mt-1 text-sm text-gray-900">{{ asset['Notes'] or 'No notes available' }}</dd>
+                            </div>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Financial Information -->
+            <div class="border-t border-gray-200 px-4 py-5 sm:px-6">
+                <h3 class="text-lg leading-6 font-medium text-gray-900">Financial Information</h3>
+                <div class="mt-4 grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
+                    <div class="sm:col-span-2">
+                        <dt class="text-sm font-medium text-gray-500">Purchase Cost</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ asset['Purchase Cost'] }}</dd>
+                    </div>
+                    <div class="sm:col-span-2">
+                        <dt class="text-sm font-medium text-gray-500">Book Value</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ asset['Book Value'] }}</dd>
+                    </div>
+                    <div class="sm:col-span-2">
+                        <dt class="text-sm font-medium text-gray-500">Depreciation Value</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ asset['Depreciation Value'] }}</dd>
+                    </div>
+                    <div class="sm:col-span-2">
+                        <dt class="text-sm font-medium text-gray-500">Residual Value</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ asset['Residual Value'] }}</dd>
+                    </div>
+                    <div class="sm:col-span-2">
+                        <dt class="text-sm font-medium text-gray-500">Residual Percent</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ asset['Residual Percent'] }}%</dd>
+                    </div>
+                    <div class="sm:col-span-2">
+                        <dt class="text-sm font-medium text-gray-500">Useful Life</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ asset['Useful Life'] }} years</dd>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Additional Information -->
+            <div class="border-t border-gray-200 px-4 py-5 sm:px-6">
+                <h3 class="text-lg leading-6 font-medium text-gray-900">Additional Information</h3>
+                <div class="mt-4 grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
+                    <div class="sm:col-span-2">
+                        <dt class="text-sm font-medium text-gray-500">Warranty</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ asset['Warranty'] or 'N/A' }}</dd>
+                    </div>
+                    <div class="sm:col-span-2">
+                        <dt class="text-sm font-medium text-gray-500">Supplier</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ asset['Supplier'] or 'N/A' }}</dd>
+                    </div>
+                    <div class="sm:col-span-2">
+                        <dt class="text-sm font-medium text-gray-500">Journal</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ asset['Journal'] or 'N/A' }}</dd>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
