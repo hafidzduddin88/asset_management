@@ -1,0 +1,255 @@
+{% extends "layouts/modern_layout.html" %}
+
+{% block title %}Dashboard - Asset Management Business Platform{% endblock %}
+
+{% block content %}
+<div class="px-4 py-5 sm:px-6">
+    <h1 class="text-2xl font-semibold text-gray-900">Dashboard</h1>
+    <p class="mt-1 max-w-2xl text-sm text-gray-500">Welcome back, {{ user.full_name }}</p>
+</div>
+
+<!-- Stats -->
+<div class="mt-4 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+    <!-- Total Assets -->
+    <div class="bg-white overflow-hidden shadow rounded-lg">
+        <div class="px-4 py-5 sm:p-6">
+            <div class="flex items-center">
+                <div class="flex-shrink-0 bg-primary-100 rounded-md p-3">
+                    <svg class="h-6 w-6 text-primary-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                    </svg>
+                </div>
+                <div class="ml-5 w-0 flex-1">
+                    <dl>
+                        <dt class="text-sm font-medium text-gray-500 truncate">Total Assets</dt>
+                        <dd>
+                            <div class="text-lg font-medium text-gray-900">{{ total_assets }}</div>
+                        </dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+        <div class="bg-gray-50 px-4 py-4 sm:px-6">
+            <div class="text-sm">
+                <a href="/assets" class="font-medium text-primary-600 hover:text-primary-500">View all assets</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Active Assets -->
+    <div class="bg-white overflow-hidden shadow rounded-lg">
+        <div class="px-4 py-5 sm:p-6">
+            <div class="flex items-center">
+                <div class="flex-shrink-0 bg-green-100 rounded-md p-3">
+                    <svg class="h-6 w-6 text-green-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+                <div class="ml-5 w-0 flex-1">
+                    <dl>
+                        <dt class="text-sm font-medium text-gray-500 truncate">Active Assets</dt>
+                        <dd>
+                            <div class="text-lg font-medium text-gray-900">{{ active_assets }}</div>
+                        </dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+        <div class="bg-gray-50 px-4 py-4 sm:px-6">
+            <div class="text-sm">
+                <a href="/assets?status=active" class="font-medium text-primary-600 hover:text-primary-500">View active assets</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Damaged Assets -->
+    <div class="bg-white overflow-hidden shadow rounded-lg">
+        <div class="px-4 py-5 sm:p-6">
+            <div class="flex items-center">
+                <div class="flex-shrink-0 bg-red-100 rounded-md p-3">
+                    <svg class="h-6 w-6 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                </div>
+                <div class="ml-5 w-0 flex-1">
+                    <dl>
+                        <dt class="text-sm font-medium text-gray-500 truncate">Damaged Assets</dt>
+                        <dd>
+                            <div class="text-lg font-medium text-gray-900">{{ damaged_assets }}</div>
+                        </dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+        <div class="bg-gray-50 px-4 py-4 sm:px-6">
+            <div class="text-sm">
+                <a href="/assets?status=damaged" class="font-medium text-primary-600 hover:text-primary-500">View damaged assets</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Disposed Assets -->
+    <div class="bg-white overflow-hidden shadow rounded-lg">
+        <div class="px-4 py-5 sm:p-6">
+            <div class="flex items-center">
+                <div class="flex-shrink-0 bg-gray-100 rounded-md p-3">
+                    <svg class="h-6 w-6 text-gray-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                </div>
+                <div class="ml-5 w-0 flex-1">
+                    <dl>
+                        <dt class="text-sm font-medium text-gray-500 truncate">Disposed Assets</dt>
+                        <dd>
+                            <div class="text-lg font-medium text-gray-900">{{ disposed_assets }}</div>
+                        </dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+        <div class="bg-gray-50 px-4 py-4 sm:px-6">
+            <div class="text-sm">
+                <a href="/assets?status=disposed" class="font-medium text-primary-600 hover:text-primary-500">View disposed assets</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
+    <!-- Recent Assets -->
+    <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+        <div class="px-4 py-5 sm:px-6 flex justify-between items-center">
+            <div>
+                <h3 class="text-lg leading-6 font-medium text-gray-900">Recent Assets</h3>
+                <p class="mt-1 max-w-2xl text-sm text-gray-500">Latest assets added to the system.</p>
+            </div>
+            <a href="/assets" class="text-sm font-medium text-primary-600 hover:text-primary-500">View all</a>
+        </div>
+        <div class="border-t border-gray-200">
+            <ul role="list" class="divide-y divide-gray-200">
+                {% for asset in recent_assets %}
+                <li>
+                    <a href="/assets/{{ asset.id }}" class="block hover:bg-gray-50">
+                        <div class="px-4 py-4 sm:px-6">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center">
+                                    {% if asset.photo_url %}
+                                    <div class="flex-shrink-0 h-12 w-12 rounded-md overflow-hidden">
+                                        <img src="{{ asset.photo_url }}" alt="{{ asset.name }}" class="h-12 w-12 object-cover">
+                                    </div>
+                                    {% else %}
+                                    <div class="flex-shrink-0 h-12 w-12 rounded-md bg-gray-100 flex items-center justify-center">
+                                        <svg class="h-6 w-6 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                        </svg>
+                                    </div>
+                                    {% endif %}
+                                    <div class="ml-4">
+                                        <div class="text-sm font-medium text-primary-600">{{ asset.name }}</div>
+                                        <div class="text-sm text-gray-500">{{ asset.asset_tag }}</div>
+                                    </div>
+                                </div>
+                                <div class="ml-2 flex-shrink-0 flex">
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                        {% if asset.status == 'active' %}bg-green-100 text-green-800
+                                        {% elif asset.status == 'damaged' %}bg-red-100 text-red-800
+                                        {% elif asset.status == 'repaired' %}bg-yellow-100 text-yellow-800
+                                        {% elif asset.status == 'disposed' %}bg-gray-100 text-gray-800
+                                        {% endif %}">
+                                        {{ asset.status }}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="mt-2 sm:flex sm:justify-between">
+                                <div class="sm:flex">
+                                    <p class="flex items-center text-sm text-gray-500">
+                                        <svg class="flex-shrink-0 mr-1.5 h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                            <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd" />
+                                        </svg>
+                                        {{ asset.location }}
+                                    </p>
+                                </div>
+                                <div class="mt-2 flex items-center text-sm text-gray-500 sm:mt-0">
+                                    <svg class="flex-shrink-0 mr-1.5 h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd" />
+                                    </svg>
+                                    <p>
+                                        Added on <time datetime="{{ asset.created_at }}">{{ asset.created_at.strftime('%b %d, %Y') }}</time>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+                </li>
+                {% endfor %}
+                {% if not recent_assets %}
+                <li class="px-4 py-5 sm:px-6 text-center text-sm text-gray-500">
+                    No assets found
+                </li>
+                {% endif %}
+            </ul>
+        </div>
+    </div>
+
+    <!-- Pending Approvals (Admin only) -->
+    {% if user.role == 'admin' %}
+    <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+        <div class="px-4 py-5 sm:px-6 flex justify-between items-center">
+            <div>
+                <h3 class="text-lg leading-6 font-medium text-gray-900">Pending Approvals</h3>
+                <p class="mt-1 max-w-2xl text-sm text-gray-500">Requests waiting for your approval.</p>
+            </div>
+            <a href="/approvals" class="text-sm font-medium text-primary-600 hover:text-primary-500">View all</a>
+        </div>
+        <div class="border-t border-gray-200">
+            <ul role="list" class="divide-y divide-gray-200">
+                {% for approval in pending_approvals %}
+                <li>
+                    <a href="/approvals/{{ approval.id }}" class="block hover:bg-gray-50">
+                        <div class="px-4 py-4 sm:px-6">
+                            <div class="flex items-center justify-between">
+                                <div class="text-sm font-medium text-primary-600">{{ approval.action_type | title }} Request</div>
+                                <div class="ml-2 flex-shrink-0 flex">
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                                        Pending
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="mt-2 sm:flex sm:justify-between">
+                                <div class="sm:flex">
+                                    <p class="flex items-center text-sm text-gray-500">
+                                        Requested by {{ approval.requester.username }}
+                                    </p>
+                                </div>
+                                <div class="mt-2 flex items-center text-sm text-gray-500 sm:mt-0">
+                                    <svg class="flex-shrink-0 mr-1.5 h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd" />
+                                    </svg>
+                                    <p>
+                                        Requested on <time datetime="{{ approval.created_at }}">{{ approval.created_at.strftime('%b %d, %Y') }}</time>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+                </li>
+                {% endfor %}
+                {% if not pending_approvals %}
+                <li class="px-4 py-5 sm:px-6 text-center text-sm text-gray-500">
+                    No pending approvals
+                </li>
+                {% endif %}
+            </ul>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Any dashboard-specific JavaScript can go here
+    });
+</script>
+{% endblock %}
