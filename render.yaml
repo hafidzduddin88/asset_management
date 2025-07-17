@@ -1,0 +1,30 @@
+services:
+  # Web service
+  - type: web
+    name: ambp
+    env: docker
+    image: hafidzduddin/ambp:latest
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: WEB_CONCURRENCY
+        value: 1
+      - key: OPTIMIZE_MEMORY
+        value: true
+      - key: DATABASE_URL
+        sync: false
+      - key: SECRET_KEY
+        sync: false
+      - key: GOOGLE_CREDS_JSON
+        sync: false
+      - key: GOOGLE_SHEET_ID
+        sync: false
+      - key: APP_URL
+        sync: false
+    autoDeploy: true
+    healthCheckPath: /health
+    scaling:
+      minInstances: 0
+      maxInstances: 1
+      targetMemoryPercent: 90
+      targetCPUPercent: 90
