@@ -20,7 +20,8 @@ class SessionAuthMiddleware(BaseHTTPMiddleware):
             request.url.path == "/health" or
             request.url.path == "/offline" or
             request.url.path == "/service-worker.js" or
-            request.url.path == "/manifest.json"
+            request.url.path == "/manifest.json" or
+            request.method == "HEAD"
         ):
             return await call_next(request)
         
