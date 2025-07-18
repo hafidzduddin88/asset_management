@@ -56,7 +56,7 @@ async def login_form(
         httponly=True,
         max_age=60 * 60 * 24,
         samesite="lax",
-        secure=False  # Set to True in production with HTTPS
+        secure=True  # HTTPS environment requires secure=True
     )
     response.set_cookie(
         key="refresh_token",
@@ -64,7 +64,7 @@ async def login_form(
         httponly=True,
         max_age=60 * 60 * 24 * 7,
         samesite="lax",
-        secure=False  # Set to True in production with HTTPS
+        secure=True  # HTTPS environment requires secure=True
     )
     return response
 
@@ -123,7 +123,7 @@ async def refresh_token(request: Request, response: Response, db: Session = Depe
         httponly=True,
         max_age=60 * 60 * 24,
         samesite="lax",
-        secure=False  # Set to True in production with HTTPS
+        secure=True  # HTTPS environment requires secure=True
     )
     return {"access_token": access_token}
 
