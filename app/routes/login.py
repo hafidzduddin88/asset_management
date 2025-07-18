@@ -32,7 +32,7 @@ async def login_form(
     """Process login form."""
     user = db.query(User).filter(User.username == username).first()
     
-    if not user or not verify_password(password, user.hashed_password):
+    if not user or not verify_password(password, user.password_hash):
         return templates.TemplateResponse(
             "login_logout.html", 
             {
@@ -69,7 +69,7 @@ async def login_for_access_token(
     """Get access token for API authentication."""
     user = db.query(User).filter(User.username == form_data.username).first()
     
-    if not user or not verify_password(form_data.password, user.hashed_password):
+    if not user or not verify_password(form_data.password, user.password_hash):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect username or password",

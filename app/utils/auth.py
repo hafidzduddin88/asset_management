@@ -11,7 +11,7 @@ from app.config import load_config
 # Load configuration
 config = load_config()
 from app.database.database import get_db
-from app.database.models import User, UserRole
+from app.database.models import User
 
 # Password context for Argon2 hashing
 pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
@@ -19,9 +19,9 @@ pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
 # OAuth2 scheme
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login/token")
 
-def verify_password(plain_password, hashed_password):
+def verify_password(plain_password, password_hash):
     """Verify password against hash."""
-    return pwd_context.verify(plain_password, hashed_password)
+    return pwd_context.verify(plain_password, password_hash)
 
 def get_password_hash(password):
     """Hash password using Argon2."""
@@ -87,7 +87,7 @@ def get_current_active_user(current_user: User = Depends(get_current_user)):
 
 def get_admin_user(current_user: User = Depends(get_current_user)):
     """Get current admin user."""
-    if current_user.role != UserRole.ADMIN:
+    if current_user.role != "admin":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not enough permissions"
