@@ -27,7 +27,7 @@ class Config:
     
     @property
     def SECRET_KEY(self) -> str:
-        """JWT Secret Key (Supabase JWT Secret)"""
+        """JWT Secret Key (Supabase Legacy JWT Secret)"""
         secret = os.getenv("SECRET_KEY")
         if not secret:
             raise RuntimeError("SECRET_KEY is not set in environment")

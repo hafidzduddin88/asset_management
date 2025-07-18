@@ -15,7 +15,7 @@ services:
       - key: DATABASE_URL
         sync: false
       - key: SECRET_KEY
-        generateValue: true
+        sync: false  # Use Supabase Legacy JWT Secret
       - key: GOOGLE_SHEET_ID
         sync: false
       - key: GOOGLE_CREDS_JSON
