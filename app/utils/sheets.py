@@ -222,9 +222,16 @@ def get_all_assets():
     try:
         sheet = get_sheet(SHEETS['ASSETS'])
         if not sheet:
+            logging.error("Could not get Assets sheet")
             return []
         
-        return sheet.get_all_records()
+        try:
+            records = sheet.get_all_records()
+            logging.info(f"Successfully retrieved {len(records)} assets from sheet")
+            return records
+        except Exception as e:
+            logging.error(f"Error getting records from Assets sheet: {str(e)}")
+            return []
     except Exception as e:
         logging.error(f"Error getting assets: {str(e)}")
         return []
