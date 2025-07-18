@@ -6,14 +6,13 @@ from sqlalchemy.orm import Session
 from datetime import timedelta, datetime, timezone
 
 from app.database.database import get_db
-from app.database.models import User
+from app.database.models import User, UserRole
 from app.utils.auth import verify_password, create_access_token
-from app.config import load_config
 
 router = APIRouter(tags=["authentication"])
 templates = Jinja2Templates(directory="app/templates")
 
-# GET login page
+# GET login page (HTML form)
 @router.get("/login", response_class=HTMLResponse)
 @router.head("/login", response_class=HTMLResponse)
 async def login_page(request: Request):
@@ -41,7 +40,10 @@ async def login_form(
 
     access_token_expires = timedelta(minutes=60 * 24)  # 1 day
     access_token = create_access_token(
-        data={"sub": user.username, "role": user.role},
+        data={
+            "sub": user.username,
+            "role": user.role  # string value, e.g. "admin"
+        },
         expires_delta=access_token_expires
     )
 
@@ -52,11 +54,11 @@ async def login_form(
         httponly=True,
         max_age=60 * 60 * 24,
         samesite="lax",
-        secure=False  # Ubah ke True jika pakai HTTPS di production
+        secure=False  # ubah True jika HTTPS
     )
     return response
 
-# POST login untuk API (token-only, optional)
+# Token-only login (API access)
 @router.post("/login/token")
 async def login_for_access_token(
     form_data: OAuth2PasswordRequestForm = Depends(),
@@ -75,11 +77,19 @@ async def login_for_access_token(
 
     access_token_expires = timedelta(minutes=60 * 24)
     access_token = create_access_token(
-        data={"sub": user.username, "role": user.role},
+        data={
+            "sub": user.username,
+            "role": user.role  # tetap string, meskipun enum secara internal
+        },
         expires_delta=access_token_expires
     )
 
-    return {"access_token": access_token, "token_type": "bearer"}
+    return {
+        "access_token": access_token,
+        "token_type": "bearer",
+        "username": user.username,
+        "role": user.role
+    }
 
 # Logout
 @router.get("/logout")
