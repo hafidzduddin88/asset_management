@@ -7,7 +7,7 @@ from datetime import timedelta, datetime, timezone
 
 from app.database.database import get_db
 from app.database.models import User, UserRole
-from app.utils.auth import verify_password, create_access_token
+from app.utils.auth import verify_password, create_access_token, create_refresh_token, decode_token
 
 router = APIRouter(tags=["authentication"])
 templates = Jinja2Templates(directory="app/templates")
@@ -39,12 +39,14 @@ async def login_form(
     db.commit()
 
     access_token_expires = timedelta(minutes=60 * 24)  # 1 day
+    refresh_token_expires = timedelta(days=7)
     access_token = create_access_token(
-        data={
-            "sub": user.username,
-            "role": user.role  # string value, e.g. "admin"
-        },
+        data={"sub": user.username, "role": user.role},
         expires_delta=access_token_expires
+    )
+    refresh_token = create_refresh_token(
+        data={"sub": user.username},
+        expires_delta=refresh_token_expires
     )
 
     response = RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
@@ -53,6 +55,14 @@ async def login_form(
         value=access_token,
         httponly=True,
         max_age=60 * 60 * 24,
+        samesite="lax",
+        secure=True
+    )
+    response.set_cookie(
+        key="refresh_token",
+        value=refresh_token,
+        httponly=True,
+        max_age=60 * 60 * 24 * 7,
         samesite="lax",
         secure=True
     )
@@ -91,9 +101,36 @@ async def login_for_access_token(
         "role": user.role
     }
 
+# Refresh access token
+@router.post("/refresh")
+async def refresh_token(request: Request, response: Response, db: Session = Depends(get_db)):
+    refresh_token = request.cookies.get("refresh_token")
+    payload = decode_token(refresh_token)
+    if not payload or payload.get("type") != "refresh":
+        raise HTTPException(status_code=401, detail="Invalid refresh token")
+    username = payload.get("sub")
+    user = db.query(User).filter(User.username == username).first()
+    if not user:
+        raise HTTPException(status_code=401, detail="User not found")
+    access_token_expires = timedelta(minutes=60 * 24)
+    access_token = create_access_token(
+        data={"sub": user.username, "role": user.role},
+        expires_delta=access_token_expires
+    )
+    response.set_cookie(
+        key="access_token",
+        value=access_token,
+        httponly=True,
+        max_age=60 * 60 * 24,
+        samesite="lax",
+        secure=True
+    )
+    return {"access_token": access_token}
+
 # Logout
 @router.get("/logout")
 async def logout():
     response = RedirectResponse(url="/login", status_code=status.HTTP_303_SEE_OTHER)
     response.delete_cookie(key="access_token")
+    response.delete_cookie(key="refresh_token")
     return response
