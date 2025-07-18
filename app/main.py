@@ -13,7 +13,7 @@ from app.routes import (
 )
 from app.middleware.session_auth import SessionAuthMiddleware
 
-# Create tables
+# Create tables (only for users and approvals)
 Base.metadata.create_all(bind=engine)
 
 # Load configuration

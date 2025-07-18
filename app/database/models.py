@@ -15,12 +15,6 @@ class ApprovalStatus(str, enum.Enum):
     APPROVED = "approved"
     REJECTED = "rejected"
 
-class AssetStatus(str, enum.Enum):
-    ACTIVE = "active"
-    DAMAGED = "damaged"
-    REPAIRED = "repaired"
-    DISPOSED = "disposed"
-
 class User(Base):
     __tablename__ = "users"
 
@@ -35,34 +29,8 @@ class User(Base):
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
     # Relationships
-    assets = relationship("Asset", back_populates="owner")
-    approvals = relationship("Approval", back_populates="admin")
+    approvals = relationship("Approval", back_populates="admin", foreign_keys="Approval.admin_id")
     approval_requests = relationship("Approval", back_populates="requester", foreign_keys="Approval.requester_id")
-
-class Asset(Base):
-    __tablename__ = "assets"
-
-    id = Column(Integer, primary_key=True, index=True)
-    asset_tag = Column(String, unique=True, index=True)
-    name = Column(String, index=True)
-    description = Column(Text)
-    category = Column(String, index=True)
-    location = Column(String, index=True)
-    purchase_date = Column(DateTime)
-    purchase_cost = Column(String)
-    status = Column(Enum(AssetStatus), default=AssetStatus.ACTIVE)
-    photo_url = Column(String)
-    photo_drive_id = Column(String)
-    owner_id = Column(Integer, ForeignKey("users.id"))
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
-
-    # Relationships
-    owner = relationship("User", back_populates="assets")
-    approvals = relationship("Approval", back_populates="asset")
-    damages = relationship("Damage", back_populates="asset")
-    relocations = relationship("Relocation", back_populates="asset")
-    disposals = relationship("Disposal", back_populates="asset")
 
 class Approval(Base):
     __tablename__ = "approvals"
@@ -70,9 +38,8 @@ class Approval(Base):
     id = Column(Integer, primary_key=True, index=True)
     action_type = Column(String, index=True)  # add, edit, relocate, dispose, damage, repair
     status = Column(Enum(ApprovalStatus), default=ApprovalStatus.PENDING)
-    request_data = Column(Text)  # JSON data of the request
+    request_data = Column(Text)  # JSON data of the request including asset_id/asset_tag
     notes = Column(Text)
-    asset_id = Column(Integer, ForeignKey("assets.id"))
     requester_id = Column(Integer, ForeignKey("users.id"))
     admin_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
@@ -80,57 +47,5 @@ class Approval(Base):
     approved_at = Column(DateTime(timezone=True), nullable=True)
 
     # Relationships
-    asset = relationship("Asset", back_populates="approvals")
     requester = relationship("User", foreign_keys=[requester_id], back_populates="approval_requests")
     admin = relationship("User", foreign_keys=[admin_id], back_populates="approvals")
-
-class Damage(Base):
-    __tablename__ = "damages"
-
-    id = Column(Integer, primary_key=True, index=True)
-    asset_id = Column(Integer, ForeignKey("assets.id"))
-    reported_by = Column(Integer, ForeignKey("users.id"))
-    damage_date = Column(DateTime, default=datetime.utcnow)
-    description = Column(Text)
-    photo_url = Column(String)
-    is_repaired = Column(Boolean, default=False)
-    repair_date = Column(DateTime, nullable=True)
-    repair_notes = Column(Text, nullable=True)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
-
-    # Relationships
-    asset = relationship("Asset", back_populates="damages")
-    reporter = relationship("User")
-
-class Relocation(Base):
-    __tablename__ = "relocations"
-
-    id = Column(Integer, primary_key=True, index=True)
-    asset_id = Column(Integer, ForeignKey("assets.id"))
-    previous_location = Column(String)
-    new_location = Column(String)
-    relocated_by = Column(Integer, ForeignKey("users.id"))
-    relocation_date = Column(DateTime, default=datetime.utcnow)
-    reason = Column(Text)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-
-    # Relationships
-    asset = relationship("Asset", back_populates="relocations")
-    user = relationship("User")
-
-class Disposal(Base):
-    __tablename__ = "disposals"
-
-    id = Column(Integer, primary_key=True, index=True)
-    asset_id = Column(Integer, ForeignKey("assets.id"))
-    disposed_by = Column(Integer, ForeignKey("users.id"))
-    disposal_date = Column(DateTime, default=datetime.utcnow)
-    reason = Column(Text)
-    notes = Column(Text)
-    evidence_url = Column(String, nullable=True)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-
-    # Relationships
-    asset = relationship("Asset", back_populates="disposals")
-    user = relationship("User")
