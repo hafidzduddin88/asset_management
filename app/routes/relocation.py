@@ -7,7 +7,9 @@ import json
 from datetime import datetime
 
 from app.database.database import get_db
-from app.database.models import Asset, User, Relocation, Approval, ApprovalStatus
+from app.database.models import User, Approval, ApprovalStatus, UserRole
+from app.utils.sheets import get_asset_by_id, update_asset
+from app.utils.flash import set_flash
 from app.database.dependencies import get_current_active_user, get_admin_user
 
 router = APIRouter(tags=["relocation"])
@@ -16,12 +18,12 @@ templates = Jinja2Templates(directory="app/templates")
 @router.get("/assets/{asset_id}/relocate", response_class=HTMLResponse)
 async def relocate_form(
     request: Request,
-    asset_id: int,
+    asset_id: str,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
     """Form to relocate an asset."""
-    asset = db.query(Asset).filter(Asset.id == asset_id).first()
+    asset = get_asset_by_id(asset_id)
     if not asset:
         return RedirectResponse(url="/assets", status_code=status.HTTP_303_SEE_OTHER)
     
@@ -37,19 +39,19 @@ async def relocate_form(
 @router.post("/assets/{asset_id}/relocate")
 async def relocate_asset(
     request: Request,
-    asset_id: int,
+    asset_id: str,
     new_location: str = Form(...),
     reason: str = Form(...),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
     """Process asset relocation form."""
-    asset = db.query(Asset).filter(Asset.id == asset_id).first()
+    asset = get_asset_by_id(asset_id)
     if not asset:
         raise HTTPException(status_code=404, detail="Asset not found")
     
     # Check if new location is different
-    if asset.location == new_location:
+    if asset.get('Location') == new_location:
         return templates.TemplateResponse(
             "relocation/form.html",
             {
@@ -68,29 +70,43 @@ async def relocate_asset(
     # Prepare relocation data
     relocation_data = {
         "asset_id": asset_id,
-        "previous_location": asset.location,
+        "asset_tag": asset.get('Asset Tag', ''),
+        "previous_location": asset.get('Location', ''),
         "new_location": new_location,
-        "relocated_by": current_user.id,
-        "relocation_date": datetime.utcnow(),
+        "relocated_by": current_user.username,
+        "relocation_date": datetime.now().strftime("%Y-%m-%d"),
         "reason": reason
     }
     
-    # If admin, relocate asset directly
-    if current_user.role == "admin":
-        # Create relocation record
-        relocation = Relocation(**relocation_data)
-        db.add(relocation)
-        
+    # If admin, relocate asset directly in Google Sheets
+    if current_user.role == UserRole.ADMIN:
         # Update asset location
-        asset.location = new_location
+        update_data = {"Location": new_location}
+        success = update_asset(asset_id, update_data)
         
-        db.commit()
-        return RedirectResponse(url=f"/assets/{asset_id}", status_code=status.HTTP_303_SEE_OTHER)
+        if success:
+            response = RedirectResponse(url=f"/assets/{asset_id}", status_code=status.HTTP_303_SEE_OTHER)
+            set_flash(response, "Asset relocated successfully", "success")
+            return response
+        else:
+            return templates.TemplateResponse(
+                "relocation/form.html",
+                {
+                    "request": request,
+                    "user": current_user,
+                    "asset": asset,
+                    "error": "Error updating asset location",
+                    "form_data": {
+                        "new_location": new_location,
+                        "reason": reason
+                    }
+                },
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
     
     # If staff, create approval request
     approval = Approval(
         action_type="relocate",
-        asset_id=asset_id,
         request_data=json.dumps(relocation_data),
         requester_id=current_user.id,
         status=ApprovalStatus.PENDING
@@ -99,4 +115,6 @@ async def relocate_asset(
     db.add(approval)
     db.commit()
     
-    return RedirectResponse(url=f"/assets/{asset_id}", status_code=status.HTTP_303_SEE_OTHER)
+    response = RedirectResponse(url=f"/assets/{asset_id}", status_code=status.HTTP_303_SEE_OTHER)
+    set_flash(response, "Relocation request submitted for approval", "success")
+    return response

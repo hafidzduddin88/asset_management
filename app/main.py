@@ -12,6 +12,7 @@ from app.routes import (
     login, damage, export, health, offline, relocation
 )
 from app.middleware.session_auth import SessionAuthMiddleware
+from app.utils.flash import FlashMiddleware
 
 # Create tables (only for users and approvals)
 Base.metadata.create_all(bind=engine)
@@ -44,6 +45,9 @@ app.add_middleware(
 
 # Session authentication middleware
 app.add_middleware(SessionAuthMiddleware)
+
+# Flash messages middleware
+app.add_middleware(FlashMiddleware)
 
 # Include routers
 app.include_router(health.router)

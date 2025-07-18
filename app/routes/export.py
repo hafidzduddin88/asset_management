@@ -11,7 +11,8 @@ from fpdf import FPDF
 from datetime import datetime
 
 from app.database.database import get_db
-from app.database.models import Asset, User, Damage, Relocation, Disposal
+from app.database.models import User, UserRole
+from app.utils.sheets import get_all_assets, get_asset_by_id
 from app.database.dependencies import get_current_active_user
 
 router = APIRouter(tags=["export"])
@@ -51,79 +52,36 @@ async def export_excel(
     # Add headers
     headers = []
     if report_type == "assets":
-        headers = ["Asset Tag", "Name", "Category", "Location", "Status", "Purchase Date", "Purchase Cost", "Photo URL"]
+        headers = ["Asset Tag", "Item Name", "Category", "Location", "Status", "Purchase Date", "Purchase Cost", "Photo URL"]
         
-        # Query assets with filters
-        query = db.query(Asset)
+        # Get assets from Google Sheets
+        all_assets = get_all_assets()
+        
+        # Apply filters
+        filtered_assets = all_assets
         if status:
-            query = query.filter(Asset.status == status)
+            filtered_assets = [a for a in filtered_assets if a.get('Status') == status]
         if category:
-            query = query.filter(Asset.category == category)
+            filtered_assets = [a for a in filtered_assets if a.get('Category') == category]
         if location:
-            query = query.filter(Asset.location == location)
+            filtered_assets = [a for a in filtered_assets if a.get('Location') == location]
         
-        assets = query.all()
+        # Add headers
+        for col, header in enumerate(headers, start=1):
+            worksheet.cell(row=1, column=col, value=header).font = Font(bold=True)
         
         # Add data rows
-        for i, asset in enumerate(assets, start=2):
-            worksheet.cell(row=1, column=1, value="Asset Tag").font = Font(bold=True)
-            worksheet.cell(row=1, column=2, value="Name").font = Font(bold=True)
-            worksheet.cell(row=1, column=3, value="Category").font = Font(bold=True)
-            worksheet.cell(row=1, column=4, value="Location").font = Font(bold=True)
-            worksheet.cell(row=1, column=5, value="Status").font = Font(bold=True)
-            worksheet.cell(row=1, column=6, value="Purchase Date").font = Font(bold=True)
-            worksheet.cell(row=1, column=7, value="Purchase Cost").font = Font(bold=True)
-            worksheet.cell(row=1, column=8, value="Photo URL").font = Font(bold=True)
-            
-            worksheet.cell(row=i, column=1, value=asset.asset_tag)
-            worksheet.cell(row=i, column=2, value=asset.name)
-            worksheet.cell(row=i, column=3, value=asset.category)
-            worksheet.cell(row=i, column=4, value=asset.location)
-            worksheet.cell(row=i, column=5, value=asset.status)
-            worksheet.cell(row=i, column=6, value=asset.purchase_date.strftime("%Y-%m-%d") if asset.purchase_date else "")
-            worksheet.cell(row=i, column=7, value=asset.purchase_cost)
-            worksheet.cell(row=i, column=8, value=asset.photo_url)
+        for i, asset in enumerate(filtered_assets, start=2):
+            worksheet.cell(row=i, column=1, value=asset.get('Asset Tag', ''))
+            worksheet.cell(row=i, column=2, value=asset.get('Item Name', ''))
+            worksheet.cell(row=i, column=3, value=asset.get('Category', ''))
+            worksheet.cell(row=i, column=4, value=asset.get('Location', ''))
+            worksheet.cell(row=i, column=5, value=asset.get('Status', ''))
+            worksheet.cell(row=i, column=6, value=asset.get('Purchase Date', ''))
+            worksheet.cell(row=i, column=7, value=asset.get('Purchase Cost', ''))
+            worksheet.cell(row=i, column=8, value=asset.get('Photo URL', ''))
     
-    elif report_type == "damages":
-        headers = ["Asset Tag", "Asset Name", "Damage Date", "Description", "Reported By", "Is Repaired", "Repair Date", "Photo URL"]
-        
-        # Query damages with filters
-        query = db.query(Damage).join(Asset)
-        if status:
-            if status == "repaired":
-                query = query.filter(Damage.is_repaired == True)
-            elif status == "unrepaired":
-                query = query.filter(Damage.is_repaired == False)
-        if category:
-            query = query.filter(Asset.category == category)
-        if location:
-            query = query.filter(Asset.location == location)
-        if start_date:
-            query = query.filter(Damage.damage_date >= datetime.strptime(start_date, "%Y-%m-%d"))
-        if end_date:
-            query = query.filter(Damage.damage_date <= datetime.strptime(end_date, "%Y-%m-%d"))
-        
-        damages = query.all()
-        
-        # Add data rows
-        for i, damage in enumerate(damages, start=2):
-            worksheet.cell(row=1, column=1, value="Asset Tag").font = Font(bold=True)
-            worksheet.cell(row=1, column=2, value="Asset Name").font = Font(bold=True)
-            worksheet.cell(row=1, column=3, value="Damage Date").font = Font(bold=True)
-            worksheet.cell(row=1, column=4, value="Description").font = Font(bold=True)
-            worksheet.cell(row=1, column=5, value="Reported By").font = Font(bold=True)
-            worksheet.cell(row=1, column=6, value="Is Repaired").font = Font(bold=True)
-            worksheet.cell(row=1, column=7, value="Repair Date").font = Font(bold=True)
-            worksheet.cell(row=1, column=8, value="Photo URL").font = Font(bold=True)
-            
-            worksheet.cell(row=i, column=1, value=damage.asset.asset_tag)
-            worksheet.cell(row=i, column=2, value=damage.asset.name)
-            worksheet.cell(row=i, column=3, value=damage.damage_date.strftime("%Y-%m-%d"))
-            worksheet.cell(row=i, column=4, value=damage.description)
-            worksheet.cell(row=i, column=5, value=damage.reporter.username)
-            worksheet.cell(row=i, column=6, value="Yes" if damage.is_repaired else "No")
-            worksheet.cell(row=i, column=7, value=damage.repair_date.strftime("%Y-%m-%d") if damage.repair_date else "")
-            worksheet.cell(row=i, column=8, value=damage.photo_url)
+    # Only assets report is supported with Google Sheets integration
     
     # Auto-adjust column width
     for col in worksheet.columns:
@@ -203,20 +161,21 @@ async def export_pdf(
     pdf.set_font("Arial", "B", 12)
     
     if report_type == "assets":
-        # Query assets with filters
-        query = db.query(Asset)
-        if status:
-            query = query.filter(Asset.status == status)
-        if category:
-            query = query.filter(Asset.category == category)
-        if location:
-            query = query.filter(Asset.location == location)
+        # Get assets from Google Sheets
+        all_assets = get_all_assets()
         
-        assets = query.all()
+        # Apply filters
+        filtered_assets = all_assets
+        if status:
+            filtered_assets = [a for a in filtered_assets if a.get('Status') == status]
+        if category:
+            filtered_assets = [a for a in filtered_assets if a.get('Category') == category]
+        if location:
+            filtered_assets = [a for a in filtered_assets if a.get('Location') == location]
         
         # Table header
         pdf.cell(30, 10, "Asset Tag", 1)
-        pdf.cell(50, 10, "Name", 1)
+        pdf.cell(50, 10, "Item Name", 1)
         pdf.cell(30, 10, "Category", 1)
         pdf.cell(30, 10, "Location", 1)
         pdf.cell(30, 10, "Status", 1)
@@ -224,50 +183,15 @@ async def export_pdf(
         
         # Table data
         pdf.set_font("Arial", "", 10)
-        for asset in assets:
-            pdf.cell(30, 10, asset.asset_tag, 1)
-            pdf.cell(50, 10, asset.name, 1)
-            pdf.cell(30, 10, asset.category, 1)
-            pdf.cell(30, 10, asset.location, 1)
-            pdf.cell(30, 10, asset.status, 1)
+        for asset in filtered_assets:
+            pdf.cell(30, 10, asset.get('Asset Tag', ''), 1)
+            pdf.cell(50, 10, asset.get('Item Name', ''), 1)
+            pdf.cell(30, 10, asset.get('Category', ''), 1)
+            pdf.cell(30, 10, asset.get('Location', ''), 1)
+            pdf.cell(30, 10, asset.get('Status', ''), 1)
             pdf.ln()
     
-    elif report_type == "damages":
-        # Query damages with filters
-        query = db.query(Damage).join(Asset)
-        if status:
-            if status == "repaired":
-                query = query.filter(Damage.is_repaired == True)
-            elif status == "unrepaired":
-                query = query.filter(Damage.is_repaired == False)
-        if category:
-            query = query.filter(Asset.category == category)
-        if location:
-            query = query.filter(Asset.location == location)
-        if start_date:
-            query = query.filter(Damage.damage_date >= datetime.strptime(start_date, "%Y-%m-%d"))
-        if end_date:
-            query = query.filter(Damage.damage_date <= datetime.strptime(end_date, "%Y-%m-%d"))
-        
-        damages = query.all()
-        
-        # Table header
-        pdf.cell(30, 10, "Asset Tag", 1)
-        pdf.cell(50, 10, "Asset Name", 1)
-        pdf.cell(30, 10, "Damage Date", 1)
-        pdf.cell(30, 10, "Repaired", 1)
-        pdf.cell(30, 10, "Repair Date", 1)
-        pdf.ln()
-        
-        # Table data
-        pdf.set_font("Arial", "", 10)
-        for damage in damages:
-            pdf.cell(30, 10, damage.asset.asset_tag, 1)
-            pdf.cell(50, 10, damage.asset.name, 1)
-            pdf.cell(30, 10, damage.damage_date.strftime("%Y-%m-%d"), 1)
-            pdf.cell(30, 10, "Yes" if damage.is_repaired else "No", 1)
-            pdf.cell(30, 10, damage.repair_date.strftime("%Y-%m-%d") if damage.repair_date else "", 1)
-            pdf.ln()
+    # Only assets report is supported with Google Sheets integration
     
     # Save to BytesIO
     output = io.BytesIO()
