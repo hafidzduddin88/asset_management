@@ -56,7 +56,7 @@ async def login_form(
         httponly=True,
         max_age=60 * 60 * 24,
         samesite="lax",
-        secure=True
+        secure=False  # Set to True in production with HTTPS
     )
     response.set_cookie(
         key="refresh_token",
@@ -64,7 +64,7 @@ async def login_form(
         httponly=True,
         max_age=60 * 60 * 24 * 7,
         samesite="lax",
-        secure=True
+        secure=False  # Set to True in production with HTTPS
     )
     return response
 
@@ -75,7 +75,7 @@ async def login_for_access_token(
     db: Session = Depends(get_db)
 ):
     user = db.query(User).filter(User.username == form_data.username).first()
-    if not user or not verify_password(form_data.password, user.password_hash):
+    if not user or not verify_password(password=form_data.password, hashed_password=user.password_hash):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect username or password",
@@ -89,7 +89,7 @@ async def login_for_access_token(
     access_token = create_access_token(
         data={
             "sub": user.username,
-            "role": user.role  # tetap string, meskipun enum secara internal
+            "role": user.role
         },
         expires_delta=access_token_expires
     )
@@ -123,7 +123,7 @@ async def refresh_token(request: Request, response: Response, db: Session = Depe
         httponly=True,
         max_age=60 * 60 * 24,
         samesite="lax",
-        secure=True
+        secure=False  # Set to True in production with HTTPS
     )
     return {"access_token": access_token}
 

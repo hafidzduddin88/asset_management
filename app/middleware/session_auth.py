@@ -2,6 +2,7 @@ from fastapi import Request, HTTPException, status
 from fastapi.responses import RedirectResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 from jose import jwt
+import logging
 from app.config import load_config
 
 # Load configuration
@@ -30,6 +31,7 @@ class SessionAuthMiddleware(BaseHTTPMiddleware):
         
         if not token:
             # Redirect to login page if no token
+            logging.warning(f"No access_token in cookies for path: {request.url.path}")
             return RedirectResponse(url="/login", status_code=status.HTTP_303_SEE_OTHER)
         
         try:
@@ -43,8 +45,9 @@ class SessionAuthMiddleware(BaseHTTPMiddleware):
             # Add user info to request state
             request.state.user = payload
             
-        except Exception:
+        except Exception as e:
             # Redirect to login page if token is invalid
+            logging.error(f"Invalid token: {str(e)}")
             return RedirectResponse(url="/login", status_code=status.HTTP_303_SEE_OTHER)
         
         # Continue with the request
