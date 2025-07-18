@@ -11,3 +11,17 @@ services:
       maxInstances: 1
       targetMemoryPercent: 90
       targetCPUPercent: 90
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: SECRET_KEY
+        generateValue: true
+      - key: GOOGLE_SHEET_ID
+        sync: false
+      - key: GOOGLE_CREDS_JSON
+        sync: false
+      - key: APP_URL
+        fromService:
+          name: ambp
+          type: web
+          property: url

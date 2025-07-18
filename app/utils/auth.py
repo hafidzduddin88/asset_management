@@ -21,7 +21,11 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login/token")
 
 def verify_password(plain_password, password_hash):
     """Verify password against hash."""
-    return pwd_context.verify(plain_password, password_hash)
+    try:
+        return pwd_context.verify(plain_password, password_hash)
+    except Exception:
+        # Jika hash tidak dapat diidentifikasi, kembalikan False
+        return False
 
 def get_password_hash(password):
     """Hash password using Argon2."""

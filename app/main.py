@@ -17,6 +17,12 @@ from app.utils.flash import FlashMiddleware
 # Create tables (only for users and approvals)
 Base.metadata.create_all(bind=engine)
 
+# Import dan jalankan seed script untuk membuat user default
+from app.database.seed import create_admin_user, create_manager_user, create_staff_user
+create_admin_user()
+create_manager_user()
+create_staff_user()
+
 # Load configuration
 config = load_config()
 

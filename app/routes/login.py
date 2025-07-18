@@ -32,12 +32,36 @@ async def login_form(
     """Process login form."""
     user = db.query(User).filter(User.username == username).first()
     
-    if not user or not verify_password(password, user.password_hash):
+    # Pastikan user ada sebelum mencoba verifikasi password
+    if not user:
         return templates.TemplateResponse(
             "login_logout.html", 
             {
                 "request": request, 
                 "error": "Invalid username or password"
+            },
+            status_code=status.HTTP_401_UNAUTHORIZED
+        )
+    
+    # Coba verifikasi password dengan penanganan error
+    try:
+        is_valid = verify_password(password, user.password_hash)
+        if not is_valid:
+            return templates.TemplateResponse(
+                "login_logout.html", 
+                {
+                    "request": request, 
+                    "error": "Invalid username or password"
+                },
+                status_code=status.HTTP_401_UNAUTHORIZED
+            )
+    except Exception as e:
+        # Log error jika diperlukan
+        return templates.TemplateResponse(
+            "login_logout.html", 
+            {
+                "request": request, 
+                "error": "Authentication error"
             },
             status_code=status.HTTP_401_UNAUTHORIZED
         )
@@ -70,10 +94,25 @@ async def login_for_access_token(
     """Get access token for API authentication."""
     user = db.query(User).filter(User.username == form_data.username).first()
     
-    if not user or not verify_password(form_data.password, user.password_hash):
+    if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect username or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    try:
+        is_valid = verify_password(form_data.password, user.password_hash)
+        if not is_valid:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Incorrect username or password",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication error",
             headers={"WWW-Authenticate": "Bearer"},
         )
     
