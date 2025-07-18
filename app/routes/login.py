@@ -15,8 +15,8 @@ templates = Jinja2Templates(directory="app/templates")
 # GET login page (HTML form)
 @router.get("/login", response_class=HTMLResponse)
 @router.head("/login", response_class=HTMLResponse)
-async def login_page(request: Request):
-    return templates.TemplateResponse("login_logout.html", {"request": request})
+async def login_page(request: Request, next: str = None):
+    return templates.TemplateResponse("login_logout.html", {"request": request, "next": next})
 
 # POST login from HTML form
 @router.post("/login", response_class=HTMLResponse)
@@ -25,13 +25,14 @@ async def login_form(
     response: Response,
     username: str = Form(...),
     password: str = Form(...),
+    next: str = Form(None),
     db: Session = Depends(get_db)
 ):
     user = db.query(User).filter(User.username == username).first()
     if not user or not verify_password(password, user.password_hash):
         return templates.TemplateResponse(
             "login_logout.html",
-            {"request": request, "error": "Invalid username or password"},
+            {"request": request, "error": "Invalid username or password", "next": next},
             status_code=status.HTTP_401_UNAUTHORIZED
         )
 
@@ -49,7 +50,10 @@ async def login_form(
         expires_delta=refresh_token_expires
     )
 
-    response = RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
+    # Redirect to original URL if available, otherwise to home
+    redirect_url = next if next else "/"
+    
+    response = RedirectResponse(url=redirect_url, status_code=status.HTTP_303_SEE_OTHER)
     response.set_cookie(
         key="access_token",
         value=access_token,

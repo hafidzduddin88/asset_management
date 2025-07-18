@@ -3,6 +3,7 @@ from fastapi.responses import RedirectResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 from jose import jwt
 import logging
+from urllib.parse import quote
 from app.config import load_config
 
 # Load configuration
@@ -30,9 +31,17 @@ class SessionAuthMiddleware(BaseHTTPMiddleware):
         token = request.cookies.get("access_token")
         
         if not token:
+            # Save the original URL for redirect after login
+            original_url = request.url.path
+            if request.query_params:
+                original_url += "?" + str(request.query_params)
+            
             # Redirect to login page if no token
-            logging.warning(f"No access_token in cookies for path: {request.url.path}")
-            return RedirectResponse(url="/login", status_code=status.HTTP_303_SEE_OTHER)
+            logging.warning(f"No access_token in cookies for path: {original_url}")
+            return RedirectResponse(
+                url=f"/login?next={quote(original_url)}", 
+                status_code=status.HTTP_303_SEE_OTHER
+            )
         
         try:
             # Validate token
@@ -46,9 +55,17 @@ class SessionAuthMiddleware(BaseHTTPMiddleware):
             request.state.user = payload
             
         except Exception as e:
+            # Save the original URL for redirect after login
+            original_url = request.url.path
+            if request.query_params:
+                original_url += "?" + str(request.query_params)
+            
             # Redirect to login page if token is invalid
             logging.error(f"Invalid token: {str(e)}")
-            return RedirectResponse(url="/login", status_code=status.HTTP_303_SEE_OTHER)
+            return RedirectResponse(
+                url=f"/login?next={quote(original_url)}", 
+                status_code=status.HTTP_303_SEE_OTHER
+            )
         
         # Continue with the request
         return await call_next(request)
