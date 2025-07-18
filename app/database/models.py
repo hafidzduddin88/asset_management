@@ -6,10 +6,10 @@ from datetime import datetime
 
 from app.database.database import Base
 
-# User roles as constants
-ROLE_ADMIN = "admin"
-ROLE_STAFF = "staff"
-ROLE_USER = "user"
+class UserRole(str, enum.Enum):
+    ADMIN = "admin"
+    MANAGER = "manager"
+    STAFF = "staff"
 
 class ApprovalStatus(str, enum.Enum):
     PENDING = "pending"
@@ -24,7 +24,7 @@ class User(Base):
     password_hash = Column(String)
     email = Column(String)
     full_name = Column(String)
-    role = Column(String, default="user")
+    role = Column(String, default=UserRole.STAFF)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())

@@ -112,7 +112,7 @@ async def add_asset(
             print(f"Error processing photo: {str(e)}")
     
     # If admin, add asset directly to Google Sheets
-    if current_user.role == "admin":
+    if current_user.role == UserRole.ADMIN:
         success = sheets_add_asset(asset_data)
         
         if success:

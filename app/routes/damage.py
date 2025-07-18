@@ -7,7 +7,7 @@ import json
 from datetime import datetime
 
 from app.database.database import get_db
-from app.database.models import User, Approval, ApprovalStatus
+from app.database.models import User, Approval, ApprovalStatus, UserRole
 from app.utils.sheets import get_asset_by_id, update_asset
 from app.database.dependencies import get_current_active_user, get_admin_user
 from app.utils.photo import resize_and_convert_image, upload_to_drive
@@ -98,7 +98,7 @@ async def report_damage(
             )
     
     # If admin, update asset status directly in Google Sheets
-    if current_user.role == "admin":
+    if current_user.role == UserRole.ADMIN:
         # Update asset status to Damaged
         update_data = {"Status": "Damaged"}
         success = update_asset(asset_id, update_data)
@@ -182,7 +182,7 @@ async def repair_asset(
     }
     
     # If admin, update asset status directly in Google Sheets
-    if current_user.role == "admin":
+    if current_user.role == UserRole.ADMIN:
         # Update asset status to Repaired
         update_data = {"Status": "Repaired"}
         success = update_asset(asset_id, update_data)

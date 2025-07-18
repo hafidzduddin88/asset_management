@@ -5,7 +5,7 @@ from jose import JWTError, jwt
 from sqlalchemy.orm import Session
 
 from app.database.database import get_db
-from app.database.models import User
+from app.database.models import User, UserRole
 from app.config import load_config
 
 config = load_config()
@@ -53,7 +53,7 @@ async def get_current_active_user(current_user: User = Depends(get_current_user)
 
 async def get_admin_user(current_user: User = Depends(get_current_user)):
     """Get current admin user."""
-    if current_user.role != "admin":
+    if current_user.role != UserRole.ADMIN:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not enough permissions"

@@ -4,7 +4,7 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
 from app.database.database import get_db
-from app.database.models import User, Approval, ApprovalStatus
+from app.database.models import User, Approval, ApprovalStatus, UserRole
 from app.database.dependencies import get_current_active_user
 from app.utils.sheets import get_all_assets
 from app.utils.flash import get_flash
@@ -31,7 +31,7 @@ async def home(
     
     # Get pending approvals (for admins)
     pending_approvals = []
-    if current_user.role == "admin":
+    if current_user.role == UserRole.ADMIN:
         pending_approvals = (
             db.query(Approval)
             .filter(Approval.status == ApprovalStatus.PENDING)
