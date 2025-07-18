@@ -54,7 +54,7 @@ async def login_form(
         httponly=True,
         max_age=60 * 60 * 24,
         samesite="lax",
-        secure=False  # ubah True jika HTTPS
+        secure=True
     )
     return response
 
