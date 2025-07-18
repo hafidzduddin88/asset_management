@@ -15,7 +15,8 @@ def set_flash(response: Union[Response, StarletteResponse], message: str, catego
         value=json.dumps(flash_data),
         httponly=True,
         max_age=30,  # 30 seconds
-        samesite="lax"
+        samesite="lax",
+        secure=False  # Set to True in production with HTTPS
     )
 
 def get_flash(request: Request) -> Optional[Dict[str, Any]]:
@@ -34,6 +35,9 @@ def get_flash(request: Request) -> Optional[Dict[str, Any]]:
 
 class FlashMiddleware:
     """Middleware to clear flash messages after they are read."""
+    
+    def __init__(self, app):
+        self.app = app
     
     async def __call__(self, scope, receive, send):
         if scope["type"] != "http":

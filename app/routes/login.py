@@ -56,7 +56,8 @@ async def login_form(
         value=access_token,
         httponly=True,
         max_age=60 * 60 * 24,  # 24 hours
-        samesite="lax"
+        samesite="lax",
+        secure=False  # Set to True in production with HTTPS
     )
     
     return response

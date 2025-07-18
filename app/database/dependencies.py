@@ -9,7 +9,7 @@ from app.database.models import User, UserRole
 from app.config import load_config
 
 config = load_config()
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/auth/token")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login/token")
 
 async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
     """Get current user from JWT token."""
