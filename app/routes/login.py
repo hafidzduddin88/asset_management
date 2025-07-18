@@ -3,7 +3,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
-from datetime import timedelta
+from datetime import timedelta, datetime, timezone
 
 from app.database.database import get_db
 from app.database.models import User
@@ -66,6 +66,10 @@ async def login_form(
             status_code=status.HTTP_401_UNAUTHORIZED
         )
     
+    # Update last_login timestamp
+    user.last_login = datetime.now(timezone.utc)
+    db.commit()
+    
     # Create access token
     access_token_expires = timedelta(minutes=60 * 24)  # 24 hours
     access_token = create_access_token(
@@ -115,6 +119,10 @@ async def login_for_access_token(
             detail="Authentication error",
             headers={"WWW-Authenticate": "Bearer"},
         )
+    
+    # Update last_login timestamp
+    user.last_login = datetime.now(timezone.utc)
+    db.commit()
     
     access_token_expires = timedelta(minutes=60 * 24)  # 24 hours
     access_token = create_access_token(

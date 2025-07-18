@@ -9,7 +9,7 @@ from app.config import load_config
 from app.database.database import engine, Base
 from app.routes import (
     home, assets, asset_management, approvals, 
-    login, damage, export, health, offline, relocation
+    login, damage, export, health, offline, relocation, profile
 )
 from app.middleware.session_auth import SessionAuthMiddleware
 from app.utils.flash import FlashMiddleware
@@ -66,6 +66,7 @@ app.include_router(damage.router)
 app.include_router(export.router)
 app.include_router(offline.router)
 app.include_router(relocation.router)
+app.include_router(profile.router)
 
 # Service worker route
 @app.get("/service-worker.js", response_class=HTMLResponse)

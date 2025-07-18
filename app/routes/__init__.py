@@ -11,5 +11,6 @@ from app.routes import (
     export,
     health,
     offline,
-    relocation
+    relocation,
+    profile
 )
