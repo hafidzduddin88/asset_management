@@ -1,0 +1,47 @@
+# Byte-compiled / cache files
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pyc
+
+# Virtual environments
+venv/
+env/
+.venv/
+.env/
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Editor / IDE configs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs and dumps
+*.log
+*.out
+*.bak
+*.tmp
+*.old
+
+# OS-specific
+.DS_Store
+Thumbs.db
+
+# Tests (opsional, kalau tidak butuh di container)
+tests/
+test/
+
+# Local build/output
+dist/
+build/
+*.egg-info/
+
+# CI/CD or Docker secrets
+secrets/
+docker-compose.override.yml
