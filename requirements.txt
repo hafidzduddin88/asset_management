@@ -14,7 +14,8 @@ psycopg2-binary==2.9.6
 alembic==1.10.4
 
 # Authentication
-python-jose[cryptography]==3.3.0
+jose==1.0.0
+python-jose[cryptography]==3.3.0  # Tetap menyertakan python-jose untuk kompatibilitas
 passlib[argon2]==1.7.4
 
 # Google API
