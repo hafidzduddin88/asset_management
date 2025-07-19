@@ -68,7 +68,7 @@ app.include_router(assets.router)
 app.include_router(asset_management.router)
 app.include_router(approvals.router)
 app.include_router(damage.router)
-app.include_router(export.router)
+app.include_router(export.router, prefix="")
 app.include_router(offline.router)
 app.include_router(relocation.router)
 app.include_router(profile.router)
@@ -84,12 +84,6 @@ async def get_service_worker():
 async def get_manifest():
     with open("app/static/manifest.json") as f:
         return f.read()
-
-# Favicon route
-@app.get("/favicon.ico")
-async def get_favicon():
-    from fastapi.responses import FileResponse
-    return FileResponse("app/static/img/favicon.ico")
 
 # Favicon route
 @app.get("/favicon.ico")

@@ -1,31 +1,27 @@
-# app/routes/export.py
-from fastapi import APIRouter, Depends, Request, Query, HTTPException
-from fastapi.responses import StreamingResponse, HTMLResponse
+from fastapi import APIRouter, Depends, Request, HTTPException, status
+from fastapi.responses import HTMLResponse, FileResponse, StreamingResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
-from typing import List, Optional
+import pandas as pd
 import io
-import openpyxl
-from openpyxl.styles import Font, Alignment
-from fpdf import FPDF
 from datetime import datetime
 
 from app.database.database import get_db
-from app.database.models import User, UserRole
-from app.utils.sheets import get_all_assets, get_asset_by_id
-from app.database.dependencies import get_current_active_user
+from app.database.models import User
+from app.database.dependencies import get_current_user
+from app.utils.sheets import get_all_assets
 
 router = APIRouter(tags=["export"])
 templates = Jinja2Templates(directory="app/templates")
 
 @router.get("/export", response_class=HTMLResponse)
-async def export_form(
+async def export_page(
     request: Request,
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_user)
 ):
-    """Export form."""
+    """Export page."""
     return templates.TemplateResponse(
-        "export/form.html",
+        "export/index.html",
         {
             "request": request,
             "user": current_user
@@ -34,179 +30,112 @@ async def export_form(
 
 @router.get("/export/excel")
 async def export_excel(
-    report_type: str = Query(...),
-    status: Optional[str] = None,
-    category: Optional[str] = None,
-    location: Optional[str] = None,
-    start_date: Optional[str] = None,
-    end_date: Optional[str] = None,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
+    request: Request,
+    current_user: User = Depends(get_current_user)
 ):
-    """Export data to Excel."""
-    # Create a new workbook and select the active worksheet
-    workbook = openpyxl.Workbook()
-    worksheet = workbook.active
-    worksheet.title = f"{report_type.capitalize()} Report"
+    """Export assets to Excel."""
+    assets = get_all_assets()
     
-    # Add headers
-    headers = []
-    if report_type == "assets":
-        headers = ["Asset Tag", "Item Name", "Category", "Location", "Status", "Purchase Date", "Purchase Cost", "Photo URL"]
-        
-        # Get assets from Google Sheets
-        all_assets = get_all_assets()
-        
-        # Apply filters
-        filtered_assets = all_assets
-        if status:
-            filtered_assets = [a for a in filtered_assets if a.get('Status') == status]
-        if category:
-            filtered_assets = [a for a in filtered_assets if a.get('Category') == category]
-        if location:
-            filtered_assets = [a for a in filtered_assets if a.get('Location') == location]
-        
-        # Add headers
-        for col, header in enumerate(headers, start=1):
-            worksheet.cell(row=1, column=col, value=header).font = Font(bold=True)
-        
-        # Add data rows
-        for i, asset in enumerate(filtered_assets, start=2):
-            worksheet.cell(row=i, column=1, value=asset.get('Asset Tag', ''))
-            worksheet.cell(row=i, column=2, value=asset.get('Item Name', ''))
-            worksheet.cell(row=i, column=3, value=asset.get('Category', ''))
-            worksheet.cell(row=i, column=4, value=asset.get('Location', ''))
-            worksheet.cell(row=i, column=5, value=asset.get('Status', ''))
-            worksheet.cell(row=i, column=6, value=asset.get('Purchase Date', ''))
-            worksheet.cell(row=i, column=7, value=asset.get('Purchase Cost', ''))
-            worksheet.cell(row=i, column=8, value=asset.get('Photo URL', ''))
+    # Convert to DataFrame
+    df = pd.DataFrame(assets)
     
-    # Only assets report is supported with Google Sheets integration
-    
-    # Auto-adjust column width
-    for col in worksheet.columns:
-        max_length = 0
-        column = col[0].column_letter
-        for cell in col:
-            if cell.value:
-                max_length = max(max_length, len(str(cell.value)))
-        adjusted_width = (max_length + 2)
-        worksheet.column_dimensions[column].width = adjusted_width
-    
-    # Save to BytesIO
+    # Create Excel file in memory
     output = io.BytesIO()
-    workbook.save(output)
-    output.seek(0)
+    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+        df.to_excel(writer, sheet_name='Assets', index=False)
+        
+        # Get the xlsxwriter workbook and worksheet objects
+        workbook = writer.book
+        worksheet = writer.sheets['Assets']
+        
+        # Add a header format
+        header_format = workbook.add_format({
+            'bold': True,
+            'text_wrap': True,
+            'valign': 'top',
+            'fg_color': '#D7E4BC',
+            'border': 1
+        })
+        
+        # Write the column headers with the defined format
+        for col_num, value in enumerate(df.columns.values):
+            worksheet.write(0, col_num, value, header_format)
+            
+        # Auto-adjust columns' width
+        for i, col in enumerate(df.columns):
+            column_width = max(df[col].astype(str).map(len).max(), len(col)) + 2
+            worksheet.set_column(i, i, column_width)
     
-    # Return Excel file
-    filename = f"{report_type}_{datetime.now().strftime('%Y%m%d%H%M%S')}.xlsx"
-    headers = {
-        "Content-Disposition": f"attachment; filename={filename}"
-    }
+    # Set up response
+    output.seek(0)
+    filename = f"assets_export_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
     
     return StreamingResponse(
-        output, 
+        output,
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        headers=headers
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
     )
 
 @router.get("/export/pdf")
 async def export_pdf(
-    report_type: str = Query(...),
-    status: Optional[str] = None,
-    category: Optional[str] = None,
-    location: Optional[str] = None,
-    start_date: Optional[str] = None,
-    end_date: Optional[str] = None,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
+    request: Request,
+    current_user: User = Depends(get_current_user)
 ):
-    """Export data to PDF."""
-    # Create PDF
-    pdf = FPDF()
-    pdf.add_page()
+    """Export assets to PDF."""
+    # This would typically use a PDF generation library like ReportLab or WeasyPrint
+    # For now, we'll return a simple text file as a placeholder
+    content = "PDF export functionality will be implemented soon."
     
-    # Set font
-    pdf.set_font("Arial", "B", 16)
-    
-    # Title
-    pdf.cell(0, 10, f"{report_type.capitalize()} Report", 0, 1, "C")
-    pdf.ln(10)
-    
-    # Report date
-    pdf.set_font("Arial", "", 10)
-    pdf.cell(0, 10, f"Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", 0, 1, "R")
-    pdf.ln(5)
-    
-    # Add filters info
-    if status or category or location or start_date or end_date:
-        pdf.set_font("Arial", "B", 12)
-        pdf.cell(0, 10, "Filters:", 0, 1)
-        pdf.set_font("Arial", "", 10)
-        
-        if status:
-            pdf.cell(0, 8, f"Status: {status}", 0, 1)
-        if category:
-            pdf.cell(0, 8, f"Category: {category}", 0, 1)
-        if location:
-            pdf.cell(0, 8, f"Location: {location}", 0, 1)
-        if start_date:
-            pdf.cell(0, 8, f"Start Date: {start_date}", 0, 1)
-        if end_date:
-            pdf.cell(0, 8, f"End Date: {end_date}", 0, 1)
-        
-        pdf.ln(5)
-    
-    # Table header
-    pdf.set_font("Arial", "B", 12)
-    
-    if report_type == "assets":
-        # Get assets from Google Sheets
-        all_assets = get_all_assets()
-        
-        # Apply filters
-        filtered_assets = all_assets
-        if status:
-            filtered_assets = [a for a in filtered_assets if a.get('Status') == status]
-        if category:
-            filtered_assets = [a for a in filtered_assets if a.get('Category') == category]
-        if location:
-            filtered_assets = [a for a in filtered_assets if a.get('Location') == location]
-        
-        # Table header
-        pdf.cell(30, 10, "Asset Tag", 1)
-        pdf.cell(50, 10, "Item Name", 1)
-        pdf.cell(30, 10, "Category", 1)
-        pdf.cell(30, 10, "Location", 1)
-        pdf.cell(30, 10, "Status", 1)
-        pdf.ln()
-        
-        # Table data
-        pdf.set_font("Arial", "", 10)
-        for asset in filtered_assets:
-            pdf.cell(30, 10, asset.get('Asset Tag', ''), 1)
-            pdf.cell(50, 10, asset.get('Item Name', ''), 1)
-            pdf.cell(30, 10, asset.get('Category', ''), 1)
-            pdf.cell(30, 10, asset.get('Location', ''), 1)
-            pdf.cell(30, 10, asset.get('Status', ''), 1)
-            pdf.ln()
-    
-    # Only assets report is supported with Google Sheets integration
-    
-    # Save to BytesIO
-    output = io.BytesIO()
-    pdf_bytes = pdf.output(dest="S").encode("latin1")
-    output.write(pdf_bytes)
-    output.seek(0)
-    
-    # Return PDF file
-    filename = f"{report_type}_{datetime.now().strftime('%Y%m%d%H%M%S')}.pdf"
-    headers = {
-        "Content-Disposition": f"attachment; filename={filename}"
-    }
+    output = io.BytesIO(content.encode())
+    filename = f"assets_export_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
     
     return StreamingResponse(
-        output, 
-        media_type="application/pdf",
-        headers=headers
+        output,
+        media_type="text/plain",
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )
+
+@router.get("/report", response_class=HTMLResponse)
+async def report_page(
+    request: Request,
+    current_user: User = Depends(get_current_user)
+):
+    """Report page."""
+    assets = get_all_assets()
+    
+    # Get summary statistics
+    total_assets = len(assets)
+    active_assets = len([a for a in assets if a.get('Status') == 'Active'])
+    damaged_assets = len([a for a in assets if a.get('Status') == 'Damaged'])
+    disposed_assets = len([a for a in assets if a.get('Status') == 'Disposed'])
+    
+    # Group assets by location
+    locations = {}
+    for asset in assets:
+        location = asset.get('Location', 'Unknown')
+        if location not in locations:
+            locations[location] = 0
+        locations[location] += 1
+    
+    # Group assets by category
+    categories = {}
+    for asset in assets:
+        category = asset.get('Category', 'Unknown')
+        if category not in categories:
+            categories[category] = 0
+        categories[category] += 1
+    
+    return templates.TemplateResponse(
+        "export/report.html",
+        {
+            "request": request,
+            "user": current_user,
+            "assets": assets,
+            "total_assets": total_assets,
+            "active_assets": active_assets,
+            "damaged_assets": damaged_assets,
+            "disposed_assets": disposed_assets,
+            "locations": locations,
+            "categories": categories
+        }
     )
