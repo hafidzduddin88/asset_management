@@ -4,10 +4,15 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from datetime import timedelta, datetime, timezone
+import secrets
 
 from app.database.database import get_db
 from app.database.models import User, UserRole
 from app.utils.auth import verify_password, create_access_token, create_refresh_token, decode_token
+from app.config import load_config
+
+# Load configuration
+config = load_config()
 
 router = APIRouter(tags=["authentication"])
 templates = Jinja2Templates(directory="app/templates")
@@ -26,6 +31,7 @@ async def login_form(
     username: str = Form(...),
     password: str = Form(...),
     next: str = Form(None),
+    remember: bool = Form(False),
     db: Session = Depends(get_db)
 ):
     user = db.query(User).filter(User.username == username).first()
@@ -37,6 +43,11 @@ async def login_form(
         )
 
     user.last_login = datetime.now(timezone.utc)
+    
+    # Set remember_token if remember option is checked
+    if remember:
+        user.remember_token = secrets.token_hex(32)
+    
     db.commit()
 
     access_token_expires = timedelta(minutes=60 * 24)  # 1 day
@@ -60,7 +71,7 @@ async def login_form(
         httponly=True,
         max_age=60 * 60 * 24,
         samesite="lax",
-        secure=True  # HTTPS environment requires secure=True
+        secure=config.IS_PRODUCTION  # Use IS_PRODUCTION to determine secure flag
     )
     response.set_cookie(
         key="refresh_token",
@@ -68,8 +79,20 @@ async def login_form(
         httponly=True,
         max_age=60 * 60 * 24 * 7,
         samesite="lax",
-        secure=True  # HTTPS environment requires secure=True
+        secure=config.IS_PRODUCTION
     )
+    
+    # Set remember_token cookie if remember option is checked
+    if remember and user.remember_token:
+        response.set_cookie(
+            key="remember_token",
+            value=user.remember_token,
+            httponly=True,
+            max_age=60 * 60 * 24 * 30,  # 30 days
+            samesite="lax",
+            secure=config.IS_PRODUCTION
+        )
+    
     return response
 
 # Token-only login (API access)
@@ -127,7 +150,7 @@ async def refresh_token(request: Request, response: Response, db: Session = Depe
         httponly=True,
         max_age=60 * 60 * 24,
         samesite="lax",
-        secure=True  # HTTPS environment requires secure=True
+        secure=config.IS_PRODUCTION
     )
     return {"access_token": access_token}
 
@@ -137,4 +160,5 @@ async def logout():
     response = RedirectResponse(url="/login", status_code=status.HTTP_303_SEE_OTHER)
     response.delete_cookie(key="access_token")
     response.delete_cookie(key="refresh_token")
+    response.delete_cookie(key="remember_token")
     return response
