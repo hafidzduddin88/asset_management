@@ -85,6 +85,18 @@ async def get_manifest():
     with open("app/static/manifest.json") as f:
         return f.read()
 
+# Favicon route
+@app.get("/favicon.ico")
+async def get_favicon():
+    from fastapi.responses import FileResponse
+    return FileResponse("app/static/img/favicon.ico")
+
+# Favicon route
+@app.get("/favicon.ico")
+async def get_favicon():
+    from fastapi.responses import FileResponse
+    return FileResponse("app/static/img/favicon.ico")
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("app.main:app", host="0.0.0.0", port=8000, reload=True)

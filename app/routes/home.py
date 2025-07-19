@@ -13,7 +13,9 @@ router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
 
 @router.get("/", response_class=HTMLResponse)
+@router.head("/", response_class=HTMLResponse)
 @router.get("/home", response_class=HTMLResponse)
+@router.head("/home", response_class=HTMLResponse)
 async def home(
     request: Request, 
     db: Session = Depends(get_db),

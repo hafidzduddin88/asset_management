@@ -23,6 +23,7 @@ class SessionAuthMiddleware(BaseHTTPMiddleware):
             request.url.path == "/offline" or
             request.url.path == "/service-worker.js" or
             request.url.path == "/manifest.json" or
+            request.url.path == "/favicon.ico" or
             request.method == "HEAD"
         ):
             return await call_next(request)
