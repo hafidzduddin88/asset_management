@@ -16,10 +16,10 @@ from app.utils.flash import set_flash
 from app.config import load_config
 
 config = load_config()
-router = APIRouter(tags=["damage"])
+router = APIRouter(prefix="/damage", tags=["damage"])
 templates = Jinja2Templates(directory="app/templates")
 
-@router.get("/assets/{asset_id}/report-damage", response_class=HTMLResponse)
+@router.get("/report/{asset_id}", response_class=HTMLResponse)
 async def report_damage_form(
     request: Request,
     asset_id: str,
@@ -29,7 +29,7 @@ async def report_damage_form(
     """Form to report asset damage."""
     asset = get_asset_by_id(asset_id)
     if not asset:
-        return RedirectResponse(url="/assets", status_code=status.HTTP_303_SEE_OTHER)
+        return RedirectResponse(url="/assets/", status_code=status.HTTP_303_SEE_OTHER)
     
     return templates.TemplateResponse(
         "damage/report.html",
@@ -40,7 +40,7 @@ async def report_damage_form(
         }
     )
 
-@router.post("/assets/{asset_id}/report-damage")
+@router.post("/report/{asset_id}")
 async def report_damage(
     request: Request,
     asset_id: str,
@@ -139,7 +139,7 @@ async def report_damage(
     set_flash(response, "Damage report submitted for approval", "success")
     return response
 
-@router.get("/assets/{asset_id}/repair", response_class=HTMLResponse)
+@router.get("/repair/{asset_id}", response_class=HTMLResponse)
 async def repair_form(
     request: Request,
     asset_id: str,
@@ -149,7 +149,7 @@ async def repair_form(
     """Form to report asset repair."""
     asset = get_asset_by_id(asset_id)
     if not asset or asset.get("Status") != "Damaged":
-        return RedirectResponse(url="/assets", status_code=status.HTTP_303_SEE_OTHER)
+        return RedirectResponse(url="/assets/", status_code=status.HTTP_303_SEE_OTHER)
     
     return templates.TemplateResponse(
         "damage/repair.html",
@@ -160,7 +160,7 @@ async def repair_form(
         }
     )
 
-@router.post("/assets/{asset_id}/repair")
+@router.post("/repair/{asset_id}")
 async def repair_asset(
     request: Request,
     asset_id: str,

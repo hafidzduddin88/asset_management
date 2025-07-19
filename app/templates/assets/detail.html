@@ -45,10 +45,10 @@
                          aria-labelledby="options-menu"
                          x-cloak>
                         <div class="py-1" role="none">
-                            <a href="/assets/{{ asset['ID'] }}/relocate" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900" role="menuitem">Relocate</a>
-                            <a href="/assets/{{ asset['ID'] }}/report-damage" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900" role="menuitem">Report Damage</a>
+                            <a href="/relocation/{{ asset['ID'] }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900" role="menuitem">Relocate</a>
+                            <a href="/damage/report/{{ asset['ID'] }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900" role="menuitem">Report Damage</a>
                             {% if asset['Status'] == 'Damaged' %}
-                            <a href="/assets/{{ asset['ID'] }}/repair" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900" role="menuitem">Mark as Repaired</a>
+                            <a href="/damage/repair/{{ asset['ID'] }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900" role="menuitem">Mark as Repaired</a>
                             {% endif %}
                             {% if user.role == 'admin' %}
                             <a href="/assets/{{ asset['ID'] }}/dispose" class="block px-4 py-2 text-sm text-red-600 hover:bg-gray-100 hover:text-red-900" role="menuitem">Dispose</a>

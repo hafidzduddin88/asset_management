@@ -12,10 +12,10 @@ from app.utils.sheets import get_asset_by_id, update_asset
 from app.utils.flash import set_flash
 from app.database.dependencies import get_current_active_user, get_admin_user
 
-router = APIRouter(tags=["relocation"])
+router = APIRouter(prefix="/relocation", tags=["relocation"])
 templates = Jinja2Templates(directory="app/templates")
 
-@router.get("/assets/{asset_id}/relocate", response_class=HTMLResponse)
+@router.get("/{asset_id}", response_class=HTMLResponse)
 async def relocate_form(
     request: Request,
     asset_id: str,
@@ -25,7 +25,7 @@ async def relocate_form(
     """Form to relocate an asset."""
     asset = get_asset_by_id(asset_id)
     if not asset:
-        return RedirectResponse(url="/assets", status_code=status.HTTP_303_SEE_OTHER)
+        return RedirectResponse(url="/assets/", status_code=status.HTTP_303_SEE_OTHER)
     
     return templates.TemplateResponse(
         "relocation/form.html",
@@ -36,7 +36,7 @@ async def relocate_form(
         }
     )
 
-@router.post("/assets/{asset_id}/relocate")
+@router.post("/{asset_id}")
 async def relocate_asset(
     request: Request,
     asset_id: str,
