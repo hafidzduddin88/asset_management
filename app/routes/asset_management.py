@@ -17,10 +17,10 @@ from app.utils.flash import set_flash
 from app.config import load_config
 
 config = load_config()
-router = APIRouter(tags=["asset_management"])
+router = APIRouter(prefix="/asset_management", tags=["asset_management"])
 templates = Jinja2Templates(directory="app/templates")
 
-@router.get("/asset/add", response_class=HTMLResponse)
+@router.get("/add", response_class=HTMLResponse)
 async def add_asset_form(
     request: Request,
     db: Session = Depends(get_db),
@@ -39,7 +39,7 @@ async def add_asset_form(
         }
     )
 
-@router.post("/asset/add")
+@router.post("/add")
 async def add_asset(
     request: Request,
     item_name: str = Form(...),
@@ -116,7 +116,7 @@ async def add_asset(
         success = sheets_add_asset(asset_data)
         
         if success:
-            response = RedirectResponse(url="/assets", status_code=status.HTTP_303_SEE_OTHER)
+            response = RedirectResponse(url="/assets/", status_code=status.HTTP_303_SEE_OTHER)
             set_flash(response, "Asset added successfully", "success")
             return response
         else:

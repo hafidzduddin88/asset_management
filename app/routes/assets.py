@@ -11,10 +11,10 @@ from app.database.dependencies import get_current_active_user
 from app.utils.sheets import get_all_assets, get_asset_by_id, get_dropdown_options
 from app.utils.flash import get_flash
 
-router = APIRouter(tags=["assets"])
+router = APIRouter(prefix="/assets", tags=["assets"])
 templates = Jinja2Templates(directory="app/templates")
 
-@router.get("/assets", response_class=HTMLResponse)
+@router.get("/", response_class=HTMLResponse)
 async def list_assets(
     request: Request,
     status: Optional[str] = None,
@@ -69,7 +69,7 @@ async def list_assets(
         }
     )
 
-@router.get("/assets/{asset_id}", response_class=HTMLResponse)
+@router.get("/{asset_id}", response_class=HTMLResponse)
 async def asset_detail(
     request: Request,
     asset_id: str,
@@ -79,7 +79,7 @@ async def asset_detail(
     """Asset detail page."""
     asset = get_asset_by_id(asset_id)
     if not asset:
-        return RedirectResponse(url="/assets", status_code=status.HTTP_303_SEE_OTHER)
+        return RedirectResponse(url="/assets/", status_code=status.HTTP_303_SEE_OTHER)
     
     # Get flash messages
     flash = get_flash(request)
