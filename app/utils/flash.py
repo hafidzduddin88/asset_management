@@ -3,10 +3,6 @@ from fastapi import Request, Response
 from starlette.responses import Response as StarletteResponse
 import json
 from typing import Optional, Dict, Any, Union
-from app.config import load_config
-
-# Load configuration
-config = load_config()
 
 def set_flash(response: Union[Response, StarletteResponse], message: str, category: str = "info") -> None:
     """Set flash message in cookie."""
@@ -20,7 +16,7 @@ def set_flash(response: Union[Response, StarletteResponse], message: str, catego
         httponly=True,
         max_age=30,  # 30 seconds
         samesite="lax",
-        secure=config.IS_PRODUCTION  # Secure in production
+        secure=False  # Set to False for development
     )
 
 def get_flash(request: Request) -> Optional[Dict[str, Any]]:
@@ -55,8 +51,7 @@ class FlashMiddleware:
                 # Add Set-Cookie header to clear flash cookie
                 headers = list(message.get("headers", []))
                 headers.append(
-                    (b"set-cookie", b"flash=; Path=/; Max-Age=0; HttpOnly; SameSite=lax" + 
-                     (b"; Secure" if config.IS_PRODUCTION else b""))
+                    (b"set-cookie", b"flash=; Path=/; Max-Age=0; HttpOnly; SameSite=lax")
                 )
                 message["headers"] = headers
             

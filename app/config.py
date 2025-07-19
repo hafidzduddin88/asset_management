@@ -6,7 +6,6 @@ from typing import Dict
 class Config:
     def __init__(self):
         self._creds = self._load_google_creds()
-        self._is_production = self._check_production_env()
 
     @property
     def GOOGLE_CREDS_JSON(self) -> Dict:
@@ -48,11 +47,6 @@ class Config:
     def APP_URL(self) -> str:
         """Application URL for external services"""
         return os.getenv("APP_URL", "http://localhost:8000")
-    
-    @property
-    def IS_PRODUCTION(self) -> bool:
-        """Check if running in production environment"""
-        return self._is_production
         
     def _load_google_creds(self) -> Dict:
         creds_json_str = os.getenv("GOOGLE_CREDS_JSON")
@@ -63,14 +57,6 @@ class Config:
         if "private_key" in creds_json:
             creds_json["private_key"] = creds_json["private_key"].replace("\\\\n", "\\n")
         return creds_json
-    
-    def _check_production_env(self) -> bool:
-        """Check if running in production environment"""
-        # Check for common production environment variables
-        return bool(os.getenv("RENDER") or 
-                   os.getenv("PRODUCTION") or 
-                   os.getenv("ENVIRONMENT") == "production" or
-                   "onrender.com" in os.getenv("APP_URL", ""))
 
 def load_config() -> Config:
     return Config()
