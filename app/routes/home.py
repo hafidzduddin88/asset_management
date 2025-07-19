@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.database.database import get_db
 from app.database.models import User, Approval, ApprovalStatus, UserRole
-from app.database.dependencies import get_current_active_user
+from app.database.dependencies import get_current_user
 from app.utils.sheets import get_all_assets
 from app.utils.flash import get_flash
 
@@ -19,7 +19,7 @@ templates = Jinja2Templates(directory="app/templates")
 async def home(
     request: Request, 
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_user)
 ):
     """Home page / Dashboard."""
     

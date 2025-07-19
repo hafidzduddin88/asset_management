@@ -63,7 +63,7 @@ class SessionAuthMiddleware(BaseHTTPMiddleware):
                             httponly=True,
                             max_age=60 * 60 * 24,  # 1 day
                             samesite="lax",
-                            secure=config.IS_PRODUCTION
+                            secure=False  # Set to False for development
                         )
                         
                         # Generate new remember token for security
@@ -78,7 +78,7 @@ class SessionAuthMiddleware(BaseHTTPMiddleware):
                             httponly=True,
                             max_age=60 * 60 * 24 * 30,  # 30 days
                             samesite="lax",
-                            secure=config.IS_PRODUCTION
+                            secure=False  # Set to False for development
                         )
                         
                         return response

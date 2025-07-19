@@ -71,7 +71,7 @@ async def login_form(
         httponly=True,
         max_age=60 * 60 * 24,
         samesite="lax",
-        secure=config.IS_PRODUCTION  # Use IS_PRODUCTION to determine secure flag
+        secure=False  # Set to False for development
     )
     response.set_cookie(
         key="refresh_token",
@@ -79,7 +79,7 @@ async def login_form(
         httponly=True,
         max_age=60 * 60 * 24 * 7,
         samesite="lax",
-        secure=config.IS_PRODUCTION
+        secure=False  # Set to False for development
     )
     
     # Set remember_token cookie if remember option is checked
@@ -90,7 +90,7 @@ async def login_form(
             httponly=True,
             max_age=60 * 60 * 24 * 30,  # 30 days
             samesite="lax",
-            secure=config.IS_PRODUCTION
+            secure=False  # Set to False for development
         )
     
     return response
@@ -150,7 +150,7 @@ async def refresh_token(request: Request, response: Response, db: Session = Depe
         httponly=True,
         max_age=60 * 60 * 24,
         samesite="lax",
-        secure=config.IS_PRODUCTION
+        secure=False  # Set to False for development
     )
     return {"access_token": access_token}
 
