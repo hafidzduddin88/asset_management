@@ -44,12 +44,12 @@ async def home(
         to_be_disposed_assets = status_counts.get('To Be Disposed', 0)
         disposed_assets = status_counts.get('Disposed', 0)
         
-        # Prepare chart data
+        # Prepare chart data - ensure all values are JSON serializable
         status_labels = list(status_counts.keys())
         status_values = [int(status_counts[label]) for label in status_labels]
         status_chart_data = {
             'labels': status_labels,
-            'values': status_values,
+            'values': list(status_values),  # Convert to list to ensure serializable
             'colors': [
                 '#10B981',  # Active - green
                 '#EF4444',  # Under Repair - red
@@ -64,14 +64,14 @@ async def home(
         category_values = [int(statistics['category_counts'][label]) for label in category_labels]
         category_chart_data = {
             'labels': category_labels,
-            'values': category_values,
+            'values': list(category_values),  # Convert to list to ensure serializable
         }
         
         location_labels = list(statistics['location_counts'].keys())
         location_values = [int(statistics['location_counts'][label]) for label in location_labels]
         location_chart_data = {
             'labels': location_labels,
-            'values': location_values,
+            'values': list(location_values),  # Convert to list to ensure serializable
         }
         
         # Monthly additions chart
@@ -166,15 +166,15 @@ async def refresh_data(
             "status_counts": status_counts,
             "status_chart_data": {
                 'labels': list(status_counts.keys()),
-                'values': [int(status_counts[label]) for label in status_counts.keys()],
+                'values': list([int(status_counts[label]) for label in status_counts.keys()]),
             },
             "category_chart_data": {
                 'labels': list(statistics['category_counts'].keys()),
-                'values': [int(statistics['category_counts'][label]) for label in statistics['category_counts'].keys()],
+                'values': list([int(statistics['category_counts'][label]) for label in statistics['category_counts'].keys()]),
             },
             "location_chart_data": {
                 'labels': list(statistics['location_counts'].keys()),
-                'values': [int(statistics['location_counts'][label]) for label in statistics['location_counts'].keys()],
+                'values': list([int(statistics['location_counts'][label]) for label in statistics['location_counts'].keys()]),
             },
             "financial_summary": statistics['financial_summary']
         }
