@@ -1,5 +1,6 @@
 # Web Framework
-fastapi==0.109.1
+fastapi==0.110.0  # Security fix
+httpx==0.25.0  # Security fix
 starlette==0.36.0  # Security fix
 uvicorn==0.22.0
 pydantic==1.10.13
