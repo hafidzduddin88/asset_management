@@ -55,7 +55,11 @@ class Config:
 
         creds_json = json.loads(creds_json_str)
         if "private_key" in creds_json:
-            creds_json["private_key"] = creds_json["private_key"].replace("\\\\n", "\\n")
+            # Fix multiple levels of escaping in private_key
+            private_key = creds_json["private_key"]
+            private_key = private_key.replace('\\n', '\n')
+            private_key = private_key.replace('\\\\n', '\n')
+            creds_json["private_key"] = private_key
         return creds_json
 
 def load_config() -> Config:

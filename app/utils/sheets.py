@@ -1,6 +1,7 @@
 # app/utils/sheets.py
 import gspread
 import logging
+import json
 from datetime import datetime
 from google.oauth2.service_account import Credentials
 from app.config import load_config
@@ -25,6 +26,12 @@ sequence_tracker = {}
 def get_sheets_client():
     """Get Google Sheets client."""
     try:
+        # Log credentials for debugging (without private key)
+        creds_debug = config.GOOGLE_CREDS_JSON.copy()
+        if 'private_key' in creds_debug:
+            creds_debug['private_key'] = '[REDACTED]'
+        logging.info(f"Using Google credentials: {json.dumps(creds_debug)}")
+        
         creds = Credentials.from_service_account_info(
             config.GOOGLE_CREDS_JSON,
             scopes=[
@@ -32,9 +39,13 @@ def get_sheets_client():
                 "https://www.googleapis.com/auth/drive"
             ]
         )
-        return gspread.authorize(creds)
+        client = gspread.authorize(creds)
+        logging.info("Successfully created Google Sheets client")
+        return client
     except Exception as e:
         logging.error(f"Error creating sheets client: {str(e)}")
+        import traceback
+        logging.error(traceback.format_exc())
         return None
 
 def get_sheet(sheet_name):
