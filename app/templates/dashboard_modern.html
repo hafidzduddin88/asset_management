@@ -25,13 +25,31 @@
         transform: translateY(-5px);
         box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
     }
+    @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+    .animate-spin {
+        animation: spin 1s linear infinite;
+    }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="px-4 py-5 sm:px-6">
-    <h1 class="text-2xl font-semibold text-gray-900">Asset Management Dashboard</h1>
-    <p class="mt-1 max-w-2xl text-sm text-gray-500">Welcome back, {{ user.full_name }}</p>
+<div class="px-4 py-5 sm:px-6 flex justify-between items-center">
+    <div>
+        <h1 class="text-2xl font-semibold text-gray-900">Asset Management Dashboard</h1>
+        <p class="mt-1 max-w-2xl text-sm text-gray-500">Welcome back, {{ user.full_name }}</p>
+    </div>
+    <div class="flex items-center">
+        <span id="last-updated" class="text-xs text-gray-500 mr-2">Last updated: <span id="update-time">Just now</span></span>
+        <button id="refresh-button" class="inline-flex items-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded text-primary-700 bg-primary-100 hover:bg-primary-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+            <svg id="refresh-icon" class="-ml-0.5 mr-1 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            Refresh
+        </button>
+    </div>
 </div>
 
 <!-- Stats Overview -->
@@ -214,7 +232,7 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
                             <span class="mt-2 text-sm font-medium text-gray-900 text-center">Active</span>
-                            <span class="text-xs text-gray-500 text-center">{{ active_assets }} assets</span>
+                            <span class="text-xs text-gray-500 text-center"><span class="active-count">{{ active_assets }}</span> assets</span>
                         </div>
                         <div class="flex mt-2">
                             <div class="w-1/2 flex justify-center">
@@ -246,7 +264,7 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
                                 </svg>
                                 <span class="mt-2 text-sm font-medium text-gray-900 text-center">Under Repair</span>
-                                <span class="text-xs text-gray-500 text-center">{{ under_repair_assets }} assets</span>
+                                <span class="text-xs text-gray-500 text-center"><span class="under-repair-count">{{ under_repair_assets }}</span> assets</span>
                             </div>
                             <div class="flex justify-center mt-2">
                                 <svg class="h-6 w-6 text-gray-400 transform rotate-90" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -262,7 +280,7 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
                                 </svg>
                                 <span class="mt-2 text-sm font-medium text-gray-900 text-center">In Storage</span>
-                                <span class="text-xs text-gray-500 text-center">{{ in_storage_assets }} assets</span>
+                                <span class="text-xs text-gray-500 text-center"><span class="in-storage-count">{{ in_storage_assets }}</span> assets</span>
                             </div>
                             <div class="flex justify-center mt-2">
                                 <svg class="h-6 w-6 text-gray-400 transform rotate-90" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -288,7 +306,7 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                                 </svg>
                                 <span class="mt-2 text-sm font-medium text-gray-900 text-center">To Be Disposed</span>
-                                <span class="text-xs text-gray-500 text-center">{{ to_be_disposed_assets }} assets</span>
+                                <span class="text-xs text-gray-500 text-center"><span class="to-be-disposed-count">{{ to_be_disposed_assets }}</span> assets</span>
                             </div>
                             <div class="flex justify-center mt-2">
                                 <svg class="h-6 w-6 text-gray-400 transform rotate-90" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -304,7 +322,7 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                                 </svg>
                                 <span class="mt-2 text-sm font-medium text-gray-900 text-center">Disposed</span>
-                                <span class="text-xs text-gray-500 text-center">{{ disposed_assets }} assets</span>
+                                <span class="text-xs text-gray-500 text-center"><span class="disposed-count">{{ disposed_assets }}</span> assets</span>
                             </div>
                         </div>
                     </div>
@@ -449,10 +467,18 @@
 
 {% block scripts %}
 <script>
+    // Charts references
+    let statusChart, categoryChart, monthlyChart, locationChart;
+    
+    // Auto-refresh interval in milliseconds
+    const AUTO_REFRESH_INTERVAL = {{ auto_refresh_interval }};
+    let autoRefreshTimer;
+    let isRefreshing = false;
+    
     document.addEventListener('DOMContentLoaded', function() {
         // Status Distribution Chart
         const statusCtx = document.getElementById('statusChart').getContext('2d');
-        const statusChart = new Chart(statusCtx, {
+        statusChart = new Chart(statusCtx, {
             type: 'doughnut',
             data: {
                 labels: {{ status_chart_data.labels | tojson }},
@@ -478,7 +504,7 @@
 
         // Category Distribution Chart
         const categoryCtx = document.getElementById('categoryChart').getContext('2d');
-        const categoryChart = new Chart(categoryCtx, {
+        categoryChart = new Chart(categoryCtx, {
             type: 'pie',
             data: {
                 labels: {{ category_chart_data.labels | tojson }},
@@ -507,7 +533,7 @@
 
         // Monthly Additions Chart
         const monthlyCtx = document.getElementById('monthlyChart').getContext('2d');
-        const monthlyChart = new Chart(monthlyCtx, {
+        monthlyChart = new Chart(monthlyCtx, {
             type: 'bar',
             data: {
                 labels: {{ monthly_chart_data.labels | tojson }},
@@ -535,7 +561,7 @@
 
         // Location Distribution Chart
         const locationCtx = document.getElementById('locationChart').getContext('2d');
-        const locationChart = new Chart(locationCtx, {
+        locationChart = new Chart(locationCtx, {
             type: 'bar',
             data: {
                 labels: {{ location_chart_data.labels | tojson }},
@@ -561,6 +587,128 @@
                 }
             }
         });
+        
+        // Set up auto-refresh
+        setupAutoRefresh();
+        
+        // Set up refresh button
+        document.getElementById('refresh-button').addEventListener('click', function() {
+            refreshData();
+        });
     });
+    
+    // Function to set up auto-refresh
+    function setupAutoRefresh() {
+        // Clear any existing timer
+        if (autoRefreshTimer) {
+            clearInterval(autoRefreshTimer);
+        }
+        
+        // Set up new timer
+        autoRefreshTimer = setInterval(function() {
+            refreshData();
+        }, AUTO_REFRESH_INTERVAL);
+        
+        // Update the last updated time
+        updateLastUpdatedTime();
+    }
+    
+    // Function to refresh data
+    function refreshData() {
+        if (isRefreshing) return;
+        isRefreshing = true;
+        
+        // Show loading state
+        const refreshIcon = document.getElementById('refresh-icon');
+        refreshIcon.classList.add('animate-spin');
+        
+        // Fetch fresh data from the server
+        fetch('/refresh-data')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Update stats
+                    updateStats(data);
+                    
+                    // Update charts
+                    updateCharts(data);
+                    
+                    // Update last updated time
+                    updateLastUpdatedTime(data.timestamp);
+                } else {
+                    console.error('Error refreshing data:', data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error refreshing data:', error);
+            })
+            .finally(() => {
+                // Remove loading state
+                refreshIcon.classList.remove('animate-spin');
+                isRefreshing = false;
+            });
+    }
+    
+    // Function to update stats
+    function updateStats(data) {
+        // Update total assets
+        document.querySelector('.stat-card:nth-child(1) .text-2xl').textContent = data.total_assets;
+        
+        // Get status counts with defaults
+        const activeCount = data.status_counts['Active'] || 0;
+        const underRepairCount = data.status_counts['Under Repair'] || 0;
+        const inStorageCount = data.status_counts['In Storage'] || 0;
+        const toBeDisposedCount = data.status_counts['To Be Disposed'] || 0;
+        const disposedCount = data.status_counts['Disposed'] || 0;
+        
+        // Update status counts in stat cards
+        document.querySelector('.stat-card:nth-child(2) .text-2xl').textContent = activeCount;
+        document.querySelector('.stat-card:nth-child(3) .text-2xl').textContent = underRepairCount;
+        document.querySelector('.stat-card:nth-child(4) .text-2xl').textContent = inStorageCount;
+        document.querySelector('.stat-card:nth-child(5) .text-2xl').textContent = toBeDisposedCount;
+        document.querySelector('.stat-card:nth-child(6) .text-2xl').textContent = disposedCount;
+        
+        // Update flowchart counts
+        document.querySelector('.active-count').textContent = activeCount;
+        document.querySelector('.under-repair-count').textContent = underRepairCount;
+        document.querySelector('.in-storage-count').textContent = inStorageCount;
+        document.querySelector('.to-be-disposed-count').textContent = toBeDisposedCount;
+        document.querySelector('.disposed-count').textContent = disposedCount;
+    }
+    
+    // Function to update charts
+    function updateCharts(data) {
+        // Update status chart
+        if (data.status_chart_data && statusChart) {
+            statusChart.data.labels = data.status_chart_data.labels;
+            statusChart.data.datasets[0].data = data.status_chart_data.values;
+            statusChart.update();
+        }
+        
+        // Update category chart
+        if (data.category_chart_data && categoryChart) {
+            categoryChart.data.labels = data.category_chart_data.labels;
+            categoryChart.data.datasets[0].data = data.category_chart_data.values;
+            categoryChart.update();
+        }
+        
+        // Update location chart
+        if (data.location_chart_data && locationChart) {
+            locationChart.data.labels = data.location_chart_data.labels;
+            locationChart.data.datasets[0].data = data.location_chart_data.values;
+            locationChart.update();
+        }
+    }
+    
+    // Function to update last updated time
+    function updateLastUpdatedTime(timestamp) {
+        const updateTimeElement = document.getElementById('update-time');
+        if (timestamp) {
+            updateTimeElement.textContent = timestamp;
+        } else {
+            const now = new Date();
+            updateTimeElement.textContent = now.toLocaleTimeString();
+        }
+    }
 </script>
 {% endblock %}

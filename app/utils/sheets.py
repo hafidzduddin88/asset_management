@@ -20,11 +20,12 @@ SHEETS = {
     'REF_LOCATION': 'Ref_Location'
 }
 
+# Set all cache TTLs to 60 seconds for frequent auto-refresh
 CACHE_TTL = {
-    'client': 3600,
-    'sheet': 3600,
-    'assets': 300,
-    'reference': 1800
+    'client': 60,
+    'sheet': 60,
+    'assets': 60,
+    'reference': 60
 }
 
 _sequence_tracker = None
