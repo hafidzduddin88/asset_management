@@ -91,6 +91,10 @@ async def get_favicon():
     from fastapi.responses import FileResponse
     return FileResponse("app/static/img/favicon.ico")
 
+@app.head("/wake")
+async def wake():
+    return HTMLResponse(status_code=200)
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("app.main:app", host="0.0.0.0", port=8000, reload=True)

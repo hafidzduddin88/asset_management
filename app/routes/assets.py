@@ -4,6 +4,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from typing import Optional, List
+import logging
 
 from app.database.database import get_db
 from app.database.models import User
@@ -77,19 +78,40 @@ async def asset_detail(
     current_user: User = Depends(get_current_active_user)
 ):
     """Asset detail page."""
-    asset = get_asset_by_id(asset_id)
-    if not asset:
-        return RedirectResponse(url="/assets/", status_code=status.HTTP_303_SEE_OTHER)
-    
-    # Get flash messages
-    flash = get_flash(request)
-    
-    return templates.TemplateResponse(
-        "assets/detail.html",
-        {
-            "request": request,
-            "user": current_user,
-            "asset": asset,
-            "flash": flash
-        }
-    )
+    try:
+        # Log for debugging
+        logging.info(f"Fetching asset details for ID: {asset_id}")
+        
+        # Get asset by ID
+        asset = get_asset_by_id(asset_id)
+        
+        if not asset:
+            logging.warning(f"Asset with ID {asset_id} not found, redirecting to assets list")
+            return RedirectResponse(url="/assets/", status_code=status.HTTP_303_SEE_OTHER)
+        
+        # Get flash messages
+        flash = get_flash(request)
+        
+        # Log success
+        logging.info(f"Successfully retrieved asset: {asset.get('Item Name')}")
+        
+        return templates.TemplateResponse(
+            "assets/detail.html",
+            {
+                "request": request,
+                "user": current_user,
+                "asset": asset,
+                "flash": flash
+            }
+        )
+    except Exception as e:
+        # Log error
+        logging.error(f"Error in asset_detail: {str(e)}")
+        import traceback
+        logging.error(traceback.format_exc())
+        
+        # Redirect to assets list with error message
+        response = RedirectResponse(url="/assets/", status_code=status.HTTP_303_SEE_OTHER)
+        from app.utils.flash import set_flash
+        set_flash(response, f"Error loading asset details: {str(e)}", "error")
+        return response

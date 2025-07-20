@@ -305,12 +305,25 @@ def _get_asset_by_id(asset_id):
     """Get asset by ID."""
     try:
         assets = get_all_assets()
+        # Convert asset_id to string for comparison
+        asset_id_str = str(asset_id)
+        
+        # Log for debugging
+        logging.info(f"Looking for asset with ID: {asset_id_str}")
+        
         for asset in assets:
-            if asset.get('ID') == asset_id:
+            # Convert asset ID to string for comparison
+            asset_id_value = str(asset.get('ID', ''))
+            if asset_id_value == asset_id_str:
+                logging.info(f"Found asset: {asset.get('Item Name')}")
                 return asset
+        
+        logging.warning(f"Asset with ID {asset_id_str} not found")
         return None
     except Exception as e:
         logging.error(f"Error getting asset by ID: {str(e)}")
+        import traceback
+        logging.error(traceback.format_exc())
         return None
 
 def add_asset(asset_data):
@@ -386,8 +399,14 @@ def update_asset(asset_id, asset_data):
             return False
             
         # Find asset row
-        cell = sheet.find(asset_id)
-        if not cell:
+        asset_id_str = str(asset_id)
+        try:
+            cell = sheet.find(asset_id_str)
+            if not cell:
+                logging.warning(f"Cell with ID {asset_id_str} not found")
+                return False
+        except Exception as e:
+            logging.error(f"Error finding cell: {str(e)}")
             return False
             
         # Get headers

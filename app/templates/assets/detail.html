@@ -1,6 +1,6 @@
 {% extends "layouts/modern_layout.html" %}
 
-{% block title %}{{ asset['Item Name'] }} - Asset Management{% endblock %}
+{% block title %}{{ asset.get('Item Name', 'Asset Details') }} - Asset Management{% endblock %}
 
 {% block content %}
 <div class="py-6">
@@ -16,7 +16,7 @@
             </div>
             <div class="flex space-x-3">
                 {% if user.role == 'admin' %}
-                <a href="/assets/{{ asset['ID'] }}/edit" class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                <a href="/assets/{{ asset.get('ID') }}/edit" class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
                     <svg class="-ml-1 mr-2 h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                     </svg>
@@ -45,13 +45,13 @@
                          aria-labelledby="options-menu"
                          x-cloak>
                         <div class="py-1" role="none">
-                            <a href="/relocation/{{ asset['ID'] }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900" role="menuitem">Relocate</a>
-                            <a href="/damage/report/{{ asset['ID'] }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900" role="menuitem">Report Damage</a>
-                            {% if asset['Status'] == 'Damaged' %}
-                            <a href="/damage/repair/{{ asset['ID'] }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900" role="menuitem">Mark as Repaired</a>
+                            <a href="/relocation/{{ asset.get('ID') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900" role="menuitem">Relocate</a>
+                            <a href="/damage/report/{{ asset.get('ID') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900" role="menuitem">Report Damage</a>
+                            {% if asset.get('Status') == 'Damaged' %}
+                            <a href="/damage/repair/{{ asset.get('ID') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900" role="menuitem">Mark as Repaired</a>
                             {% endif %}
                             {% if user.role == 'admin' %}
-                            <a href="/assets/{{ asset['ID'] }}/dispose" class="block px-4 py-2 text-sm text-red-600 hover:bg-gray-100 hover:text-red-900" role="menuitem">Dispose</a>
+                            <a href="/assets/{{ asset.get('ID') }}/dispose" class="block px-4 py-2 text-sm text-red-600 hover:bg-gray-100 hover:text-red-900" role="menuitem">Dispose</a>
                             {% endif %}
                         </div>
                     </div>
@@ -62,16 +62,16 @@
         <div class="mt-6 bg-white shadow overflow-hidden sm:rounded-lg">
             <div class="px-4 py-5 sm:px-6 flex justify-between items-center">
                 <div>
-                    <h3 class="text-lg leading-6 font-medium text-gray-900">{{ asset['Item Name'] }}</h3>
-                    <p class="mt-1 max-w-2xl text-sm text-gray-500">{{ asset['Asset Tag'] }}</p>
+                    <h3 class="text-lg leading-6 font-medium text-gray-900">{{ asset.get('Item Name', 'Unknown Item') }}</h3>
+                    <p class="mt-1 max-w-2xl text-sm text-gray-500">{{ asset.get('Asset Tag', 'No Tag') }}</p>
                 </div>
                 <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full 
-                    {% if asset['Status'] == 'Active' %}bg-green-100 text-green-800
-                    {% elif asset['Status'] == 'Damaged' %}bg-red-100 text-red-800
-                    {% elif asset['Status'] == 'Repaired' %}bg-yellow-100 text-yellow-800
-                    {% elif asset['Status'] == 'Disposed' %}bg-gray-100 text-gray-800
+                    {% if asset.get('Status') == 'Active' %}bg-green-100 text-green-800
+                    {% elif asset.get('Status') == 'Damaged' %}bg-red-100 text-red-800
+                    {% elif asset.get('Status') == 'Repaired' %}bg-yellow-100 text-yellow-800
+                    {% elif asset.get('Status') == 'Disposed' %}bg-gray-100 text-gray-800
                     {% else %}bg-blue-100 text-blue-800{% endif %}">
-                    {{ asset['Status'] }}
+                    {{ asset.get('Status', 'Unknown') }}
                 </span>
             </div>
             
@@ -80,8 +80,8 @@
                     <!-- Asset Photo -->
                     <div class="md:col-span-1">
                         <div class="aspect-w-1 aspect-h-1 bg-gray-200 rounded-lg overflow-hidden">
-                            {% if asset['Photo URL'] %}
-                            <img src="{{ asset['Photo URL'] }}" alt="{{ asset['Item Name'] }}" class="w-full h-full object-center object-cover">
+                            {% if asset.get('Photo URL') %}
+                            <img src="{{ asset.get('Photo URL') }}" alt="{{ asset.get('Item Name', 'Asset Photo') }}" class="w-full h-full object-center object-cover">
                             {% else %}
                             <div class="w-full h-full flex items-center justify-center bg-gray-100">
                                 <svg class="h-24 w-24 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -97,55 +97,55 @@
                         <dl class="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
                             <div class="sm:col-span-1">
                                 <dt class="text-sm font-medium text-gray-500">Category</dt>
-                                <dd class="mt-1 text-sm text-gray-900">{{ asset['Category'] }}</dd>
+                                <dd class="mt-1 text-sm text-gray-900">{{ asset.get('Category', 'N/A') }}</dd>
                             </div>
                             <div class="sm:col-span-1">
                                 <dt class="text-sm font-medium text-gray-500">Type</dt>
-                                <dd class="mt-1 text-sm text-gray-900">{{ asset['Type'] }}</dd>
+                                <dd class="mt-1 text-sm text-gray-900">{{ asset.get('Type', 'N/A') }}</dd>
                             </div>
                             <div class="sm:col-span-1">
                                 <dt class="text-sm font-medium text-gray-500">Manufacture</dt>
-                                <dd class="mt-1 text-sm text-gray-900">{{ asset['Manufacture'] or 'N/A' }}</dd>
+                                <dd class="mt-1 text-sm text-gray-900">{{ asset.get('Manufacture') or 'N/A' }}</dd>
                             </div>
                             <div class="sm:col-span-1">
                                 <dt class="text-sm font-medium text-gray-500">Model</dt>
-                                <dd class="mt-1 text-sm text-gray-900">{{ asset['Model'] or 'N/A' }}</dd>
+                                <dd class="mt-1 text-sm text-gray-900">{{ asset.get('Model') or 'N/A' }}</dd>
                             </div>
                             <div class="sm:col-span-1">
                                 <dt class="text-sm font-medium text-gray-500">Serial Number</dt>
-                                <dd class="mt-1 text-sm text-gray-900">{{ asset['Serial Number'] or 'N/A' }}</dd>
+                                <dd class="mt-1 text-sm text-gray-900">{{ asset.get('Serial Number') or 'N/A' }}</dd>
                             </div>
                             <div class="sm:col-span-1">
                                 <dt class="text-sm font-medium text-gray-500">Company</dt>
-                                <dd class="mt-1 text-sm text-gray-900">{{ asset['Company'] }}</dd>
+                                <dd class="mt-1 text-sm text-gray-900">{{ asset.get('Company', 'N/A') }}</dd>
                             </div>
                             <div class="sm:col-span-1">
                                 <dt class="text-sm font-medium text-gray-500">Bisnis Unit</dt>
-                                <dd class="mt-1 text-sm text-gray-900">{{ asset['Bisnis Unit'] or 'N/A' }}</dd>
+                                <dd class="mt-1 text-sm text-gray-900">{{ asset.get('Bisnis Unit') or 'N/A' }}</dd>
                             </div>
                             <div class="sm:col-span-1">
                                 <dt class="text-sm font-medium text-gray-500">Owner</dt>
-                                <dd class="mt-1 text-sm text-gray-900">{{ asset['Owner'] }}</dd>
+                                <dd class="mt-1 text-sm text-gray-900">{{ asset.get('Owner', 'N/A') }}</dd>
                             </div>
                             <div class="sm:col-span-1">
                                 <dt class="text-sm font-medium text-gray-500">Location</dt>
-                                <dd class="mt-1 text-sm text-gray-900">{{ asset['Location'] }}</dd>
+                                <dd class="mt-1 text-sm text-gray-900">{{ asset.get('Location', 'N/A') }}</dd>
                             </div>
                             <div class="sm:col-span-1">
                                 <dt class="text-sm font-medium text-gray-500">Room</dt>
-                                <dd class="mt-1 text-sm text-gray-900">{{ asset['Room'] }}</dd>
+                                <dd class="mt-1 text-sm text-gray-900">{{ asset.get('Room', 'N/A') }}</dd>
                             </div>
                             <div class="sm:col-span-1">
                                 <dt class="text-sm font-medium text-gray-500">Item Condition</dt>
-                                <dd class="mt-1 text-sm text-gray-900">{{ asset['Item Condition'] or 'N/A' }}</dd>
+                                <dd class="mt-1 text-sm text-gray-900">{{ asset.get('Item Condition') or 'N/A' }}</dd>
                             </div>
                             <div class="sm:col-span-1">
                                 <dt class="text-sm font-medium text-gray-500">Purchase Date</dt>
-                                <dd class="mt-1 text-sm text-gray-900">{{ asset['Purchase Date'] }}</dd>
+                                <dd class="mt-1 text-sm text-gray-900">{{ asset.get('Purchase Date', 'N/A') }}</dd>
                             </div>
                             <div class="sm:col-span-2">
                                 <dt class="text-sm font-medium text-gray-500">Notes</dt>
-                                <dd class="mt-1 text-sm text-gray-900">{{ asset['Notes'] or 'No notes available' }}</dd>
+                                <dd class="mt-1 text-sm text-gray-900">{{ asset.get('Notes') or 'No notes available' }}</dd>
                             </div>
                         </dl>
                     </div>
@@ -158,27 +158,39 @@
                 <div class="mt-4 grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
                     <div class="sm:col-span-2">
                         <dt class="text-sm font-medium text-gray-500">Purchase Cost</dt>
-                        <dd class="mt-1 text-sm text-gray-900">{{ asset['Purchase Cost'] }}</dd>
+                        <dd class="mt-1 text-sm text-gray-900">{{ asset.get('Purchase Cost', 'N/A') }}</dd>
                     </div>
                     <div class="sm:col-span-2">
                         <dt class="text-sm font-medium text-gray-500">Book Value</dt>
-                        <dd class="mt-1 text-sm text-gray-900">{{ asset['Book Value'] }}</dd>
+                        <dd class="mt-1 text-sm text-gray-900">{{ asset.get('Book Value', 'N/A') }}</dd>
                     </div>
                     <div class="sm:col-span-2">
                         <dt class="text-sm font-medium text-gray-500">Depreciation Value</dt>
-                        <dd class="mt-1 text-sm text-gray-900">{{ asset['Depreciation Value'] }}</dd>
+                        <dd class="mt-1 text-sm text-gray-900">{{ asset.get('Depreciation Value', 'N/A') }}</dd>
                     </div>
                     <div class="sm:col-span-2">
                         <dt class="text-sm font-medium text-gray-500">Residual Value</dt>
-                        <dd class="mt-1 text-sm text-gray-900">{{ asset['Residual Value'] }}</dd>
+                        <dd class="mt-1 text-sm text-gray-900">{{ asset.get('Residual Value', 'N/A') }}</dd>
                     </div>
                     <div class="sm:col-span-2">
                         <dt class="text-sm font-medium text-gray-500">Residual Percent</dt>
-                        <dd class="mt-1 text-sm text-gray-900">{{ asset['Residual Percent'] }}%</dd>
+                        <dd class="mt-1 text-sm text-gray-900">
+                            {% if asset.get('Residual Percent') %}
+                                {{ asset.get('Residual Percent') }}%
+                            {% else %}
+                                N/A
+                            {% endif %}
+                        </dd>
                     </div>
                     <div class="sm:col-span-2">
                         <dt class="text-sm font-medium text-gray-500">Useful Life</dt>
-                        <dd class="mt-1 text-sm text-gray-900">{{ asset['Useful Life'] }} years</dd>
+                        <dd class="mt-1 text-sm text-gray-900">
+                            {% if asset.get('Useful Life') %}
+                                {{ asset.get('Useful Life') }} years
+                            {% else %}
+                                N/A
+                            {% endif %}
+                        </dd>
                     </div>
                 </div>
             </div>
@@ -189,15 +201,15 @@
                 <div class="mt-4 grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
                     <div class="sm:col-span-2">
                         <dt class="text-sm font-medium text-gray-500">Warranty</dt>
-                        <dd class="mt-1 text-sm text-gray-900">{{ asset['Warranty'] or 'N/A' }}</dd>
+                        <dd class="mt-1 text-sm text-gray-900">{{ asset.get('Warranty') or 'N/A' }}</dd>
                     </div>
                     <div class="sm:col-span-2">
                         <dt class="text-sm font-medium text-gray-500">Supplier</dt>
-                        <dd class="mt-1 text-sm text-gray-900">{{ asset['Supplier'] or 'N/A' }}</dd>
+                        <dd class="mt-1 text-sm text-gray-900">{{ asset.get('Supplier') or 'N/A' }}</dd>
                     </div>
                     <div class="sm:col-span-2">
                         <dt class="text-sm font-medium text-gray-500">Journal</dt>
-                        <dd class="mt-1 text-sm text-gray-900">{{ asset['Journal'] or 'N/A' }}</dd>
+                        <dd class="mt-1 text-sm text-gray-900">{{ asset.get('Journal') or 'N/A' }}</dd>
                     </div>
                 </div>
             </div>
