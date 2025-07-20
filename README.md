@@ -1,6 +1,8 @@
-# Asset Management Business Platform (AMBP)
+# Asset Management System
 
 A modern, web-based asset management system with role-based authentication, approval workflows, and offline support.
+
+Created by: Asset Management & Business Process Department
 
 ## Features
 
