@@ -9,15 +9,34 @@ from datetime import datetime
 
 from app.database.database import get_db
 from app.database.models import User, Approval, ApprovalStatus, UserRole
-from app.utils.sheets import get_asset_by_id, update_asset
+from app.utils.sheets import get_asset_by_id, update_asset, get_all_assets
 from app.database.dependencies import get_current_active_user, get_admin_user
 from app.utils.photo import resize_and_convert_image, upload_to_drive
 from app.utils.flash import set_flash
 from app.config import load_config
 
 config = load_config()
-router = APIRouter(prefix="/damage", tags=["damage"])
+router = APIRouter(tags=["damage"])
 templates = Jinja2Templates(directory="app/templates")
+
+@router.get("/", response_class=HTMLResponse)
+async def damage_list(
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """List damaged assets."""
+    assets = get_all_assets()
+    damaged_assets = [a for a in assets if a.get('Status') == 'Damaged']
+    
+    return templates.TemplateResponse(
+        "damage/list.html",
+        {
+            "request": request,
+            "user": current_user,
+            "assets": damaged_assets
+        }
+    )
 
 @router.get("/report/{asset_id}", response_class=HTMLResponse)
 async def report_damage_form(

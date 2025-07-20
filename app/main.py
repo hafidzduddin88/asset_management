@@ -67,10 +67,10 @@ app.include_router(login.router)
 app.include_router(assets.router)
 app.include_router(asset_management.router)
 app.include_router(approvals.router, prefix="/approvals")
-app.include_router(damage.router)
+app.include_router(damage.router, prefix="/damage")
 app.include_router(export.router, prefix="")
 app.include_router(offline.router)
-app.include_router(relocation.router)
+app.include_router(relocation.router, prefix="/relocation")
 app.include_router(profile.router)
 
 # Service worker route
