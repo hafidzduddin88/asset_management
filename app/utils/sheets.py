@@ -5,6 +5,7 @@ import json
 from datetime import datetime
 from google.oauth2.service_account import Credentials
 from app.config import load_config
+from app.utils.cache import cache
 from typing import List, Dict, Any, Optional, Tuple
 
 # Load configuration
@@ -20,11 +21,23 @@ SHEETS = {
     'REF_LOCATION': 'Ref_Location'
 }
 
+# Cache TTLs (in seconds)
+CACHE_TTL = {
+    'client': 3600,  # 1 hour
+    'sheet': 3600,   # 1 hour
+    'assets': 300,   # 5 minutes
+    'reference': 1800  # 30 minutes
+}
+
 # Asset tag sequence tracker
 sequence_tracker = {}
 
 def get_sheets_client():
-    """Get Google Sheets client."""
+    """Get Google Sheets client with caching."""
+    return cache.get_or_set('sheets_client', _create_sheets_client, CACHE_TTL['client'])
+
+def _create_sheets_client():
+    """Create a new Google Sheets client."""
     try:
         # Log credentials for debugging (without private key)
         creds_debug = config.GOOGLE_CREDS_JSON.copy()
@@ -49,6 +62,11 @@ def get_sheets_client():
         return None
 
 def get_sheet(sheet_name):
+    """Get specific worksheet from the spreadsheet with caching."""
+    cache_key = f'sheet_{sheet_name}'
+    return cache.get_or_set(cache_key, lambda: _get_sheet(sheet_name), CACHE_TTL['sheet'])
+
+def _get_sheet(sheet_name):
     """Get specific worksheet from the spreadsheet."""
     try:
         client = get_sheets_client()
@@ -62,6 +80,11 @@ def get_sheet(sheet_name):
         return None
 
 def get_reference_data(sheet_name):
+    """Get reference data from specified sheet with caching."""
+    cache_key = f'reference_{sheet_name}'
+    return cache.get_or_set(cache_key, lambda: _get_reference_data(sheet_name), CACHE_TTL['reference'])
+
+def _get_reference_data(sheet_name):
     """Get reference data from specified sheet."""
     sheet = get_sheet(sheet_name)
     if not sheet:
@@ -70,6 +93,10 @@ def get_reference_data(sheet_name):
     return sheet.get_all_records()
 
 def get_dropdown_options():
+    """Get all dropdown options for forms with caching."""
+    return cache.get_or_set('dropdown_options', _get_dropdown_options, CACHE_TTL['reference'])
+
+def _get_dropdown_options():
     """Get all dropdown options for forms."""
     try:
         categories = get_reference_data(SHEETS['REF_CATEGORIES'])
@@ -78,18 +105,36 @@ def get_dropdown_options():
         owners = get_reference_data(SHEETS['REF_OWNERS'])
         locations = get_reference_data(SHEETS['REF_LOCATION'])
         
+        # Extract category names
+        category_names = [c.get('Category', '') for c in categories if 'Category' in c]
+        
+        # Extract company names
+        company_names = [c.get('Company', '') for c in companies if 'Company' in c]
+        
+        # Extract owner names
+        owner_names = [o.get('Owner', '') for o in owners if 'Owner' in o]
+        
+        # Process locations
+        location_dict = {}
+        for loc in locations:
+            if 'Location' in loc:
+                location_name = loc['Location']
+                if location_name not in location_dict:
+                    location_dict[location_name] = []
+                if 'Room' in loc:
+                    location_dict[location_name].append(loc['Room'])
+        
         return {
-            'categories': [c['Category'] for c in categories],
+            'categories': category_names,
             'types': types,  # Keep full records for filtering by category
-            'companies': [c['Company'] for c in companies],
-            'owners': [o['Owner'] for o in owners],
-            'locations': {
-                loc['Location']: [r['Room'] for r in locations if r['Location'] == loc['Location']]
-                for loc in {r['Location']: None for r in locations}.keys()
-            }
+            'companies': company_names,
+            'owners': owner_names,
+            'locations': location_dict
         }
     except Exception as e:
         logging.error(f"Error getting dropdown options: {str(e)}")
+        import traceback
+        logging.error(traceback.format_exc())
         return {
             'categories': [], 'types': [], 'companies': [], 
             'owners': [], 'locations': {}
@@ -229,6 +274,10 @@ def calculate_asset_financials(purchase_cost, purchase_date, category):
         }
 
 def get_all_assets():
+    """Get all assets from the sheet with caching."""
+    return cache.get_or_set('all_assets', _get_all_assets, CACHE_TTL['assets'])
+
+def _get_all_assets():
     """Get all assets from the sheet."""
     try:
         sheet = get_sheet(SHEETS['ASSETS'])
@@ -248,6 +297,11 @@ def get_all_assets():
         return []
 
 def get_asset_by_id(asset_id):
+    """Get asset by ID with caching."""
+    cache_key = f'asset_{asset_id}'
+    return cache.get_or_set(cache_key, lambda: _get_asset_by_id(asset_id), CACHE_TTL['assets'])
+
+def _get_asset_by_id(asset_id):
     """Get asset by ID."""
     try:
         assets = get_all_assets()
@@ -267,7 +321,7 @@ def add_asset(asset_data):
             return False
             
         # Get next ID
-        assets = sheet.get_all_records()
+        assets = get_all_assets()
         next_id = str(len(assets) + 1).zfill(3)
         
         # Generate asset tag if not provided
@@ -315,6 +369,10 @@ def add_asset(asset_data):
         
         # Append row
         sheet.append_row(row_data)
+        
+        # Clear cache
+        cache.delete('all_assets')
+        
         return True
     except Exception as e:
         logging.error(f"Error adding asset: {str(e)}")
@@ -354,6 +412,10 @@ def update_asset(asset_id, asset_data):
             if header in asset_data:
                 sheet.update_cell(cell.row, i + 1, asset_data[header])
         
+        # Clear cache
+        cache.delete('all_assets')
+        cache.delete(f'asset_{asset_id}')
+        
         return True
     except Exception as e:
         logging.error(f"Error updating asset: {str(e)}")
@@ -362,7 +424,18 @@ def update_asset(asset_id, asset_data):
 def delete_asset(asset_id):
     """Delete asset from sheet (mark as deleted)."""
     try:
-        return update_asset(asset_id, {'Status': 'Deleted'})
+        result = update_asset(asset_id, {'Status': 'Deleted'})
+        
+        # Clear cache
+        cache.delete('all_assets')
+        cache.delete(f'asset_{asset_id}')
+        
+        return result
     except Exception as e:
         logging.error(f"Error deleting asset: {str(e)}")
         return False
+
+def invalidate_cache():
+    """Invalidate all cache."""
+    cache.clear()
+    logging.info("Cache invalidated")

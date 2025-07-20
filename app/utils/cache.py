@@ -1,49 +1,52 @@
-# app/utils/cache.py
-from functools import wraps
+"""
+Simple in-memory cache implementation.
+"""
 import time
-from typing import Any, Callable, Dict, Optional, TypeVar, cast
+from typing import Dict, Any, Optional, Callable, Tuple
 
-T = TypeVar("T")
-
-# Simple in-memory cache
-_cache: Dict[str, Dict[str, Any]] = {}
-
-def cache(ttl_seconds: int = 300):
-    """Cache decorator with TTL."""
-    def decorator(func: Callable[..., T]) -> Callable[..., T]:
-        @wraps(func)
-        def wrapper(*args: Any, **kwargs: Any) -> T:
-            # Create cache key from function name and arguments
-            key = f"{func.__name__}:{str(args)}:{str(kwargs)}"
-            
-            # Check if result is in cache and not expired
-            if key in _cache:
-                entry = _cache[key]
-                if entry["expires"] > time.time():
-                    return cast(T, entry["value"])
-            
-            # Call function and cache result
-            result = func(*args, **kwargs)
-            _cache[key] = {
-                "value": result,
-                "expires": time.time() + ttl_seconds
-            }
-            
-            return result
-        return wrapper
-    return decorator
-
-def clear_cache(prefix: Optional[str] = None) -> int:
-    """Clear cache entries with optional prefix."""
-    global _cache
+class Cache:
+    """Simple in-memory cache with expiration."""
     
-    if prefix is None:
-        count = len(_cache)
-        _cache = {}
-        return count
+    def __init__(self, default_ttl: int = 300):
+        """Initialize cache with default TTL in seconds."""
+        self._cache: Dict[str, Tuple[Any, float]] = {}
+        self._default_ttl = default_ttl
     
-    keys_to_delete = [key for key in _cache if key.startswith(prefix)]
-    for key in keys_to_delete:
-        del _cache[key]
+    def get(self, key: str) -> Optional[Any]:
+        """Get value from cache if it exists and is not expired."""
+        if key not in self._cache:
+            return None
+        
+        value, expiry = self._cache[key]
+        if expiry < time.time():
+            # Expired
+            del self._cache[key]
+            return None
+            
+        return value
     
-    return len(keys_to_delete)
+    def set(self, key: str, value: Any, ttl: Optional[int] = None) -> None:
+        """Set value in cache with expiration time."""
+        ttl = ttl if ttl is not None else self._default_ttl
+        expiry = time.time() + ttl
+        self._cache[key] = (value, expiry)
+    
+    def delete(self, key: str) -> None:
+        """Delete key from cache."""
+        if key in self._cache:
+            del self._cache[key]
+    
+    def clear(self) -> None:
+        """Clear all cache."""
+        self._cache.clear()
+    
+    def get_or_set(self, key: str, getter: Callable[[], Any], ttl: Optional[int] = None) -> Any:
+        """Get value from cache or set it if not exists."""
+        value = self.get(key)
+        if value is None:
+            value = getter()
+            self.set(key, value, ttl)
+        return value
+
+# Create global cache instance
+cache = Cache()
