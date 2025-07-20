@@ -366,9 +366,17 @@ def _get_asset_statistics():
                 pass
     
     # Financial summary
-    total_purchase_cost = sum(float(asset.get('Purchase Cost', 0)) for asset in assets)
-    total_book_value = sum(float(asset.get('Book Value', 0)) for asset in assets)
-    total_depreciation = sum(float(asset.get('Depreciation Value', 0)) for asset in assets)
+    def safe_float(value):
+        if value == '' or value is None:
+            return 0.0
+        try:
+            return float(value)
+        except (ValueError, TypeError):
+            return 0.0
+    
+    total_purchase_cost = sum(safe_float(asset.get('Purchase Cost', 0)) for asset in assets)
+    total_book_value = sum(safe_float(asset.get('Book Value', 0)) for asset in assets)
+    total_depreciation = sum(safe_float(asset.get('Depreciation Value', 0)) for asset in assets)
     
     # Company distribution
     company_distribution = {}

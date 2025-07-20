@@ -27,13 +27,13 @@ async def home(
     current_user: User = Depends(get_current_user)
 ):
     """Home page / Dashboard."""
-    
-    # Get assets from Google Sheets
-    assets = get_all_assets()
-    
-    # Get asset statistics for charts
-    statistics = get_asset_statistics()
-    valid_statuses = get_valid_asset_statuses()
+    try:
+        # Get assets from Google Sheets
+        assets = get_all_assets()
+        
+        # Get asset statistics for charts
+        statistics = get_asset_statistics()
+        valid_statuses = get_valid_asset_statuses()
     
     # Get dashboard stats
     total_assets = len(assets)
@@ -96,29 +96,45 @@ async def home(
     # Get flash messages
     flash = get_flash(request)
     
-    return templates.TemplateResponse(
-        "dashboard_modern.html",
-        {
-            "request": request,
-            "user": current_user,
-            "total_assets": total_assets,
-            "active_assets": active_assets,
-            "under_repair_assets": under_repair_assets,
-            "in_storage_assets": in_storage_assets,
-            "to_be_disposed_assets": to_be_disposed_assets,
-            "disposed_assets": disposed_assets,
-            "pending_approvals": pending_approvals,
-            "recent_assets": recent_assets,
-            "flash": flash,
-            "status_chart_data": status_chart_data,
-            "category_chart_data": category_chart_data,
-            "location_chart_data": location_chart_data,
-            "monthly_chart_data": monthly_chart_data,
-            "financial_summary": financial_summary,
-            "valid_statuses": valid_statuses,
-            "auto_refresh_interval": AUTO_REFRESH_INTERVAL
-        },
-    )
+        return templates.TemplateResponse(
+            "dashboard_modern.html",
+            {
+                "request": request,
+                "user": current_user,
+                "total_assets": total_assets,
+                "active_assets": active_assets,
+                "under_repair_assets": under_repair_assets,
+                "in_storage_assets": in_storage_assets,
+                "to_be_disposed_assets": to_be_disposed_assets,
+                "disposed_assets": disposed_assets,
+                "pending_approvals": pending_approvals,
+                "recent_assets": recent_assets,
+                "flash": flash,
+                "status_chart_data": status_chart_data,
+                "category_chart_data": category_chart_data,
+                "location_chart_data": location_chart_data,
+                "monthly_chart_data": monthly_chart_data,
+                "financial_summary": financial_summary,
+                "valid_statuses": valid_statuses,
+                "auto_refresh_interval": AUTO_REFRESH_INTERVAL
+            },
+        )
+    except Exception as e:
+        import traceback
+        error_details = traceback.format_exc()
+        logging.error(f"Error in dashboard: {str(e)}\n{error_details}")
+        
+        # Return a simplified error page
+        return templates.TemplateResponse(
+            "error.html",
+            {
+                "request": request,
+                "user": current_user,
+                "error_message": "There was an error loading the dashboard. Please try again later.",
+                "error_details": str(e) if current_user.role == UserRole.ADMIN else None
+            },
+            status_code=500
+        )
 
 @router.get("/refresh-data", response_class=JSONResponse)
 async def refresh_data(
@@ -157,5 +173,7 @@ async def refresh_data(
             "financial_summary": statistics['financial_summary']
         }
     except Exception as e:
-        logging.error(f"Error refreshing data: {str(e)}")
+        import traceback
+        error_details = traceback.format_exc()
+        logging.error(f"Error refreshing data: {str(e)}\n{error_details}")
         return {"success": False, "error": str(e)}
