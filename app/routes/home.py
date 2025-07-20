@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from app.database.database import get_db
 from app.database.models import User, Approval, ApprovalStatus, UserRole
 from app.database.dependencies import get_current_user
-from app.utils.sheets import get_all_assets
+from app.utils.sheets import get_all_assets, get_asset_statistics, get_valid_asset_statuses
 from app.utils.flash import get_flash
 
 router = APIRouter()
@@ -26,11 +26,53 @@ async def home(
     # Get assets from Google Sheets
     assets = get_all_assets()
     
+    # Get asset statistics for charts
+    statistics = get_asset_statistics()
+    valid_statuses = get_valid_asset_statuses()
+    
     # Get dashboard stats
     total_assets = len(assets)
-    active_assets = len([a for a in assets if a.get('Status') == 'Active'])
-    damaged_assets = len([a for a in assets if a.get('Status') == 'Damaged'])
-    disposed_assets = len([a for a in assets if a.get('Status') == 'Disposed'])
+    status_counts = statistics['status_counts']
+    active_assets = status_counts.get('Active', 0)
+    under_repair_assets = status_counts.get('Under Repair', 0)
+    in_storage_assets = status_counts.get('In Storage', 0)
+    to_be_disposed_assets = status_counts.get('To Be Disposed', 0)
+    disposed_assets = status_counts.get('Disposed', 0)
+    
+    # Prepare chart data
+    status_chart_data = {
+        'labels': list(status_counts.keys()),
+        'values': list(status_counts.values()),
+        'colors': [
+            '#10B981',  # Active - green
+            '#EF4444',  # Under Repair - red
+            '#3B82F6',  # In Storage - blue
+            '#F59E0B',  # To Be Disposed - yellow
+            '#6B7280',  # Disposed - gray
+            '#8B5CF6'   # Other - purple
+        ]
+    }
+    
+    category_chart_data = {
+        'labels': list(statistics['category_counts'].keys()),
+        'values': list(statistics['category_counts'].values()),
+    }
+    
+    location_chart_data = {
+        'labels': list(statistics['location_counts'].keys()),
+        'values': list(statistics['location_counts'].values()),
+    }
+    
+    # Monthly additions chart
+    monthly_data = statistics['monthly_additions']
+    sorted_months = sorted(monthly_data.keys())
+    monthly_chart_data = {
+        'labels': [month.split('-')[1] + '/' + month.split('-')[0][2:] for month in sorted_months],
+        'values': [monthly_data[month] for month in sorted_months]
+    }
+    
+    # Financial summary
+    financial_summary = statistics['financial_summary']
     
     # Get pending approvals (for admins)
     pending_approvals = []
@@ -56,10 +98,18 @@ async def home(
             "user": current_user,
             "total_assets": total_assets,
             "active_assets": active_assets,
-            "damaged_assets": damaged_assets,
+            "under_repair_assets": under_repair_assets,
+            "in_storage_assets": in_storage_assets,
+            "to_be_disposed_assets": to_be_disposed_assets,
             "disposed_assets": disposed_assets,
             "pending_approvals": pending_approvals,
             "recent_assets": recent_assets,
-            "flash": flash
+            "flash": flash,
+            "status_chart_data": status_chart_data,
+            "category_chart_data": category_chart_data,
+            "location_chart_data": location_chart_data,
+            "monthly_chart_data": monthly_chart_data,
+            "financial_summary": financial_summary,
+            "valid_statuses": valid_statuses
         },
     )

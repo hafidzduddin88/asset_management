@@ -37,4 +37,7 @@ Pillow==9.5.0
 # HTTP Requests
 requests==2.31.0
 
+# Date handling
+python-dateutil==2.8.2
+
 # No python-dotenv, using OS environment variables directly

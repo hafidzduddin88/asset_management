@@ -3,6 +3,7 @@ import gspread
 import logging
 import json
 from datetime import datetime
+from dateutil.relativedelta import relativedelta
 from google.oauth2.service_account import Credentials
 from app.config import load_config
 from app.utils.cache import cache
@@ -302,6 +303,90 @@ def delete_asset(asset_id):
     except Exception as e:
         logging.error(f"Error deleting asset: {str(e)}")
         return False
+
+def get_asset_statistics():
+    """
+    Get statistics about assets for dashboard charts.
+    """
+    cache_key = 'asset_statistics'
+    return cache.get_or_set(cache_key, _get_asset_statistics, CACHE_TTL['assets'])
+
+def _get_asset_statistics():
+    assets = get_all_assets()
+    if not assets:
+        return {
+            'status_counts': {},
+            'category_counts': {},
+            'location_counts': {},
+            'monthly_additions': {},
+            'financial_summary': {
+                'total_purchase_cost': 0,
+                'total_book_value': 0,
+                'total_depreciation': 0
+            },
+            'company_distribution': {}
+        }
+    
+    # Status distribution
+    status_counts = {}
+    for asset in assets:
+        status = asset.get('Status', 'Unknown')
+        status_counts[status] = status_counts.get(status, 0) + 1
+    
+    # Category distribution
+    category_counts = {}
+    for asset in assets:
+        category = asset.get('Category', 'Unknown')
+        category_counts[category] = category_counts.get(category, 0) + 1
+    
+    # Location distribution
+    location_counts = {}
+    for asset in assets:
+        location = asset.get('Location', 'Unknown')
+        location_counts[location] = location_counts.get(location, 0) + 1
+    
+    # Monthly asset additions (last 12 months)
+    monthly_additions = {}
+    current_date = datetime.now()
+    for i in range(12):
+        month_date = current_date - relativedelta(months=i)
+        month_key = month_date.strftime('%Y-%m')
+        monthly_additions[month_key] = 0
+    
+    for asset in assets:
+        purchase_date = asset.get('Purchase Date')
+        if purchase_date:
+            try:
+                date_obj = datetime.strptime(purchase_date, '%Y-%m-%d')
+                month_key = date_obj.strftime('%Y-%m')
+                if month_key in monthly_additions:
+                    monthly_additions[month_key] += 1
+            except (ValueError, TypeError):
+                pass
+    
+    # Financial summary
+    total_purchase_cost = sum(float(asset.get('Purchase Cost', 0)) for asset in assets)
+    total_book_value = sum(float(asset.get('Book Value', 0)) for asset in assets)
+    total_depreciation = sum(float(asset.get('Depreciation Value', 0)) for asset in assets)
+    
+    # Company distribution
+    company_distribution = {}
+    for asset in assets:
+        company = asset.get('Company', 'Unknown')
+        company_distribution[company] = company_distribution.get(company, 0) + 1
+    
+    return {
+        'status_counts': status_counts,
+        'category_counts': category_counts,
+        'location_counts': location_counts,
+        'monthly_additions': monthly_additions,
+        'financial_summary': {
+            'total_purchase_cost': total_purchase_cost,
+            'total_book_value': total_book_value,
+            'total_depreciation': total_depreciation
+        },
+        'company_distribution': company_distribution
+    }
 
 def invalidate_cache():
     cache.clear()
