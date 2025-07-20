@@ -211,6 +211,18 @@ def _get_asset_by_id(asset_id):
             return asset
     return None
 
+def get_valid_asset_statuses():
+    """
+    Returns a dictionary of valid asset statuses and their descriptions.
+    """
+    return {
+        'Active': 'Asset is currently in use',
+        'Disposed': 'Telah di Disposal',
+        'In Storage': 'Barang Aktif berada di Gudang',
+        'To Be Disposed': 'Masuk List yang akan di disposal',
+        'Under Repair': 'Masuk List Barang Damage / Rusak'
+    }
+
 def add_asset(asset_data):
     try:
         sheet = get_sheet(SHEETS['ASSETS'])

@@ -9,7 +9,7 @@ import logging
 from app.database.database import get_db
 from app.database.models import User
 from app.database.dependencies import get_current_active_user
-from app.utils.sheets import get_all_assets, get_asset_by_id, get_dropdown_options
+from app.utils.sheets import get_all_assets, get_asset_by_id, get_dropdown_options, get_valid_asset_statuses
 from app.utils.flash import get_flash
 
 router = APIRouter(prefix="/assets", tags=["assets"])
@@ -50,6 +50,9 @@ async def list_assets(
     # Get dropdown options for filters
     dropdown_options = get_dropdown_options()
     
+    # Get valid asset statuses
+    asset_statuses = get_valid_asset_statuses()
+    
     # Get flash messages
     flash = get_flash(request)
     
@@ -61,7 +64,8 @@ async def list_assets(
             "assets": filtered_assets,
             "categories": dropdown_options['categories'],
             "locations": list(dropdown_options['locations'].keys()),
-            "statuses": ['Active', 'Damaged', 'Repaired', 'Disposed'],
+            "statuses": list(asset_statuses.keys()),
+            "status_descriptions": asset_statuses,
             "selected_status": status,
             "selected_category": category,
             "selected_location": location,

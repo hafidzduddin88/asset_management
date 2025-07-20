@@ -27,7 +27,7 @@ async def damage_list(
 ):
     """List damaged assets."""
     assets = get_all_assets()
-    damaged_assets = [a for a in assets if a.get('Status') == 'Damaged']
+    damaged_assets = [a for a in assets if a.get('Status') == 'Under Repair']
     
     return templates.TemplateResponse(
         "damage/list.html",
@@ -119,8 +119,8 @@ async def report_damage(
     
     # If admin, update asset status directly in Google Sheets
     if current_user.role == UserRole.ADMIN:
-        # Update asset status to Damaged
-        update_data = {"Status": "Damaged"}
+        # Update asset status to Under Repair
+        update_data = {"Status": "Under Repair"}
         success = update_asset(asset_id, update_data)
         
         if success:
@@ -167,7 +167,7 @@ async def repair_form(
 ):
     """Form to report asset repair."""
     asset = get_asset_by_id(asset_id)
-    if not asset or asset.get("Status") != "Damaged":
+    if not asset or asset.get("Status") != "Under Repair":
         return RedirectResponse(url="/assets/", status_code=status.HTTP_303_SEE_OTHER)
     
     return templates.TemplateResponse(
@@ -189,8 +189,8 @@ async def repair_asset(
 ):
     """Process repair form."""
     asset = get_asset_by_id(asset_id)
-    if not asset or asset.get("Status") != "Damaged":
-        raise HTTPException(status_code=404, detail="Asset not found or not damaged")
+    if not asset or asset.get("Status") != "Under Repair":
+        raise HTTPException(status_code=404, detail="Asset not found or not under repair")
     
     # Prepare repair data
     repair_data = {
@@ -203,8 +203,8 @@ async def repair_asset(
     
     # If admin, update asset status directly in Google Sheets
     if current_user.role == UserRole.ADMIN:
-        # Update asset status to Repaired
-        update_data = {"Status": "Repaired"}
+        # Update asset status to Active
+        update_data = {"Status": "Active"}
         success = update_asset(asset_id, update_data)
         
         if success:
