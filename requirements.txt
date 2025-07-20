@@ -27,6 +27,9 @@ google-api-python-client==2.86.0
 # Export
 openpyxl==3.1.2
 fpdf2==2.7.4
+numpy==1.24.3
+pandas==2.0.0
+xlsxwriter==3.1.0
 
 # Image Processing
 Pillow==9.5.0

@@ -2,9 +2,8 @@ from fastapi import APIRouter, Depends, Request, HTTPException, status
 from fastapi.responses import HTMLResponse, FileResponse, StreamingResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
+import pandas as pd
 import io
-import csv
-import json
 from datetime import datetime
 
 from app.database.database import get_db
@@ -34,30 +33,46 @@ async def export_excel(
     request: Request,
     current_user: User = Depends(get_current_user)
 ):
-    """Export assets to Excel (CSV format)."""
+    """Export assets to Excel."""
     assets = get_all_assets()
     
-    # Create CSV in memory
-    output = io.StringIO()
+    # Convert to DataFrame
+    df = pd.DataFrame(assets)
     
-    # Get all possible field names from assets
-    fieldnames = set()
-    for asset in assets:
-        fieldnames.update(asset.keys())
-    fieldnames = sorted(list(fieldnames))
-    
-    # Write CSV
-    writer = csv.DictWriter(output, fieldnames=fieldnames)
-    writer.writeheader()
-    writer.writerows(assets)
+    # Create Excel file in memory
+    output = io.BytesIO()
+    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+        df.to_excel(writer, sheet_name='Assets', index=False)
+        
+        # Get the xlsxwriter workbook and worksheet objects
+        workbook = writer.book
+        worksheet = writer.sheets['Assets']
+        
+        # Add a header format
+        header_format = workbook.add_format({
+            'bold': True,
+            'text_wrap': True,
+            'valign': 'top',
+            'fg_color': '#D7E4BC',
+            'border': 1
+        })
+        
+        # Write the column headers with the defined format
+        for col_num, value in enumerate(df.columns.values):
+            worksheet.write(0, col_num, value, header_format)
+            
+        # Auto-adjust columns' width
+        for i, col in enumerate(df.columns):
+            column_width = max(df[col].astype(str).map(len).max(), len(col)) + 2
+            worksheet.set_column(i, i, column_width)
     
     # Set up response
-    output_bytes = io.BytesIO(output.getvalue().encode())
-    filename = f"assets_export_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+    output.seek(0)
+    filename = f"assets_export_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
     
     return StreamingResponse(
-        output_bytes,
-        media_type="text/csv",
+        output,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         headers={"Content-Disposition": f"attachment; filename={filename}"}
     )
 
