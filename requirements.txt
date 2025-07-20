@@ -1,9 +1,10 @@
 # Web Framework
-fastapi==0.95.1
+fastapi==0.109.1
+starlette==0.40.0  # Security fix
 uvicorn==0.22.0
 pydantic==1.10.13
 jinja2==3.1.3
-python-multipart==0.0.18	
+python-multipart==0.0.18
 aiofiles==23.1.0
 
 # Database
@@ -26,10 +27,13 @@ numpy==1.24.3  # Must be installed before pandas
 pandas==2.0.0  # Required for Excel export functionality
 
 # Image Processing
-Pillow==10.2.0	
+Pillow==10.3.0
 
 # HTTP Requests
 requests==2.31.0
 
 # Date handling
 python-dateutil==2.8.2
+
+# Build tools
+setuptools==65.5.1  # Security fix for CVE-2022-40897
