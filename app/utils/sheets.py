@@ -8,10 +8,8 @@ from app.config import load_config
 from app.utils.cache import cache
 from typing import List, Dict, Any, Optional, Tuple
 
-# Load configuration
 config = load_config()
 
-# Constants
 SHEETS = {
     'ASSETS': 'Assets',
     'REF_CATEGORIES': 'Ref_Categories',
@@ -21,30 +19,23 @@ SHEETS = {
     'REF_LOCATION': 'Ref_Location'
 }
 
-# Cache TTLs (in seconds)
 CACHE_TTL = {
-    'client': 3600,  # 1 hour
-    'sheet': 3600,   # 1 hour
-    'assets': 300,   # 5 minutes
-    'reference': 1800  # 30 minutes
+    'client': 3600,
+    'sheet': 3600,
+    'assets': 300,
+    'reference': 1800
 }
 
-# Asset tag sequence tracker
-sequence_tracker = {}
+_sequence_tracker = None
 
 def get_sheets_client():
-    """Get Google Sheets client with caching."""
     return cache.get_or_set('sheets_client', _create_sheets_client, CACHE_TTL['client'])
 
 def _create_sheets_client():
-    """Create a new Google Sheets client."""
     try:
-        # Log credentials for debugging (without private key)
         creds_debug = config.GOOGLE_CREDS_JSON.copy()
-        if 'private_key' in creds_debug:
-            creds_debug['private_key'] = '[REDACTED]'
+        creds_debug['private_key'] = '[REDACTED]'
         logging.info(f"Using Google credentials: {json.dumps(creds_debug)}")
-        
         creds = Credentials.from_service_account_info(
             config.GOOGLE_CREDS_JSON,
             scopes=[
@@ -57,22 +48,17 @@ def _create_sheets_client():
         return client
     except Exception as e:
         logging.error(f"Error creating sheets client: {str(e)}")
-        import traceback
-        logging.error(traceback.format_exc())
         return None
 
 def get_sheet(sheet_name):
-    """Get specific worksheet from the spreadsheet with caching."""
     cache_key = f'sheet_{sheet_name}'
     return cache.get_or_set(cache_key, lambda: _get_sheet(sheet_name), CACHE_TTL['sheet'])
 
 def _get_sheet(sheet_name):
-    """Get specific worksheet from the spreadsheet."""
     try:
         client = get_sheets_client()
         if not client:
             return None
-            
         spreadsheet = client.open_by_key(config.GOOGLE_SHEET_ID)
         return spreadsheet.worksheet(sheet_name)
     except Exception as e:
@@ -80,180 +66,104 @@ def _get_sheet(sheet_name):
         return None
 
 def get_reference_data(sheet_name):
-    """Get reference data from specified sheet with caching."""
     cache_key = f'reference_{sheet_name}'
     return cache.get_or_set(cache_key, lambda: _get_reference_data(sheet_name), CACHE_TTL['reference'])
 
 def _get_reference_data(sheet_name):
-    """Get reference data from specified sheet."""
     sheet = get_sheet(sheet_name)
-    if not sheet:
-        return []
-    
-    return sheet.get_all_records()
+    return sheet.get_all_records() if sheet else []
 
 def get_dropdown_options():
-    """Get all dropdown options for forms with caching."""
     return cache.get_or_set('dropdown_options', _get_dropdown_options, CACHE_TTL['reference'])
 
 def _get_dropdown_options():
-    """Get all dropdown options for forms."""
     try:
         categories = get_reference_data(SHEETS['REF_CATEGORIES'])
         types = get_reference_data(SHEETS['REF_TYPES'])
         companies = get_reference_data(SHEETS['REF_COMPANIES'])
         owners = get_reference_data(SHEETS['REF_OWNERS'])
         locations = get_reference_data(SHEETS['REF_LOCATION'])
-        
-        # Extract category names
+
         category_names = [c.get('Category', '') for c in categories if 'Category' in c]
-        
-        # Extract company names
         company_names = [c.get('Company', '') for c in companies if 'Company' in c]
-        
-        # Extract owner names
         owner_names = [o.get('Owner', '') for o in owners if 'Owner' in o]
-        
-        # Process locations
         location_dict = {}
         for loc in locations:
-            if 'Location' in loc:
-                location_name = loc['Location']
-                if location_name not in location_dict:
-                    location_dict[location_name] = []
-                if 'Room' in loc:
-                    location_dict[location_name].append(loc['Room'])
-        
+            location_name = loc.get('Location')
+            if location_name:
+                location_dict.setdefault(location_name, []).append(loc.get('Room', ''))
         return {
             'categories': category_names,
-            'types': types,  # Keep full records for filtering by category
+            'types': types,
             'companies': company_names,
             'owners': owner_names,
             'locations': location_dict
         }
     except Exception as e:
         logging.error(f"Error getting dropdown options: {str(e)}")
-        import traceback
-        logging.error(traceback.format_exc())
         return {
-            'categories': [], 'types': [], 'companies': [], 
+            'categories': [], 'types': [], 'companies': [],
             'owners': [], 'locations': {}
         }
 
 def get_reference_value(sheet_name, lookup_column, lookup_value, return_column):
-    """Get a specific value from reference sheets."""
-    try:
-        data = get_reference_data(sheet_name)
-        for row in data:
-            if row.get(lookup_column) == lookup_value:
-                return row.get(return_column)
-        return None
-    except Exception as e:
-        logging.error(f"Error in get_reference_value: {str(e)}")
-        return None
-
-def generate_asset_tag(company, category, type_val, owner, purchase_date):
-    """Generate asset tag based on specified format."""
-    try:
-        # Get codes from reference sheets
-        code_company = get_reference_value(SHEETS['REF_COMPANIES'], 'Company', company, 'Code Company')
-        code_category = get_reference_value(SHEETS['REF_CATEGORIES'], 'Category', category, 'Code Category')
-        code_type = get_reference_value(SHEETS['REF_TYPES'], 'Type', type_val, 'Code Type')
-        code_owner = get_reference_value(SHEETS['REF_OWNERS'], 'Owner', owner, 'Code Owner')
-        
-        # Parse year from purchase date
-        if isinstance(purchase_date, str):
-            year = datetime.strptime(purchase_date, "%Y-%m-%d").year
-        else:
-            year = purchase_date.year
-            
-        year_2digit = str(year)[-2:]
-        
-        # Generate sequence number
-        if code_company and code_category and code_type and code_owner:
-            key = (code_company, code_type, str(year))
-            
-            # Initialize tracker if needed
-            global sequence_tracker
-            if not sequence_tracker:
-                _initialize_sequence_tracker()
-                
-            if key not in sequence_tracker:
-                sequence_tracker[key] = 1
-            else:
-                sequence_tracker[key] += 1
-                
-            seq_num = str(sequence_tracker[key]).zfill(3)
-            
-            # Format: (code_company)-(code_category).(code_type).(code_owner)(year_2digit).(seq_num)
-            asset_tag = f"{code_company}-{code_category}.{code_type}.{code_owner}{year_2digit}.{seq_num}"
-            return asset_tag
-            
-    except Exception as e:
-        logging.error(f"Error generating asset tag: {str(e)}")
-    
+    data = get_reference_data(sheet_name)
+    for row in data:
+        if row.get(lookup_column) == lookup_value:
+            return row.get(return_column)
     return None
 
-def _initialize_sequence_tracker():
-    """Initialize sequence tracker from existing assets."""
-    try:
+def _ensure_sequence_tracker():
+    global _sequence_tracker
+    if _sequence_tracker is None:
+        _sequence_tracker = {}
         assets = get_all_assets()
-        global sequence_tracker
-        sequence_tracker = {}
-        
         for asset in assets:
             company_code = asset.get('Code Company')
             type_code = asset.get('Code Type')
             year = asset.get('Tahun')
-            
             if company_code and type_code and year:
                 key = (company_code, type_code, str(year))
                 asset_tag = asset.get('Asset Tag', '')
-                
                 if asset_tag and '.' in asset_tag:
-                    # Extract sequence number from asset tag
                     try:
-                        seq_part = asset_tag.split('.')[-1]
-                        seq_num = int(seq_part)
-                        
-                        if key not in sequence_tracker or sequence_tracker[key] < seq_num:
-                            sequence_tracker[key] = seq_num
-                    except (ValueError, IndexError):
+                        seq_num = int(asset_tag.split('.')[-1])
+                        _sequence_tracker[key] = max(_sequence_tracker.get(key, 0), seq_num)
+                    except Exception:
                         pass
+
+def generate_asset_tag(company, category, type_val, owner, purchase_date):
+    try:
+        code_company = get_reference_value(SHEETS['REF_COMPANIES'], 'Company', company, 'Code Company')
+        code_category = get_reference_value(SHEETS['REF_CATEGORIES'], 'Category', category, 'Code Category')
+        code_type = get_reference_value(SHEETS['REF_TYPES'], 'Type', type_val, 'Code Type')
+        code_owner = get_reference_value(SHEETS['REF_OWNERS'], 'Owner', owner, 'Code Owner')
+        year = datetime.strptime(purchase_date, "%Y-%m-%d").year if isinstance(purchase_date, str) else purchase_date.year
+        year_2digit = str(year)[-2:]
+
+        if all([code_company, code_category, code_type, code_owner]):
+            key = (code_company, code_type, str(year))
+            _ensure_sequence_tracker()
+            _sequence_tracker[key] = _sequence_tracker.get(key, 0) + 1
+            seq_num = str(_sequence_tracker[key]).zfill(3)
+            return f"{code_company}-{code_category}.{code_type}.{code_owner}{year_2digit}.{seq_num}"
     except Exception as e:
-        logging.error(f"Error initializing sequence tracker: {str(e)}")
+        logging.error(f"Error generating asset tag: {str(e)}")
+    return None
 
 def calculate_asset_financials(purchase_cost, purchase_date, category):
-    """Calculate financial values for an asset."""
     try:
-        # Get residual percent and useful life from category
         residual_percent = float(get_reference_value(
             SHEETS['REF_CATEGORIES'], 'Category', category, 'Residual Percent') or 0)
         useful_life = int(get_reference_value(
             SHEETS['REF_CATEGORIES'], 'Category', category, 'Useful Life') or 0)
-        
-        # Parse purchase date
-        if isinstance(purchase_date, str):
-            purchase_year = datetime.strptime(purchase_date, "%Y-%m-%d").year
-        else:
-            purchase_year = purchase_date.year
-            
+        purchase_year = datetime.strptime(purchase_date, "%Y-%m-%d").year if isinstance(purchase_date, str) else purchase_date.year
         current_year = datetime.now().year
         years_used = current_year - purchase_year
-        
-        # Calculate values
         purchase_cost = float(purchase_cost)
         residual_value = purchase_cost * (residual_percent / 100)
-        
-        # Calculate depreciation
-        if years_used < useful_life:
-            depreciation = ((purchase_cost - residual_value) / useful_life) * years_used
-        else:
-            depreciation = (purchase_cost - residual_value)
-            
-        # Calculate book value
+        depreciation = ((purchase_cost - residual_value) / useful_life) * years_used if years_used < useful_life else (purchase_cost - residual_value)
         book_value = purchase_cost - depreciation
-        
         return {
             'Residual Percent': residual_percent,
             'Residual Value': round(residual_value, 2),
@@ -274,71 +184,41 @@ def calculate_asset_financials(purchase_cost, purchase_date, category):
         }
 
 def get_all_assets():
-    """Get all assets from the sheet with caching."""
     return cache.get_or_set('all_assets', _get_all_assets, CACHE_TTL['assets'])
 
 def _get_all_assets():
-    """Get all assets from the sheet."""
+    sheet = get_sheet(SHEETS['ASSETS'])
+    if not sheet:
+        logging.error("Could not get Assets sheet")
+        return []
     try:
-        sheet = get_sheet(SHEETS['ASSETS'])
-        if not sheet:
-            logging.error("Could not get Assets sheet")
-            return []
-        
-        try:
-            records = sheet.get_all_records()
-            logging.info(f"Successfully retrieved {len(records)} assets from sheet")
-            return records
-        except Exception as e:
-            logging.error(f"Error getting records from Assets sheet: {str(e)}")
-            return []
+        records = sheet.get_all_records()
+        logging.info(f"Retrieved {len(records)} assets from sheet")
+        return records
     except Exception as e:
-        logging.error(f"Error getting assets: {str(e)}")
+        logging.error(f"Error getting records from Assets sheet: {str(e)}")
         return []
 
 def get_asset_by_id(asset_id):
-    """Get asset by ID with caching."""
     cache_key = f'asset_{asset_id}'
     return cache.get_or_set(cache_key, lambda: _get_asset_by_id(asset_id), CACHE_TTL['assets'])
 
 def _get_asset_by_id(asset_id):
-    """Get asset by ID."""
-    try:
-        assets = get_all_assets()
-        # Convert asset_id to string for comparison
-        asset_id_str = str(asset_id)
-        
-        # Log for debugging
-        logging.info(f"Looking for asset with ID: {asset_id_str}")
-        
-        for asset in assets:
-            # Convert asset ID to string for comparison
-            asset_id_value = str(asset.get('ID', ''))
-            if asset_id_value == asset_id_str:
-                logging.info(f"Found asset: {asset.get('Item Name')}")
-                return asset
-        
-        logging.warning(f"Asset with ID {asset_id_str} not found")
-        return None
-    except Exception as e:
-        logging.error(f"Error getting asset by ID: {str(e)}")
-        import traceback
-        logging.error(traceback.format_exc())
-        return None
+    assets = get_all_assets()
+    asset_id_str = str(asset_id)
+    for asset in assets:
+        if str(asset.get('ID', '')) == asset_id_str:
+            return asset
+    return None
 
 def add_asset(asset_data):
-    """Add new asset to the sheet."""
     try:
         sheet = get_sheet(SHEETS['ASSETS'])
         if not sheet:
             return False
-            
-        # Get next ID
         assets = get_all_assets()
         next_id = str(len(assets) + 1).zfill(3)
-        
-        # Generate asset tag if not provided
-        if 'Asset Tag' not in asset_data or not asset_data['Asset Tag']:
+        if not asset_data.get('Asset Tag'):
             asset_tag = generate_asset_tag(
                 asset_data.get('Company'),
                 asset_data.get('Category'),
@@ -348,19 +228,12 @@ def add_asset(asset_data):
             )
             if asset_tag:
                 asset_data['Asset Tag'] = asset_tag
-        
-        # Calculate financial values
-        financials = calculate_asset_financials(
+        asset_data.update(calculate_asset_financials(
             asset_data.get('Purchase Cost', 0),
             asset_data.get('Purchase Date'),
             asset_data.get('Category')
-        )
-        
-        # Merge data
-        asset_data.update(financials)
+        ))
         asset_data['ID'] = next_id
-        
-        # Get codes
         asset_data['Code Category'] = get_reference_value(
             SHEETS['REF_CATEGORIES'], 'Category', asset_data.get('Category'), 'Code Category')
         asset_data['Code Company'] = get_reference_value(
@@ -369,92 +242,57 @@ def add_asset(asset_data):
             SHEETS['REF_TYPES'], 'Type', asset_data.get('Type'), 'Code Type')
         asset_data['Code Owner'] = get_reference_value(
             SHEETS['REF_OWNERS'], 'Owner', asset_data.get('Owner'), 'Code Owner')
-        
-        # Set default status if not provided
-        if 'Status' not in asset_data:
-            asset_data['Status'] = 'Active'
-        
-        # Get headers and prepare row
+        asset_data.setdefault('Status', 'Active')
         headers = sheet.row_values(1)
-        row_data = []
-        for header in headers:
-            row_data.append(asset_data.get(header, ''))
-        
-        # Append row
+        row_data = [asset_data.get(header, '') for header in headers]
         sheet.append_row(row_data)
-        
-        # Clear cache
-        cache.delete('all_assets')
-        
+        invalidate_cache()
         return True
     except Exception as e:
         logging.error(f"Error adding asset: {str(e)}")
         return False
 
 def update_asset(asset_id, asset_data):
-    """Update asset in the sheet."""
     try:
         sheet = get_sheet(SHEETS['ASSETS'])
         if not sheet:
             return False
-            
-        # Find asset row
         asset_id_str = str(asset_id)
         try:
             cell = sheet.find(asset_id_str)
             if not cell:
-                logging.warning(f"Cell with ID {asset_id_str} not found")
                 return False
         except Exception as e:
             logging.error(f"Error finding cell: {str(e)}")
             return False
-            
-        # Get headers
         headers = sheet.row_values(1)
-        
-        # Recalculate financials if needed
-        if 'Purchase Cost' in asset_data or 'Purchase Date' in asset_data or 'Category' in asset_data:
-            # Get current asset data
+        if any(k in asset_data for k in ['Purchase Cost', 'Purchase Date', 'Category']):
             current_asset = get_asset_by_id(asset_id)
             if current_asset:
-                # Use updated values or current values
                 purchase_cost = asset_data.get('Purchase Cost', current_asset.get('Purchase Cost'))
                 purchase_date = asset_data.get('Purchase Date', current_asset.get('Purchase Date'))
                 category = asset_data.get('Category', current_asset.get('Category'))
-                
-                # Calculate new financials
-                financials = calculate_asset_financials(purchase_cost, purchase_date, category)
-                asset_data.update(financials)
-        
-        # Update row
+                asset_data.update(calculate_asset_financials(purchase_cost, purchase_date, category))
         for i, header in enumerate(headers):
             if header in asset_data:
                 sheet.update_cell(cell.row, i + 1, asset_data[header])
-        
-        # Clear cache
-        cache.delete('all_assets')
-        cache.delete(f'asset_{asset_id}')
-        
+        invalidate_cache()
         return True
     except Exception as e:
         logging.error(f"Error updating asset: {str(e)}")
         return False
 
 def delete_asset(asset_id):
-    """Delete asset from sheet (mark as deleted)."""
     try:
         result = update_asset(asset_id, {'Status': 'Deleted'})
-        
-        # Clear cache
-        cache.delete('all_assets')
-        cache.delete(f'asset_{asset_id}')
-        
+        invalidate_cache()
         return result
     except Exception as e:
         logging.error(f"Error deleting asset: {str(e)}")
         return False
 
 def invalidate_cache():
-    """Invalidate all cache."""
     cache.clear()
+    global _sequence_tracker
+    _sequence_tracker = None
     logging.info("Cache invalidated")
