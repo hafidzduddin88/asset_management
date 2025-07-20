@@ -1,35 +1,29 @@
 # Web Framework
 fastapi==0.95.1
 uvicorn==0.22.0
-starlette==0.26.1
 pydantic==1.10.7
 jinja2==3.1.2
 python-multipart==0.0.6
 aiofiles==23.1.0
-httpx==0.24.0
 
 # Database
 sqlalchemy==2.0.12
 psycopg2-binary==2.9.6
-alembic==1.10.4
 
 # Authentication
-jose==1.0.0
-python-jose[cryptography]==3.3.0  # Tetap menyertakan python-jose untuk kompatibilitas
+python-jose[cryptography]==3.3.0
 passlib[argon2]==1.7.4
 
 # Google API
 gspread==5.9.0
 google-auth==2.17.3
-google-auth-oauthlib==1.0.0
-google-api-python-client==2.86.0
 
 # Export
 openpyxl==3.1.2
 fpdf2==2.7.4
-numpy==1.24.3
-pandas==2.0.0
 xlsxwriter==3.1.0
+pandas==2.0.0  # Required for Excel export functionality
+# Note: numpy is installed as a dependency of pandas
 
 # Image Processing
 Pillow==9.5.0
@@ -39,5 +33,3 @@ requests==2.31.0
 
 # Date handling
 python-dateutil==2.8.2
-
-# No python-dotenv, using OS environment variables directly

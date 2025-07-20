@@ -4,6 +4,7 @@ __pycache__/
 *.pyo
 *.pyd
 *.pyc
+.pytest_cache/
 
 # Virtual environments
 venv/
@@ -15,6 +16,7 @@ env/
 .git/
 .gitignore
 .gitattributes
+.github/
 
 # Editor / IDE configs
 .vscode/
@@ -28,14 +30,21 @@ env/
 *.bak
 *.tmp
 *.old
+logs/
 
 # OS-specific
 .DS_Store
 Thumbs.db
 
-# Tests (opsional, kalau tidak butuh di container)
+# Tests
 tests/
 test/
+
+# Documentation
+docs/
+README.md
+LICENSE
+CHANGELOG.md
 
 # Local build/output
 dist/
@@ -44,4 +53,21 @@ build/
 
 # CI/CD or Docker secrets
 secrets/
-docker-compose.override.yml
+docker-compose*.yml
+
+# Amazon Q specific
+.amazonq/
+
+# Development files not needed in production
+*.md
+*.example
+*.sample
+render.yaml
+.dockerignore
+Dockerfile*
+
+# Large static files that can be served from CDN in production
+app/static/img/*.png
+app/static/img/*.jpg
+app/static/img/*.jpeg
+app/static/img/*.gif
