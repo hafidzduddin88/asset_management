@@ -367,3 +367,76 @@ def invalidate_cache():
     """
     cache.invalidate_all()
     logging.info("Cache invalidated, data will be refreshed from Google Sheets")
+
+def add_asset(asset_data):
+    """
+    Add a new asset to the Google Sheet.
+    
+    Args:
+        asset_data: Dictionary containing asset information
+        
+    Returns:
+        bool: True if successful, False otherwise
+    """
+    try:
+        # Get the assets sheet
+        sheet = get_sheet(SHEETS['ASSETS'])
+        if not sheet:
+            logging.error("Could not get Assets sheet")
+            return False
+            
+        # Get all assets to determine next ID
+        assets = get_all_assets()
+        next_id = 1
+        if assets:
+            try:
+                # Find the highest ID and increment by 1
+                max_id = max(int(asset.get('ID', 0)) for asset in assets)
+                next_id = max_id + 1
+            except Exception as e:
+                logging.error(f"Error determining next ID: {str(e)}")
+                next_id = len(assets) + 1
+        
+        # Add ID to asset data
+        asset_data['ID'] = str(next_id)
+        
+        # Generate asset tag if not provided
+        if not asset_data.get('Asset Tag'):
+            asset_tag = generate_asset_tag(
+                asset_data.get('Company', ''),
+                asset_data.get('Category', ''),
+                asset_data.get('Type', ''),
+                asset_data.get('Owner', ''),
+                asset_data.get('Purchase Date', '')
+            )
+            if asset_tag:
+                asset_data['Asset Tag'] = asset_tag
+        
+        # Calculate financial values
+        financials = calculate_asset_financials(
+            asset_data.get('Purchase Cost', 0),
+            asset_data.get('Purchase Date', ''),
+            asset_data.get('Category', '')
+        )
+        
+        # Add financial data to asset
+        for key, value in financials.items():
+            asset_data[key] = value
+        
+        # Get all headers from the sheet
+        headers = sheet.row_values(1)
+        
+        # Prepare row data in the correct order
+        row_data = [asset_data.get(header, '') for header in headers]
+        
+        # Append the new row
+        sheet.append_row(row_data)
+        logging.info(f"Added new asset with ID {next_id}")
+        
+        # Invalidate cache to refresh data
+        invalidate_cache()
+        
+        return True
+    except Exception as e:
+        logging.error(f"Error adding asset: {str(e)}")
+        return False
