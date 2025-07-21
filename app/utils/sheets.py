@@ -405,8 +405,12 @@ def ensure_serializable(obj):
         return {k: ensure_serializable(v) for k, v in obj.items()}
     elif isinstance(obj, (list, tuple)):
         return [ensure_serializable(item) for item in obj]
-    elif isinstance(obj, (dict_keys, dict_values)):
+    elif hasattr(obj, 'keys') and callable(obj.keys):  # Handle dict_keys
         return list(obj)
+    elif hasattr(obj, '__iter__') and not isinstance(obj, (str, bytes)):  # Handle dict_values and other iterables
+        return list(obj)
+    elif callable(obj):  # Handle functions and methods
+        return str(obj)
     elif hasattr(obj, '__dict__'):
         return str(obj)
     return obj
