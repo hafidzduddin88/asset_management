@@ -397,6 +397,76 @@ def _get_asset_statistics():
         'company_distribution': company_distribution
     }
 
+def ensure_serializable(obj):
+    """
+    Ensure an object is JSON serializable by converting non-serializable types.
+    """
+    if isinstance(obj, dict):
+        return {k: ensure_serializable(v) for k, v in obj.items()}
+    elif isinstance(obj, (list, tuple)):
+        return [ensure_serializable(item) for item in obj]
+    elif isinstance(obj, (dict_keys, dict_values)):
+        return list(obj)
+    elif hasattr(obj, '__dict__'):
+        return str(obj)
+    return obj
+
+def get_chart_data():
+    """
+    Get pre-formatted chart data for the dashboard that is guaranteed to be JSON serializable.
+    """
+    statistics = get_asset_statistics() or {}
+    status_counts = statistics.get('status_counts', {})
+    category_counts = statistics.get('category_counts', {})
+    location_counts = statistics.get('location_counts', {})
+    monthly_data = statistics.get('monthly_additions', {})
+    
+    # Status chart data
+    status_labels = list(status_counts.keys())
+    status_values = [int(status_counts[label]) for label in status_labels]
+    status_chart_data = {
+        'labels': status_labels,
+        'values': status_values,
+        'colors': [
+            '#10B981',  # Active - green
+            '#EF4444',  # Under Repair - red
+            '#3B82F6',  # In Storage - blue
+            '#F59E0B',  # To Be Disposed - yellow
+            '#6B7280',  # Disposed - gray
+            '#8B5CF6'   # Other - purple
+        ]
+    }
+    
+    # Category chart data
+    category_labels = list(category_counts.keys())
+    category_values = [int(category_counts[label]) for label in category_labels]
+    category_chart_data = {
+        'labels': category_labels,
+        'values': category_values
+    }
+    
+    # Location chart data
+    location_labels = list(location_counts.keys())
+    location_values = [int(location_counts[label]) for label in location_labels]
+    location_chart_data = {
+        'labels': location_labels,
+        'values': location_values
+    }
+    
+    # Monthly additions chart
+    sorted_months = sorted(monthly_data.keys())
+    monthly_chart_data = {
+        'labels': [month.split('-')[1] + '/' + month.split('-')[0][2:] for month in sorted_months],
+        'values': [monthly_data[month] for month in sorted_months]
+    }
+    
+    return {
+        'status_chart_data': status_chart_data,
+        'category_chart_data': category_chart_data,
+        'location_chart_data': location_chart_data,
+        'monthly_chart_data': monthly_chart_data
+    }
+
 def invalidate_cache():
     cache.clear()
     global _sequence_tracker

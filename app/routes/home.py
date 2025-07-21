@@ -8,7 +8,7 @@ from datetime import datetime
 from app.database.database import get_db
 from app.database.models import User, Approval, ApprovalStatus, UserRole
 from app.database.dependencies import get_current_user
-from app.utils.sheets import get_all_assets, get_asset_statistics, get_valid_asset_statuses, invalidate_cache
+from app.utils.sheets import get_all_assets, get_asset_statistics, get_valid_asset_statuses, invalidate_cache, get_chart_data, ensure_serializable
 from app.utils.flash import get_flash
 
 router = APIRouter()
@@ -31,9 +31,6 @@ async def home(
         assets = get_all_assets()
         statistics = get_asset_statistics() or {}
         status_counts = statistics.get('status_counts', {})
-        category_counts = statistics.get('category_counts', {})
-        location_counts = statistics.get('location_counts', {})
-        monthly_data = statistics.get('monthly_additions', {})
         financial_summary = statistics.get('financial_summary', {})
 
         total_assets = len(assets)
@@ -42,6 +39,13 @@ async def home(
         in_storage_assets = status_counts.get('In Storage', 0)
         to_be_disposed_assets = status_counts.get('To Be Disposed', 0)
         disposed_assets = status_counts.get('Disposed', 0)
+        
+        # Get pre-formatted chart data that is guaranteed to be JSON serializable
+        chart_data = get_chart_data()
+        status_chart_data = chart_data['status_chart_data']
+        category_chart_data = chart_data['category_chart_data']
+        location_chart_data = chart_data['location_chart_data']
+        monthly_chart_data = chart_data['monthly_chart_data']
 
         flash = get_flash(request)
         return templates.TemplateResponse(
@@ -104,26 +108,22 @@ async def refresh_data(
         assets = get_all_assets()
         statistics = get_asset_statistics()
         status_counts = statistics['status_counts']
+        chart_data = get_chart_data()
         
         # Return basic stats for updating the UI
-        return {
+        response_data = {
             "success": True,
             "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             "total_assets": len(assets),
             "status_counts": status_counts,
-            "status_chart_data": {
-                'labels': list(status_counts.keys()),
-                'values': list([int(status_counts[label]) for label in status_counts.keys()]),
-            },
-            "category_chart_data": {
-                'labels': list(statistics['category_counts'].keys()),
-                'values': list([int(statistics['category_counts'][label]) for label in statistics['category_counts'].keys()]),
-            },
-            "location_chart_data": {
-                'labels': list(statistics['location_counts'].keys()),
-                'values': list([int(statistics['location_counts'][label]) for label in statistics['location_counts'].keys()]),
-            },
+            "status_chart_data": chart_data['status_chart_data'],
+            "category_chart_data": chart_data['category_chart_data'],
+            "location_chart_data": chart_data['location_chart_data'],
             "financial_summary": statistics['financial_summary']
+        }
+        
+        # Ensure all data is JSON serializable
+        return ensure_serializable(response_data)
         }
     except Exception as e:
         import traceback
