@@ -61,9 +61,10 @@ async def home(
                 "to_be_disposed_assets": to_be_disposed_assets,
                 "disposed_assets": disposed_assets,
                 "status_counts": status_counts,
-                "category_counts": category_counts,
-                "location_counts": location_counts,
-                "monthly_data": monthly_data,
+                "status_chart_data": status_chart_data,
+                "category_chart_data": category_chart_data,
+                "location_chart_data": location_chart_data,
+                "monthly_chart_data": monthly_chart_data,
                 "financial_summary": financial_summary,
                 "flash": flash,
                 "auto_refresh_interval": AUTO_REFRESH_INTERVAL
@@ -124,7 +125,6 @@ async def refresh_data(
         
         # Ensure all data is JSON serializable
         return ensure_serializable(response_data)
-        }
     except Exception as e:
         import traceback
         error_details = traceback.format_exc()
