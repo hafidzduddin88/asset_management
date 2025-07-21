@@ -28,7 +28,7 @@
             border: 1px solid rgba(229, 231, 235, 0.5);
         }
         .login-logo {
-            width: 100px;
+            width: 200px;
             height: 100px;
             margin: 0 auto 1.5rem;
             object-fit: contain;
@@ -57,7 +57,7 @@
     <div class="login-card space-y-6">
         <div class="text-center">
             <div class="flex justify-center">
-                <img src="/static/img/logo.png" alt="Logo" class="login-logo">
+                <img src="/static/img/logo.png" alt="Logo" class="login-logo" onerror="this.onerror=null; this.src='/static/img/logo-fallback.png';">
             </div>
             <h2 class="text-center text-3xl font-extrabold text-gray-900">
                 Asset Management System
