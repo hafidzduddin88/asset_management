@@ -71,6 +71,12 @@ async def home(
             }
         )
     except Exception as e:
+        # Default chart data (empty) to prevent template error
+        empty_chart_data = {
+            "labels": [],
+            "values": [],
+            "colors": []
+        }
         return templates.TemplateResponse(
             "dashboard_modern.html",
             {
@@ -88,6 +94,10 @@ async def home(
                 "location_counts": {},
                 "monthly_data": {},
                 "financial_summary": {},
+                "status_chart_data": empty_chart_data,
+                "category_chart_data": empty_chart_data,
+                "location_chart_data": empty_chart_data,
+                "monthly_chart_data": empty_chart_data,
                 "flash": f"Something went wrong: {str(e)}",
                 "auto_refresh_interval": AUTO_REFRESH_INTERVAL
             },
