@@ -6,5 +6,7 @@
     "Codegeex.SidebarUI.LanguagePreference": "English",
     "Codegeex.RepoIndex": true,
     "Codegeex.CompletionDelay": 1,
-    "Codegeex.Chat.fontSize": 11
+    "Codegeex.Chat.fontSize": 11,
+    "git.path": "C:\\Program Files\\Git\\cmd\\git.exe"
+    "git.enableSmartCommit": true,
 }
