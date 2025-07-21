@@ -409,7 +409,7 @@
             data: {
                 labels: {{ status_chart_data.labels | tojson }},
                 datasets: [{
-                    data: {{ status_chart_data.values | list | tojson }},
+                    data: {{ status_chart_data.values | tojson }},
                     backgroundColor: {{ status_chart_data.colors | tojson }},
                     borderWidth: 1
                 }]
@@ -435,7 +435,7 @@
             data: {
                 labels: {{ category_chart_data.labels | tojson }},
                 datasets: [{
-                    data: {{ category_chart_data.values | list | tojson }},
+                    data: {{ category_chart_data.values | tojson }},
                     backgroundColor: [
                         '#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6',
                         '#EC4899', '#6366F1', '#14B8A6', '#F97316', '#A855F7'
@@ -465,7 +465,7 @@
                 labels: {{ monthly_chart_data.labels | tojson }},
                 datasets: [{
                     label: 'Assets Added',
-                    data: {{ monthly_chart_data.values | list | tojson }},
+                    data: {{ monthly_chart_data.values | tojson }},
                     backgroundColor: '#3B82F6',
                     borderColor: '#2563EB',
                     borderWidth: 1
@@ -493,7 +493,7 @@
                 labels: {{ location_chart_data.labels | tojson }},
                 datasets: [{
                     label: 'Assets',
-                    data: {{ location_chart_data.values | list | tojson }},
+                    data: {{ location_chart_data.values | tojson }},
                     backgroundColor: '#10B981',
                     borderColor: '#059669',
                     borderWidth: 1
