@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Logo</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .logo-container {
+            width: 400px;
+            height: 200px;
+            border: 1px solid #ccc;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+            overflow: hidden;
+        }
+        .logo-content {
+            text-align: center;
+        }
+        .logo-title {
+            font-size: 48px;
+            font-weight: bold;
+            margin: 0;
+            letter-spacing: 1px;
+        }
+        .logo-subtitle {
+            font-size: 18px;
+            margin-top: 5px;
+        }
+        .instructions {
+            max-width: 600px;
+            margin-top: 20px;
+            line-height: 1.6;
+        }
+        .download-btn {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .download-btn:hover {
+            background-color: #2563eb;
+        }
+    </style>
+</head>
+<body>
+    <h1>Asset Management System Logo</h1>
+    
+    <div class="logo-container" id="logo">
+        <div class="logo-content">
+            <div class="logo-title">AMBP</div>
+            <div class="logo-subtitle">Asset Management System</div>
+        </div>
+    </div>
+    
+    <button class="download-btn" id="downloadBtn">Download Logo (400x200px)</button>
+    
+    <div class="instructions">
+        <h2>Instructions:</h2>
+        <ol>
+            <li>Click the "Download Logo" button to save the logo as a PNG file</li>
+            <li>Save the file as "logo.png" in the app/static/img/ directory</li>
+            <li>This will replace the existing logo with a new 400x200px version</li>
+        </ol>
+        <p><strong>Note:</strong> This is a simple placeholder logo. For a professional logo, consider using a graphic design tool.</p>
+    </div>
+
+    <script>
+        document.getElementById('downloadBtn').addEventListener('click', function() {
+            // Create a canvas element
+            const canvas = document.createElement('canvas');
+            canvas.width = 400;
+            canvas.height = 200;
+            const ctx = canvas.getContext('2d');
+            
+            // Draw gradient background
+            const gradient = ctx.createLinearGradient(0, 0, 400, 200);
+            gradient.addColorStop(0, '#3b82f6');
+            gradient.addColorStop(1, '#2563eb');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, 400, 200);
+            
+            // Draw text
+            ctx.fillStyle = 'white';
+            ctx.font = 'bold 48px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('AMBP', 200, 100);
+            
+            ctx.font = '18px Arial';
+            ctx.fillText('Asset Management System', 200, 130);
+            
+            // Create download link
+            const link = document.createElement('a');
+            link.download = 'logo.png';
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        });
+    </script>
+</body>
+</html>

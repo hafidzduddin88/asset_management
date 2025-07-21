@@ -225,243 +225,122 @@ def get_valid_asset_statuses():
         'Under Repair': 'Masuk List Barang Damage / Rusak'
     }
 
-def add_asset(asset_data):
-    try:
-        sheet = get_sheet(SHEETS['ASSETS'])
-        if not sheet:
-            return False
-        assets = get_all_assets()
-        next_id = str(len(assets) + 1).zfill(3)
-        if not asset_data.get('Asset Tag'):
-            asset_tag = generate_asset_tag(
-                asset_data.get('Company'),
-                asset_data.get('Category'),
-                asset_data.get('Type'),
-                asset_data.get('Owner'),
-                asset_data.get('Purchase Date')
-            )
-            if asset_tag:
-                asset_data['Asset Tag'] = asset_tag
-        asset_data.update(calculate_asset_financials(
-            asset_data.get('Purchase Cost', 0),
-            asset_data.get('Purchase Date'),
-            asset_data.get('Category')
-        ))
-        asset_data['ID'] = next_id
-        asset_data['Code Category'] = get_reference_value(
-            SHEETS['REF_CATEGORIES'], 'Category', asset_data.get('Category'), 'Code Category')
-        asset_data['Code Company'] = get_reference_value(
-            SHEETS['REF_COMPANIES'], 'Company', asset_data.get('Company'), 'Code Company')
-        asset_data['Code Type'] = get_reference_value(
-            SHEETS['REF_TYPES'], 'Type', asset_data.get('Type'), 'Code Type')
-        asset_data['Code Owner'] = get_reference_value(
-            SHEETS['REF_OWNERS'], 'Owner', asset_data.get('Owner'), 'Code Owner')
-        asset_data.setdefault('Status', 'Active')
-        headers = sheet.row_values(1)
-        row_data = [asset_data.get(header, '') for header in headers]
-        sheet.append_row(row_data)
-        invalidate_cache()
-        return True
-    except Exception as e:
-        logging.error(f"Error adding asset: {str(e)}")
-        return False
-
-def update_asset(asset_id, asset_data):
-    try:
-        sheet = get_sheet(SHEETS['ASSETS'])
-        if not sheet:
-            return False
-        asset_id_str = str(asset_id)
-        try:
-            cell = sheet.find(asset_id_str)
-            if not cell:
-                return False
-        except Exception as e:
-            logging.error(f"Error finding cell: {str(e)}")
-            return False
-        headers = sheet.row_values(1)
-        if any(k in asset_data for k in ['Purchase Cost', 'Purchase Date', 'Category']):
-            current_asset = get_asset_by_id(asset_id)
-            if current_asset:
-                purchase_cost = asset_data.get('Purchase Cost', current_asset.get('Purchase Cost'))
-                purchase_date = asset_data.get('Purchase Date', current_asset.get('Purchase Date'))
-                category = asset_data.get('Category', current_asset.get('Category'))
-                asset_data.update(calculate_asset_financials(purchase_cost, purchase_date, category))
-        for i, header in enumerate(headers):
-            if header in asset_data:
-                sheet.update_cell(cell.row, i + 1, asset_data[header])
-        invalidate_cache()
-        return True
-    except Exception as e:
-        logging.error(f"Error updating asset: {str(e)}")
-        return False
-
-def delete_asset(asset_id):
-    try:
-        result = update_asset(asset_id, {'Status': 'Deleted'})
-        invalidate_cache()
-        return result
-    except Exception as e:
-        logging.error(f"Error deleting asset: {str(e)}")
-        return False
-
+# Add a function to get asset statistics
 def get_asset_statistics():
     """
-    Get statistics about assets for dashboard charts.
+    Calculate statistics about assets including status counts and financial summary.
     """
-    cache_key = 'asset_statistics'
-    return cache.get_or_set(cache_key, _get_asset_statistics, CACHE_TTL['assets'])
-
-def _get_asset_statistics():
     assets = get_all_assets()
-    if not assets:
-        return {
-            'status_counts': {},
-            'category_counts': {},
-            'location_counts': {},
-            'monthly_additions': {},
-            'financial_summary': {
-                'total_purchase_cost': 0,
-                'total_book_value': 0,
-                'total_depreciation': 0
-            },
-            'company_distribution': {}
-        }
     
-    # Status distribution
+    # Count assets by status
     status_counts = {}
     for asset in assets:
         status = asset.get('Status', 'Unknown')
         status_counts[status] = status_counts.get(status, 0) + 1
     
-    # Category distribution
+    # Calculate financial summary
+    total_purchase_cost = 0
+    total_book_value = 0
+    total_depreciation = 0
+    
+    for asset in assets:
+        purchase_cost = safe_float(asset.get('Purchase Cost', 0))
+        book_value = safe_float(asset.get('Book Value', 0))
+        depreciation = safe_float(asset.get('Depreciation Value', 0))
+        
+        total_purchase_cost += purchase_cost
+        total_book_value += book_value
+        total_depreciation += depreciation
+    
+    return {
+        'status_counts': status_counts,
+        'financial_summary': {
+            'total_purchase_cost': round(total_purchase_cost, 2),
+            'total_book_value': round(total_book_value, 2),
+            'total_depreciation': round(total_depreciation, 2)
+        }
+    }
+
+# Add a function to get chart data
+def get_chart_data():
+    """
+    Prepare data for dashboard charts.
+    """
+    assets = get_all_assets()
+    
+    # Status chart data
+    status_counts = {}
+    for asset in assets:
+        status = asset.get('Status', 'Unknown')
+        status_counts[status] = status_counts.get(status, 0) + 1
+    
+    status_colors = {
+        'Active': '#10B981',  # green
+        'Under Repair': '#EF4444',  # red
+        'In Storage': '#3B82F6',  # blue
+        'To Be Disposed': '#F59E0B',  # yellow
+        'Disposed': '#6B7280',  # gray
+        'Unknown': '#9CA3AF'  # light gray
+    }
+    
+    status_chart_data = {
+        'labels': list(status_counts.keys()),
+        'values': list(status_counts.values()),
+        'colors': [status_colors.get(status, '#9CA3AF') for status in status_counts.keys()]
+    }
+    
+    # Category chart data
     category_counts = {}
     for asset in assets:
         category = asset.get('Category', 'Unknown')
         category_counts[category] = category_counts.get(category, 0) + 1
     
-    # Location distribution
+    category_chart_data = {
+        'labels': list(category_counts.keys()),
+        'values': list(category_counts.values())
+    }
+    
+    # Location chart data
     location_counts = {}
     for asset in assets:
         location = asset.get('Location', 'Unknown')
         location_counts[location] = location_counts.get(location, 0) + 1
     
-    # Monthly asset additions (last 12 months)
-    monthly_additions = {}
-    current_date = datetime.now()
-    for i in range(12):
-        month_date = current_date - relativedelta(months=i)
-        month_key = month_date.strftime('%Y-%m')
-        monthly_additions[month_key] = 0
+    # Sort locations by count (descending)
+    sorted_locations = sorted(location_counts.items(), key=lambda x: x[1], reverse=True)
+    location_labels = [loc[0] for loc in sorted_locations[:10]]  # Top 10 locations
+    location_values = [loc[1] for loc in sorted_locations[:10]]
     
-    for asset in assets:
-        purchase_date = asset.get('Purchase Date')
-        if purchase_date:
-            try:
-                date_obj = datetime.strptime(purchase_date, '%Y-%m-%d')
-                month_key = date_obj.strftime('%Y-%m')
-                if month_key in monthly_additions:
-                    monthly_additions[month_key] += 1
-            except (ValueError, TypeError):
-                pass
-    
-    # Financial summary
-    def safe_float(value):
-        if value == '' or value is None:
-            return 0.0
-        try:
-            return float(value)
-        except (ValueError, TypeError):
-            return 0.0
-    
-    total_purchase_cost = sum(safe_float(asset.get('Purchase Cost', 0)) for asset in assets)
-    total_book_value = sum(safe_float(asset.get('Book Value', 0)) for asset in assets)
-    total_depreciation = sum(safe_float(asset.get('Depreciation Value', 0)) for asset in assets)
-    
-    # Company distribution
-    company_distribution = {}
-    for asset in assets:
-        company = asset.get('Company', 'Unknown')
-        company_distribution[company] = company_distribution.get(company, 0) + 1
-    
-    return {
-        'status_counts': status_counts,
-        'category_counts': category_counts,
-        'location_counts': location_counts,
-        'monthly_additions': monthly_additions,
-        'financial_summary': {
-            'total_purchase_cost': total_purchase_cost,
-            'total_book_value': total_book_value,
-            'total_depreciation': total_depreciation
-        },
-        'company_distribution': company_distribution
-    }
-
-def ensure_serializable(obj):
-    """
-    Ensure an object is JSON serializable by converting non-serializable types.
-    """
-    if isinstance(obj, dict):
-        return {k: ensure_serializable(v) for k, v in obj.items()}
-    elif isinstance(obj, (list, tuple)):
-        return [ensure_serializable(item) for item in obj]
-    elif hasattr(obj, 'keys') and callable(obj.keys):  # Handle dict_keys
-        return list(obj)
-    elif hasattr(obj, '__iter__') and not isinstance(obj, (str, bytes)):  # Handle dict_values and other iterables
-        return list(obj)
-    elif callable(obj):  # Handle functions and methods
-        return str(obj)
-    elif hasattr(obj, '__dict__'):
-        return str(obj)
-    return obj
-
-def get_chart_data():
-    """
-    Get pre-formatted chart data for the dashboard that is guaranteed to be JSON serializable.
-    """
-    statistics = get_asset_statistics() or {}
-    status_counts = statistics.get('status_counts', {})
-    category_counts = statistics.get('category_counts', {})
-    location_counts = statistics.get('location_counts', {})
-    monthly_data = statistics.get('monthly_additions', {})
-    
-    # Status chart data
-    status_labels = list(status_counts.keys())
-    status_values = [int(status_counts[label]) for label in status_labels]
-    status_chart_data = {
-        'labels': status_labels,
-        'values': status_values,
-        'colors': [
-            '#10B981',  # Active - green
-            '#EF4444',  # Under Repair - red
-            '#3B82F6',  # In Storage - blue
-            '#F59E0B',  # To Be Disposed - yellow
-            '#6B7280',  # Disposed - gray
-            '#8B5CF6'   # Other - purple
-        ]
-    }
-    
-    # Category chart data
-    category_labels = list(category_counts.keys())
-    category_values = [int(category_counts[label]) for label in category_labels]
-    category_chart_data = {
-        'labels': category_labels,
-        'values': category_values
-    }
-    
-    # Location chart data
-    location_labels = list(location_counts.keys())
-    location_values = [int(location_counts[label]) for label in location_labels]
     location_chart_data = {
         'labels': location_labels,
         'values': location_values
     }
     
-    # Monthly additions chart
-    sorted_months = sorted(monthly_data.keys())
+    # Monthly additions chart data
+    monthly_counts = {}
+    current_date = datetime.now()
+    
+    # Initialize with last 12 months
+    for i in range(11, -1, -1):
+        month_date = current_date.replace(day=1) - relativedelta(months=i)
+        month_key = month_date.strftime('%b %Y')
+        monthly_counts[month_key] = 0
+    
+    # Count assets by purchase month
+    for asset in assets:
+        purchase_date = asset.get('Purchase Date', '')
+        if purchase_date:
+            try:
+                date = datetime.strptime(purchase_date, '%Y-%m-%d')
+                month_key = date.strftime('%b %Y')
+                if month_key in monthly_counts:
+                    monthly_counts[month_key] += 1
+            except Exception:
+                pass
+    
     monthly_chart_data = {
-        'labels': [month.split('-')[1] + '/' + month.split('-')[0][2:] for month in sorted_months],
-        'values': [monthly_data[month] for month in sorted_months]
+        'labels': list(monthly_counts.keys()),
+        'values': list(monthly_counts.values())
     }
     
     return {
@@ -471,8 +350,20 @@ def get_chart_data():
         'monthly_chart_data': monthly_chart_data
     }
 
+def safe_float(value):
+    """
+    Safely convert a value to float, returning 0 if conversion fails.
+    """
+    if value is None or value == '':
+        return 0
+    try:
+        return float(value)
+    except (ValueError, TypeError):
+        return 0
+
 def invalidate_cache():
-    cache.clear()
-    global _sequence_tracker
-    _sequence_tracker = None
-    logging.info("Cache invalidated")
+    """
+    Invalidate all cached data to force refresh from Google Sheets.
+    """
+    cache.invalidate_all()
+    logging.info("Cache invalidated, data will be refreshed from Google Sheets")

@@ -9,7 +9,7 @@ from typing import Dict, Any, List, Optional
 from app.database.database import get_db
 from app.database.models import User, Approval, ApprovalStatus, UserRole
 from app.database.dependencies import get_current_user
-from app.utils.sheets import get_all_assets, get_asset_statistics, get_valid_asset_statuses, invalidate_cache, get_chart_data, ensure_serializable
+from app.utils.sheets import get_all_assets, get_asset_statistics, get_valid_asset_statuses, invalidate_cache, get_chart_data
 from app.utils.flash import get_flash
 
 router = APIRouter()
@@ -200,7 +200,15 @@ async def refresh_data(
         }
         
         # Ensure all data is JSON serializable
-        return ensure_serializable(response_data)
+        # Convert dict_values to lists for JSON serialization
+        if 'status_chart_data' in response_data and 'values' in response_data['status_chart_data']:
+            response_data['status_chart_data']['values'] = list(response_data['status_chart_data']['values'])
+        if 'category_chart_data' in response_data and 'values' in response_data['category_chart_data']:
+            response_data['category_chart_data']['values'] = list(response_data['category_chart_data']['values'])
+        if 'location_chart_data' in response_data and 'values' in response_data['location_chart_data']:
+            response_data['location_chart_data']['values'] = list(response_data['location_chart_data']['values'])
+        
+        return response_data
     except Exception as e:
         logging.error(f"Error refreshing data: {str(e)}", exc_info=True)
         return {"success": False, "error": str(e)}
