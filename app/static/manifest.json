@@ -1,6 +1,6 @@
 {
   "name": "Asset Management System",
-  "short_name": "AMS",
+  "short_name": "AssetsManagement",
   "description": "A modern asset management system",
   "start_url": "/",
   "display": "standalone",
