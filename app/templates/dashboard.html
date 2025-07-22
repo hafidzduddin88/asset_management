@@ -360,15 +360,15 @@
       }
     });
     
-    // Monthly Chart (using location_chart_data for now)
+    // Monthly Chart (using monthly_chart_data)
     const monthlyCtx = document.getElementById('monthlyChart').getContext('2d');
     monthlyChart = new Chart(monthlyCtx, {
       type: 'line',
       data: {
-        labels: {{ location_chart_data.labels | tojson }},
+        labels: {{ monthly_chart_data.labels | tojson }},
         datasets: [{
           label: 'Assets Added',
-          data: {{ location_chart_data.values | tojson }},
+          data: {{ monthly_chart_data.values | tojson }},
           backgroundColor: 'rgba(16, 185, 129, 0.2)',
           borderColor: 'rgba(16, 185, 129, 1)',
           borderWidth: 2,
@@ -500,6 +500,13 @@
       companyChart.data.labels = Object.keys(data.company_counts);
       companyChart.data.datasets[0].data = Object.values(data.company_counts);
       companyChart.update();
+    }
+    
+    // Update monthly chart
+    if (data.monthly_chart_data && monthlyChart) {
+      monthlyChart.data.labels = data.monthly_chart_data.labels;
+      monthlyChart.data.datasets[0].data = data.monthly_chart_data.values;
+      monthlyChart.update();
     }
   }
   

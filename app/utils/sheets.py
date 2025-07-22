@@ -367,17 +367,28 @@ def get_chart_data(year=None, category=None):
             except Exception:
                 pass
     
+    # Explicitly convert to lists to ensure JSON serialization works
+    monthly_labels = list(monthly_counts.keys())
+    monthly_values = list(monthly_counts.values())
+    
     monthly_chart_data = {
-        'labels': list(monthly_counts.keys()),
-        'values': list(monthly_counts.values())
+        'labels': monthly_labels,
+        'values': monthly_values
     }
     
+    # Ensure all data is properly serializable
     return {
         'status_counts': status_counts,
         'category_counts': category_counts,
         'company_counts': company_counts,
-        'location_chart_data': location_chart_data,
-        'monthly_chart_data': monthly_chart_data
+        'location_chart_data': {
+            'labels': list(location_chart_data['labels']),
+            'values': list(location_chart_data['values'])
+        },
+        'monthly_chart_data': {
+            'labels': list(monthly_chart_data['labels']),
+            'values': list(monthly_chart_data['values'])
+        }
     }
 
 def safe_float(value):

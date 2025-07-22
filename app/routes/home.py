@@ -173,6 +173,15 @@ async def refresh_data(
         for key in ['status_counts', 'category_counts', 'company_counts']:
             if key in response_data:
                 response_data[key] = {k: v for k, v in response_data[key].items()}
+                
+        # Ensure chart data is properly serializable
+        if 'location_chart_data' in response_data:
+            if isinstance(response_data['location_chart_data'].get('values'), type(dict.values)):
+                response_data['location_chart_data']['values'] = list(response_data['location_chart_data']['values'])
+                
+        if 'monthly_chart_data' in response_data:
+            if isinstance(response_data['monthly_chart_data'].get('values'), type(dict.values)):
+                response_data['monthly_chart_data']['values'] = list(response_data['monthly_chart_data']['values'])
         
         return response_data
     except Exception as e:
