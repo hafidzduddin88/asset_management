@@ -20,7 +20,6 @@ SHEETS = {
     'REF_LOCATION': 'Ref_Location'
 }
 
-# Set all cache TTLs to 60 seconds for frequent auto-refresh
 CACHE_TTL = {
     'client': 60,
     'sheet': 60,
@@ -66,6 +65,92 @@ def _get_sheet(sheet_name):
     except Exception as e:
         logging.error(f"Error getting sheet {sheet_name}: {str(e)}")
         return None
+
+def get_all_assets():
+    return cache.get_or_set('all_assets', _get_all_assets, CACHE_TTL['assets'])
+
+def _get_all_assets():
+    sheet = get_sheet(SHEETS['ASSETS'])
+    if not sheet:
+        logging.error("Could not get Assets sheet")
+        return []
+    try:
+        records = sheet.get_all_records()
+        logging.info(f"Retrieved {len(records)} assets from sheet")
+        return records
+    except Exception as e:
+        logging.error(f"Error getting records from Assets sheet: {str(e)}")
+        return []
+
+def get_summary_data():
+    assets = get_all_assets()
+    total_purchase_value = 0
+    for asset in assets:
+        try:
+            purchase_cost = float(asset.get("Purchase Cost", 0) or 0)
+            total_purchase_value += purchase_cost
+        except Exception:
+            continue
+    return {
+        "total_purchase_value": total_purchase_value
+    }
+
+def get_chart_data():
+    assets = get_all_assets()
+
+    # Category counts
+    category_counts = {}
+    for asset in assets:
+        cat = asset.get("Category", "Unknown")
+        category_counts[cat] = category_counts.get(cat, 0) + 1
+
+    # Location counts
+    location_counts = {}
+    for asset in assets:
+        loc = asset.get("Location", "Unknown")
+        location_counts[loc] = location_counts.get(loc, 0) + 1
+
+    # Monthly chart
+    monthly_counts = {}
+    now = datetime.now()
+    for i in range(11, -1, -1):
+        month = (now.replace(day=1) - relativedelta(months=i)).strftime("%b %Y")
+        monthly_counts[month] = 0
+
+    for asset in assets:
+        date_str = asset.get("Purchase Date", "")
+        try:
+            dt = datetime.strptime(date_str, "%Y-%m-%d")
+            key = dt.strftime("%b %Y")
+            if key in monthly_counts:
+                monthly_counts[key] += 1
+        except Exception:
+            continue
+
+    # Age distribution
+    age_distribution = {}
+    current_year = datetime.now().year
+    for asset in assets:
+        try:
+            year = datetime.strptime(asset.get("Purchase Date", ""), "%Y-%m-%d").year
+            age = current_year - year
+            age_str = f"{age} tahun"
+            age_distribution[age_str] = age_distribution.get(age_str, 0) + 1
+        except:
+            continue
+
+    return {
+        "category_counts": category_counts,
+        "location_chart_data": {
+            "labels": list(location_counts.keys()),
+            "values": list(location_counts.values())
+        },
+        "monthly_chart_data": {
+            "labels": list(monthly_counts.keys()),
+            "values": list(monthly_counts.values())
+        },
+        "age_distribution": age_distribution
+    }
 
 def get_reference_data(sheet_name):
     cache_key = f'reference_{sheet_name}'
