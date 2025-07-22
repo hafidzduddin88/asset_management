@@ -117,8 +117,9 @@ async def home(
         return templates.TemplateResponse("dashboard.html", context)
     except Exception as e:
         logging.error(f"Dashboard error: {str(e)}", exc_info=True)
-        
+
         # Prepare error context with safe default values
+        empty_chart_data = {"labels": [], "values": []}
         error_context = {
             "request": request,
             "user": current_user,
@@ -126,15 +127,18 @@ async def home(
             "status_counts": {},
             "category_counts": {},
             "company_counts": {},
-            "location_chart_data": {"labels": [], "values": []},
-            "monthly_chart_data": {"labels": [], "values": []},
+            "location_chart_data": empty_chart_data,
+            "monthly_chart_data": empty_chart_data,
+            "status_chart_data": empty_chart_data,
+            "category_chart_data": empty_chart_data,
+            "company_chart_data": empty_chart_data,
             "years": [],
             "categories": [],
             "year": None,
             "category": None,
             "flash": f"Something went wrong: {str(e)}"
         }
-        
+
         return templates.TemplateResponse("dashboard.html", error_context, status_code=500)
 
 @router.get("/refresh-data", response_class=JSONResponse)
