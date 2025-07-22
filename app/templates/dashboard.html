@@ -114,8 +114,9 @@
 
     <script>
         // Age distribution chart
-        const ageLabels = {{ age_distribution.keys() | list | tojson }};
-        const ageData = {{ age_distribution.values() | list | tojson }};
+		const ageLabels = {{ age_distribution | map(attribute='0') | list | tojson }};
+		const ageData = {{ age_distribution | map(attribute='1') | list | tojson }};
+
 
         const ctxAge = document.getElementById('ageChart').getContext('2d');
         new Chart(ctxAge, {

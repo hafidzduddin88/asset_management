@@ -42,9 +42,9 @@ async def home(request: Request, user=Depends(get_current_user)):
             "total_purchase_value": total_purchase_value,
             "category_counts": category_counts,
             "location_counts": location_counts_dict,
-            "monthly_chart_labels": monthly_chart_labels,
-            "monthly_chart_values": monthly_chart_values,
-            "age_distribution": age_distribution,
+            "monthly_chart_labels": list(monthly_chart_labels),
+            "monthly_chart_values": list(monthly_chart_values),
+            "age_distribution": list(age_distribution.items()),
             "latest_assets": latest_assets
         }
 
