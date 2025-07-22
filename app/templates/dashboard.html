@@ -360,15 +360,15 @@
       }
     });
     
-    // Monthly Chart (using monthly_chart_data)
+    // Monthly Chart
     const monthlyCtx = document.getElementById('monthlyChart').getContext('2d');
     monthlyChart = new Chart(monthlyCtx, {
       type: 'line',
       data: {
-        labels: {{ monthly_chart_data.labels | tojson }},
+        labels: {{ monthly_chart_data.labels | default([]) | tojson }},
         datasets: [{
           label: 'Assets Added',
-          data: {{ monthly_chart_data.values | tojson }},
+          data: {{ monthly_chart_data.values | default([]) | tojson }},
           backgroundColor: 'rgba(16, 185, 129, 0.2)',
           borderColor: 'rgba(16, 185, 129, 1)',
           borderWidth: 2,

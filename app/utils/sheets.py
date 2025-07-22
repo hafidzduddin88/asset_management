@@ -271,7 +271,7 @@ def get_chart_data(year=None, category=None):
         category: Optional filter by category
         
     Returns:
-        Dictionary with chart data
+        Dictionary with chart data (all values are JSON serializable)
     """
     assets = get_all_assets()
     
@@ -376,20 +376,32 @@ def get_chart_data(year=None, category=None):
         'values': monthly_values
     }
     
-    # Ensure all data is properly serializable
-    return {
-        'status_counts': status_counts,
-        'category_counts': category_counts,
-        'company_counts': company_counts,
-        'location_chart_data': {
-            'labels': list(location_chart_data['labels']),
-            'values': list(location_chart_data['values'])
-        },
-        'monthly_chart_data': {
-            'labels': list(monthly_chart_data['labels']),
-            'values': list(monthly_chart_data['values'])
+    # Create a safe, serializable result
+    try:
+        result = {
+            'status_counts': dict(status_counts),
+            'category_counts': dict(category_counts),
+            'company_counts': dict(company_counts),
+            'location_chart_data': {
+                'labels': list(location_chart_data['labels']),
+                'values': list(location_chart_data['values'])
+            },
+            'monthly_chart_data': {
+                'labels': list(monthly_chart_data['labels']),
+                'values': list(monthly_chart_data['values'])
+            }
         }
-    }
+        return result
+    except Exception as e:
+        logging.error(f"Error preparing chart data: {str(e)}")
+        # Return safe defaults if anything goes wrong
+        return {
+            'status_counts': {},
+            'category_counts': {},
+            'company_counts': {},
+            'location_chart_data': {'labels': [], 'values': []},
+            'monthly_chart_data': {'labels': [], 'values': []}
+        }
 
 def safe_float(value):
     """

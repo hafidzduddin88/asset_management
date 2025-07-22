@@ -118,7 +118,7 @@ async def home(
     except Exception as e:
         logging.error(f"Dashboard error: {str(e)}", exc_info=True)
         
-        # Prepare error context
+        # Prepare error context with safe default values
         error_context = {
             "request": request,
             "user": current_user,
@@ -169,19 +169,25 @@ async def refresh_data(
         }
         
         # Ensure all data is JSON serializable
-        # Convert dict_values to lists for JSON serialization
+        # The chart_data function should already return JSON serializable data,
+        # but let's double-check to be safe
+        
+        # Convert all dictionaries to ensure they're serializable
         for key in ['status_counts', 'category_counts', 'company_counts']:
             if key in response_data:
-                response_data[key] = {k: v for k, v in response_data[key].items()}
-                
-        # Ensure chart data is properly serializable
-        if 'location_chart_data' in response_data:
-            if isinstance(response_data['location_chart_data'].get('values'), type(dict.values)):
-                response_data['location_chart_data']['values'] = list(response_data['location_chart_data']['values'])
-                
-        if 'monthly_chart_data' in response_data:
-            if isinstance(response_data['monthly_chart_data'].get('values'), type(dict.values)):
-                response_data['monthly_chart_data']['values'] = list(response_data['monthly_chart_data']['values'])
+                response_data[key] = dict(response_data[key])
+        
+        # Ensure chart data structures are properly serializable
+        for chart_key in ['location_chart_data', 'monthly_chart_data']:
+            if chart_key in response_data:
+                for data_key in ['labels', 'values']:
+                    if data_key in response_data[chart_key]:
+                        # Convert any non-list to a list
+                        if not isinstance(response_data[chart_key][data_key], list):
+                            try:
+                                response_data[chart_key][data_key] = list(response_data[chart_key][data_key])
+                            except:
+                                response_data[chart_key][data_key] = []
         
         return response_data
     except Exception as e:
