@@ -21,6 +21,7 @@ async def list_assets(
     status: Optional[str] = None,
     category: Optional[str] = None,
     location: Optional[str] = None,
+    room: Optional[str] = None,
     search: Optional[str] = None,
     page: int = 1,
     db: Session = Depends(get_db),
@@ -39,6 +40,8 @@ async def list_assets(
         filtered_assets = [a for a in filtered_assets if a.get('Category') == category]
     if location:
         filtered_assets = [a for a in filtered_assets if a.get('Location') == location]
+        if room:
+            filtered_assets = [a for a in filtered_assets if a.get('Room') == room]
     if search:
         search = search.lower()
         filtered_assets = [a for a in filtered_assets if 
@@ -75,6 +78,11 @@ async def list_assets(
     # Get flash messages
     flash = get_flash(request)
     
+    # Get rooms for selected location
+    rooms = []
+    if location and location in dropdown_options['locations']:
+        rooms = dropdown_options['locations'][location]
+    
     return templates.TemplateResponse(
         "assets/list.html",
         {
@@ -83,11 +91,13 @@ async def list_assets(
             "assets": paginated_assets,
             "categories": dropdown_options['categories'],
             "locations": list(dropdown_options['locations'].keys()),
+            "rooms": rooms,
             "statuses": list(asset_statuses.keys()),
             "status_descriptions": asset_statuses,
             "selected_status": status,
             "selected_category": category,
             "selected_location": location,
+            "selected_room": room,
             "search": search,
             "flash": flash,
             "current_page": page,

@@ -38,7 +38,7 @@
                     </button>
                 </div>
                 
-                <form x-show="showFilters" x-transition class="mt-4 grid grid-cols-1 gap-y-4 gap-x-4 sm:grid-cols-6">
+                <form x-show="showFilters" x-transition x-data="{ showRooms: {{ 'true' if selected_location else 'false' }} }" class="mt-4 grid grid-cols-1 gap-y-4 gap-x-4 sm:grid-cols-6">
                     <div class="sm:col-span-2">
                         <label for="filter-status" class="block text-sm font-medium text-gray-700">Status</label>
                         <select id="filter-status" name="status" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md">
@@ -61,10 +61,20 @@
                     
                     <div class="sm:col-span-2">
                         <label for="filter-location" class="block text-sm font-medium text-gray-700">Location</label>
-                        <select id="filter-location" name="location" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md">
+                        <select id="filter-location" name="location" @change="showRooms = $event.target.value !== ''" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md">
                             <option value="">All Locations</option>
                             {% for location in locations %}
                             <option value="{{ location }}" {% if selected_location == location %}selected{% endif %}>{{ location }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="sm:col-span-2" x-show="showRooms" x-transition>
+                        <label for="filter-room" class="block text-sm font-medium text-gray-700">Room</label>
+                        <select id="filter-room" name="room" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md">
+                            <option value="">All Rooms</option>
+                            {% for room in rooms %}
+                            <option value="{{ room }}" {% if selected_room == room %}selected{% endif %}>{{ room }}</option>
                             {% endfor %}
                         </select>
                     </div>
@@ -186,7 +196,7 @@
                 <div>
                     <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
                         <!-- Previous Page -->
-                        <a href="{{ '/assets/?page=' + (current_page - 1)|string + ('&status=' + selected_status if selected_status else '') + ('&category=' + selected_category if selected_category else '') + ('&location=' + selected_location if selected_location else '') + ('&search=' + search if search else '') }}" 
+                        <a href="{{ '/assets/?page=' + (current_page - 1)|string + ('&status=' + selected_status if selected_status else '') + ('&category=' + selected_category if selected_category else '') + ('&location=' + selected_location if selected_location else '') + ('&room=' + selected_room if selected_room else '') + ('&search=' + search if search else '') }}" 
                            class="{{ 'pointer-events-none bg-gray-100' if current_page == 1 else 'hover:bg-gray-50' }} relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500">
                             <span class="sr-only">Previous</span>
                             <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
@@ -201,7 +211,7 @@
                                 {{ page_num }}
                             </span>
                             {% elif page_num == 1 or page_num == total_pages or (page_num >= current_page - 1 and page_num <= current_page + 1) %}
-                            <a href="{{ '/assets/?page=' + page_num|string + ('&status=' + selected_status if selected_status else '') + ('&category=' + selected_category if selected_category else '') + ('&location=' + selected_location if selected_location else '') + ('&search=' + search if search else '') }}" 
+                            <a href="{{ '/assets/?page=' + page_num|string + ('&status=' + selected_status if selected_status else '') + ('&category=' + selected_category if selected_category else '') + ('&location=' + selected_location if selected_location else '') + ('&room=' + selected_room if selected_room else '') + ('&search=' + search if search else '') }}" 
                                class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
                                 {{ page_num }}
                             </a>
@@ -213,7 +223,7 @@
                         {% endfor %}
                         
                         <!-- Next Page -->
-                        <a href="{{ '/assets/?page=' + (current_page + 1)|string + ('&status=' + selected_status if selected_status else '') + ('&category=' + selected_category if selected_category else '') + ('&location=' + selected_location if selected_location else '') + ('&search=' + search if search else '') }}" 
+                        <a href="{{ '/assets/?page=' + (current_page + 1)|string + ('&status=' + selected_status if selected_status else '') + ('&category=' + selected_category if selected_category else '') + ('&location=' + selected_location if selected_location else '') + ('&room=' + selected_room if selected_room else '') + ('&search=' + search if search else '') }}" 
                            class="{{ 'pointer-events-none bg-gray-100' if current_page == total_pages else 'hover:bg-gray-50' }} relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500">
                             <span class="sr-only">Next</span>
                             <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
@@ -226,14 +236,14 @@
             
             <!-- Mobile Pagination -->
             <div class="flex items-center justify-between w-full sm:hidden">
-                <a href="{{ '/assets/?page=' + (current_page - 1)|string + ('&status=' + selected_status if selected_status else '') + ('&category=' + selected_category if selected_category else '') + ('&location=' + selected_location if selected_location else '') + ('&search=' + search if search else '') }}" 
+                <a href="{{ '/assets/?page=' + (current_page - 1)|string + ('&status=' + selected_status if selected_status else '') + ('&category=' + selected_category if selected_category else '') + ('&location=' + selected_location if selected_location else '') + ('&room=' + selected_room if selected_room else '') + ('&search=' + search if search else '') }}" 
                    class="{{ 'pointer-events-none opacity-50' if current_page == 1 else '' }} relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
                     Previous
                 </a>
                 <div class="text-sm text-gray-700">
                     <span>{{ current_page }} of {{ total_pages }}</span>
                 </div>
-                <a href="{{ '/assets/?page=' + (current_page + 1)|string + ('&status=' + selected_status if selected_status else '') + ('&category=' + selected_category if selected_category else '') + ('&location=' + selected_location if selected_location else '') + ('&search=' + search if search else '') }}" 
+                <a href="{{ '/assets/?page=' + (current_page + 1)|string + ('&status=' + selected_status if selected_status else '') + ('&category=' + selected_category if selected_category else '') + ('&location=' + selected_location if selected_location else '') + ('&room=' + selected_room if selected_room else '') + ('&search=' + search if search else '') }}" 
                    class="{{ 'pointer-events-none opacity-50' if current_page == total_pages else '' }} relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
                     Next
                 </a>
@@ -249,8 +259,21 @@
     document.addEventListener('DOMContentLoaded', function() {
         // Handle filter form submission
         const filterForm = document.querySelector('form');
+        const locationSelect = document.getElementById('filter-location');
+        const roomSelect = document.getElementById('filter-room');
+        
         if (filterForm) {
             filterForm.addEventListener('change', function(e) {
+                // If location changes, clear room selection
+                if (e.target.id === 'filter-location') {
+                    // Don't submit immediately if location is selected
+                    // Let the user select a room first
+                    if (e.target.value !== '') {
+                        return;
+                    }
+                }
+                
+                // For other selects, submit the form
                 if (e.target.tagName === 'SELECT') {
                     this.submit();
                 }
