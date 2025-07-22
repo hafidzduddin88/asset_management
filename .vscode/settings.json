@@ -7,6 +7,8 @@
     "Codegeex.RepoIndex": true,
     "Codegeex.CompletionDelay": 1,
     "Codegeex.Chat.fontSize": 11,
-    "git.path": "C:\\Program Files\\Git\\cmd\\git.exe"
+    "git.path": "C:\\Program Files\\Git\\cmd\\git.exe",
     "git.enableSmartCommit": true,
+    "git.enabled": true,
+
 }

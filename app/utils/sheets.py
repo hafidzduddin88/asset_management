@@ -262,11 +262,39 @@ def get_asset_statistics():
     }
 
 # Add a function to get chart data
-def get_chart_data():
+def get_chart_data(year=None, category=None):
     """
     Prepare data for dashboard charts.
+    
+    Args:
+        year: Optional filter by year
+        category: Optional filter by category
+        
+    Returns:
+        Dictionary with chart data
     """
     assets = get_all_assets()
+    
+    # Apply filters if provided
+    if year or category:
+        filtered_assets = []
+        for asset in assets:
+            include = True
+            
+            if year and asset.get('Purchase Date'):
+                try:
+                    asset_year = datetime.strptime(asset.get('Purchase Date'), '%Y-%m-%d').year
+                    if str(asset_year) != str(year):
+                        include = False
+                except:
+                    pass
+                    
+            if category and asset.get('Category') != category:
+                include = False
+                
+            if include:
+                filtered_assets.append(asset)
+        assets = filtered_assets
     
     # Status chart data
     status_counts = {}
@@ -295,10 +323,11 @@ def get_chart_data():
         category = asset.get('Category', 'Unknown')
         category_counts[category] = category_counts.get(category, 0) + 1
     
-    category_chart_data = {
-        'labels': list(category_counts.keys()),
-        'values': list(category_counts.values())
-    }
+    # Company chart data
+    company_counts = {}
+    for asset in assets:
+        company = asset.get('Company', 'Unknown')
+        company_counts[company] = company_counts.get(company, 0) + 1
     
     # Location chart data
     location_counts = {}
@@ -344,8 +373,9 @@ def get_chart_data():
     }
     
     return {
-        'status_chart_data': status_chart_data,
-        'category_chart_data': category_chart_data,
+        'status_counts': status_counts,
+        'category_counts': category_counts,
+        'company_counts': company_counts,
         'location_chart_data': location_chart_data,
         'monthly_chart_data': monthly_chart_data
     }

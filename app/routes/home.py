@@ -31,55 +31,7 @@ DASHBOARD_SECTIONS = {
     "financial_summary": True
 }
 
-def get_dashboard_data(db: Session, assets: List[Dict[str, Any]]) -> Dict[str, Any]:
-    """
-    Prepare all data needed for the dashboard in a structured format.
-    
-    Args:
-        db: Database session
-        assets: List of assets from Google Sheets
-        
-    Returns:
-        Dictionary containing all dashboard data
-    """
-    # Get asset statistics
-    statistics = get_asset_statistics() or {}
-    status_counts = statistics.get('status_counts', {})
-    financial_summary = statistics.get('financial_summary', {})
-    
-    # Calculate asset counts
-    total_assets = len(assets)
-    active_assets = status_counts.get('Active', 0)
-    under_repair_assets = status_counts.get('Under Repair', 0)
-    in_storage_assets = status_counts.get('In Storage', 0)
-    to_be_disposed_assets = status_counts.get('To Be Disposed', 0)
-    disposed_assets = status_counts.get('Disposed', 0)
-    
-    # Get chart data
-    chart_data = get_chart_data()
-    
-    # Get recent assets (sort by ID in reverse to get newest first)
-    recent_assets = sorted(assets, key=lambda x: x.get('ID', '0'), reverse=True)[:MAX_RECENT_ASSETS]
-    
-    # Return structured dashboard data
-    return {
-        "assets": assets,
-        "total_assets": total_assets,
-        "active_assets": active_assets,
-        "under_repair_assets": under_repair_assets,
-        "in_storage_assets": in_storage_assets,
-        "to_be_disposed_assets": to_be_disposed_assets,
-        "disposed_assets": disposed_assets,
-        "status_counts": status_counts,
-        "status_chart_data": chart_data['status_chart_data'],
-        "category_chart_data": chart_data['category_chart_data'],
-        "location_chart_data": chart_data['location_chart_data'],
-        "monthly_chart_data": chart_data['monthly_chart_data'],
-        "financial_summary": financial_summary,
-        "recent_assets": recent_assets,
-        "sections": DASHBOARD_SECTIONS,
-        "auto_refresh_interval": AUTO_REFRESH_INTERVAL
-    }
+# Removed get_dashboard_data function as it's no longer needed
 
 def get_pending_approvals(db: Session, user: User) -> List[Approval]:
     """
@@ -107,8 +59,11 @@ def get_pending_approvals(db: Session, user: User) -> List[Approval]:
 @router.head("/", response_class=HTMLResponse)
 @router.get("/home", response_class=HTMLResponse)
 @router.head("/home", response_class=HTMLResponse)
+@router.get("/dashboard", response_class=HTMLResponse)
 async def home(
     request: Request, 
+    year: str = None,
+    category: str = None,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
@@ -117,11 +72,27 @@ async def home(
         # Get assets data
         assets = get_all_assets()
         
-        # Get dashboard data
-        dashboard_data = get_dashboard_data(db, assets)
+        # Get available years from assets
+        years = set()
+        categories = set()
+        for asset in assets:
+            if asset.get('Purchase Date'):
+                try:
+                    asset_year = datetime.strptime(asset.get('Purchase Date'), '%Y-%m-%d').year
+                    years.add(str(asset_year))
+                except:
+                    pass
+            if asset.get('Category'):
+                categories.add(asset.get('Category'))
         
-        # Get pending approvals for admin users
-        pending_approvals = get_pending_approvals(db, current_user)
+        years = sorted(list(years), reverse=True)
+        categories = sorted(list(categories))
+        
+        # Get chart data with filters
+        chart_data = get_chart_data(year, category)
+        
+        # Calculate total assets based on filtered data
+        total_assets = sum(chart_data['status_counts'].values())
         
         # Get flash messages
         flash = get_flash(request)
@@ -130,44 +101,34 @@ async def home(
         context = {
             "request": request,
             "user": current_user,
-            "pending_approvals": pending_approvals,
             "flash": flash,
-            **dashboard_data  # Unpack all dashboard data
+            "total_assets": total_assets,
+            "status_counts": chart_data['status_counts'],
+            "category_counts": chart_data['category_counts'],
+            "company_counts": chart_data['company_counts'],
+            "years": years,
+            "categories": categories,
+            "year": year,
+            "category": category
         }
         
         return templates.TemplateResponse("dashboard.html", context)
     except Exception as e:
         logging.error(f"Dashboard error: {str(e)}", exc_info=True)
         
-        # Default chart data (empty) to prevent template error
-        empty_chart_data = {
-            "labels": [],
-            "values": [],
-            "colors": []
-        }
-        
         # Prepare error context
         error_context = {
             "request": request,
             "user": current_user,
-            "assets": [],
             "total_assets": 0,
-            "active_assets": 0,
-            "under_repair_assets": 0,
-            "in_storage_assets": 0,
-            "to_be_disposed_assets": 0,
-            "disposed_assets": 0,
             "status_counts": {},
-            "status_chart_data": empty_chart_data,
-            "category_chart_data": empty_chart_data,
-            "location_chart_data": empty_chart_data,
-            "monthly_chart_data": empty_chart_data,
-            "financial_summary": {},
-            "recent_assets": [],
-            "pending_approvals": [],
-            "sections": DASHBOARD_SECTIONS,
-            "flash": f"Something went wrong: {str(e)}",
-            "auto_refresh_interval": AUTO_REFRESH_INTERVAL
+            "category_counts": {},
+            "company_counts": {},
+            "years": [],
+            "categories": [],
+            "year": None,
+            "category": None,
+            "flash": f"Something went wrong: {str(e)}"
         }
         
         return templates.TemplateResponse("dashboard.html", error_context, status_code=500)
@@ -175,6 +136,8 @@ async def home(
 @router.get("/refresh-data", response_class=JSONResponse)
 async def refresh_data(
     request: Request,
+    year: str = None,
+    category: str = None,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
@@ -183,30 +146,27 @@ async def refresh_data(
         # Invalidate all cache to force refresh from Google Sheets
         invalidate_cache()
         
-        # Get fresh data
-        assets = get_all_assets()
-        dashboard_data = get_dashboard_data(db, assets)
+        # Get fresh data with filters
+        chart_data = get_chart_data(year, category)
+        
+        # Calculate total assets based on filtered data
+        total_assets = sum(chart_data['status_counts'].values())
         
         # Return basic stats for updating the UI
         response_data = {
             "success": True,
             "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            "total_assets": dashboard_data["total_assets"],
-            "status_counts": dashboard_data["status_counts"],
-            "status_chart_data": dashboard_data["status_chart_data"],
-            "category_chart_data": dashboard_data["category_chart_data"],
-            "location_chart_data": dashboard_data["location_chart_data"],
-            "financial_summary": dashboard_data["financial_summary"]
+            "total_assets": total_assets,
+            "status_counts": chart_data['status_counts'],
+            "category_counts": chart_data['category_counts'],
+            "company_counts": chart_data['company_counts']
         }
         
         # Ensure all data is JSON serializable
         # Convert dict_values to lists for JSON serialization
-        if 'status_chart_data' in response_data and 'values' in response_data['status_chart_data']:
-            response_data['status_chart_data']['values'] = list(response_data['status_chart_data']['values'])
-        if 'category_chart_data' in response_data and 'values' in response_data['category_chart_data']:
-            response_data['category_chart_data']['values'] = list(response_data['category_chart_data']['values'])
-        if 'location_chart_data' in response_data and 'values' in response_data['location_chart_data']:
-            response_data['location_chart_data']['values'] = list(response_data['location_chart_data']['values'])
+        for key in ['status_counts', 'category_counts', 'company_counts']:
+            if key in response_data:
+                response_data[key] = {k: v for k, v in response_data[key].items()}
         
         return response_data
     except Exception as e:
