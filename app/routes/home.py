@@ -13,7 +13,7 @@ async def redirect_root():
     return RedirectResponse("/dashboard")
 
 @router.get("/dashboard")
-async def home(request: Request, user = Depends(get_current_user)):
+async def home(request: Request, current_user = Depends(get_current_user)):
     try:
         # Summary and chart data
         summary_data = get_summary_data()
@@ -37,7 +37,7 @@ async def home(request: Request, user = Depends(get_current_user)):
 
         context = {
             "request": request,
-            "user": user,
+            "user": current_user,
             "total_assets": total_assets,
             "total_purchase_value": total_purchase_value,
             "category_counts": category_counts,
@@ -54,5 +54,6 @@ async def home(request: Request, user = Depends(get_current_user)):
         logging.error("Dashboard error: %s", e, exc_info=True)
         return templates.TemplateResponse("error.html", {
             "request": request,
+            "user": current_user,
             "message": "Terjadi kesalahan saat memuat dashboard.",
         })
