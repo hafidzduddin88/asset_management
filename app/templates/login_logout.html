@@ -2,10 +2,18 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Login - Asset Management System</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    
+    <!-- App Icons -->
     <link rel="icon" href="/static/img/favicon.ico">
+    <link rel="icon" type="image/png" sizes="16x16" href="/static/img/favicon-16x16.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/static/img/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="96x96" href="/static/img/favicon-96x96.png">
+    <link rel="apple-touch-icon" href="/static/img/apple-touch-icon.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <style>
         body {
             background-color: #f3f4f6;
@@ -32,6 +40,9 @@
             height: 100px;
             margin: 0 auto 1.5rem;
             object-fit: contain;
+            image-rendering: -webkit-optimize-contrast;
+            image-rendering: crisp-edges;
+            -ms-interpolation-mode: nearest-neighbor;
         }
         .form-input {
             transition: all 0.2s ease-in-out;
@@ -57,7 +68,7 @@
     <div class="login-card space-y-6">
         <div class="text-center">
             <div class="flex justify-center">
-                <img src="/static/img/logo.png" alt="Logo" class="login-logo" onerror="this.onerror=null; this.src='/static/img/logo-fallback.png';">
+                <img src="/static/img/logo.png" alt="Logo" class="login-logo" width="200" height="100" onerror="this.onerror=null; this.src='/static/img/logo-fallback.png';" loading="eager">
             </div>
             <h2 class="text-center text-3xl font-extrabold text-gray-900">
                 Asset Management System

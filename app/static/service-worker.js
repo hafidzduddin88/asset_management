@@ -6,6 +6,13 @@ const urlsToCache = [
   '/static/js/main.js',
   '/static/img/icon-192x192.png',
   '/static/img/icon-512x512.png',
+  '/static/img/android-chrome-192x192.png',
+  '/static/img/android-chrome-512x512.png',
+  '/static/img/apple-touch-icon.png',
+  '/static/img/favicon-16x16.png',
+  '/static/img/favicon-32x32.png',
+  '/static/img/favicon-96x96.png',
+  '/static/img/favicon.ico',
   '/offline'
 ];
 
