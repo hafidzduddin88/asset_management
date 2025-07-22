@@ -470,3 +470,54 @@ def add_asset(asset_data):
     except Exception as e:
         logging.error(f"Error adding asset: {str(e)}")
         return False
+
+def update_asset(asset_id, update_data):
+    """
+    Update an existing asset in the Google Sheet.
+    
+    Args:
+        asset_id: ID of the asset to update
+        update_data: Dictionary containing fields to update
+        
+    Returns:
+        bool: True if successful, False otherwise
+    """
+    try:
+        # Get the assets sheet
+        sheet = get_sheet(SHEETS['ASSETS'])
+        if not sheet:
+            logging.error("Could not get Assets sheet")
+            return False
+        
+        # Get all assets to find the one to update
+        assets = get_all_assets()
+        asset_id_str = str(asset_id)
+        
+        # Find the asset and its row index
+        row_index = None
+        for i, asset in enumerate(assets):
+            if str(asset.get('ID', '')) == asset_id_str:
+                row_index = i + 2  # +2 because Google Sheets is 1-indexed and we have a header row
+                break
+        
+        if row_index is None:
+            logging.error(f"Asset with ID {asset_id} not found")
+            return False
+        
+        # Get headers to determine column indices
+        headers = sheet.row_values(1)
+        
+        # Update each field
+        for field, value in update_data.items():
+            if field in headers:
+                col_index = headers.index(field) + 1  # +1 because Google Sheets is 1-indexed
+                sheet.update_cell(row_index, col_index, value)
+                logging.info(f"Updated {field} to {value} for asset {asset_id}")
+        
+        # Invalidate cache to refresh data
+        invalidate_cache()
+        
+        return True
+    except Exception as e:
+        logging.error(f"Error updating asset: {str(e)}")
+        return False
