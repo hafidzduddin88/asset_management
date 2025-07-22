@@ -13,7 +13,7 @@ async def redirect_root():
     return RedirectResponse("/dashboard")
 
 @router.get("/dashboard")
-async def home(request: Request, user=Depends(get_current_user)):
+async def home(request: Request, user = Depends(get_current_user)):
     try:
         # Summary and chart data
         summary_data = get_summary_data()
