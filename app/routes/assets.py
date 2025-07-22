@@ -22,6 +22,7 @@ async def list_assets(
     category: Optional[str] = None,
     location: Optional[str] = None,
     search: Optional[str] = None,
+    page: int = 1,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
@@ -46,6 +47,24 @@ async def list_assets(
             search in str(a.get('Notes', '')).lower() or
             search in str(a.get('Serial Number', '')).lower()
         ]
+        
+    # Pagination
+    ITEMS_PER_PAGE = 20
+    total_items = len(filtered_assets)
+    total_pages = (total_items + ITEMS_PER_PAGE - 1) // ITEMS_PER_PAGE  # Ceiling division
+    
+    # Ensure page is within valid range
+    if page < 1:
+        page = 1
+    elif page > total_pages and total_pages > 0:
+        page = total_pages
+        
+    # Calculate start and end indices for current page
+    start_idx = (page - 1) * ITEMS_PER_PAGE
+    end_idx = min(start_idx + ITEMS_PER_PAGE, total_items)
+    
+    # Get assets for current page
+    paginated_assets = filtered_assets[start_idx:end_idx]
     
     # Get dropdown options for filters
     dropdown_options = get_dropdown_options()
@@ -61,7 +80,7 @@ async def list_assets(
         {
             "request": request,
             "user": current_user,
-            "assets": filtered_assets,
+            "assets": paginated_assets,
             "categories": dropdown_options['categories'],
             "locations": list(dropdown_options['locations'].keys()),
             "statuses": list(asset_statuses.keys()),
@@ -70,7 +89,11 @@ async def list_assets(
             "selected_category": category,
             "selected_location": location,
             "search": search,
-            "flash": flash
+            "flash": flash,
+            "current_page": page,
+            "total_pages": total_pages,
+            "total_items": total_items,
+            "items_per_page": ITEMS_PER_PAGE
         }
     )
 
