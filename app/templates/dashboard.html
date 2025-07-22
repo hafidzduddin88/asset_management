@@ -18,109 +18,500 @@
       height: 200px;
     }
   }
+  .stat-card {
+    transition: all 0.3s ease;
+    border-radius: 0.75rem;
+    overflow: hidden;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  }
+  .stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  }
+  .stat-icon {
+    width: 3rem;
+    height: 3rem;
+    border-radius: 9999px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .dashboard-section {
+    margin-top: 1.5rem;
+    border-radius: 0.75rem;
+    overflow: hidden;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  }
+  .section-header {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid #e5e7eb;
+    background-color: #f9fafb;
+  }
+  .section-body {
+    padding: 1.5rem;
+    background-color: white;
+  }
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+  .animate-spin {
+    animation: spin 1s linear infinite;
+  }
+  .filter-bar {
+    background-color: white;
+    border-radius: 0.75rem;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+  }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="flex justify-between items-center mb-6">
-  <h1 class="text-2xl font-bold">Dashboard</h1>
-  <form method="get" action="/dashboard" class="flex space-x-2">
-    <select name="year" class="border rounded px-2 py-1">
-      <option value="">All Years</option>
-      {% for y in years %}
-      <option value="{{ y }}" {% if y == year %}selected{% endif %}>{{ y }}</option>
-      {% endfor %}
-    </select>
-    <select name="category" class="border rounded px-2 py-1">
-      <option value="">All Categories</option>
-      {% for c in categories %}
-      <option value="{{ c }}" {% if c == category %}selected{% endif %}>{{ c }}</option>
-      {% endfor %}
-    </select>
-    <button type="submit" class="bg-blue-500 text-white px-3 py-1 rounded">Filter</button>
+<!-- Dashboard Header -->
+<div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+  <div class="mb-4 md:mb-0">
+    <h1 class="text-2xl font-bold text-gray-900">Asset Management Dashboard</h1>
+    <p class="mt-1 text-sm text-gray-500">Welcome back, {{ user.full_name }}</p>
+  </div>
+  <div class="flex items-center">
+    <span id="last-updated" class="text-xs text-gray-500 mr-3">Last updated: <span id="update-time">Just now</span></span>
+    <button id="refresh-button" class="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+      <svg id="refresh-icon" class="-ml-0.5 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+      </svg>
+      Refresh Data
+    </button>
+  </div>
+</div>
+
+<!-- Filter Bar -->
+<div class="filter-bar">
+  <form method="get" action="/dashboard" class="flex flex-col md:flex-row gap-3 items-end">
+    <div class="w-full md:w-auto">
+      <label for="year-filter" class="block text-sm font-medium text-gray-700 mb-1">Year</label>
+      <select id="year-filter" name="year" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+        <option value="">All Years</option>
+        {% for y in years %}
+        <option value="{{ y }}" {% if y == year %}selected{% endif %}>{{ y }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="w-full md:w-auto">
+      <label for="category-filter" class="block text-sm font-medium text-gray-700 mb-1">Category</label>
+      <select id="category-filter" name="category" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+        <option value="">All Categories</option>
+        {% for c in categories %}
+        <option value="{{ c }}" {% if c == category %}selected{% endif %}>{{ c }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+      <svg class="-ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+      </svg>
+      Apply Filters
+    </button>
   </form>
 </div>
 
-<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-  <div class="bg-white p-4 rounded shadow">
-    <h2 class="text-gray-500">Total Assets</h2>
-    <p class="text-2xl font-semibold">{{ total_assets }}</p>
+<!-- Stats Overview -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-5">
+  <!-- Total Assets -->
+  <div class="bg-white stat-card">
+    <div class="p-5">
+      <div class="flex items-center">
+        <div class="stat-icon bg-primary-100">
+          <svg class="h-5 w-5 text-primary-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+          </svg>
+        </div>
+        <div class="ml-4">
+          <p class="text-sm font-medium text-gray-500">Total Assets</p>
+          <p class="text-2xl font-semibold text-gray-900">{{ total_assets }}</p>
+        </div>
+      </div>
+    </div>
   </div>
+
+  <!-- Status Cards -->
   {% for status, count in status_counts.items() %}
-  <div class="bg-white p-4 rounded shadow">
-    <h2 class="text-gray-500">{{ status }}</h2>
-    <p class="text-2xl font-semibold">{{ count }}</p>
+  <div class="bg-white stat-card">
+    <div class="p-5">
+      <div class="flex items-center">
+        <div class="stat-icon 
+          {% if status == 'Active' %}bg-green-100
+          {% elif status == 'Under Repair' %}bg-red-100
+          {% elif status == 'In Storage' %}bg-blue-100
+          {% elif status == 'To Be Disposed' %}bg-yellow-100
+          {% elif status == 'Disposed' %}bg-gray-100
+          {% else %}bg-purple-100{% endif %}">
+          <svg class="h-5 w-5 
+            {% if status == 'Active' %}text-green-600
+            {% elif status == 'Under Repair' %}text-red-600
+            {% elif status == 'In Storage' %}text-blue-600
+            {% elif status == 'To Be Disposed' %}text-yellow-600
+            {% elif status == 'Disposed' %}text-gray-600
+            {% else %}text-purple-600{% endif %}" 
+            xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            {% if status == 'Active' %}
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            {% elif status == 'Under Repair' %}
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+            {% elif status == 'In Storage' %}
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+            {% elif status == 'To Be Disposed' %}
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            {% elif status == 'Disposed' %}
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            {% else %}
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            {% endif %}
+          </svg>
+        </div>
+        <div class="ml-4">
+          <p class="text-sm font-medium text-gray-500">{{ status }}</p>
+          <p class="text-2xl font-semibold text-gray-900">{{ count }}</p>
+        </div>
+      </div>
+    </div>
   </div>
   {% endfor %}
 </div>
 
-<div class="mt-8 bg-white p-4 rounded shadow">
-  <h2 class="text-lg font-semibold mb-4">Assets by Company</h2>
-  <div class="chart-container">
-    <canvas id="companyChart"></canvas>
+<!-- Charts Section -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+  <!-- Status Distribution Chart -->
+  <div class="dashboard-section">
+    <div class="section-header">
+      <h3 class="text-lg font-medium text-gray-900">Asset Status Distribution</h3>
+    </div>
+    <div class="section-body">
+      <div class="chart-container">
+        <canvas id="statusChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Category Distribution Chart -->
+  <div class="dashboard-section">
+    <div class="section-header">
+      <h3 class="text-lg font-medium text-gray-900">Asset Category Distribution</h3>
+    </div>
+    <div class="section-body">
+      <div class="chart-container">
+        <canvas id="categoryChart"></canvas>
+      </div>
+    </div>
   </div>
 </div>
 
-<div class="mt-8 bg-white p-4 rounded shadow">
-  <h2 class="text-lg font-semibold mb-4">Assets by Category</h2>
-  <div class="chart-container">
-    <canvas id="categoryChart"></canvas>
+<!-- Second Row of Charts -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+  <!-- Company Distribution Chart -->
+  <div class="dashboard-section">
+    <div class="section-header">
+      <h3 class="text-lg font-medium text-gray-900">Assets by Company</h3>
+    </div>
+    <div class="section-body">
+      <div class="chart-container">
+        <canvas id="companyChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Monthly Additions Chart -->
+  <div class="dashboard-section">
+    <div class="section-header">
+      <h3 class="text-lg font-medium text-gray-900">Monthly Asset Additions</h3>
+    </div>
+    <div class="section-body">
+      <div class="chart-container">
+        <canvas id="monthlyChart"></canvas>
+      </div>
+    </div>
   </div>
 </div>
+{% endblock %}
 
+{% block scripts %}
 <script>
-  const companyData = {
-    labels: {{ company_counts.keys() | list | tojson }},
-    datasets: [{
-      label: 'Assets by Company',
-      data: {{ company_counts.values() | list | tojson }},
-      backgroundColor: 'rgba(59, 130, 246, 0.6)',
-      borderColor: 'rgba(59, 130, 246, 1)',
-      borderWidth: 1
-    }]
-  };
-
-  const companyConfig = {
-    type: 'bar',
-    data: companyData,
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      scales: {
-        y: {
-          beginAtZero: true
+  // Auto-refresh interval in milliseconds (60 seconds)
+  const AUTO_REFRESH_INTERVAL = 60000;
+  let autoRefreshTimer;
+  let isRefreshing = false;
+  
+  // Chart references
+  let statusChart, categoryChart, companyChart, monthlyChart;
+  
+  document.addEventListener('DOMContentLoaded', function() {
+    initializeCharts();
+    setupAutoRefresh();
+    
+    // Set up refresh button
+    document.getElementById('refresh-button').addEventListener('click', function() {
+      refreshData();
+    });
+    
+    // Set up filter form
+    const filterForm = document.querySelector('form');
+    const yearFilter = document.getElementById('year-filter');
+    const categoryFilter = document.getElementById('category-filter');
+    
+    // Auto-submit on select change
+    yearFilter.addEventListener('change', function() {
+      filterForm.submit();
+    });
+    
+    categoryFilter.addEventListener('change', function() {
+      filterForm.submit();
+    });
+  });
+  
+  function initializeCharts() {
+    // Status Distribution Chart
+    const statusCtx = document.getElementById('statusChart').getContext('2d');
+    statusChart = new Chart(statusCtx, {
+      type: 'doughnut',
+      data: {
+        labels: Object.keys({{ status_counts | tojson }}),
+        datasets: [{
+          data: Object.values({{ status_counts | tojson }}),
+          backgroundColor: [
+            '#10B981', // Active - green
+            '#EF4444', // Under Repair - red
+            '#3B82F6', // In Storage - blue
+            '#F59E0B', // To Be Disposed - yellow
+            '#6B7280', // Disposed - gray
+            '#8B5CF6'  // Other - purple
+          ],
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'right',
+            labels: {
+              boxWidth: 12
+            }
+          }
         }
       }
-    }
-  };
-
-  new Chart(document.getElementById('companyChart'), companyConfig);
-
-  const categoryData = {
-    labels: {{ category_counts.keys() | list | tojson }},
-    datasets: [{
-      label: 'Assets by Category',
-      data: {{ category_counts.values() | list | tojson }},
-      backgroundColor: 'rgba(16, 185, 129, 0.6)',
-      borderColor: 'rgba(16, 185, 129, 1)',
-      borderWidth: 1
-    }]
-  };
-
-  const categoryConfig = {
-    type: 'bar',
-    data: categoryData,
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      scales: {
-        y: {
-          beginAtZero: true
+    });
+    
+    // Category Distribution Chart
+    const categoryCtx = document.getElementById('categoryChart').getContext('2d');
+    categoryChart = new Chart(categoryCtx, {
+      type: 'pie',
+      data: {
+        labels: Object.keys({{ category_counts | tojson }}),
+        datasets: [{
+          data: Object.values({{ category_counts | tojson }}),
+          backgroundColor: [
+            '#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6',
+            '#EC4899', '#6366F1', '#14B8A6', '#F97316', '#A855F7'
+          ],
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'right',
+            labels: {
+              boxWidth: 12
+            }
+          }
         }
       }
+    });
+    
+    // Company Chart
+    const companyCtx = document.getElementById('companyChart').getContext('2d');
+    companyChart = new Chart(companyCtx, {
+      type: 'bar',
+      data: {
+        labels: Object.keys({{ company_counts | tojson }}),
+        datasets: [{
+          label: 'Assets by Company',
+          data: Object.values({{ company_counts | tojson }}),
+          backgroundColor: 'rgba(59, 130, 246, 0.6)',
+          borderColor: 'rgba(59, 130, 246, 1)',
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              precision: 0
+            }
+          }
+        }
+      }
+    });
+    
+    // Monthly Chart (using location_chart_data for now)
+    const monthlyCtx = document.getElementById('monthlyChart').getContext('2d');
+    monthlyChart = new Chart(monthlyCtx, {
+      type: 'line',
+      data: {
+        labels: {{ location_chart_data.labels | tojson }},
+        datasets: [{
+          label: 'Assets Added',
+          data: {{ location_chart_data.values | tojson }},
+          backgroundColor: 'rgba(16, 185, 129, 0.2)',
+          borderColor: 'rgba(16, 185, 129, 1)',
+          borderWidth: 2,
+          tension: 0.3,
+          fill: true
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              precision: 0
+            }
+          }
+        }
+      }
+    });
+  }
+  
+  // Function to set up auto-refresh
+  function setupAutoRefresh() {
+    // Clear any existing timer
+    if (autoRefreshTimer) {
+      clearInterval(autoRefreshTimer);
     }
-  };
-
-  new Chart(document.getElementById('categoryChart'), categoryConfig);
+    
+    // Set up new timer
+    autoRefreshTimer = setInterval(function() {
+      refreshData();
+    }, AUTO_REFRESH_INTERVAL);
+    
+    // Update the last updated time
+    updateLastUpdatedTime();
+  }
+  
+  // Function to refresh data
+  function refreshData() {
+    if (isRefreshing) return;
+    isRefreshing = true;
+    
+    // Show loading state
+    const refreshIcon = document.getElementById('refresh-icon');
+    refreshIcon.classList.add('animate-spin');
+    
+    // Build URL with current filters
+    const yearFilter = document.getElementById('year-filter').value;
+    const categoryFilter = document.getElementById('category-filter').value;
+    let url = '/refresh-data';
+    const params = [];
+    
+    if (yearFilter) {
+      params.push(`year=${encodeURIComponent(yearFilter)}`);
+    }
+    
+    if (categoryFilter) {
+      params.push(`category=${encodeURIComponent(categoryFilter)}`);
+    }
+    
+    if (params.length > 0) {
+      url += '?' + params.join('&');
+    }
+    
+    // Fetch fresh data from the server
+    fetch(url)
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          // Update stats
+          updateStats(data);
+          
+          // Update charts
+          updateCharts(data);
+          
+          // Update last updated time
+          updateLastUpdatedTime(data.timestamp);
+        } else {
+          console.error('Error refreshing data:', data.error);
+        }
+      })
+      .catch(error => {
+        console.error('Error refreshing data:', error);
+      })
+      .finally(() => {
+        // Remove loading state
+        refreshIcon.classList.remove('animate-spin');
+        isRefreshing = false;
+      });
+  }
+  
+  // Function to update stats
+  function updateStats(data) {
+    // Update total assets
+    document.querySelector('.stat-card:nth-child(1) .text-2xl').textContent = data.total_assets;
+    
+    // Update status counts
+    const statusCards = document.querySelectorAll('.stat-card:not(:first-child)');
+    let cardIndex = 0;
+    
+    for (const [status, count] of Object.entries(data.status_counts)) {
+      if (cardIndex < statusCards.length) {
+        statusCards[cardIndex].querySelector('.text-sm').textContent = status;
+        statusCards[cardIndex].querySelector('.text-2xl').textContent = count;
+        cardIndex++;
+      }
+    }
+  }
+  
+  // Function to update charts
+  function updateCharts(data) {
+    // Update status chart
+    if (data.status_counts && statusChart) {
+      statusChart.data.labels = Object.keys(data.status_counts);
+      statusChart.data.datasets[0].data = Object.values(data.status_counts);
+      statusChart.update();
+    }
+    
+    // Update category chart
+    if (data.category_counts && categoryChart) {
+      categoryChart.data.labels = Object.keys(data.category_counts);
+      categoryChart.data.datasets[0].data = Object.values(data.category_counts);
+      categoryChart.update();
+    }
+    
+    // Update company chart
+    if (data.company_counts && companyChart) {
+      companyChart.data.labels = Object.keys(data.company_counts);
+      companyChart.data.datasets[0].data = Object.values(data.company_counts);
+      companyChart.update();
+    }
+  }
+  
+  // Function to update last updated time
+  function updateLastUpdatedTime(timestamp) {
+    const updateTimeElement = document.getElementById('update-time');
+    if (timestamp) {
+      updateTimeElement.textContent = timestamp;
+    } else {
+      const now = new Date();
+      updateTimeElement.textContent = now.toLocaleTimeString();
+    }
+  }
 </script>
 {% endblock %}

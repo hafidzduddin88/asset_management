@@ -106,6 +106,8 @@ async def home(
             "status_counts": chart_data['status_counts'],
             "category_counts": chart_data['category_counts'],
             "company_counts": chart_data['company_counts'],
+            "location_chart_data": chart_data['location_chart_data'],
+            "monthly_chart_data": chart_data['monthly_chart_data'],
             "years": years,
             "categories": categories,
             "year": year,
@@ -124,6 +126,8 @@ async def home(
             "status_counts": {},
             "category_counts": {},
             "company_counts": {},
+            "location_chart_data": {"labels": [], "values": []},
+            "monthly_chart_data": {"labels": [], "values": []},
             "years": [],
             "categories": [],
             "year": None,
@@ -159,7 +163,9 @@ async def refresh_data(
             "total_assets": total_assets,
             "status_counts": chart_data['status_counts'],
             "category_counts": chart_data['category_counts'],
-            "company_counts": chart_data['company_counts']
+            "company_counts": chart_data['company_counts'],
+            "location_chart_data": chart_data['location_chart_data'],
+            "monthly_chart_data": chart_data['monthly_chart_data']
         }
         
         # Ensure all data is JSON serializable
