@@ -55,7 +55,7 @@ def get_token_from_request(request: Request) -> str:
     token = request.cookies.get("access_token")
     return token
 
-def get_current_user(request: Request = Depends(), db: Session = Depends(get_db)) -> User:
+def get_current_user(request: Request, db: Session = Depends(get_db)) -> User:
     token = get_token_from_request(request)
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
