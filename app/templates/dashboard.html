@@ -114,9 +114,9 @@
 
     <script>
         // Age distribution chart
-		const ageLabels = {{ age_distribution | map(attribute='0') | list | tojson }};
-		const ageData = {{ age_distribution | map(attribute='1') | list | tojson }};
-
+        const ageDistribution = {{ age_distribution | tojson }};
+        const ageLabels = ageDistribution.map(item => item.label);
+        const ageData = ageDistribution.map(item => item.value);
 
         const ctxAge = document.getElementById('ageChart').getContext('2d');
         new Chart(ctxAge, {
@@ -126,13 +126,13 @@
                 datasets: [{
                     label: 'Jumlah Aset',
                     data: ageData,
-                    backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                   backgroundColor: 'rgba(54, 162, 235, 0.6)',
                     borderColor: 'rgba(54, 162, 235, 1)',
-                    borderWidth: 1
-                }]
+                   borderWidth: 1
+               }]
             },
             options: {
-                scales: {
+              scales: {
                     y: {
                         beginAtZero: true
                     }
