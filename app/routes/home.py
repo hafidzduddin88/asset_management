@@ -13,7 +13,10 @@ async def redirect_root():
     return RedirectResponse("/dashboard")
 
 @router.get("/dashboard")
-async def home(request: Request, current_user = Depends(get_current_user)):
+async def home(
+    request: Request = Depends(get_request),
+    current_user=Depends(get_current_user)
+):
     try:
         # Summary and chart data
         summary_data = get_summary_data()
@@ -30,7 +33,6 @@ async def home(request: Request, current_user = Depends(get_current_user)):
 
         monthly_chart_labels = chart_data.get("monthly_chart_data", {}).get("labels", [])
         monthly_chart_values = chart_data.get("monthly_chart_data", {}).get("values", [])
-
         age_distribution = chart_data.get("age_distribution", {})
 
         latest_assets = sorted(all_assets, key=lambda a: a.get("Purchase Date", ""), reverse=True)[:10]
