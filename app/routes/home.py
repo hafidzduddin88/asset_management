@@ -21,11 +21,16 @@ async def home(request: Request, current_user = Depends(get_current_user)):
         chart_data = get_chart_data()
         all_assets = get_all_assets()
 
+        # Filter out disposed assets for dashboard counts
+        active_assets = [asset for asset in all_assets if asset.get("Status", "") != "Disposed"]
+        disposed_assets = [asset for asset in all_assets if asset.get("Status", "") == "Disposed"]
+        
         # Prepare variables for dashboard.html
-        total_assets = len(all_assets)
+        total_assets = len(active_assets)
         total_purchase_value = summary_data.get("total_purchase_value", 0)
         total_book_value = summary_data.get("total_book_value", 0)
         total_depreciation_value = summary_data.get("total_depreciation_value", 0)
+        disposed_count = len(disposed_assets)
         category_counts = chart_data.get("category_counts", {})
         
         # Format location data
@@ -46,9 +51,9 @@ async def home(request: Request, current_user = Depends(get_current_user)):
             for k, v in age_distribution.items()
         ]
 
-        # Format latest assets
+        # Format latest assets (excluding disposed assets)
         latest_assets = sorted(
-            all_assets, 
+            active_assets, 
             key=lambda a: a.get("Purchase Date", ""), 
             reverse=True
         )[:10]
@@ -60,6 +65,7 @@ async def home(request: Request, current_user = Depends(get_current_user)):
             "total_purchase_value": total_purchase_value,
             "total_book_value": total_book_value,
             "total_depreciation_value": total_depreciation_value,
+            "disposed_count": disposed_count,
             "category_counts": category_counts,
             "location_counts": location_counts_dict,
             "monthly_chart_labels": monthly_chart_labels,

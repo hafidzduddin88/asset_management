@@ -19,12 +19,13 @@
     <!-- Summary Cards -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
         <div class="bg-white rounded-lg shadow p-6">
-            <h2 class="text-lg font-medium text-gray-900 mb-2">Total Aset</h2>
+            <h2 class="text-lg font-medium text-gray-900 mb-2">Total Aset Aktif</h2>
             <p class="text-3xl font-bold text-primary-600">{{ total_assets }}</p>
             <div class="space-y-1 mt-2">
                 <p class="text-sm text-gray-500">Total Nilai Perolehan: <span class="font-medium">Rp {{ "{:,.0f}".format(total_purchase_value) }}</span></p>
                 <p class="text-sm text-gray-500">Total Book Value: <span class="font-medium">Rp {{ "{:,.0f}".format(total_book_value) }}</span></p>
                 <p class="text-sm text-gray-500">Total Depresiasi: <span class="font-medium">Rp {{ "{:,.0f}".format(total_depreciation_value) }}</span></p>
+                <p class="text-sm text-gray-400 mt-2 border-t pt-2">Aset Disposed: <span class="font-medium">{{ disposed_count }}</span></p>
             </div>
         </div>
 
