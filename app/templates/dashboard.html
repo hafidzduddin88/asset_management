@@ -133,134 +133,16 @@
         </div>
     </div>
     
-    <!-- Asset Status Cards -->
-    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 sm:gap-6 mb-6">
-        <!-- Damaged Assets -->
-        <div class="bg-white rounded-lg shadow p-4 sm:p-6 status-card damaged">
-            <div class="flex justify-between items-start">
-                <div>
-                    <h2 class="text-base sm:text-lg font-medium text-gray-900 mb-2">Damaged</h2>
-                    <p class="text-2xl sm:text-3xl font-bold text-red-600">{{ damaged_count }}</p>
-                </div>
-                <div class="status-icon bg-red-100">
-                    <i class="fas fa-tools text-red-600"></i>
-                </div>
-            </div>
-            <p class="text-sm text-gray-500 mt-3">Assets under repair</p>
-            <div class="mt-4 pt-2 border-t border-gray-100">
-                <a href="/damage" class="text-xs text-red-600 hover:text-red-800 font-medium flex items-center">
-                    View Details
-                    <svg class="w-3 h-3 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                    </svg>
-                </a>
-            </div>
-        </div>
-        
-        <!-- Relocated Assets -->
-        <div class="bg-white rounded-lg shadow p-4 sm:p-6 status-card relocated">
-            <div class="flex justify-between items-start">
-                <div>
-                    <h2 class="text-base sm:text-lg font-medium text-gray-900 mb-2">Relocated</h2>
-                    <p class="text-2xl sm:text-3xl font-bold text-blue-600">{{ relocated_count }}</p>
-                </div>
-                <div class="status-icon bg-blue-100">
-                    <i class="fas fa-dolly text-blue-600"></i>
-                </div>
-            </div>
-            <p class="text-sm text-gray-500 mt-3">Recently moved assets</p>
-            <div class="mt-4 pt-2 border-t border-gray-100">
-                <a href="/relocation" class="text-xs text-blue-600 hover:text-blue-800 font-medium flex items-center">
-                    View Details
-                    <svg class="w-3 h-3 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                    </svg>
-                </a>
-            </div>
-        </div>
-        
-        <!-- Repaired Assets -->
-        <div class="bg-white rounded-lg shadow p-4 sm:p-6 status-card repaired">
-            <div class="flex justify-between items-start">
-                <div>
-                    <h2 class="text-base sm:text-lg font-medium text-gray-900 mb-2">Repaired</h2>
-                    <p class="text-2xl sm:text-3xl font-bold text-green-600">{{ repaired_count }}</p>
-                </div>
-                <div class="status-icon bg-green-100">
-                    <i class="fas fa-check-circle text-green-600"></i>
-                </div>
-            </div>
-            <p class="text-sm text-gray-500 mt-3">Fixed assets</p>
-            <div class="mt-4 pt-2 border-t border-gray-100">
-                <a href="/damage" class="text-xs text-green-600 hover:text-green-800 font-medium flex items-center">
-                    View Details
-                    <svg class="w-3 h-3 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                    </svg>
-                </a>
-            </div>
-        </div>
-        
-        <!-- To Be Disposed Assets -->
-        <div class="bg-white rounded-lg shadow p-4 sm:p-6 status-card to-dispose">
-            <div class="flex justify-between items-start">
-                <div>
-                    <h2 class="text-base sm:text-lg font-medium text-gray-900 mb-2">To Be Disposed</h2>
-                    <p class="text-2xl sm:text-3xl font-bold text-yellow-600">{{ to_be_disposed_count }}</p>
-                </div>
-                <div class="status-icon bg-yellow-100">
-                    <i class="fas fa-exclamation-triangle text-yellow-600"></i>
-                </div>
-            </div>
-            <p class="text-sm text-gray-500 mt-3">Pending disposal</p>
-            <div class="mt-4 pt-2 border-t border-gray-100">
-                <a href="/disposal" class="text-xs text-yellow-600 hover:text-yellow-800 font-medium flex items-center">
-                    View Details
-                    <svg class="w-3 h-3 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                    </svg>
-                </a>
-            </div>
-        </div>
-        
-        <!-- Disposed Assets -->
-        <div class="bg-white rounded-lg shadow p-4 sm:p-6 status-card disposed">
-            <div class="flex justify-between items-start">
-                <div>
-                    <h2 class="text-base sm:text-lg font-medium text-gray-900 mb-2">Disposed</h2>
-                    <p class="text-2xl sm:text-3xl font-bold text-gray-600">{{ disposed_count }}</p>
-                </div>
-                <div class="status-icon bg-gray-100">
-                    <i class="fas fa-trash-alt text-gray-600"></i>
-                </div>
-            </div>
-            <p class="text-sm text-gray-500 mt-3">Removed from inventory</p>
-            <div class="mt-4 pt-2 border-t border-gray-100">
-                <a href="/disposal" class="text-xs text-gray-600 hover:text-gray-800 font-medium flex items-center">
-                    View Details
-                    <svg class="w-3 h-3 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                    </svg>
-                </a>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Charts Section -->
+    <!-- Asset Status Distribution Chart -->
     <div class="mb-6">
         <div class="bg-white rounded-lg shadow overflow-hidden">
             <div class="flex flex-col md:flex-row">
                 <div class="w-full md:w-3/4 p-4 sm:p-6">
                     <div class="flex justify-between items-center mb-4">
-                        <h3 class="text-base sm:text-lg font-medium text-gray-900 chart-title">Monthly Asset Additions (Last 12 Months)</h3>
-                        <div class="flex space-x-2">
-                            <button class="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded text-gray-600 chart-period-btn active" data-period="month">Monthly</button>
-                            <button class="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded text-gray-600 chart-period-btn" data-period="quarter">Quarterly</button>
-                            <button class="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded text-gray-600 chart-period-btn" data-period="year">Yearly</button>
-                        </div>
+                        <h3 class="text-base sm:text-lg font-medium text-gray-900">Asset Status Distribution</h3>
                     </div>
                     <div class="chart-container">
-                        <canvas id="monthlyChart"></canvas>
+                        <canvas id="statusChart"></canvas>
                     </div>
                 </div>
                 <div class="w-full md:w-1/4 bg-gray-50 p-4 sm:p-6 border-t md:border-t-0 md:border-l border-gray-200">
@@ -272,7 +154,7 @@
                                 <span class="font-medium">{{ total_assets }}</span>
                             </div>
                             <div class="w-full bg-gray-200 rounded-full h-1.5">
-                                <div class="bg-primary-600 h-1.5 rounded-full" style="width: 100%"></div>
+                                <div class="bg-green-600 h-1.5 rounded-full" style="width: 100%"></div>
                             </div>
                         </div>
                         <div>
@@ -293,6 +175,15 @@
                                 <div class="bg-yellow-600 h-1.5 rounded-full" style="width: {{ (to_be_disposed_count / total_assets * 100) if total_assets > 0 else 0 }}%"></div>
                             </div>
                         </div>
+                        <div>
+                            <div class="flex justify-between text-xs mb-1">
+                                <span class="text-gray-500">Disposed</span>
+                                <span class="font-medium">{{ disposed_count }}</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-1.5">
+                                <div class="bg-gray-600 h-1.5 rounded-full" style="width: {{ (disposed_count / total_assets * 100) if total_assets > 0 else 0 }}%"></div>
+                            </div>
+                        </div>
                         <div class="pt-4 border-t border-gray-200">
                             <a href="/export" class="text-xs text-primary-600 hover:text-primary-800 font-medium flex items-center">
                                 <i class="fas fa-file-export mr-1"></i> Export Report
@@ -300,6 +191,25 @@
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Charts Section -->
+    <div class="mb-6">
+        <div class="bg-white rounded-lg shadow overflow-hidden">
+            <div class="p-4 sm:p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-base sm:text-lg font-medium text-gray-900 chart-title">Monthly Asset Additions (Last 12 Months)</h3>
+                        <div class="flex space-x-2">
+                            <button class="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded text-gray-600 chart-period-btn active" data-period="month">Monthly</button>
+                            <button class="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded text-gray-600 chart-period-btn" data-period="quarter">Quarterly</button>
+                            <button class="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded text-gray-600 chart-period-btn" data-period="year">Yearly</button>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="monthlyChart"></canvas>
+                    </div>
             </div>
         </div>
     </div>
@@ -369,6 +279,50 @@
 
 {% block scripts %}
 <script>
+    // Status distribution chart
+    const statusLabels = ['Active', 'Damaged', 'To Be Disposed', 'Disposed'];
+    const statusData = [{{ total_assets }}, {{ damaged_count }}, {{ to_be_disposed_count }}, {{ disposed_count }}];
+    const statusColors = ['#10B981', '#EF4444', '#F59E0B', '#6B7280'];
+    
+    const ctxStatus = document.getElementById('statusChart').getContext('2d');
+    window.statusChart = new Chart(ctxStatus, {
+        type: 'doughnut',
+        data: {
+            labels: statusLabels,
+            datasets: [{
+                data: statusData,
+                backgroundColor: statusColors,
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'right',
+                    labels: {
+                        boxWidth: 12,
+                        font: {
+                            size: isMobile ? 10 : 12
+                        }
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const label = context.label || '';
+                            const value = context.raw || 0;
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
+                            return `${label}: ${value} (${percentage}%)`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+    
     // Check if we're on a mobile device and handle resize
     let isMobile = window.innerWidth < 640;
     
