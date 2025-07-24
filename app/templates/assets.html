@@ -111,25 +111,11 @@
 
 {% block scripts %}
 <script>
-// Sample data - replace with actual API calls
-const assetsData = [
-    {id: 1, name: "Laptop Dell XPS 13", location: "Office Building A", room: "Room 101", category: "IT Equipment", status: "Active", purchase_date: "2023-01-15", purchase_cost: 15000000, book_value: 12000000},
-    {id: 2, name: "Office Chair Ergonomic", location: "Office Building A", room: "Room 101", category: "Furniture", status: "Active", purchase_date: "2023-02-10", purchase_cost: 2500000, book_value: 2000000},
-    {id: 3, name: "Projector Epson EB-X41", location: "Office Building A", room: "Meeting Room A", category: "IT Equipment", status: "Active", purchase_date: "2023-03-05", purchase_cost: 8000000, book_value: 6500000},
-    {id: 4, name: "Printer HP LaserJet Pro", location: "Office Building B", room: "Room 201", category: "IT Equipment", status: "Active", purchase_date: "2023-01-20", purchase_cost: 4500000, book_value: 3600000},
-    {id: 5, name: "Executive Desk", location: "Office Building B", room: "Room 201", category: "Furniture", status: "Active", purchase_date: "2023-02-15", purchase_cost: 3500000, book_value: 2800000},
-    {id: 6, name: "Server Dell PowerEdge", location: "Warehouse", room: "Server Room", category: "IT Equipment", status: "Active", purchase_date: "2023-01-10", purchase_cost: 25000000, book_value: 20000000},
-    {id: 7, name: "Air Conditioner", location: "Office Building A", room: "Room 102", category: "HVAC", status: "Active", purchase_date: "2023-03-01", purchase_cost: 6000000, book_value: 5000000},
-    {id: 8, name: "Conference Table", location: "Office Building B", room: "Conference Room", category: "Furniture", status: "Active", purchase_date: "2023-02-20", purchase_cost: 4000000, book_value: 3200000},
-];
+// Get real asset data from server
+const assetsData = {{ assets_data | tojson }};
 
-// Room reference data - cached at page load
-const roomsData = {
-    "Office Building A": ["Room 101", "Room 102", "Meeting Room A", "Meeting Room B"],
-    "Office Building B": ["Room 201", "Room 202", "Conference Room"],
-    "Warehouse": ["Server Room", "Storage Area A", "Storage Area B"],
-    "Factory": ["Production Floor", "Quality Control", "Maintenance Room"]
-};
+// Room reference data - build from actual asset data
+let roomsData = {};
 
 // Pagination settings
 const ITEMS_PER_PAGE = 20;
@@ -139,13 +125,49 @@ let allAssets = [];
 
 // Initialize
 document.addEventListener('DOMContentLoaded', function() {
-    allAssets = assetsData.filter(asset => asset.status === 'Active');
+    // Process asset data and ensure proper field mapping
+    allAssets = assetsData.map(asset => {
+        return {
+            id: asset.ID || asset.id,
+            name: asset['Asset Name'] || asset.Name || asset.name || 'Unnamed Asset',
+            location: asset.Location || asset.location || '',
+            room: asset.Room || asset.room || '',
+            category: asset.Category || asset.category || '',
+            status: asset.Status || asset.status || 'Active',
+            purchase_date: asset['Purchase Date'] || asset.purchase_date || '',
+            purchase_cost: parseFloat(asset['Purchase Cost'] || asset.purchase_cost || 0),
+            book_value: parseFloat(asset['Book Value'] || asset.book_value || 0)
+        };
+    }).filter(asset => asset.status !== 'Disposed');
+    
     filteredAssets = [...allAssets];
+    
+    // Build rooms data from actual assets
+    buildRoomsData();
     
     initializeFilters();
     displayAssets();
     setupEventListeners();
 });
+
+function buildRoomsData() {
+    // Build rooms data from actual asset locations and rooms
+    roomsData = {};
+    
+    allAssets.forEach(asset => {
+        if (asset.location && asset.room) {
+            if (!roomsData[asset.location]) {
+                roomsData[asset.location] = new Set();
+            }
+            roomsData[asset.location].add(asset.room);
+        }
+    });
+    
+    // Convert Sets to Arrays and sort
+    Object.keys(roomsData).forEach(location => {
+        roomsData[location] = Array.from(roomsData[location]).sort();
+    });
+}
 
 function initializeFilters() {
     const locationFilter = document.getElementById('locationFilter');
