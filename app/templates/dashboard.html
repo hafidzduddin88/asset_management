@@ -31,9 +31,9 @@
             <h2 class="text-base sm:text-lg font-medium text-gray-900 mb-2">Active Assets</h2>
             <p class="text-2xl sm:text-3xl font-bold text-primary-600">{{ total_assets }}</p>
             <div class="space-y-1 mt-2">
-                <p class="text-sm text-gray-500">Total Purchase Value: <span class="font-medium">$ {{ "{:,.0f}".format(total_purchase_value) }}</span></p>
-                <p class="text-sm text-gray-500">Total Book Value: <span class="font-medium">$ {{ "{:,.0f}".format(total_book_value) }}</span></p>
-                <p class="text-sm text-gray-500">Total Depreciation: <span class="font-medium">$ {{ "{:,.0f}".format(total_depreciation_value) }}</span></p>
+                <p class="text-sm text-gray-500">Total Purchase Value: <span class="font-medium">Rp {{ "{:,.0f}".format(total_purchase_value) }}</span></p>
+                <p class="text-sm text-gray-500">Total Book Value: <span class="font-medium">Rp {{ "{:,.0f}".format(total_book_value) }}</span></p>
+                <p class="text-sm text-gray-500">Total Depreciation: <span class="font-medium">Rp {{ "{:,.0f}".format(total_depreciation_value) }}</span></p>
                 <p class="text-sm text-gray-400 mt-2 border-t pt-2">Disposed Assets: <span class="font-medium">{{ disposed_count }}</span></p>
             </div>
         </div>
@@ -62,16 +62,47 @@
             </ul>
         </div>
     </div>
-
-    <!-- Charts -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6">
+    
+    <!-- Asset Status Cards -->
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 sm:gap-6 mb-6">
+        <!-- Damaged Assets -->
         <div class="bg-white rounded-lg shadow p-4 sm:p-6">
-            <h3 class="text-base sm:text-lg font-medium text-gray-900 mb-2 sm:mb-4">Asset Age Distribution</h3>
-            <div class="chart-container">
-                <canvas id="ageChart"></canvas>
-            </div>
+            <h2 class="text-base sm:text-lg font-medium text-gray-900 mb-2">Damaged</h2>
+            <p class="text-2xl sm:text-3xl font-bold text-red-600">{{ damaged_count }}</p>
+            <p class="text-sm text-gray-500 mt-1">Assets under repair</p>
         </div>
-
+        
+        <!-- Relocated Assets -->
+        <div class="bg-white rounded-lg shadow p-4 sm:p-6">
+            <h2 class="text-base sm:text-lg font-medium text-gray-900 mb-2">Relocated</h2>
+            <p class="text-2xl sm:text-3xl font-bold text-blue-600">{{ relocated_count }}</p>
+            <p class="text-sm text-gray-500 mt-1">Recently moved assets</p>
+        </div>
+        
+        <!-- Repaired Assets -->
+        <div class="bg-white rounded-lg shadow p-4 sm:p-6">
+            <h2 class="text-base sm:text-lg font-medium text-gray-900 mb-2">Repaired</h2>
+            <p class="text-2xl sm:text-3xl font-bold text-green-600">{{ repaired_count }}</p>
+            <p class="text-sm text-gray-500 mt-1">Fixed assets</p>
+        </div>
+        
+        <!-- To Be Disposed Assets -->
+        <div class="bg-white rounded-lg shadow p-4 sm:p-6">
+            <h2 class="text-base sm:text-lg font-medium text-gray-900 mb-2">To Be Disposed</h2>
+            <p class="text-2xl sm:text-3xl font-bold text-yellow-600">{{ to_be_disposed_count }}</p>
+            <p class="text-sm text-gray-500 mt-1">Pending disposal</p>
+        </div>
+        
+        <!-- Disposed Assets -->
+        <div class="bg-white rounded-lg shadow p-4 sm:p-6">
+            <h2 class="text-base sm:text-lg font-medium text-gray-900 mb-2">Disposed</h2>
+            <p class="text-2xl sm:text-3xl font-bold text-gray-600">{{ disposed_count }}</p>
+            <p class="text-sm text-gray-500 mt-1">Removed from inventory</p>
+        </div>
+    </div>
+    
+    <!-- Charts -->
+    <div class="mb-6">
         <div class="bg-white rounded-lg shadow p-4 sm:p-6">
             <h3 class="text-base sm:text-lg font-medium text-gray-900 mb-2 sm:mb-4">Monthly Asset Additions</h3>
             <div class="chart-container">
@@ -98,7 +129,7 @@
                 <tbody class="bg-white divide-y divide-gray-200">
                     {% for asset in latest_assets %}
                         <tr>
-                            <td class="px-3 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-medium text-gray-900">{{ asset.get("Asset Name", "") }}</td>
+                            <td class="px-3 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-medium text-gray-900">{{ asset.get("Name", asset.get("Asset Name", "")) }}</td>
                             <td class="px-3 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">{{ asset.get("Category", "") }}</td>
                             <td class="px-3 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">{{ asset.get("Location", "") }}</td>
                             <td class="px-3 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">{{ asset.get("Purchase Date", "") }}</td>
@@ -123,58 +154,11 @@
         // Only redraw charts if we've crossed the mobile threshold
         if (wasMobile !== isMobile) {
             // Redraw charts with new settings
-            if (window.ageChart) window.ageChart.update();
             if (window.monthlyChart) window.monthlyChart.update();
         }
     });
     
-    // Age distribution chart
-    const ageDistribution = {{ age_distribution | tojson }};
-    const ageLabels = ageDistribution.map(item => item.label);
-    const ageData = ageDistribution.map(item => item.value);
-
-    const ctxAge = document.getElementById('ageChart').getContext('2d');
-    window.ageChart = new Chart(ctxAge, {
-        type: 'bar',
-        data: {
-            labels: ageLabels,
-            datasets: [{
-                label: 'Asset Count',
-                data: ageData,
-                backgroundColor: 'rgba(59, 130, 246, 0.6)',
-                borderColor: 'rgba(59, 130, 246, 1)',
-                borderWidth: 1
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        precision: 0,
-                        font: {
-                            size: isMobile ? 10 : 12
-                        }
-                    }
-                },
-                x: {
-                    ticks: {
-                        font: {
-                            size: isMobile ? 10 : 12
-                        }
-                    }
-                }
-            },
-            plugins: {
-                legend: {
-                    display: !isMobile,
-                    position: 'top'
-                }
-            }
-        }
-    });
+    // We removed the age distribution chart
 
     // Monthly asset additions chart
     const monthLabels = {{ monthly_chart_labels | tojson }};

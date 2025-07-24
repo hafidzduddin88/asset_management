@@ -25,9 +25,15 @@ async def home(request: Request, current_user = Depends(get_current_user)):
         active_assets = [asset for asset in all_assets if asset.get("Status", "") != "Disposed"]
         disposed_assets = [asset for asset in all_assets if asset.get("Status", "") == "Disposed"]
         
-        # Prepare variables for dashboard.html
+        # Count assets by status and activity
         total_assets = len(active_assets)
         disposed_count = len(disposed_assets)
+        damaged_count = len([a for a in all_assets if a.get("Status", "") == "Under Repair"])
+        
+        # Count assets by activity type
+        relocated_count = len([a for a in all_assets if a.get("Last Activity", "") == "Relocated"])
+        repaired_count = len([a for a in all_assets if a.get("Last Activity", "") == "Repaired"])
+        to_be_disposed_count = len([a for a in all_assets if a.get("Status", "") == "To Be Disposed"])
         
         # Helper function to safely convert values to float
         def safe_float(value):
@@ -78,6 +84,10 @@ async def home(request: Request, current_user = Depends(get_current_user)):
             "total_book_value": total_book_value,
             "total_depreciation_value": total_depreciation_value,
             "disposed_count": disposed_count,
+            "damaged_count": damaged_count,
+            "relocated_count": relocated_count,
+            "repaired_count": repaired_count,
+            "to_be_disposed_count": to_be_disposed_count,
             "category_counts": category_counts,
             "location_counts": location_counts_dict,
             "monthly_chart_labels": monthly_chart_labels,
