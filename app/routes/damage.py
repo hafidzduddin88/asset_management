@@ -6,7 +6,7 @@ from app.utils.auth import get_current_user
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
 
-@router.get("/damage")
+@router.get("/")
 async def damaged_assets_page(request: Request, current_user = Depends(get_current_user)):
     """Damaged assets page with search and log functionality"""
     from app.utils.sheets import get_all_assets
@@ -20,7 +20,7 @@ async def damaged_assets_page(request: Request, current_user = Depends(get_curre
         "assets_data": all_assets
     })
 
-@router.post("/damage/report")
+@router.post("/report")
 async def submit_damage_report(request: Request, current_user = Depends(get_current_user)):
     """Submit damage report - requires admin approval"""
     # This would handle the form submission
