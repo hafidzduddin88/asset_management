@@ -129,7 +129,7 @@ document.addEventListener('DOMContentLoaded', function() {
     allAssets = assetsData.map(asset => {
         return {
             id: asset.ID || asset.id,
-            name: asset['Asset Name'] || asset.Name || asset.name || 'Unnamed Asset',
+            name: asset['Item Name'] || asset['Asset Name'] || asset.Name || asset.name || 'Unnamed Asset',
             location: asset.Location || asset.location || '',
             room: asset.Room || asset.room || '',
             category: asset.Category || asset.category || '',
