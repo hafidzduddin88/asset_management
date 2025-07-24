@@ -304,6 +304,14 @@
         </div>
     </div>
 
+    <!-- Debug info (will be hidden in production) -->
+    {% if latest_assets %}
+    <div class="bg-gray-100 p-4 mb-4 rounded-lg text-xs" style="display: none;">
+        <p>Debug - Available fields in first asset:</p>
+        <pre>{{ latest_assets[0].keys() | list }}</pre>
+    </div>
+    {% endif %}
+    
     <!-- Latest Assets Table -->
     <div class="bg-white rounded-lg shadow overflow-hidden">
         <div class="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200 flex justify-between items-center">
@@ -329,7 +337,9 @@
                 <tbody class="bg-white divide-y divide-gray-200">
                     {% for asset in latest_assets %}
                         <tr class="table-row-link hover:bg-gray-50 cursor-pointer" onclick="window.location='/assets/{{ asset.get("ID", "") }}'">
-                            <td class="px-3 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-medium text-gray-900">{{ asset.get("Name", asset.get("Asset Name", "")) }}</td>
+                            <td class="px-3 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-medium text-gray-900">
+                                {{ asset.get("display_name", "Unnamed Asset") }}
+                            </td>
                             <td class="px-3 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">{{ asset.get("Category", "") }}</td>
                             <td class="px-3 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">{{ asset.get("Location", "") }}</td>
                             <td class="px-3 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">{{ asset.get("Purchase Date", "") }}</td>

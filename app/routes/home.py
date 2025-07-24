@@ -75,6 +75,30 @@ async def home(request: Request, current_user = Depends(get_current_user)):
             key=lambda a: a.get("Purchase Date", ""), 
             reverse=True
         )[:10]
+        
+        # Process assets to ensure they have a display_name field
+        for asset in latest_assets:
+            # Try different possible field names for the asset name
+            name_fields = ["Name", "Asset Name", "AssetName", "Item Name", "Description", "Item"]
+            display_name = None
+            
+            for field in name_fields:
+                if asset.get(field):
+                    display_name = asset.get(field)
+                    break
+            
+            # If no name found, use a default
+            if not display_name:
+                display_name = f"Asset #{asset.get('ID', 'Unknown')}"
+                
+            # Add the display_name to the asset
+            asset["display_name"] = display_name
+            
+        # Debug: Print the first asset's keys to see what fields are available
+        if latest_assets:
+            logging.info(f"Asset keys: {list(latest_assets[0].keys())}")
+            logging.info(f"Asset display name: {latest_assets[0].get('display_name', 'Not found')}")
+            logging.info(f"Original asset name fields: {[latest_assets[0].get(f, 'None') for f in name_fields]}")
 
         context = {
             "request": request,
