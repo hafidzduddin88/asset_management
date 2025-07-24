@@ -49,6 +49,23 @@ jobs:
           rm -rf /tmp/.buildx-cache
           mv /tmp/.buildx-cache-new /tmp/.buildx-cache
 
+      - name: Cleanup old Docker images
+        run: |
+          # Get all tags except latest
+          TAGS=$(curl -s -H "Authorization: Bearer ${{ secrets.DOCKERHUB_TOKEN }}" \
+            "https://hub.docker.com/v2/repositories/${{ secrets.DOCKERHUB_USERNAME }}/ambp/tags/?page_size=100" | \
+            jq -r '.results[] | select(.name != "latest") | .name')
+          
+          # Delete each old tag
+          for TAG in $TAGS; do
+            echo "Deleting tag: $TAG"
+            curl -X DELETE \
+              -H "Authorization: Bearer ${{ secrets.DOCKERHUB_TOKEN }}" \
+              "https://hub.docker.com/v2/repositories/${{ secrets.DOCKERHUB_USERNAME }}/ambp/tags/$TAG/"
+          done
+          
+          echo "Cleanup completed. Only 'latest' tag remains."
+
   deploy:
     needs: build
     runs-on: ubuntu-latest
