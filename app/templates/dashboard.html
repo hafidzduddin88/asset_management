@@ -1,173 +1,160 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Dashboard Aset</title>
+{% extends "layouts/modern_layout.html" %}
+
+{% block title %}Dashboard Aset{% endblock %}
+
+{% block head %}
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            padding: 2rem;
-            background-color: #f4f4f4;
-        }
-        h1 {
-            text-align: center;
-        }
-        .dashboard-container {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: space-around;
-        }
-        .card {
-            background-color: white;
-            border-radius: 10px;
-            padding: 1.5rem;
-            margin: 1rem;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-            flex: 1 1 300px;
-        }
         .chart-container {
             position: relative;
             height: 300px;
         }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 1rem;
-        }
-        th, td {
-            padding: 0.5rem;
-            border: 1px solid #ccc;
-            text-align: left;
-        }
-        th {
-            background-color: #eaeaea;
-        }
     </style>
-</head>
-<body>
+{% endblock %}
+{% block content %}
+    <div class="mb-6">
+        <h1 class="text-2xl font-bold text-gray-900">Dashboard Aset</h1>
+    </div>
 
-    <h1>Dashboard Aset</h1>
-
-    <div class="dashboard-container">
-        <div class="card">
-            <h2>Total Aset: {{ total_assets }}</h2>
-            <h3>Total Nilai Perolehan: Rp {{ "{:,.0f}".format(total_purchase_value) }}</h3>
+    <!-- Summary Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+        <div class="bg-white rounded-lg shadow p-6">
+            <h2 class="text-lg font-medium text-gray-900 mb-2">Total Aset</h2>
+            <p class="text-3xl font-bold text-primary-600">{{ total_assets }}</p>
+            <p class="text-sm text-gray-500 mt-1">Total Nilai Perolehan: Rp {{ "{:,.0f}".format(total_purchase_value) }}</p>
         </div>
 
-        <div class="card">
-            <h3>Aset per Kategori</h3>
-            <ul>
+        <div class="bg-white rounded-lg shadow p-6">
+            <h2 class="text-lg font-medium text-gray-900 mb-2">Aset per Kategori</h2>
+            <ul class="space-y-1">
                 {% for category, count in category_counts.items() %}
-                    <li>{{ category }}: {{ count }}</li>
+                    <li class="flex justify-between">
+                        <span class="text-gray-600">{{ category }}</span>
+                        <span class="font-medium">{{ count }}</span>
+                    </li>
                 {% endfor %}
             </ul>
         </div>
 
-        <div class="card">
-            <h3>Jumlah Aset per Lokasi</h3>
-            <ul>
+        <div class="bg-white rounded-lg shadow p-6">
+            <h2 class="text-lg font-medium text-gray-900 mb-2">Jumlah Aset per Lokasi</h2>
+            <ul class="space-y-1">
                 {% for location, count in location_counts.items() %}
-                    <li>{{ location }}: {{ count }}</li>
+                    <li class="flex justify-between">
+                        <span class="text-gray-600">{{ location }}</span>
+                        <span class="font-medium">{{ count }}</span>
+                    </li>
                 {% endfor %}
             </ul>
         </div>
     </div>
 
-    <div class="card">
-        <h3>Distribusi Umur Aset</h3>
-        <div class="chart-container">
-            <canvas id="ageChart"></canvas>
+    <!-- Charts -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Distribusi Umur Aset</h3>
+            <div class="chart-container">
+                <canvas id="ageChart"></canvas>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Riwayat Penambahan Aset Bulanan</h3>
+            <div class="chart-container">
+                <canvas id="monthlyChart"></canvas>
+            </div>
         </div>
     </div>
 
-    <div class="card">
-        <h3>Riwayat Penambahan Aset Bulanan</h3>
-        <div class="chart-container">
-            <canvas id="monthlyChart"></canvas>
+    <!-- Latest Assets Table -->
+    <div class="bg-white rounded-lg shadow overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-medium text-gray-900">10 Aset Terbaru</h3>
         </div>
-    </div>
-
-    <div class="card">
-        <h3>10 Aset Terbaru</h3>
-        <table>
-            <thead>
-                <tr>
-                    <th>Nama</th>
-                    <th>Kategori</th>
-                    <th>Lokasi</th>
-                    <th>Tanggal Perolehan</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for asset in latest_assets %}
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
                     <tr>
-                        <td>{{ asset.get("Asset Name", "") }}</td>
-                        <td>{{ asset.get("Category", "") }}</td>
-                        <td>{{ asset.get("Location", "") }}</td>
-                        <td>{{ asset.get("Purchase Date", "") }}</td>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kategori</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Lokasi</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tanggal Perolehan</th>
                     </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for asset in latest_assets %}
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ asset.get("Asset Name", "") }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ asset.get("Category", "") }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ asset.get("Location", "") }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ asset.get("Purchase Date", "") }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
+{% endblock %}
 
-    <script>
-        // Age distribution chart
-        const ageDistribution = {{ age_distribution | tojson }};
-        const ageLabels = ageDistribution.map(item => item.label);
-        const ageData = ageDistribution.map(item => item.value);
+{% block scripts %}
+<script>
+    // Age distribution chart
+    const ageDistribution = {{ age_distribution | tojson }};
+    const ageLabels = ageDistribution.map(item => item.label);
+    const ageData = ageDistribution.map(item => item.value);
 
-        const ctxAge = document.getElementById('ageChart').getContext('2d');
-        new Chart(ctxAge, {
-            type: 'bar',
-            data: {
-                labels: ageLabels,
-                datasets: [{
-                    label: 'Jumlah Aset',
-                    data: ageData,
-                   backgroundColor: 'rgba(54, 162, 235, 0.6)',
-                    borderColor: 'rgba(54, 162, 235, 1)',
-                   borderWidth: 1
-               }]
-            },
-            options: {
-              scales: {
-                    y: {
-                        beginAtZero: true
-                    }
+    const ctxAge = document.getElementById('ageChart').getContext('2d');
+    new Chart(ctxAge, {
+        type: 'bar',
+        data: {
+            labels: ageLabels,
+            datasets: [{
+                label: 'Jumlah Aset',
+                data: ageData,
+                backgroundColor: 'rgba(59, 130, 246, 0.6)',
+                borderColor: 'rgba(59, 130, 246, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true
                 }
             }
-        });
+        }
+    });
 
-        // Monthly asset additions chart
-        const monthLabels = {{ monthly_chart_labels | tojson }};
-        const monthData = {{ monthly_chart_values | tojson }};
+    // Monthly asset additions chart
+    const monthLabels = {{ monthly_chart_labels | tojson }};
+    const monthData = {{ monthly_chart_values | tojson }};
 
-        const ctxMonthly = document.getElementById('monthlyChart').getContext('2d');
-        new Chart(ctxMonthly, {
-            type: 'line',
-            data: {
-                labels: monthLabels,
-                datasets: [{
-                    label: 'Penambahan Aset',
-                    data: monthData,
-                    backgroundColor: 'rgba(255, 99, 132, 0.4)',
-                    borderColor: 'rgba(255, 99, 132, 1)',
-                    borderWidth: 2,
-                    fill: true,
-                    tension: 0.3
-                }]
-            },
-            options: {
-                scales: {
-                    y: {
-                        beginAtZero: true
-                    }
+    const ctxMonthly = document.getElementById('monthlyChart').getContext('2d');
+    new Chart(ctxMonthly, {
+        type: 'line',
+        data: {
+            labels: monthLabels,
+            datasets: [{
+                label: 'Penambahan Aset',
+                data: monthData,
+                backgroundColor: 'rgba(16, 185, 129, 0.2)',
+                borderColor: 'rgba(16, 185, 129, 1)',
+                borderWidth: 2,
+                fill: true,
+                tension: 0.3
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true
                 }
             }
-        });
-    </script>
-
-</body>
-</html>
+        }
+    });
+</script>
+{% endblock %}
