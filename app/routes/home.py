@@ -29,9 +29,18 @@ async def home(request: Request, current_user = Depends(get_current_user)):
         total_assets = len(active_assets)
         disposed_count = len(disposed_assets)
         
+        # Helper function to safely convert values to float
+        def safe_float(value):
+            if value is None or value == '':
+                return 0.0
+            try:
+                return float(value)
+            except (ValueError, TypeError):
+                return 0.0
+        
         # Calculate financial values directly from assets
-        total_purchase_value = sum(float(asset.get("Purchase Cost", 0)) for asset in active_assets)
-        total_book_value = sum(float(asset.get("Book Value", 0)) for asset in active_assets)
+        total_purchase_value = sum(safe_float(asset.get("Purchase Cost")) for asset in active_assets)
+        total_book_value = sum(safe_float(asset.get("Book Value")) for asset in active_assets)
         # Calculate depreciation as purchase value minus book value
         total_depreciation_value = total_purchase_value - total_book_value
         category_counts = chart_data.get("category_counts", {})
