@@ -43,6 +43,9 @@
             <button id="logTab" class="tab-button py-2 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 font-medium text-sm">
                 <i class="fas fa-list mr-2"></i>Log Damaged Assets
             </button>
+            <button id="reportTab" class="tab-button py-2 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 font-medium text-sm">
+                <i class="fas fa-exclamation-triangle mr-2"></i>Report Damaged Asset
+            </button>
         </nav>
     </div>
 </div>
@@ -74,6 +77,66 @@
     </div>
 </div>
 
+<!-- Report Damaged Asset Tab -->
+<div id="reportContent" class="tab-content" style="display: none;">
+    <div class="bg-white rounded-lg shadow p-6">
+        <h3 class="text-lg font-medium text-gray-900 mb-4">Report Damaged Asset</h3>
+        <form id="directDamageForm">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Asset ID/Name *</label>
+                    <input type="text" name="asset_identifier" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500" placeholder="Enter asset ID or name" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Damage Type *</label>
+                    <select name="damage_type" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500" required>
+                        <option value="">Select Damage Type</option>
+                        <option value="Physical Damage">Physical Damage</option>
+                        <option value="Electrical Issue">Electrical Issue</option>
+                        <option value="Software Problem">Software Problem</option>
+                        <option value="Mechanical Failure">Mechanical Failure</option>
+                        <option value="Water Damage">Water Damage</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="mt-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Damage Description *</label>
+                <textarea name="damage_description" rows="4" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500" placeholder="Describe the damage in detail..." required></textarea>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Severity Level *</label>
+                    <select name="severity" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500" required>
+                        <option value="">Select Severity</option>
+                        <option value="Low">Low - Minor issue, asset still usable</option>
+                        <option value="Medium">Medium - Significant issue, limited functionality</option>
+                        <option value="High">High - Major issue, asset unusable</option>
+                        <option value="Critical">Critical - Safety hazard or complete failure</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Reported By *</label>
+                    <input type="text" name="reported_by" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500" value="{{ user.username if user else '' }}" required>
+                </div>
+            </div>
+            
+            <div class="mt-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Additional Notes</label>
+                <textarea name="notes" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500" placeholder="Any additional information..."></textarea>
+            </div>
+            
+            <div class="mt-6">
+                <button type="submit" class="bg-red-600 text-white px-6 py-2 rounded-md hover:bg-red-700">
+                    <i class="fas fa-exclamation-triangle mr-2"></i>Submit Damage Report
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <!-- Log Damaged Assets Tab -->
 <div id="logContent" class="tab-content" style="display: none;">
     <div class="bg-white rounded-lg shadow overflow-hidden">
@@ -90,6 +153,7 @@
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reported By</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                     </tr>
                 </thead>
                 <tbody id="damageLogTable" class="bg-white divide-y divide-gray-200">
@@ -254,6 +318,7 @@ function setupEventListeners() {
     // Tab switching
     document.getElementById('searchTab').addEventListener('click', () => switchTab('search'));
     document.getElementById('logTab').addEventListener('click', () => switchTab('log'));
+    document.getElementById('reportTab').addEventListener('click', () => switchTab('report'));
     
     // Location filter
     document.getElementById('locationFilter').addEventListener('change', function() {
@@ -298,25 +363,36 @@ function setupEventListeners() {
         e.preventDefault();
         submitDamageReport();
     });
+    
+    // Direct damage report form submission
+    document.getElementById('directDamageForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        submitDirectDamageReport();
+    });
 }
 
 function switchTab(tab) {
     const searchTab = document.getElementById('searchTab');
     const logTab = document.getElementById('logTab');
+    const reportTab = document.getElementById('reportTab');
     const searchContent = document.getElementById('searchContent');
     const logContent = document.getElementById('logContent');
+    const reportContent = document.getElementById('reportContent');
+    
+    // Remove active class from all tabs
+    [searchTab, logTab, reportTab].forEach(t => t.classList.remove('active'));
+    [searchContent, logContent, reportContent].forEach(c => c.style.display = 'none');
     
     if (tab === 'search') {
         searchTab.classList.add('active');
-        logTab.classList.remove('active');
         searchContent.style.display = 'block';
-        logContent.style.display = 'none';
-    } else {
+    } else if (tab === 'log') {
         logTab.classList.add('active');
-        searchTab.classList.remove('active');
         logContent.style.display = 'block';
-        searchContent.style.display = 'none';
         loadDamageLog();
+    } else if (tab === 'report') {
+        reportTab.classList.add('active');
+        reportContent.style.display = 'block';
     }
 }
 
@@ -397,7 +473,7 @@ function loadDamageLog() {
     const tableBody = document.getElementById('damageLogTable');
     
     if (damageLog.length === 0) {
-        tableBody.innerHTML = '<tr><td colspan="6" class="px-6 py-4 text-center text-gray-500">No damage reports found</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="7" class="px-6 py-4 text-center text-gray-500">No damage reports found</td></tr>';
         return;
     }
     
@@ -412,6 +488,13 @@ function loadDamageLog() {
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${entry.date}</td>
             <td class="px-6 py-4 whitespace-nowrap">
                 <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(entry.status)}">${entry.status}</span>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                ${entry.status === 'Approved' ? `
+                    <button onclick="markAsDisposed(${entry.id})" class="text-yellow-600 hover:text-yellow-900 mr-2" title="Mark as To Be Disposed">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                ` : ''}
             </td>
         </tr>
     `).join('');
@@ -433,6 +516,48 @@ function getStatusColor(status) {
         case 'Approved': return 'bg-green-100 text-green-800';
         case 'Rejected': return 'bg-red-100 text-red-800';
         default: return 'bg-gray-100 text-gray-800';
+    }
+}
+
+function submitDirectDamageReport() {
+    const formData = new FormData(document.getElementById('directDamageForm'));
+    
+    // Add to damage log
+    const newEntry = {
+        id: damageLog.length + 1,
+        asset_name: formData.get('asset_identifier'),
+        damage_type: formData.get('damage_type'),
+        severity: formData.get('severity'),
+        reported_by: formData.get('reported_by'),
+        date: new Date().toISOString().split('T')[0],
+        status: 'Pending Approval'
+    };
+    
+    damageLog.unshift(newEntry);
+    
+    // Reset form and show success
+    document.getElementById('directDamageForm').reset();
+    document.getElementById('successModal').style.display = 'block';
+}
+
+function markAsDisposed(entryId) {
+    if (confirm('Mark this asset as "To Be Disposed"? This action will require admin approval.')) {
+        // Find the entry and update status
+        const entry = damageLog.find(e => e.id === entryId);
+        if (entry) {
+            entry.status = 'To Be Disposed';
+            loadDamageLog();
+            
+            // Show notification
+            const toast = document.createElement('div');
+            toast.className = 'fixed bottom-4 right-4 bg-yellow-600 text-white px-4 py-2 rounded shadow-lg z-50';
+            toast.innerHTML = '<i class="fas fa-info-circle mr-2"></i>Asset marked for disposal - pending admin approval';
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }
     }
 }
 </script>
