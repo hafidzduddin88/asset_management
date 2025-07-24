@@ -1,41 +1,26 @@
 {
-  "name": "Asset Management System",
-  "short_name": "AssetsManagement",
-  "description": "A modern asset management system",
+  "name": "AMBP - Asset Management Business Platform",
+  "short_name": "AMBP",
+  "description": "Asset Management Business Platform for tracking and managing company assets",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#3B82F6",
+  "orientation": "portrait-primary",
   "icons": [
     {
       "src": "/static/img/icon-192x192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "maskable any"
     },
     {
       "src": "/static/img/icon-512x512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/static/img/icon-1024x1024.png",
-      "sizes": "1024x1024",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/static/img/android-chrome-192x192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "/static/img/android-chrome-512x512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any"
+      "purpose": "maskable any"
     }
-  ]
+  ],
+  "categories": ["business", "productivity"],
+  "lang": "en"
 }

@@ -1,85 +1,30 @@
-// Service Worker for Asset Management Business Platform
-const CACHE_NAME = 'ambp-cache-v1';
+const CACHE_NAME = 'ambp-v1';
 const urlsToCache = [
   '/',
-  '/static/css/main.css',
-  '/static/js/main.js',
-  '/static/img/icon-192x192.png',
-  '/static/img/icon-512x512.png',
-  '/static/img/android-chrome-192x192.png',
-  '/static/img/android-chrome-512x512.png',
-  '/static/img/apple-touch-icon.png',
-  '/static/img/favicon-16x16.png',
-  '/static/img/favicon-32x32.png',
-  '/static/img/favicon-96x96.png',
-  '/static/img/favicon.ico',
-  '/offline'
+  '/assets',
+  '/static/manifest.json',
+  'https://cdn.tailwindcss.com',
+  'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css'
 ];
 
-// Install event - cache assets
-self.addEventListener('install', event => {
+self.addEventListener('install', function(event) {
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then(cache => {
-        console.log('Opened cache');
+      .then(function(cache) {
         return cache.addAll(urlsToCache);
       })
   );
 });
 
-// Activate event - clean up old caches
-self.addEventListener('activate', event => {
-  const cacheWhitelist = [CACHE_NAME];
-  event.waitUntil(
-    caches.keys().then(cacheNames => {
-      return Promise.all(
-        cacheNames.map(cacheName => {
-          if (cacheWhitelist.indexOf(cacheName) === -1) {
-            return caches.delete(cacheName);
-          }
-        })
-      );
-    })
-  );
-});
-
-// Fetch event - serve from cache or network
-self.addEventListener('fetch', event => {
+self.addEventListener('fetch', function(event) {
   event.respondWith(
     caches.match(event.request)
-      .then(response => {
-        // Cache hit - return response
+      .then(function(response) {
         if (response) {
           return response;
         }
-        
-        // Clone the request
-        const fetchRequest = event.request.clone();
-        
-        return fetch(fetchRequest)
-          .then(response => {
-            // Check if valid response
-            if (!response || response.status !== 200 || response.type !== 'basic') {
-              return response;
-            }
-            
-            // Clone the response
-            const responseToCache = response.clone();
-            
-            // Add to cache
-            caches.open(CACHE_NAME)
-              .then(cache => {
-                cache.put(event.request, responseToCache);
-              });
-              
-            return response;
-          })
-          .catch(error => {
-            // If fetch fails, show offline page
-            if (event.request.mode === 'navigate') {
-              return caches.match('/offline');
-            }
-          });
-      })
+        return fetch(event.request);
+      }
+    )
   );
 });

@@ -6,8 +6,11 @@
     <title>{% block title %}Asset Management Business Platform{% endblock %}</title>
     
     <!-- PWA Support -->
-    <link rel="manifest" href="/manifest.json">
+    <link rel="manifest" href="/static/manifest.json">
     <meta name="theme-color" content="#3B82F6">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="AMBP">
     
     <!-- App Icons -->
     <link rel="icon" type="image/png" sizes="16x16" href="/static/img/favicon-16x16.png">
@@ -65,26 +68,26 @@
                         <span class="text-xl font-bold text-primary-600">AMBP</span>
                     </div>
                     <div class="hidden sm:ml-6 sm:flex sm:space-x-8">
-                        <a href="/" class="{% if request.url.path == '/' %}border-primary-500 text-gray-900{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                        <a href="/" class="{% if request.url.path == '/' or request.url.path == '/dashboard' %}border-primary-500 text-gray-900{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
                             Dashboard
                         </a>
-                        <a href="/assets" class="{% if request.url.path == '/assets' %}border-primary-500 text-gray-900{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                        <a href="/assets" class="{% if '/assets' in request.url.path %}border-primary-500 text-gray-900{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
                             Assets
                         </a>
-                        <a href="/asset_management/add" class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                        <a href="/asset_management/add" class="{% if '/asset_management/add' in request.url.path %}border-primary-500 text-gray-900{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
                             Add Asset
                         </a>
-                        <a href="/damage/report" class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                        <a href="/damage/report" class="{% if '/damage' in request.url.path %}border-primary-500 text-gray-900{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
                             Damage Report
                         </a>
-                        <a href="/repair/report" class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                        <a href="/repair/report" class="{% if '/repair' in request.url.path %}border-primary-500 text-gray-900{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
                             Repaired Report
                         </a>
-                        <a href="/disposal/request" class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                        <a href="/disposal/request" class="{% if '/disposal/request' in request.url.path %}border-primary-500 text-gray-900{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
                             Request Disposal
                         </a>
                         {% if user and user.role == 'admin' %}
-                        <a href="/disposal" class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                        <a href="/disposal" class="{% if request.url.path == '/disposal' %}border-primary-500 text-gray-900{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
                             Disposal Asset
                         </a>
                         {% endif %}
@@ -135,14 +138,14 @@
                     <!-- Mobile menu -->
                     <div x-show="open" class="absolute top-16 inset-x-0 bg-white shadow-md py-2 z-50" id="mobile-menu">
                         <div class="px-2 pt-2 pb-3 space-y-1">
-                            <a href="/" class="{% if request.url.path == '/' %}bg-primary-50 border-primary-500 text-primary-700{% else %}border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800{% endif %} block pl-3 pr-4 py-2 border-l-4 text-base font-medium">Dashboard</a>
-                            <a href="/assets" class="{% if request.url.path == '/assets' %}bg-primary-50 border-primary-500 text-primary-700{% else %}border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800{% endif %} block pl-3 pr-4 py-2 border-l-4 text-base font-medium">Assets</a>
-                            <a href="/asset_management/add" class="border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800 block pl-3 pr-4 py-2 border-l-4 text-base font-medium">Add Asset</a>
-                            <a href="/damage/report" class="border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800 block pl-3 pr-4 py-2 border-l-4 text-base font-medium">Damage Report</a>
-                            <a href="/repair/report" class="border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800 block pl-3 pr-4 py-2 border-l-4 text-base font-medium">Repaired Report</a>
-                            <a href="/disposal/request" class="border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800 block pl-3 pr-4 py-2 border-l-4 text-base font-medium">Request Disposal</a>
+                            <a href="/" class="{% if request.url.path == '/' or request.url.path == '/dashboard' %}bg-primary-50 border-primary-500 text-primary-700{% else %}border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800{% endif %} block pl-3 pr-4 py-2 border-l-4 text-base font-medium">Dashboard</a>
+                            <a href="/assets" class="{% if '/assets' in request.url.path %}bg-primary-50 border-primary-500 text-primary-700{% else %}border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800{% endif %} block pl-3 pr-4 py-2 border-l-4 text-base font-medium">Assets</a>
+                            <a href="/asset_management/add" class="{% if '/asset_management/add' in request.url.path %}bg-primary-50 border-primary-500 text-primary-700{% else %}border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800{% endif %} block pl-3 pr-4 py-2 border-l-4 text-base font-medium">Add Asset</a>
+                            <a href="/damage/report" class="{% if '/damage' in request.url.path %}bg-primary-50 border-primary-500 text-primary-700{% else %}border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800{% endif %} block pl-3 pr-4 py-2 border-l-4 text-base font-medium">Damage Report</a>
+                            <a href="/repair/report" class="{% if '/repair' in request.url.path %}bg-primary-50 border-primary-500 text-primary-700{% else %}border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800{% endif %} block pl-3 pr-4 py-2 border-l-4 text-base font-medium">Repaired Report</a>
+                            <a href="/disposal/request" class="{% if '/disposal/request' in request.url.path %}bg-primary-50 border-primary-500 text-primary-700{% else %}border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800{% endif %} block pl-3 pr-4 py-2 border-l-4 text-base font-medium">Request Disposal</a>
                             {% if user and user.role == 'admin' %}
-                            <a href="/disposal" class="border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800 block pl-3 pr-4 py-2 border-l-4 text-base font-medium">Disposal Asset</a>
+                            <a href="/disposal" class="{% if request.url.path == '/disposal' %}bg-primary-50 border-primary-500 text-primary-700{% else %}border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800{% endif %} block pl-3 pr-4 py-2 border-l-4 text-base font-medium">Disposal Asset</a>
                             {% endif %}
                             
                             <!-- Mobile Profile Menu -->
@@ -191,11 +194,65 @@
         {% include "components/toast_notification.html" %}
     </div>
 
+    <!-- PWA Install Prompt -->
+    <div id="installPrompt" class="fixed bottom-4 left-4 right-4 bg-primary-600 text-white p-4 rounded-lg shadow-lg z-50" style="display: none;">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center">
+                <i class="fas fa-mobile-alt mr-3 text-xl"></i>
+                <div>
+                    <p class="font-medium">Install AMBP</p>
+                    <p class="text-sm opacity-90">Add to home screen for quick access</p>
+                </div>
+            </div>
+            <div class="flex space-x-2">
+                <button id="installBtn" class="bg-white text-primary-600 px-3 py-1 rounded text-sm font-medium">Install</button>
+                <button id="dismissBtn" class="text-white opacity-75 hover:opacity-100">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- PWA Service Worker Registration -->
     <script>
+        let deferredPrompt;
+        
+        // PWA Install Prompt
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            
+            // Show install prompt if not already installed
+            if (!window.matchMedia('(display-mode: standalone)').matches) {
+                document.getElementById('installPrompt').style.display = 'block';
+            }
+        });
+        
+        // Install button click
+        document.getElementById('installBtn').addEventListener('click', async () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                deferredPrompt = null;
+                document.getElementById('installPrompt').style.display = 'none';
+            }
+        });
+        
+        // Dismiss button click
+        document.getElementById('dismissBtn').addEventListener('click', () => {
+            document.getElementById('installPrompt').style.display = 'none';
+            localStorage.setItem('installPromptDismissed', 'true');
+        });
+        
+        // Check if user previously dismissed
+        if (localStorage.getItem('installPromptDismissed') === 'true') {
+            document.getElementById('installPrompt').style.display = 'none';
+        }
+        
+        // Service Worker Registration
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', function() {
-                navigator.serviceWorker.register('/service-worker.js').then(function(registration) {
+                navigator.serviceWorker.register('/static/service-worker.js').then(function(registration) {
                     console.log('ServiceWorker registration successful with scope: ', registration.scope);
                 }, function(err) {
                     console.log('ServiceWorker registration failed: ', err);
