@@ -6,12 +6,18 @@ from app.utils.auth import get_current_user
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
 
-@router.get("/damage/report")
-async def damage_report_page(request: Request, current_user = Depends(get_current_user)):
-    """Damage report page"""
-    return templates.TemplateResponse("damage_report.html", {
+@router.get("/damage")
+async def damaged_assets_page(request: Request, current_user = Depends(get_current_user)):
+    """Damaged assets page with search and log functionality"""
+    from app.utils.sheets import get_all_assets
+    
+    # Get real asset data from Google Sheets
+    all_assets = get_all_assets()
+    
+    return templates.TemplateResponse("damaged_assets.html", {
         "request": request,
-        "user": current_user
+        "user": current_user,
+        "assets_data": all_assets
     })
 
 @router.post("/damage/report")
