@@ -286,8 +286,60 @@
     </div>
 {% endblock %}
 
+<!-- PWA Install Prompt -->
+<div id="installPrompt" class="fixed bottom-4 left-4 right-4 bg-primary-600 text-white p-4 rounded-lg shadow-lg z-50" style="display: none;">
+    <div class="flex items-center justify-between">
+        <div class="flex items-center">
+            <i class="fas fa-mobile-alt mr-3 text-xl"></i>
+            <div>
+                <p class="font-medium">Install AMBP</p>
+                <p class="text-sm opacity-90">Add to home screen for quick access</p>
+            </div>
+        </div>
+        <div class="flex space-x-2">
+            <button id="installBtn" class="bg-white text-primary-600 px-3 py-1 rounded text-sm font-medium">Install</button>
+            <button id="dismissBtn" class="text-white opacity-75 hover:opacity-100">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
 {% block scripts %}
 <script>
+    let deferredPrompt;
+    
+    // PWA Install Prompt
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        
+        // Show install prompt if not already installed
+        if (!window.matchMedia('(display-mode: standalone)').matches) {
+            document.getElementById('installPrompt').style.display = 'block';
+        }
+    });
+    
+    // Install button click
+    document.getElementById('installBtn').addEventListener('click', async () => {
+        if (deferredPrompt) {
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            deferredPrompt = null;
+            document.getElementById('installPrompt').style.display = 'none';
+        }
+    });
+    
+    // Dismiss button click
+    document.getElementById('dismissBtn').addEventListener('click', () => {
+        document.getElementById('installPrompt').style.display = 'none';
+        localStorage.setItem('installPromptDismissed', 'true');
+    });
+    
+    // Check if user previously dismissed
+    if (localStorage.getItem('installPromptDismissed') === 'true') {
+        document.getElementById('installPrompt').style.display = 'none';
+    }
     // Activity charts data (simplified for demo)
     const activityLabels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     
