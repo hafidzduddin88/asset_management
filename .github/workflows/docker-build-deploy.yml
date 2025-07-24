@@ -52,19 +52,29 @@ jobs:
       - name: Cleanup old Docker images
         run: |
           # Get all tags except latest
-          TAGS=$(curl -s -H "Authorization: Bearer ${{ secrets.DOCKERHUB_TOKEN }}" \
-            "https://hub.docker.com/v2/repositories/${{ secrets.DOCKERHUB_USERNAME }}/ambp/tags/?page_size=100" | \
-            jq -r '.results[] | select(.name != "latest") | .name')
+          RESPONSE=$(curl -s -H "Authorization: Bearer ${{ secrets.DOCKERHUB_TOKEN }}" \
+            "https://hub.docker.com/v2/repositories/${{ secrets.DOCKERHUB_USERNAME }}/ambp/tags/?page_size=100")
           
-          # Delete each old tag
-          for TAG in $TAGS; do
-            echo "Deleting tag: $TAG"
-            curl -X DELETE \
-              -H "Authorization: Bearer ${{ secrets.DOCKERHUB_TOKEN }}" \
-              "https://hub.docker.com/v2/repositories/${{ secrets.DOCKERHUB_USERNAME }}/ambp/tags/$TAG/"
-          done
+          # Check if response has results
+          if echo "$RESPONSE" | jq -e '.results' > /dev/null 2>&1; then
+            TAGS=$(echo "$RESPONSE" | jq -r '.results[] | select(.name != "latest") | .name')
+            
+            if [ -n "$TAGS" ]; then
+              echo "Found tags to delete: $TAGS"
+              for TAG in $TAGS; do
+                echo "Deleting tag: $TAG"
+                curl -X DELETE \
+                  -H "Authorization: Bearer ${{ secrets.DOCKERHUB_TOKEN }}" \
+                  "https://hub.docker.com/v2/repositories/${{ secrets.DOCKERHUB_USERNAME }}/ambp/tags/$TAG/"
+              done
+            else
+              echo "No old tags to delete"
+            fi
+          else
+            echo "No tags found or API error"
+          fi
           
-          echo "Cleanup completed. Only 'latest' tag remains."
+          echo "Cleanup completed."
 
   deploy:
     needs: build
