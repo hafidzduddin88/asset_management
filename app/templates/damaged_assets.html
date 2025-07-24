@@ -229,18 +229,36 @@ let roomsData = {};
 let allAssets = [];
 let filteredAssets = [];
 
-// Sample damage log data
-let damageLog = [
-    {id: 1, asset_name: "Laptop Dell XPS", damage_type: "Physical Damage", severity: "Medium", reported_by: "John Doe", date: "2024-01-15", status: "Pending Approval"},
-    {id: 2, asset_name: "Office Chair", damage_type: "Mechanical Failure", severity: "Low", reported_by: "Jane Smith", date: "2024-01-14", status: "Approved"},
-];
+// Get damage log and under repair assets from real data
+let damageLog = [];
+let underRepairAssets = [];
 
-// Sample under repair assets
-let underRepairAssets = [
-    {id: 1, asset_name: "Laptop HP ProBook", location: "Office Building A", room: "Room 101", damage_type: "Screen Crack", severity: "Medium", repair_date: "2024-01-10"},
-    {id: 2, asset_name: "Printer Canon", location: "Office Building B", room: "Room 201", damage_type: "Paper Jam", severity: "Low", repair_date: "2024-01-12"},
-    {id: 3, asset_name: "Projector Epson", location: "Warehouse", room: "Meeting Room", damage_type: "Lamp Failure", severity: "High", repair_date: "2024-01-08"},
-];
+// Process real asset data to find damaged and under repair assets
+function processAssetData() {
+    // Filter assets with status "Under Repair" or "Damaged"
+    underRepairAssets = allAssets.filter(asset => 
+        asset.status === 'Under Repair' || asset.status === 'Damaged'
+    ).map(asset => ({
+        id: asset.id,
+        asset_name: asset.name,
+        location: asset.location,
+        room: asset.room,
+        damage_type: asset.damage_type || 'Not specified',
+        severity: asset.severity || 'Medium',
+        repair_date: asset.repair_date || new Date().toISOString().split('T')[0]
+    }));
+    
+    // Create damage log from damaged assets (sample structure)
+    damageLog = underRepairAssets.map((asset, index) => ({
+        id: index + 1,
+        asset_name: asset.asset_name,
+        damage_type: asset.damage_type,
+        severity: asset.severity,
+        reported_by: 'System',
+        date: asset.repair_date,
+        status: 'Approved'
+    }));
+}
 
 // Initialize
 document.addEventListener('DOMContentLoaded', function() {
@@ -255,6 +273,7 @@ document.addEventListener('DOMContentLoaded', function() {
     })).filter(asset => asset.status === 'Active');
     
     buildRoomsData();
+    processAssetData();
     initializeFilters();
     setupEventListeners();
     loadDamageLog();
