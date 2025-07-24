@@ -4,6 +4,8 @@
 
 {% block head %}
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         .chart-container {
             position: relative;
@@ -18,23 +20,91 @@
             overflow-x: auto;
             -webkit-overflow-scrolling: touch;
         }
+        .status-card {
+            transition: all 0.3s ease;
+            border-left: 4px solid transparent;
+        }
+        .status-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+        .status-card.damaged { border-left-color: #EF4444; }
+        .status-card.relocated { border-left-color: #3B82F6; }
+        .status-card.repaired { border-left-color: #10B981; }
+        .status-card.to-dispose { border-left-color: #F59E0B; }
+        .status-card.disposed { border-left-color: #6B7280; }
+        
+        .status-icon {
+            width: 3rem;
+            height: 3rem;
+            border-radius: 9999px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .dashboard-header {
+            background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+            color: white;
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        
+        .table-row-link:hover {
+            background-color: rgba(59, 130, 246, 0.05);
+        }
     </style>
 {% endblock %}
 {% block content %}
-    <div class="mb-4 sm:mb-6">
-        <h1 class="text-xl sm:text-2xl font-bold text-gray-900">Asset Dashboard</h1>
+    <div class="dashboard-header mb-6">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center">
+            <div>
+                <h1 class="text-xl sm:text-2xl font-bold">Asset Management Dashboard</h1>
+                <p class="text-sm opacity-90 mt-1">Real-time monitoring and reporting</p>
+            </div>
+            <div class="mt-4 md:mt-0 flex items-center">
+                <span id="last-updated" class="text-xs opacity-75 mr-3">Last updated: <span id="update-time">Just now</span></span>
+                <button id="refresh-button" class="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-white bg-opacity-20 hover:bg-opacity-30 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-white focus:ring-opacity-50">
+                    <svg id="refresh-icon" class="-ml-0.5 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    Refresh Data
+                </button>
+            </div>
+        </div>
     </div>
 
     <!-- Summary Cards -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6">
-        <div class="bg-white rounded-lg shadow p-4 sm:p-6">
-            <h2 class="text-base sm:text-lg font-medium text-gray-900 mb-2">Active Assets</h2>
-            <p class="text-2xl sm:text-3xl font-bold text-primary-600">{{ total_assets }}</p>
-            <div class="space-y-1 mt-2">
-                <p class="text-sm text-gray-500">Total Purchase Value: <span class="font-medium">Rp {{ "{:,.0f}".format(total_purchase_value) }}</span></p>
-                <p class="text-sm text-gray-500">Total Book Value: <span class="font-medium">Rp {{ "{:,.0f}".format(total_book_value) }}</span></p>
-                <p class="text-sm text-gray-500">Total Depreciation: <span class="font-medium">Rp {{ "{:,.0f}".format(total_depreciation_value) }}</span></p>
-                <p class="text-sm text-gray-400 mt-2 border-t pt-2">Disposed Assets: <span class="font-medium">{{ disposed_count }}</span></p>
+        <div class="bg-white rounded-lg shadow p-4 sm:p-6 border-l-4 border-primary-500">
+            <div class="flex justify-between items-start">
+                <div>
+                    <h2 class="text-base sm:text-lg font-medium text-gray-900 mb-2">Active Assets</h2>
+                    <p class="text-2xl sm:text-3xl font-bold text-primary-600">{{ total_assets }}</p>
+                </div>
+                <div class="bg-primary-100 p-3 rounded-full">
+                    <i class="fas fa-boxes text-primary-600 text-xl"></i>
+                </div>
+            </div>
+            <div class="space-y-2 mt-4">
+                <div class="flex justify-between items-center">
+                    <p class="text-sm text-gray-500">Purchase Value:</p>
+                    <p class="text-sm font-medium">Rp {{ "{:,.0f}".format(total_purchase_value) }}</p>
+                </div>
+                <div class="flex justify-between items-center">
+                    <p class="text-sm text-gray-500">Book Value:</p>
+                    <p class="text-sm font-medium">Rp {{ "{:,.0f}".format(total_book_value) }}</p>
+                </div>
+                <div class="flex justify-between items-center">
+                    <p class="text-sm text-gray-500">Depreciation:</p>
+                    <p class="text-sm font-medium">Rp {{ "{:,.0f}".format(total_depreciation_value) }}</p>
+                </div>
+                <div class="flex justify-between items-center pt-2 mt-2 border-t">
+                    <p class="text-sm text-gray-400">Disposed Assets:</p>
+                    <p class="text-sm font-medium text-gray-400">{{ disposed_count }}</p>
+                </div>
             </div>
         </div>
 
@@ -66,55 +136,184 @@
     <!-- Asset Status Cards -->
     <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 sm:gap-6 mb-6">
         <!-- Damaged Assets -->
-        <div class="bg-white rounded-lg shadow p-4 sm:p-6">
-            <h2 class="text-base sm:text-lg font-medium text-gray-900 mb-2">Damaged</h2>
-            <p class="text-2xl sm:text-3xl font-bold text-red-600">{{ damaged_count }}</p>
-            <p class="text-sm text-gray-500 mt-1">Assets under repair</p>
+        <div class="bg-white rounded-lg shadow p-4 sm:p-6 status-card damaged">
+            <div class="flex justify-between items-start">
+                <div>
+                    <h2 class="text-base sm:text-lg font-medium text-gray-900 mb-2">Damaged</h2>
+                    <p class="text-2xl sm:text-3xl font-bold text-red-600">{{ damaged_count }}</p>
+                </div>
+                <div class="status-icon bg-red-100">
+                    <i class="fas fa-tools text-red-600"></i>
+                </div>
+            </div>
+            <p class="text-sm text-gray-500 mt-3">Assets under repair</p>
+            <div class="mt-4 pt-2 border-t border-gray-100">
+                <a href="/damage" class="text-xs text-red-600 hover:text-red-800 font-medium flex items-center">
+                    View Details
+                    <svg class="w-3 h-3 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                    </svg>
+                </a>
+            </div>
         </div>
         
         <!-- Relocated Assets -->
-        <div class="bg-white rounded-lg shadow p-4 sm:p-6">
-            <h2 class="text-base sm:text-lg font-medium text-gray-900 mb-2">Relocated</h2>
-            <p class="text-2xl sm:text-3xl font-bold text-blue-600">{{ relocated_count }}</p>
-            <p class="text-sm text-gray-500 mt-1">Recently moved assets</p>
+        <div class="bg-white rounded-lg shadow p-4 sm:p-6 status-card relocated">
+            <div class="flex justify-between items-start">
+                <div>
+                    <h2 class="text-base sm:text-lg font-medium text-gray-900 mb-2">Relocated</h2>
+                    <p class="text-2xl sm:text-3xl font-bold text-blue-600">{{ relocated_count }}</p>
+                </div>
+                <div class="status-icon bg-blue-100">
+                    <i class="fas fa-dolly text-blue-600"></i>
+                </div>
+            </div>
+            <p class="text-sm text-gray-500 mt-3">Recently moved assets</p>
+            <div class="mt-4 pt-2 border-t border-gray-100">
+                <a href="/relocation" class="text-xs text-blue-600 hover:text-blue-800 font-medium flex items-center">
+                    View Details
+                    <svg class="w-3 h-3 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                    </svg>
+                </a>
+            </div>
         </div>
         
         <!-- Repaired Assets -->
-        <div class="bg-white rounded-lg shadow p-4 sm:p-6">
-            <h2 class="text-base sm:text-lg font-medium text-gray-900 mb-2">Repaired</h2>
-            <p class="text-2xl sm:text-3xl font-bold text-green-600">{{ repaired_count }}</p>
-            <p class="text-sm text-gray-500 mt-1">Fixed assets</p>
+        <div class="bg-white rounded-lg shadow p-4 sm:p-6 status-card repaired">
+            <div class="flex justify-between items-start">
+                <div>
+                    <h2 class="text-base sm:text-lg font-medium text-gray-900 mb-2">Repaired</h2>
+                    <p class="text-2xl sm:text-3xl font-bold text-green-600">{{ repaired_count }}</p>
+                </div>
+                <div class="status-icon bg-green-100">
+                    <i class="fas fa-check-circle text-green-600"></i>
+                </div>
+            </div>
+            <p class="text-sm text-gray-500 mt-3">Fixed assets</p>
+            <div class="mt-4 pt-2 border-t border-gray-100">
+                <a href="/damage" class="text-xs text-green-600 hover:text-green-800 font-medium flex items-center">
+                    View Details
+                    <svg class="w-3 h-3 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                    </svg>
+                </a>
+            </div>
         </div>
         
         <!-- To Be Disposed Assets -->
-        <div class="bg-white rounded-lg shadow p-4 sm:p-6">
-            <h2 class="text-base sm:text-lg font-medium text-gray-900 mb-2">To Be Disposed</h2>
-            <p class="text-2xl sm:text-3xl font-bold text-yellow-600">{{ to_be_disposed_count }}</p>
-            <p class="text-sm text-gray-500 mt-1">Pending disposal</p>
+        <div class="bg-white rounded-lg shadow p-4 sm:p-6 status-card to-dispose">
+            <div class="flex justify-between items-start">
+                <div>
+                    <h2 class="text-base sm:text-lg font-medium text-gray-900 mb-2">To Be Disposed</h2>
+                    <p class="text-2xl sm:text-3xl font-bold text-yellow-600">{{ to_be_disposed_count }}</p>
+                </div>
+                <div class="status-icon bg-yellow-100">
+                    <i class="fas fa-exclamation-triangle text-yellow-600"></i>
+                </div>
+            </div>
+            <p class="text-sm text-gray-500 mt-3">Pending disposal</p>
+            <div class="mt-4 pt-2 border-t border-gray-100">
+                <a href="/disposal" class="text-xs text-yellow-600 hover:text-yellow-800 font-medium flex items-center">
+                    View Details
+                    <svg class="w-3 h-3 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                    </svg>
+                </a>
+            </div>
         </div>
         
         <!-- Disposed Assets -->
-        <div class="bg-white rounded-lg shadow p-4 sm:p-6">
-            <h2 class="text-base sm:text-lg font-medium text-gray-900 mb-2">Disposed</h2>
-            <p class="text-2xl sm:text-3xl font-bold text-gray-600">{{ disposed_count }}</p>
-            <p class="text-sm text-gray-500 mt-1">Removed from inventory</p>
+        <div class="bg-white rounded-lg shadow p-4 sm:p-6 status-card disposed">
+            <div class="flex justify-between items-start">
+                <div>
+                    <h2 class="text-base sm:text-lg font-medium text-gray-900 mb-2">Disposed</h2>
+                    <p class="text-2xl sm:text-3xl font-bold text-gray-600">{{ disposed_count }}</p>
+                </div>
+                <div class="status-icon bg-gray-100">
+                    <i class="fas fa-trash-alt text-gray-600"></i>
+                </div>
+            </div>
+            <p class="text-sm text-gray-500 mt-3">Removed from inventory</p>
+            <div class="mt-4 pt-2 border-t border-gray-100">
+                <a href="/disposal" class="text-xs text-gray-600 hover:text-gray-800 font-medium flex items-center">
+                    View Details
+                    <svg class="w-3 h-3 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                    </svg>
+                </a>
+            </div>
         </div>
     </div>
     
-    <!-- Charts -->
+    <!-- Charts Section -->
     <div class="mb-6">
-        <div class="bg-white rounded-lg shadow p-4 sm:p-6">
-            <h3 class="text-base sm:text-lg font-medium text-gray-900 mb-2 sm:mb-4">Monthly Asset Additions</h3>
-            <div class="chart-container">
-                <canvas id="monthlyChart"></canvas>
+        <div class="bg-white rounded-lg shadow overflow-hidden">
+            <div class="flex flex-col md:flex-row">
+                <div class="w-full md:w-3/4 p-4 sm:p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-base sm:text-lg font-medium text-gray-900">Monthly Asset Additions</h3>
+                        <div class="flex space-x-2">
+                            <button class="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded text-gray-600 chart-period-btn active" data-period="month">Monthly</button>
+                            <button class="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded text-gray-600 chart-period-btn" data-period="quarter">Quarterly</button>
+                            <button class="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded text-gray-600 chart-period-btn" data-period="year">Yearly</button>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="monthlyChart"></canvas>
+                    </div>
+                </div>
+                <div class="w-full md:w-1/4 bg-gray-50 p-4 sm:p-6 border-t md:border-t-0 md:border-l border-gray-200">
+                    <h4 class="text-sm font-medium text-gray-900 mb-4">Asset Statistics</h4>
+                    <div class="space-y-4">
+                        <div>
+                            <div class="flex justify-between text-xs mb-1">
+                                <span class="text-gray-500">Active Assets</span>
+                                <span class="font-medium">{{ total_assets }}</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-1.5">
+                                <div class="bg-primary-600 h-1.5 rounded-full" style="width: 100%"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-xs mb-1">
+                                <span class="text-gray-500">Damaged</span>
+                                <span class="font-medium">{{ damaged_count }}</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-1.5">
+                                <div class="bg-red-600 h-1.5 rounded-full" style="width: {{ (damaged_count / total_assets * 100) if total_assets > 0 else 0 }}%"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-xs mb-1">
+                                <span class="text-gray-500">To Be Disposed</span>
+                                <span class="font-medium">{{ to_be_disposed_count }}</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-1.5">
+                                <div class="bg-yellow-600 h-1.5 rounded-full" style="width: {{ (to_be_disposed_count / total_assets * 100) if total_assets > 0 else 0 }}%"></div>
+                            </div>
+                        </div>
+                        <div class="pt-4 border-t border-gray-200">
+                            <a href="/export" class="text-xs text-primary-600 hover:text-primary-800 font-medium flex items-center">
+                                <i class="fas fa-file-export mr-1"></i> Export Report
+                            </a>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
     <!-- Latest Assets Table -->
     <div class="bg-white rounded-lg shadow overflow-hidden">
-        <div class="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200">
-            <h3 class="text-base sm:text-lg font-medium text-gray-900">10 Latest Assets</h3>
+        <div class="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200 flex justify-between items-center">
+            <h3 class="text-base sm:text-lg font-medium text-gray-900">Latest Assets</h3>
+            <a href="/assets" class="text-xs text-primary-600 hover:text-primary-800 font-medium flex items-center">
+                View All
+                <svg class="w-3 h-3 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                </svg>
+            </a>
         </div>
         <div class="overflow-x-auto table-responsive">
             <table class="min-w-full divide-y divide-gray-200">
@@ -124,15 +323,32 @@
                         <th scope="col" class="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
                         <th scope="col" class="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
                         <th scope="col" class="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                        <th scope="col" class="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
                     {% for asset in latest_assets %}
-                        <tr>
+                        <tr class="table-row-link hover:bg-gray-50 cursor-pointer" onclick="window.location='/assets/{{ asset.get("ID", "") }}'">
                             <td class="px-3 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-medium text-gray-900">{{ asset.get("Name", asset.get("Asset Name", "")) }}</td>
                             <td class="px-3 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">{{ asset.get("Category", "") }}</td>
                             <td class="px-3 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">{{ asset.get("Location", "") }}</td>
                             <td class="px-3 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">{{ asset.get("Purchase Date", "") }}</td>
+                            <td class="px-3 sm:px-6 py-2 sm:py-4 whitespace-nowrap">
+                                {% set status = asset.get("Status", "") %}
+                                {% if status == "Active" %}
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Active</span>
+                                {% elif status == "Under Repair" %}
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">Damaged</span>
+                                {% elif status == "In Storage" %}
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">Storage</span>
+                                {% elif status == "To Be Disposed" %}
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">To Dispose</span>
+                                {% elif status == "Disposed" %}
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">Disposed</span>
+                                {% else %}
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">{{ status }}</span>
+                                {% endif %}
+                            </td>
                         </tr>
                     {% endfor %}
                 </tbody>
@@ -158,8 +374,6 @@
         }
     });
     
-    // We removed the age distribution chart
-
     // Monthly asset additions chart
     const monthLabels = {{ monthly_chart_labels | tojson }};
     const monthData = {{ monthly_chart_values | tojson }};
@@ -172,8 +386,8 @@
             datasets: [{
                 label: 'Asset Additions',
                 data: monthData,
-                backgroundColor: 'rgba(16, 185, 129, 0.2)',
-                borderColor: 'rgba(16, 185, 129, 1)',
+                backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                borderColor: 'rgba(59, 130, 246, 1)',
                 borderWidth: 2,
                 fill: true,
                 tension: 0.3
@@ -212,6 +426,72 @@
                 }
             }
         }
+    });
+    
+    // Handle chart period buttons
+    document.querySelectorAll('.chart-period-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            // Remove active class from all buttons
+            document.querySelectorAll('.chart-period-btn').forEach(btn => {
+                btn.classList.remove('active');
+                btn.classList.remove('bg-primary-100');
+                btn.classList.remove('text-primary-700');
+                btn.classList.add('bg-gray-100');
+                btn.classList.add('text-gray-600');
+            });
+            
+            // Add active class to clicked button
+            this.classList.add('active');
+            this.classList.remove('bg-gray-100');
+            this.classList.remove('text-gray-600');
+            this.classList.add('bg-primary-100');
+            this.classList.add('text-primary-700');
+            
+            // In a real app, we would fetch data for the selected period
+            // For now, we'll just show a simulated update
+            const period = this.getAttribute('data-period');
+            
+            // Update chart title based on period
+            let chartTitle = 'Monthly';
+            if (period === 'quarter') chartTitle = 'Quarterly';
+            if (period === 'year') chartTitle = 'Yearly';
+            
+            // Simulate data update
+            setTimeout(() => {
+                // In a real app, we would update with actual data
+                // For now, just show a toast notification
+                const toast = document.createElement('div');
+                toast.className = 'fixed bottom-4 right-4 bg-primary-600 text-white px-4 py-2 rounded shadow-lg';
+                toast.innerHTML = `<div class="flex items-center"><i class="fas fa-info-circle mr-2"></i> ${chartTitle} view selected</div>`;
+                document.body.appendChild(toast);
+                
+                setTimeout(() => {
+                    toast.remove();
+                }, 3000);
+            }, 300);
+        });
+    });
+    
+    // Handle refresh button
+    document.getElementById('refresh-button').addEventListener('click', function() {
+        const refreshIcon = document.getElementById('refresh-icon');
+        refreshIcon.classList.add('animate-spin');
+        
+        // Simulate refresh
+        setTimeout(() => {
+            refreshIcon.classList.remove('animate-spin');
+            document.getElementById('update-time').textContent = new Date().toLocaleTimeString();
+            
+            // Show toast notification
+            const toast = document.createElement('div');
+            toast.className = 'fixed bottom-4 right-4 bg-green-600 text-white px-4 py-2 rounded shadow-lg';
+            toast.innerHTML = '<div class="flex items-center"><i class="fas fa-check-circle mr-2"></i> Dashboard refreshed</div>';
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }, 1000);
     });
 </script>
 {% endblock %}
