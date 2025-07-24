@@ -133,64 +133,67 @@
         </div>
     </div>
     
-    <!-- Asset Status Distribution Chart -->
-    <div class="mb-6">
-        <div class="bg-white rounded-lg shadow overflow-hidden">
-            <div class="flex flex-col md:flex-row">
-                <div class="w-full md:w-3/4 p-4 sm:p-6">
-                    <div class="flex justify-between items-center mb-4">
-                        <h3 class="text-base sm:text-lg font-medium text-gray-900">Asset Status Distribution</h3>
-                    </div>
-                    <div class="chart-container">
-                        <canvas id="statusChart"></canvas>
-                    </div>
+    <!-- Asset Activity Charts -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <!-- Damaged Assets Chart -->
+        <div class="bg-white rounded-lg shadow p-4 sm:p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-base sm:text-lg font-medium text-gray-900">Damaged Assets</h3>
+                <div class="flex space-x-2">
+                    <button class="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded text-gray-600 damaged-period-btn active" data-period="month">Monthly</button>
+                    <button class="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded text-gray-600 damaged-period-btn" data-period="quarter">Quarterly</button>
+                    <button class="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded text-gray-600 damaged-period-btn" data-period="year">Yearly</button>
                 </div>
-                <div class="w-full md:w-1/4 bg-gray-50 p-4 sm:p-6 border-t md:border-t-0 md:border-l border-gray-200">
-                    <h4 class="text-sm font-medium text-gray-900 mb-4">Asset Statistics</h4>
-                    <div class="space-y-4">
-                        <div>
-                            <div class="flex justify-between text-xs mb-1">
-                                <span class="text-gray-500">Active Assets</span>
-                                <span class="font-medium">{{ total_assets }}</span>
-                            </div>
-                            <div class="w-full bg-gray-200 rounded-full h-1.5">
-                                <div class="bg-green-600 h-1.5 rounded-full" style="width: 100%"></div>
-                            </div>
-                        </div>
-                        <div>
-                            <div class="flex justify-between text-xs mb-1">
-                                <span class="text-gray-500">Damaged</span>
-                                <span class="font-medium">{{ damaged_count }}</span>
-                            </div>
-                            <div class="w-full bg-gray-200 rounded-full h-1.5">
-                                <div class="bg-red-600 h-1.5 rounded-full" style="width: {{ (damaged_count / total_assets * 100) if total_assets > 0 else 0 }}%"></div>
-                            </div>
-                        </div>
-                        <div>
-                            <div class="flex justify-between text-xs mb-1">
-                                <span class="text-gray-500">To Be Disposed</span>
-                                <span class="font-medium">{{ to_be_disposed_count }}</span>
-                            </div>
-                            <div class="w-full bg-gray-200 rounded-full h-1.5">
-                                <div class="bg-yellow-600 h-1.5 rounded-full" style="width: {{ (to_be_disposed_count / total_assets * 100) if total_assets > 0 else 0 }}%"></div>
-                            </div>
-                        </div>
-                        <div>
-                            <div class="flex justify-between text-xs mb-1">
-                                <span class="text-gray-500">Disposed</span>
-                                <span class="font-medium">{{ disposed_count }}</span>
-                            </div>
-                            <div class="w-full bg-gray-200 rounded-full h-1.5">
-                                <div class="bg-gray-600 h-1.5 rounded-full" style="width: {{ (disposed_count / total_assets * 100) if total_assets > 0 else 0 }}%"></div>
-                            </div>
-                        </div>
-                        <div class="pt-4 border-t border-gray-200">
-                            <a href="/export" class="text-xs text-primary-600 hover:text-primary-800 font-medium flex items-center">
-                                <i class="fas fa-file-export mr-1"></i> Export Report
-                            </a>
-                        </div>
-                    </div>
+            </div>
+            <div class="chart-container">
+                <canvas id="damagedChart"></canvas>
+            </div>
+        </div>
+        
+        <!-- Repaired Assets Chart -->
+        <div class="bg-white rounded-lg shadow p-4 sm:p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-base sm:text-lg font-medium text-gray-900">Repaired Assets</h3>
+                <div class="flex space-x-2">
+                    <button class="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded text-gray-600 repaired-period-btn active" data-period="month">Monthly</button>
+                    <button class="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded text-gray-600 repaired-period-btn" data-period="quarter">Quarterly</button>
+                    <button class="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded text-gray-600 repaired-period-btn" data-period="year">Yearly</button>
                 </div>
+            </div>
+            <div class="chart-container">
+                <canvas id="repairedChart"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+        <!-- Relocated Assets Chart -->
+        <div class="bg-white rounded-lg shadow p-4 sm:p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-base sm:text-lg font-medium text-gray-900">Relocated Assets</h3>
+            </div>
+            <div class="chart-container">
+                <canvas id="relocatedChart"></canvas>
+            </div>
+        </div>
+        
+        <!-- To Be Disposed Chart -->
+        <div class="bg-white rounded-lg shadow p-4 sm:p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-base sm:text-lg font-medium text-gray-900">To Be Disposed</h3>
+            </div>
+            <div class="chart-container">
+                <canvas id="toBeDisposedChart"></canvas>
+            </div>
+        </div>
+        
+        <!-- Disposed Assets Chart -->
+        <div class="bg-white rounded-lg shadow p-4 sm:p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-base sm:text-lg font-medium text-gray-900">Disposed Assets</h3>
+            </div>
+            <div class="chart-container">
+                <canvas id="disposedChart"></canvas>
             </div>
         </div>
     </div>
@@ -279,45 +282,173 @@
 
 {% block scripts %}
 <script>
-    // Status distribution chart
-    const statusLabels = ['Active', 'Damaged', 'To Be Disposed', 'Disposed'];
-    const statusData = [{{ total_assets }}, {{ damaged_count }}, {{ to_be_disposed_count }}, {{ disposed_count }}];
-    const statusColors = ['#10B981', '#EF4444', '#F59E0B', '#6B7280'];
+    // Activity charts data (simplified for demo)
+    const activityLabels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     
-    const ctxStatus = document.getElementById('statusChart').getContext('2d');
-    window.statusChart = new Chart(ctxStatus, {
-        type: 'doughnut',
+    // Damaged Assets Chart
+    const ctxDamaged = document.getElementById('damagedChart').getContext('2d');
+    window.damagedChart = new Chart(ctxDamaged, {
+        type: 'bar',
         data: {
-            labels: statusLabels,
+            labels: activityLabels,
             datasets: [{
-                data: statusData,
-                backgroundColor: statusColors,
+                label: 'Damaged Assets',
+                data: [2, 1, 3, 0, 1, 2, 1, 0, 1, 2, 0, 1],
+                backgroundColor: 'rgba(239, 68, 68, 0.6)',
+                borderColor: 'rgba(239, 68, 68, 1)',
                 borderWidth: 1
             }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        precision: 0
+                    }
+                }
+            },
             plugins: {
                 legend: {
-                    position: 'right',
-                    labels: {
-                        boxWidth: 12,
-                        font: {
-                            size: isMobile ? 10 : 12
-                        }
+                    display: false
+                }
+            }
+        }
+    });
+    
+    // Repaired Assets Chart
+    const ctxRepaired = document.getElementById('repairedChart').getContext('2d');
+    window.repairedChart = new Chart(ctxRepaired, {
+        type: 'bar',
+        data: {
+            labels: activityLabels,
+            datasets: [{
+                label: 'Repaired Assets',
+                data: [1, 2, 1, 3, 0, 1, 2, 1, 0, 1, 2, 0],
+                backgroundColor: 'rgba(16, 185, 129, 0.6)',
+                borderColor: 'rgba(16, 185, 129, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        precision: 0
                     }
-                },
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            const label = context.label || '';
-                            const value = context.raw || 0;
-                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                            const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
-                            return `${label}: ${value} (${percentage}%)`;
-                        }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                }
+            }
+        }
+    });
+    
+    // Relocated Assets Chart
+    const ctxRelocated = document.getElementById('relocatedChart').getContext('2d');
+    window.relocatedChart = new Chart(ctxRelocated, {
+        type: 'line',
+        data: {
+            labels: activityLabels,
+            datasets: [{
+                label: 'Relocated Assets',
+                data: [0, 1, 0, 2, 1, 0, 1, 0, 2, 0, 1, 0],
+                backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                borderColor: 'rgba(59, 130, 246, 1)',
+                borderWidth: 2,
+                fill: true,
+                tension: 0.3
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        precision: 0
                     }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                }
+            }
+        }
+    });
+    
+    // To Be Disposed Chart
+    const ctxToBeDisposed = document.getElementById('toBeDisposedChart').getContext('2d');
+    window.toBeDisposedChart = new Chart(ctxToBeDisposed, {
+        type: 'line',
+        data: {
+            labels: activityLabels,
+            datasets: [{
+                label: 'To Be Disposed',
+                data: [0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0],
+                backgroundColor: 'rgba(245, 158, 11, 0.2)',
+                borderColor: 'rgba(245, 158, 11, 1)',
+                borderWidth: 2,
+                fill: true,
+                tension: 0.3
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        precision: 0
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                }
+            }
+        }
+    });
+    
+    // Disposed Assets Chart
+    const ctxDisposed = document.getElementById('disposedChart').getContext('2d');
+    window.disposedChart = new Chart(ctxDisposed, {
+        type: 'bar',
+        data: {
+            labels: activityLabels,
+            datasets: [{
+                label: 'Disposed Assets',
+                data: [1, 0, 2, 1, 3, 0, 2, 1, 0, 2, 1, 3],
+                backgroundColor: 'rgba(107, 114, 128, 0.6)',
+                borderColor: 'rgba(107, 114, 128, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        precision: 0
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
                 }
             }
         }
