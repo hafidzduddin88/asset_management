@@ -27,10 +27,13 @@ async def home(request: Request, current_user = Depends(get_current_user)):
         
         # Prepare variables for dashboard.html
         total_assets = len(active_assets)
-        total_purchase_value = summary_data.get("total_purchase_value", 0)
-        total_book_value = summary_data.get("total_book_value", 0)
-        total_depreciation_value = summary_data.get("total_depreciation_value", 0)
         disposed_count = len(disposed_assets)
+        
+        # Calculate financial values directly from assets
+        total_purchase_value = sum(float(asset.get("Purchase Cost", 0)) for asset in active_assets)
+        total_book_value = sum(float(asset.get("Book Value", 0)) for asset in active_assets)
+        # Calculate depreciation as purchase value minus book value
+        total_depreciation_value = total_purchase_value - total_book_value
         category_counts = chart_data.get("category_counts", {})
         
         # Format location data

@@ -1,6 +1,6 @@
 {% extends "layouts/modern_layout.html" %}
 
-{% block title %}Dashboard Aset{% endblock %}
+{% block title %}Asset Dashboard{% endblock %}
 
 {% block head %}
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -9,28 +9,37 @@
             position: relative;
             height: 300px;
         }
+        @media (max-width: 640px) {
+            .chart-container {
+                height: 250px;
+            }
+        }
+        .table-responsive {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
     </style>
 {% endblock %}
 {% block content %}
-    <div class="mb-6">
-        <h1 class="text-2xl font-bold text-gray-900">Dashboard Aset</h1>
+    <div class="mb-4 sm:mb-6">
+        <h1 class="text-xl sm:text-2xl font-bold text-gray-900">Asset Dashboard</h1>
     </div>
 
     <!-- Summary Cards -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
-        <div class="bg-white rounded-lg shadow p-6">
-            <h2 class="text-lg font-medium text-gray-900 mb-2">Total Aset Aktif</h2>
-            <p class="text-3xl font-bold text-primary-600">{{ total_assets }}</p>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6">
+        <div class="bg-white rounded-lg shadow p-4 sm:p-6">
+            <h2 class="text-base sm:text-lg font-medium text-gray-900 mb-2">Active Assets</h2>
+            <p class="text-2xl sm:text-3xl font-bold text-primary-600">{{ total_assets }}</p>
             <div class="space-y-1 mt-2">
-                <p class="text-sm text-gray-500">Total Nilai Perolehan: <span class="font-medium">Rp {{ "{:,.0f}".format(total_purchase_value) }}</span></p>
-                <p class="text-sm text-gray-500">Total Book Value: <span class="font-medium">Rp {{ "{:,.0f}".format(total_book_value) }}</span></p>
-                <p class="text-sm text-gray-500">Total Depresiasi: <span class="font-medium">Rp {{ "{:,.0f}".format(total_depreciation_value) }}</span></p>
-                <p class="text-sm text-gray-400 mt-2 border-t pt-2">Aset Disposed: <span class="font-medium">{{ disposed_count }}</span></p>
+                <p class="text-sm text-gray-500">Total Purchase Value: <span class="font-medium">$ {{ "{:,.0f}".format(total_purchase_value) }}</span></p>
+                <p class="text-sm text-gray-500">Total Book Value: <span class="font-medium">$ {{ "{:,.0f}".format(total_book_value) }}</span></p>
+                <p class="text-sm text-gray-500">Total Depreciation: <span class="font-medium">$ {{ "{:,.0f}".format(total_depreciation_value) }}</span></p>
+                <p class="text-sm text-gray-400 mt-2 border-t pt-2">Disposed Assets: <span class="font-medium">{{ disposed_count }}</span></p>
             </div>
         </div>
 
-        <div class="bg-white rounded-lg shadow p-6">
-            <h2 class="text-lg font-medium text-gray-900 mb-2">Aset per Kategori</h2>
+        <div class="bg-white rounded-lg shadow p-4 sm:p-6">
+            <h2 class="text-base sm:text-lg font-medium text-gray-900 mb-2">Assets by Category</h2>
             <ul class="space-y-1">
                 {% for category, count in category_counts.items() %}
                     <li class="flex justify-between">
@@ -41,8 +50,8 @@
             </ul>
         </div>
 
-        <div class="bg-white rounded-lg shadow p-6">
-            <h2 class="text-lg font-medium text-gray-900 mb-2">Jumlah Aset per Lokasi</h2>
+        <div class="bg-white rounded-lg shadow p-4 sm:p-6">
+            <h2 class="text-base sm:text-lg font-medium text-gray-900 mb-2">Assets by Location</h2>
             <ul class="space-y-1">
                 {% for location, count in location_counts.items() %}
                     <li class="flex justify-between">
@@ -55,16 +64,16 @@
     </div>
 
     <!-- Charts -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        <div class="bg-white rounded-lg shadow p-6">
-            <h3 class="text-lg font-medium text-gray-900 mb-4">Distribusi Umur Aset</h3>
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6">
+        <div class="bg-white rounded-lg shadow p-4 sm:p-6">
+            <h3 class="text-base sm:text-lg font-medium text-gray-900 mb-2 sm:mb-4">Asset Age Distribution</h3>
             <div class="chart-container">
                 <canvas id="ageChart"></canvas>
             </div>
         </div>
 
-        <div class="bg-white rounded-lg shadow p-6">
-            <h3 class="text-lg font-medium text-gray-900 mb-4">Riwayat Penambahan Aset Bulanan</h3>
+        <div class="bg-white rounded-lg shadow p-4 sm:p-6">
+            <h3 class="text-base sm:text-lg font-medium text-gray-900 mb-2 sm:mb-4">Monthly Asset Additions</h3>
             <div class="chart-container">
                 <canvas id="monthlyChart"></canvas>
             </div>
@@ -73,26 +82,26 @@
 
     <!-- Latest Assets Table -->
     <div class="bg-white rounded-lg shadow overflow-hidden">
-        <div class="px-6 py-4 border-b border-gray-200">
-            <h3 class="text-lg font-medium text-gray-900">10 Aset Terbaru</h3>
+        <div class="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200">
+            <h3 class="text-base sm:text-lg font-medium text-gray-900">10 Latest Assets</h3>
         </div>
-        <div class="overflow-x-auto">
+        <div class="overflow-x-auto table-responsive">
             <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
                     <tr>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kategori</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Lokasi</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tanggal Perolehan</th>
+                        <th scope="col" class="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                        <th scope="col" class="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                        <th scope="col" class="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
+                        <th scope="col" class="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
                     {% for asset in latest_assets %}
                         <tr>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ asset.get("Asset Name", "") }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ asset.get("Category", "") }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ asset.get("Location", "") }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ asset.get("Purchase Date", "") }}</td>
+                            <td class="px-3 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-medium text-gray-900">{{ asset.get("Asset Name", "") }}</td>
+                            <td class="px-3 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">{{ asset.get("Category", "") }}</td>
+                            <td class="px-3 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">{{ asset.get("Location", "") }}</td>
+                            <td class="px-3 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">{{ asset.get("Purchase Date", "") }}</td>
                         </tr>
                     {% endfor %}
                 </tbody>
@@ -103,18 +112,34 @@
 
 {% block scripts %}
 <script>
+    // Check if we're on a mobile device and handle resize
+    let isMobile = window.innerWidth < 640;
+    
+    // Add resize listener to update charts when switching between mobile and desktop
+    window.addEventListener('resize', function() {
+        const wasMobile = isMobile;
+        isMobile = window.innerWidth < 640;
+        
+        // Only redraw charts if we've crossed the mobile threshold
+        if (wasMobile !== isMobile) {
+            // Redraw charts with new settings
+            if (window.ageChart) window.ageChart.update();
+            if (window.monthlyChart) window.monthlyChart.update();
+        }
+    });
+    
     // Age distribution chart
     const ageDistribution = {{ age_distribution | tojson }};
     const ageLabels = ageDistribution.map(item => item.label);
     const ageData = ageDistribution.map(item => item.value);
 
     const ctxAge = document.getElementById('ageChart').getContext('2d');
-    new Chart(ctxAge, {
+    window.ageChart = new Chart(ctxAge, {
         type: 'bar',
         data: {
             labels: ageLabels,
             datasets: [{
-                label: 'Jumlah Aset',
+                label: 'Asset Count',
                 data: ageData,
                 backgroundColor: 'rgba(59, 130, 246, 0.6)',
                 borderColor: 'rgba(59, 130, 246, 1)',
@@ -126,7 +151,26 @@
             maintainAspectRatio: false,
             scales: {
                 y: {
-                    beginAtZero: true
+                    beginAtZero: true,
+                    ticks: {
+                        precision: 0,
+                        font: {
+                            size: isMobile ? 10 : 12
+                        }
+                    }
+                },
+                x: {
+                    ticks: {
+                        font: {
+                            size: isMobile ? 10 : 12
+                        }
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: !isMobile,
+                    position: 'top'
                 }
             }
         }
@@ -137,12 +181,12 @@
     const monthData = {{ monthly_chart_values | tojson }};
 
     const ctxMonthly = document.getElementById('monthlyChart').getContext('2d');
-    new Chart(ctxMonthly, {
+    window.monthlyChart = new Chart(ctxMonthly, {
         type: 'line',
         data: {
             labels: monthLabels,
             datasets: [{
-                label: 'Penambahan Aset',
+                label: 'Asset Additions',
                 data: monthData,
                 backgroundColor: 'rgba(16, 185, 129, 0.2)',
                 borderColor: 'rgba(16, 185, 129, 1)',
@@ -156,7 +200,31 @@
             maintainAspectRatio: false,
             scales: {
                 y: {
-                    beginAtZero: true
+                    beginAtZero: true,
+                    ticks: {
+                        precision: 0,
+                        font: {
+                            size: isMobile ? 10 : 12
+                        }
+                    }
+                },
+                x: {
+                    ticks: {
+                        maxRotation: isMobile ? 45 : 0,
+                        font: {
+                            size: isMobile ? 8 : 12
+                        },
+                        callback: function(val, index) {
+                            // On mobile, show fewer labels
+                            return isMobile ? (index % 2 === 0 ? this.getLabelForValue(val) : '') : this.getLabelForValue(val);
+                        }
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: !isMobile,
+                    position: 'top'
                 }
             }
         }
