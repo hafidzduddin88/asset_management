@@ -252,7 +252,7 @@
             <div class="flex flex-col md:flex-row">
                 <div class="w-full md:w-3/4 p-4 sm:p-6">
                     <div class="flex justify-between items-center mb-4">
-                        <h3 class="text-base sm:text-lg font-medium text-gray-900">Monthly Asset Additions</h3>
+                        <h3 class="text-base sm:text-lg font-medium text-gray-900 chart-title">Monthly Asset Additions (Last 12 Months)</h3>
                         <div class="flex space-x-2">
                             <button class="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded text-gray-600 chart-period-btn active" data-period="month">Monthly</button>
                             <button class="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded text-gray-600 chart-period-btn" data-period="quarter">Quarterly</button>
@@ -384,18 +384,36 @@
         }
     });
     
-    // Monthly asset additions chart
-    const monthLabels = {{ monthly_chart_labels | tojson }};
-    const monthData = {{ monthly_chart_values | tojson }};
-
+    // Chart data for different time periods
+    const chartData = {
+        month: {
+            labels: {{ monthly_chart_labels | tojson }},
+            values: {{ monthly_chart_values | tojson }},
+            title: 'Monthly Asset Additions (Last 12 Months)'
+        },
+        quarter: {
+            labels: {{ quarterly_chart_labels | tojson }},
+            values: {{ quarterly_chart_values | tojson }},
+            title: 'Quarterly Asset Additions (Last 3 Years)'
+        },
+        year: {
+            labels: {{ yearly_chart_labels | tojson }},
+            values: {{ yearly_chart_values | tojson }},
+            title: 'Yearly Asset Additions (Last 5 Years)'
+        }
+    };
+    
+    // Current period
+    let currentPeriod = 'month';
+    
     const ctxMonthly = document.getElementById('monthlyChart').getContext('2d');
     window.monthlyChart = new Chart(ctxMonthly, {
         type: 'line',
         data: {
-            labels: monthLabels,
+            labels: chartData[currentPeriod].labels,
             datasets: [{
                 label: 'Asset Additions',
-                data: monthData,
+                data: chartData[currentPeriod].values,
                 backgroundColor: 'rgba(59, 130, 246, 0.2)',
                 borderColor: 'rgba(59, 130, 246, 1)',
                 borderWidth: 2,
@@ -457,28 +475,43 @@
             this.classList.add('bg-primary-100');
             this.classList.add('text-primary-700');
             
-            // In a real app, we would fetch data for the selected period
-            // For now, we'll just show a simulated update
+            // Get the selected period
             const period = this.getAttribute('data-period');
+            currentPeriod = period;
             
-            // Update chart title based on period
-            let chartTitle = 'Monthly';
-            if (period === 'quarter') chartTitle = 'Quarterly';
-            if (period === 'year') chartTitle = 'Yearly';
+            // Update chart title
+            const chartTitle = document.querySelector('.chart-title');
+            if (chartTitle) {
+                chartTitle.textContent = chartData[period].title;
+            }
             
-            // Simulate data update
+            // Update chart data
+            window.monthlyChart.data.labels = chartData[period].labels;
+            window.monthlyChart.data.datasets[0].data = chartData[period].values;
+            
+            // Update chart options based on period
+            if (period === 'year') {
+                window.monthlyChart.config.type = 'bar';
+                window.monthlyChart.data.datasets[0].backgroundColor = 'rgba(59, 130, 246, 0.6)';
+                window.monthlyChart.data.datasets[0].borderColor = 'rgba(59, 130, 246, 1)';
+            } else {
+                window.monthlyChart.config.type = 'line';
+                window.monthlyChart.data.datasets[0].backgroundColor = 'rgba(59, 130, 246, 0.2)';
+                window.monthlyChart.data.datasets[0].borderColor = 'rgba(59, 130, 246, 1)';
+            }
+            
+            // Update the chart
+            window.monthlyChart.update();
+            
+            // Show toast notification
+            const toast = document.createElement('div');
+            toast.className = 'fixed bottom-4 right-4 bg-primary-600 text-white px-4 py-2 rounded shadow-lg';
+            toast.innerHTML = `<div class="flex items-center"><i class="fas fa-info-circle mr-2"></i> ${chartData[period].title}</div>`;
+            document.body.appendChild(toast);
+            
             setTimeout(() => {
-                // In a real app, we would update with actual data
-                // For now, just show a toast notification
-                const toast = document.createElement('div');
-                toast.className = 'fixed bottom-4 right-4 bg-primary-600 text-white px-4 py-2 rounded shadow-lg';
-                toast.innerHTML = `<div class="flex items-center"><i class="fas fa-info-circle mr-2"></i> ${chartTitle} view selected</div>`;
-                document.body.appendChild(toast);
-                
-                setTimeout(() => {
-                    toast.remove();
-                }, 3000);
-            }, 300);
+                toast.remove();
+            }, 3000);
         });
     });
     

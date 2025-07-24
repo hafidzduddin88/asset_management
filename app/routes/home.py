@@ -57,10 +57,75 @@ async def home(request: Request, current_user = Depends(get_current_user)):
         location_values = location_data.get("values", [])
         location_counts_dict = dict(zip(location_counts, location_values))
 
-        # Format monthly chart data
+        # Format time-based chart data
         monthly_data = chart_data.get("monthly_chart_data", {})
         monthly_chart_labels = monthly_data.get("labels", [])
         monthly_chart_values = monthly_data.get("values", [])
+        
+        # Generate quarterly data (last 12 quarters - 3 years)
+        quarterly_chart_labels = []
+        quarterly_chart_values = []
+        
+        # Get current year and quarter
+        from datetime import datetime
+        current_date = datetime.now()
+        current_year = current_date.year
+        current_quarter = (current_date.month - 1) // 3 + 1
+        
+        # Generate data for the last 12 quarters
+        for i in range(11, -1, -1):
+            year = current_year
+            quarter = current_quarter - i
+            
+            # Adjust year if quarter is negative or > 4
+            while quarter <= 0:
+                year -= 1
+                quarter += 4
+            while quarter > 4:
+                year += 1
+                quarter -= 4
+                
+            quarterly_chart_labels.append(f"Q{quarter} {year}")
+            
+            # Count assets added in this quarter
+            quarter_start_month = (quarter - 1) * 3 + 1
+            quarter_end_month = quarter * 3
+            
+            count = 0
+            for asset in all_assets:
+                purchase_date = asset.get("Purchase Date", "")
+                if purchase_date:
+                    try:
+                        date = datetime.strptime(purchase_date, "%Y-%m-%d")
+                        if date.year == year and quarter_start_month <= date.month <= quarter_end_month:
+                            count += 1
+                    except:
+                        pass
+            
+            quarterly_chart_values.append(count)
+        
+        # Generate yearly data (last 5 years)
+        yearly_chart_labels = []
+        yearly_chart_values = []
+        
+        # Generate data for the last 5 years
+        for i in range(4, -1, -1):
+            year = current_year - i
+            yearly_chart_labels.append(str(year))
+            
+            # Count assets added in this year
+            count = 0
+            for asset in all_assets:
+                purchase_date = asset.get("Purchase Date", "")
+                if purchase_date:
+                    try:
+                        date = datetime.strptime(purchase_date, "%Y-%m-%d")
+                        if date.year == year:
+                            count += 1
+                    except:
+                        pass
+            
+            yearly_chart_values.append(count)
 
         # Format age distribution - convert to list of tuples for proper serialization
         age_distribution = chart_data.get("age_distribution", {})
@@ -116,6 +181,10 @@ async def home(request: Request, current_user = Depends(get_current_user)):
             "location_counts": location_counts_dict,
             "monthly_chart_labels": monthly_chart_labels,
             "monthly_chart_values": monthly_chart_values,
+            "quarterly_chart_labels": quarterly_chart_labels,
+            "quarterly_chart_values": quarterly_chart_values,
+            "yearly_chart_labels": yearly_chart_labels,
+            "yearly_chart_values": yearly_chart_values,
             "age_distribution": age_distribution_list,
             "latest_assets": latest_assets
         }
