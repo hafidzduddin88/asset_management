@@ -38,13 +38,13 @@
     <div class="border-b border-gray-200">
         <nav class="-mb-px flex space-x-8">
             <button id="searchTab" class="tab-button active py-2 px-1 border-b-2 border-red-500 font-medium text-sm">
-                <i class="fas fa-search mr-2"></i>Search Assets
+                <i class="fas fa-exclamation-triangle mr-2"></i>Report Asset Damage
             </button>
             <button id="logTab" class="tab-button py-2 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 font-medium text-sm">
                 <i class="fas fa-list mr-2"></i>Log Damaged Assets
             </button>
             <button id="reportTab" class="tab-button py-2 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 font-medium text-sm">
-                <i class="fas fa-exclamation-triangle mr-2"></i>Report Damaged Asset
+                <i class="fas fa-tools mr-2"></i>Damaged Asset List
             </button>
         </nav>
     </div>
@@ -77,63 +77,30 @@
     </div>
 </div>
 
-<!-- Report Damaged Asset Tab -->
+<!-- Damaged Asset List Tab -->
 <div id="reportContent" class="tab-content" style="display: none;">
-    <div class="bg-white rounded-lg shadow p-6">
-        <h3 class="text-lg font-medium text-gray-900 mb-4">Report Damaged Asset</h3>
-        <form id="directDamageForm">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Asset ID/Name *</label>
-                    <input type="text" name="asset_identifier" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500" placeholder="Enter asset ID or name" required>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Damage Type *</label>
-                    <select name="damage_type" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500" required>
-                        <option value="">Select Damage Type</option>
-                        <option value="Physical Damage">Physical Damage</option>
-                        <option value="Electrical Issue">Electrical Issue</option>
-                        <option value="Software Problem">Software Problem</option>
-                        <option value="Mechanical Failure">Mechanical Failure</option>
-                        <option value="Water Damage">Water Damage</option>
-                        <option value="Other">Other</option>
-                    </select>
-                </div>
-            </div>
-            
-            <div class="mt-4">
-                <label class="block text-sm font-medium text-gray-700 mb-2">Damage Description *</label>
-                <textarea name="damage_description" rows="4" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500" placeholder="Describe the damage in detail..." required></textarea>
-            </div>
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Severity Level *</label>
-                    <select name="severity" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500" required>
-                        <option value="">Select Severity</option>
-                        <option value="Low">Low - Minor issue, asset still usable</option>
-                        <option value="Medium">Medium - Significant issue, limited functionality</option>
-                        <option value="High">High - Major issue, asset unusable</option>
-                        <option value="Critical">Critical - Safety hazard or complete failure</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Reported By *</label>
-                    <input type="text" name="reported_by" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500" value="{{ user.username if user else '' }}" required>
-                </div>
-            </div>
-            
-            <div class="mt-4">
-                <label class="block text-sm font-medium text-gray-700 mb-2">Additional Notes</label>
-                <textarea name="notes" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500" placeholder="Any additional information..."></textarea>
-            </div>
-            
-            <div class="mt-6">
-                <button type="submit" class="bg-red-600 text-white px-6 py-2 rounded-md hover:bg-red-700">
-                    <i class="fas fa-exclamation-triangle mr-2"></i>Submit Damage Report
-                </button>
-            </div>
-        </form>
+    <div class="bg-white rounded-lg shadow overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-medium text-gray-900">Assets Under Repair</h3>
+            <p class="text-sm text-gray-500 mt-1">Manage assets currently being repaired</p>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Asset Name</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Damage Type</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Severity</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Repair Date</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="underRepairTable" class="bg-white divide-y divide-gray-200">
+                    <!-- Under repair assets will be populated here -->
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
 
@@ -268,6 +235,13 @@ let damageLog = [
     {id: 2, asset_name: "Office Chair", damage_type: "Mechanical Failure", severity: "Low", reported_by: "Jane Smith", date: "2024-01-14", status: "Approved"},
 ];
 
+// Sample under repair assets
+let underRepairAssets = [
+    {id: 1, asset_name: "Laptop HP ProBook", location: "Office Building A", room: "Room 101", damage_type: "Screen Crack", severity: "Medium", repair_date: "2024-01-10"},
+    {id: 2, asset_name: "Printer Canon", location: "Office Building B", room: "Room 201", damage_type: "Paper Jam", severity: "Low", repair_date: "2024-01-12"},
+    {id: 3, asset_name: "Projector Epson", location: "Warehouse", room: "Meeting Room", damage_type: "Lamp Failure", severity: "High", repair_date: "2024-01-08"},
+];
+
 // Initialize
 document.addEventListener('DOMContentLoaded', function() {
     // Process asset data
@@ -393,6 +367,7 @@ function switchTab(tab) {
     } else if (tab === 'report') {
         reportTab.classList.add('active');
         reportContent.style.display = 'block';
+        loadUnderRepairAssets();
     }
 }
 
@@ -559,6 +534,85 @@ function markAsDisposed(entryId) {
             }, 3000);
         }
     }
+}
+
+function loadUnderRepairAssets() {
+    const tableBody = document.getElementById('underRepairTable');
+    
+    if (underRepairAssets.length === 0) {
+        tableBody.innerHTML = '<tr><td colspan="6" class="px-6 py-4 text-center text-gray-500">No assets under repair</td></tr>';
+        return;
+    }
+    
+    tableBody.innerHTML = underRepairAssets.map(asset => `
+        <tr>
+            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${asset.asset_name}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${asset.location}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${asset.damage_type}</td>
+            <td class="px-6 py-4 whitespace-nowrap">
+                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getSeverityColor(asset.severity)}">${asset.severity}</span>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${asset.repair_date}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                <div class="flex space-x-2">
+                    <button onclick="viewAssetDetail(${asset.id})" class="text-blue-600 hover:text-blue-900" title="View Details">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                    <button onclick="markAsFixed(${asset.id})" class="text-green-600 hover:text-green-900" title="Mark as Fixed">
+                        <i class="fas fa-check"></i>
+                    </button>
+                    <button onclick="markForDisposal(${asset.id})" class="text-yellow-600 hover:text-yellow-900" title="Mark for Disposal">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                </div>
+            </td>
+        </tr>
+    `).join('');
+}
+
+function viewAssetDetail(assetId) {
+    const asset = underRepairAssets.find(a => a.id === assetId);
+    if (asset) {
+        alert(`Asset Details:\nName: ${asset.asset_name}\nLocation: ${asset.location}\nDamage: ${asset.damage_type}\nSeverity: ${asset.severity}`);
+    }
+}
+
+function markAsFixed(assetId) {
+    if (confirm('Mark this asset as Fixed? This will change status to Active.')) {
+        // Remove from under repair list
+        underRepairAssets = underRepairAssets.filter(a => a.id !== assetId);
+        loadUnderRepairAssets();
+        
+        showToast('Asset marked as Fixed and returned to Active status', 'green');
+    }
+}
+
+function markForDisposal(assetId) {
+    if (confirm('Mark this asset for Disposal? This action requires admin approval.')) {
+        // Remove from under repair list
+        const asset = underRepairAssets.find(a => a.id === assetId);
+        underRepairAssets = underRepairAssets.filter(a => a.id !== assetId);
+        loadUnderRepairAssets();
+        
+        showToast('Asset marked for disposal - pending admin approval', 'yellow');
+    }
+}
+
+function showToast(message, color) {
+    const colorClasses = {
+        green: 'bg-green-600',
+        yellow: 'bg-yellow-600',
+        red: 'bg-red-600'
+    };
+    
+    const toast = document.createElement('div');
+    toast.className = `fixed bottom-4 right-4 ${colorClasses[color]} text-white px-4 py-2 rounded shadow-lg z-50`;
+    toast.innerHTML = `<i class="fas fa-info-circle mr-2"></i>${message}`;
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.remove();
+    }, 3000);
 }
 </script>
 {% endblock %}
