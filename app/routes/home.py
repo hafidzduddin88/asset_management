@@ -24,6 +24,8 @@ async def home(request: Request, current_user = Depends(get_current_user)):
         # Prepare variables for dashboard.html
         total_assets = len(all_assets)
         total_purchase_value = summary_data.get("total_purchase_value", 0)
+        total_book_value = summary_data.get("total_book_value", 0)
+        total_depreciation_value = summary_data.get("total_depreciation_value", 0)
         category_counts = chart_data.get("category_counts", {})
         
         # Format location data
@@ -56,6 +58,8 @@ async def home(request: Request, current_user = Depends(get_current_user)):
             "user": current_user,
             "total_assets": total_assets,
             "total_purchase_value": total_purchase_value,
+            "total_book_value": total_book_value,
+            "total_depreciation_value": total_depreciation_value,
             "category_counts": category_counts,
             "location_counts": location_counts_dict,
             "monthly_chart_labels": monthly_chart_labels,
