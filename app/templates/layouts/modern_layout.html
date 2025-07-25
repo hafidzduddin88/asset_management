@@ -192,7 +192,7 @@
     <footer class="bg-white border-t border-gray-200 py-4">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <p class="text-center text-sm text-gray-500">
-                &copy; 2023 Asset Management Business Platform. All rights reserved.
+                &copy; 2025 Asset Management Business Process Department. All rights reserved.
             </p>
         </div>
     </footer>
@@ -230,8 +230,9 @@
             e.preventDefault();
             deferredPrompt = e;
             
-            // Show install prompt if not already installed
-            if (!window.matchMedia('(display-mode: standalone)').matches) {
+            // Show install prompt if not already installed and not dismissed
+            if (!window.matchMedia('(display-mode: standalone)').matches && 
+                localStorage.getItem('installPromptDismissed') !== 'true') {
                 document.getElementById('installPrompt').style.display = 'block';
             }
         });
@@ -241,7 +242,17 @@
             if (deferredPrompt) {
                 deferredPrompt.prompt();
                 const { outcome } = await deferredPrompt.userChoice;
+                console.log('PWA install outcome:', outcome);
+                if (outcome === 'accepted') {
+                    console.log('User accepted the install prompt');
+                } else {
+                    console.log('User dismissed the install prompt');
+                }
                 deferredPrompt = null;
+                document.getElementById('installPrompt').style.display = 'none';
+            } else {
+                // Fallback for browsers that don't support beforeinstallprompt
+                alert('To install this app:\n\n1. Open browser menu (⋮)\n2. Select "Add to Home screen" or "Install app"\n3. Follow the prompts');
                 document.getElementById('installPrompt').style.display = 'none';
             }
         });
@@ -252,8 +263,8 @@
             localStorage.setItem('installPromptDismissed', 'true');
         });
         
-        // Check if user previously dismissed
-        if (localStorage.getItem('installPromptDismissed') === 'true') {
+        // Check if user previously dismissed or already installed
+        if (localStorage.getItem('installPromptDismissed') === 'true' || window.matchMedia('(display-mode: standalone)').matches) {
             document.getElementById('installPrompt').style.display = 'none';
         }
         

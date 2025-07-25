@@ -1,6 +1,6 @@
 {
-  "name": "AMBP - Asset Management Business Platform",
-  "short_name": "AMBP",
+  "name": "AMBP - Asset Management Business Process",
+  "short_name": "AsetRapi",
   "description": "Asset Management Business Platform for tracking and managing company assets",
   "start_url": "/",
   "display": "standalone",
