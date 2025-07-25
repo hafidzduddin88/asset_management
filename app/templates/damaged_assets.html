@@ -401,18 +401,18 @@ function processAssetData() {
     // Filter assets with status "Under Repair" only
     underRepairAssets = allAssets.filter(asset => {
         const status = (asset.Status || asset.status || '').toString().trim();
-        console.log(`Asset: ${asset.name}, Status: "${status}"`); // Debug log
+        console.log(`Asset: ${asset['Item Name']}, Status: "${status}"`); // Debug log
         return status === 'Under Repair';
     }).map(asset => ({
-        id: asset.id,
-        asset_name: asset.name,
-        location: asset.location,
-        room: asset.room,
-        category: asset.category,
-        book_value: asset.book_value || 0,
-        damage_type: asset.damage_type || 'Not specified',
-        severity: asset.severity || 'Medium',
-        repair_date: asset.repair_date || new Date().toISOString().split('T')[0]
+        id: asset.ID,
+        asset_name: asset['Item Name'],
+        location: asset.Location,
+        room: asset.Room,
+        category: asset.Category,
+        book_value: parseFloat(asset['Book Value'] || 0),
+        damage_type: asset['Item Condition'] || 'Not specified',
+        severity: 'Medium',
+        repair_date: asset['Purchase Date'] || new Date().toISOString().split('T')[0]
     }));
     
     console.log('Under repair assets found:', underRepairAssets); // Debug log
