@@ -60,6 +60,31 @@ async def approve_request(approval_id: int, request: Request, current_user = Dep
                 'Location': 'HO - Ciputat',
                 'Room': '1022 - Gudang Support TOG'
             })
+            
+        elif approval.get('Type') == 'repair_action':
+            # Add to repair log when store action approved
+            from app.utils.sheets import add_repair_log
+            repair_data = {
+                'asset_id': approval.get('Asset_ID'),
+                'asset_name': approval.get('Asset_Name'),
+                'repair_action': 'Store Asset',
+                'action_type': 'store',
+                'description': approval.get('Description'),
+                'performed_by': current_user.username,
+                'action_date': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                'new_location': 'HO - Ciputat',
+                'new_room': '1022 - Gudang Support TOG',
+                'notes': 'Approved by admin'
+            }
+            add_repair_log(repair_data)
+            
+            # Update asset status to In Storage
+            update_asset(approval.get('Asset_ID'), {
+                'Status': 'In Storage',
+                'Bisnis Unit': 'General Affair',
+                'Location': 'HO - Ciputat',
+                'Room': '1022 - Gudang Support TOG'
+            })
         
         return {"status": "success", "message": "Request approved successfully"}
     else:

@@ -963,11 +963,17 @@ document.addEventListener('DOMContentLoaded', function() {
 async function submitRepairAction(actionType) {
     const asset = window.currentRepairAsset;
     
+    if (actionType === 'store') {
+        if (!confirm('Are you sure you want to STORE this asset? This will move the asset to storage and require admin approval.')) {
+            return;
+        }
+    }
+    
     const repairData = {
         asset_id: asset.id,
         asset_name: asset.name,
         action_type: actionType,
-        description: actionType === 'store' ? 'Asset stored after repair completion' : 'Asset allocated to new location'
+        description: actionType === 'store' ? 'Request to store asset after repair completion' : 'Asset allocated to new location'
     };
     
     try {
