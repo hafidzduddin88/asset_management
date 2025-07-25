@@ -25,8 +25,8 @@ google-auth==2.17.3
 openpyxl==3.1.2
 fpdf2==2.7.4
 xlsxwriter==3.1.0
-numpy==1.24.3  # Must be installed before pandas
-pandas==2.0.0  # Required for Excel export functionality
+numpy==1.26.4  # Must be installed before pandas
+pandas==2.2.2  # Required for Excel export functionality
 
 # Image Processing
 Pillow==10.3.0
@@ -38,4 +38,4 @@ requests==2.31.0
 python-dateutil==2.8.2
 
 # Build tools
-setuptools==65.5.1  # Security fix for CVE-2022-40897
+setuptools>=69  # Security fix for CVE-2022-40897
