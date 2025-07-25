@@ -314,20 +314,102 @@
         e.preventDefault();
         deferredPrompt = e;
         
-        // Show install prompt if not already installed
+        // Show install prompt if not already installed and on mobile
         if (!window.matchMedia('(display-mode: standalone)').matches) {
-            document.getElementById('installPrompt').style.display = 'block';
+            const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            
+            if (isMobileDevice) {
+                // On dashboard page, show a more prominent mobile install prompt
+                const isOnDashboard = window.location.pathname.includes('/dashboard');
+                
+                if (isOnDashboard) {
+                    // Show a more prominent mobile-specific install banner
+                    showMobileInstallBanner();
+                } else {
+                    // On other pages, show the regular install prompt
+                    document.getElementById('installPrompt').style.display = 'block';
+                }
+            } else {
+                // On desktop, just show the regular prompt
+                document.getElementById('installPrompt').style.display = 'block';
+            }
         }
     });
     
-    // Install button click
-    document.getElementById('installBtn').addEventListener('click', async () => {
+    // Function to show mobile-specific install banner
+    function showMobileInstallBanner() {
+        // First hide the regular prompt
+        document.getElementById('installPrompt').style.display = 'none';
+        
+        // Create and show mobile-specific banner
+        if (!document.getElementById('mobileInstallBanner')) {
+            const banner = document.createElement('div');
+            banner.id = 'mobileInstallBanner';
+            banner.className = 'fixed top-0 left-0 right-0 bg-primary-700 text-white p-4 z-50 shadow-lg';
+            banner.innerHTML = `
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <i class="fas fa-mobile-alt text-2xl mr-3"></i>
+                        <div>
+                            <p class="font-bold text-lg">Install AMBP App</p>
+                            <p class="text-sm opacity-90">Untuk akses lebih cepat dan fitur offline</p>
+                        </div>
+                    </div>
+                    <div class="flex space-x-2">
+                        <button id="mobileInstallBtn" class="bg-white text-primary-700 px-4 py-2 rounded-full font-bold text-sm">
+                            Install
+                        </button>
+                        <button id="mobileDismissBtn" class="text-white bg-primary-600 px-3 py-2 rounded-full">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="mt-2 text-xs opacity-75 flex items-center">
+                    <i class="fas fa-info-circle mr-1"></i>
+                    <span>Aplikasi ini tetap bisa digunakan offline setelah diinstall</span>
+                </div>
+            `;
+            
+            document.body.appendChild(banner);
+            
+            // Add event listeners
+            document.getElementById('mobileInstallBtn').addEventListener('click', promptInstall);
+            document.getElementById('mobileDismissBtn').addEventListener('click', () => {
+                document.getElementById('mobileInstallBanner').style.display = 'none';
+                localStorage.setItem('mobileInstallPromptDismissed', 'true');
+            });
+            
+            // Check if user previously dismissed
+            if (localStorage.getItem('mobileInstallPromptDismissed') === 'true') {
+                banner.style.display = 'none';
+            }
+        }
+    }
+    
+    // Function to prompt installation
+    function promptInstall() {
         if (deferredPrompt) {
             deferredPrompt.prompt();
-            const { outcome } = await deferredPrompt.userChoice;
-            deferredPrompt = null;
-            document.getElementById('installPrompt').style.display = 'none';
+            deferredPrompt.userChoice.then(choiceResult => {
+                if (choiceResult.outcome === 'accepted') {
+                    console.log('User accepted the install prompt');
+                    // Hide all prompts
+                    if (document.getElementById('mobileInstallBanner')) {
+                        document.getElementById('mobileInstallBanner').style.display = 'none';
+                    }
+                    document.getElementById('installPrompt').style.display = 'none';
+                    document.getElementById('install-app-btn').style.display = 'none';
+                } else {
+                    console.log('User dismissed the install prompt');
+                }
+                deferredPrompt = null;
+            });
         }
+    }
+    
+    // Install button click
+    document.getElementById('installBtn').addEventListener('click', async () => {
+        promptInstall();
     });
     
     // Dismiss button click

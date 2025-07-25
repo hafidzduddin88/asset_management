@@ -434,15 +434,26 @@ function processAssetData() {
 
 // Initialize
 document.addEventListener('DOMContentLoaded', function() {
-    // Process asset data
+    // Process all asset data (don't filter by status here)
     allAssets = assetsData.map(asset => ({
         id: asset.ID || asset.id,
         name: asset['Item Name'] || asset['Asset Name'] || asset.Name || 'Unnamed Asset',
         location: asset.Location || '',
         room: asset.Room || '',
         category: asset.Category || '',
-        status: asset.Status || 'Active'
-    })).filter(asset => asset.status === 'Active');
+        status: asset.Status || 'Active',
+        Status: asset.Status || 'Active',
+        'Item Name': asset['Item Name'] || asset.name,
+        Location: asset.Location || '',
+        Room: asset.Room || '',
+        Category: asset.Category || '',
+        'Book Value': asset['Book Value'] || 0,
+        'Item Condition': asset['Item Condition'] || '',
+        'Purchase Date': asset['Purchase Date'] || ''
+    }));
+    
+    // Filter active assets for damage reporting
+    const activeAssets = allAssets.filter(asset => asset.status === 'Active');
     
     buildRoomsData();
     processAssetData();
@@ -450,6 +461,9 @@ document.addEventListener('DOMContentLoaded', function() {
     setupEventListeners();
     loadDamageLog();
     loadUnderRepairAssets();
+    
+    // Use active assets for damage reporting
+    allAssets = activeAssets;
 });
 
 function buildRoomsData() {
@@ -867,6 +881,124 @@ function markForDisposal(assetId) {
         loadUnderRepairAssets();
         
         showToast('Asset marked for disposal - pending admin approval', 'yellow');
+    }
+}
+
+function openRepairAction(assetId, assetName) {
+    document.getElementById('repairAssetName').textContent = assetName;
+    document.getElementById('repairActionModal').style.display = 'block';
+    
+    // Store asset info for later use
+    window.currentRepairAsset = { id: assetId, name: assetName };
+}
+
+// Add event listeners for repair action modal
+document.addEventListener('DOMContentLoaded', function() {
+    // Repair modal controls
+    document.getElementById('closeRepairModal').addEventListener('click', () => {
+        document.getElementById('repairActionModal').style.display = 'none';
+    });
+    
+    document.getElementById('storeAssetBtn').addEventListener('click', () => {
+        submitRepairAction('store');
+    });
+    
+    document.getElementById('allocateAssetBtn').addEventListener('click', () => {
+        document.getElementById('repairActionModal').style.display = 'none';
+        document.getElementById('allocateAssetId').value = window.currentRepairAsset.id;
+        document.getElementById('allocateModal').style.display = 'block';
+    });
+    
+    // Allocate modal controls
+    document.getElementById('closeAllocateModal').addEventListener('click', () => {
+        document.getElementById('allocateModal').style.display = 'none';
+    });
+    
+    document.getElementById('cancelAllocateBtn').addEventListener('click', () => {
+        document.getElementById('allocateModal').style.display = 'none';
+    });
+    
+    document.getElementById('allocateForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        submitAllocation();
+    });
+});
+
+async function submitRepairAction(actionType) {
+    const asset = window.currentRepairAsset;
+    
+    const repairData = {
+        asset_id: asset.id,
+        asset_name: asset.name,
+        action_type: actionType,
+        description: actionType === 'store' ? 'Asset stored after repair completion' : 'Asset allocated to new location'
+    };
+    
+    try {
+        const response = await fetch('/repair/action', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(repairData)
+        });
+        
+        const result = await response.json();
+        
+        if (result.status === 'success') {
+            document.getElementById('repairActionModal').style.display = 'none';
+            showToast(result.message, 'green');
+            
+            // Refresh page to show updated data
+            setTimeout(() => {
+                location.reload();
+            }, 2000);
+        } else {
+            alert('Error: ' + result.message);
+        }
+    } catch (error) {
+        alert('Error submitting repair action: ' + error.message);
+    }
+}
+
+async function submitAllocation() {
+    const formData = new FormData(document.getElementById('allocateForm'));
+    const asset = window.currentRepairAsset;
+    
+    const allocationData = {
+        asset_id: asset.id,
+        asset_name: asset.name,
+        action_type: 'allocate',
+        business_unit: formData.get('business_unit'),
+        location: formData.get('location'),
+        room: formData.get('room'),
+        description: `Asset allocated to ${formData.get('location')} - ${formData.get('room')}`
+    };
+    
+    try {
+        const response = await fetch('/repair/action', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(allocationData)
+        });
+        
+        const result = await response.json();
+        
+        if (result.status === 'success') {
+            document.getElementById('allocateModal').style.display = 'none';
+            showToast(result.message, 'green');
+            
+            // Refresh page to show updated data
+            setTimeout(() => {
+                location.reload();
+            }, 2000);
+        } else {
+            alert('Error: ' + result.message);
+        }
+    } catch (error) {
+        alert('Error submitting allocation: ' + error.message);
     }
 }
 
