@@ -66,6 +66,10 @@ def _get_sheet(sheet_name):
             # Sheet doesn't exist, create it
             if sheet_name == SHEETS['APPROVALS']:
                 return _create_approvals_sheet(spreadsheet)
+            elif sheet_name == SHEETS['DAMAGE_LOG']:
+                return _create_damage_log_sheet(spreadsheet)
+            elif sheet_name == SHEETS['REPAIR_LOG']:
+                return _create_repair_log_sheet(spreadsheet)
             else:
                 raise
     except Exception as e:
@@ -90,6 +94,44 @@ def _create_approvals_sheet(spreadsheet):
         return sheet
     except Exception as e:
         logging.error(f"Error creating Approvals sheet: {str(e)}")
+        return None
+
+def _create_damage_log_sheet(spreadsheet):
+    """Create Damage_Log sheet with headers"""
+    try:
+        sheet = spreadsheet.add_worksheet(title=SHEETS['DAMAGE_LOG'], rows=1000, cols=12)
+        
+        # Add headers
+        headers = [
+            'ID', 'Asset_ID', 'Asset_Name', 'Damage_Type', 'Severity',
+            'Description', 'Reported_By', 'Report_Date', 'Status',
+            'Location', 'Room', 'Notes'
+        ]
+        
+        sheet.append_row(headers)
+        logging.info(f"Created {SHEETS['DAMAGE_LOG']} sheet with headers")
+        return sheet
+    except Exception as e:
+        logging.error(f"Error creating Damage_Log sheet: {str(e)}")
+        return None
+
+def _create_repair_log_sheet(spreadsheet):
+    """Create Repair_Log sheet with headers"""
+    try:
+        sheet = spreadsheet.add_worksheet(title=SHEETS['REPAIR_LOG'], rows=1000, cols=12)
+        
+        # Add headers
+        headers = [
+            'ID', 'Asset_ID', 'Asset_Name', 'Repair_Action', 'Action_Type',
+            'Description', 'Performed_By', 'Action_Date', 'Status',
+            'New_Location', 'New_Room', 'Notes'
+        ]
+        
+        sheet.append_row(headers)
+        logging.info(f"Created {SHEETS['REPAIR_LOG']} sheet with headers")
+        return sheet
+    except Exception as e:
+        logging.error(f"Error creating Repair_Log sheet: {str(e)}")
         return None
 
 def get_all_assets():
@@ -738,3 +780,93 @@ def update_approval_status(approval_id, status, approved_by, notes=''):
     except Exception as e:
         logging.error(f"Error updating approval status: {str(e)}")
         return False
+
+def add_damage_log(damage_data):
+    """Add damage report to Damage_Log sheet"""
+    try:
+        sheet = get_sheet(SHEETS['DAMAGE_LOG'])
+        if not sheet:
+            return False
+        
+        # Get next ID
+        records = sheet.get_all_records()
+        next_id = len(records) + 1
+        
+        # Prepare row data
+        row_data = [
+            str(next_id),
+            damage_data.get('asset_id', ''),
+            damage_data.get('asset_name', ''),
+            damage_data.get('damage_type', ''),
+            damage_data.get('severity', ''),
+            damage_data.get('description', ''),
+            damage_data.get('reported_by', ''),
+            damage_data.get('report_date', ''),
+            'Reported',
+            damage_data.get('location', ''),
+            damage_data.get('room', ''),
+            damage_data.get('notes', '')
+        ]
+        
+        sheet.append_row(row_data)
+        invalidate_cache()
+        return True
+    except Exception as e:
+        logging.error(f"Error adding damage log: {str(e)}")
+        return False
+
+def add_repair_log(repair_data):
+    """Add repair action to Repair_Log sheet"""
+    try:
+        sheet = get_sheet(SHEETS['REPAIR_LOG'])
+        if not sheet:
+            return False
+        
+        # Get next ID
+        records = sheet.get_all_records()
+        next_id = len(records) + 1
+        
+        # Prepare row data
+        row_data = [
+            str(next_id),
+            repair_data.get('asset_id', ''),
+            repair_data.get('asset_name', ''),
+            repair_data.get('repair_action', ''),
+            repair_data.get('action_type', ''),
+            repair_data.get('description', ''),
+            repair_data.get('performed_by', ''),
+            repair_data.get('action_date', ''),
+            'Completed',
+            repair_data.get('new_location', ''),
+            repair_data.get('new_room', ''),
+            repair_data.get('notes', '')
+        ]
+        
+        sheet.append_row(row_data)
+        invalidate_cache()
+        return True
+    except Exception as e:
+        logging.error(f"Error adding repair log: {str(e)}")
+        return False
+
+def get_damage_logs():
+    """Get all damage logs from Google Sheets"""
+    sheet = get_sheet(SHEETS['DAMAGE_LOG'])
+    if not sheet:
+        return []
+    try:
+        return sheet.get_all_records()
+    except Exception as e:
+        logging.error(f"Error getting damage logs: {str(e)}")
+        return []
+
+def get_repair_logs():
+    """Get all repair logs from Google Sheets"""
+    sheet = get_sheet(SHEETS['REPAIR_LOG'])
+    if not sheet:
+        return []
+    try:
+        return sheet.get_all_records()
+    except Exception as e:
+        logging.error(f"Error getting repair logs: {str(e)}")
+        return []
