@@ -16,7 +16,7 @@ COPY requirements.txt .
 # Install dependencies into a virtual environment
 RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
-RUN pip install --upgrade pip==23.3.2 setuptools==69.0.3 wheel==0.42.0
+RUN pip install --upgrade pip setuptools wheel
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Final stage
