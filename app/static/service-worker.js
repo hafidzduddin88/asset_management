@@ -3,6 +3,9 @@ const urlsToCache = [
   '/',
   '/assets',
   '/static/manifest.json',
+  '/static/img/logo.png',
+  '/static/img/android-chrome-192x192.png',
+  '/static/img/android-chrome-512x512.png',
   'https://cdn.tailwindcss.com',
   'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css'
 ];
