@@ -49,32 +49,64 @@ jobs:
           rm -rf /tmp/.buildx-cache
           mv /tmp/.buildx-cache-new /tmp/.buildx-cache
 
-      - name: Cleanup old Docker images
+      - name: Complete DockerHub cleanup
         run: |
-          # Get all tags except latest
-          RESPONSE=$(curl -s -H "Authorization: Bearer ${{ secrets.DOCKERHUB_TOKEN }}" \
-            "https://hub.docker.com/v2/repositories/${{ secrets.DOCKERHUB_USERNAME }}/ambp/tags/?page_size=100")
+          echo "Starting complete DockerHub cleanup..."
           
-          # Check if response has results
-          if echo "$RESPONSE" | jq -e '.results' > /dev/null 2>&1; then
-            TAGS=$(echo "$RESPONSE" | jq -r '.results[] | select(.name != "latest") | .name')
+          # Get all tags with pagination
+          PAGE=1
+          ALL_TAGS=""
+          
+          while true; do
+            RESPONSE=$(curl -s -H "Authorization: Bearer ${{ secrets.DOCKERHUB_TOKEN }}" \
+              "https://hub.docker.com/v2/repositories/${{ secrets.DOCKERHUB_USERNAME }}/ambp/tags/?page=$PAGE&page_size=100")
             
-            if [ -n "$TAGS" ]; then
-              echo "Found tags to delete: $TAGS"
-              for TAG in $TAGS; do
-                echo "Deleting tag: $TAG"
-                curl -X DELETE \
-                  -H "Authorization: Bearer ${{ secrets.DOCKERHUB_TOKEN }}" \
-                  "https://hub.docker.com/v2/repositories/${{ secrets.DOCKERHUB_USERNAME }}/ambp/tags/$TAG/"
-              done
-            else
-              echo "No old tags to delete"
+            if ! echo "$RESPONSE" | jq -e '.results' > /dev/null 2>&1; then
+              break
             fi
+            
+            TAGS=$(echo "$RESPONSE" | jq -r '.results[] | select(.name != "latest") | .name')
+            ALL_TAGS="$ALL_TAGS $TAGS"
+            
+            # Check if there's a next page
+            NEXT=$(echo "$RESPONSE" | jq -r '.next // empty')
+            if [ -z "$NEXT" ]; then
+              break
+            fi
+            
+            PAGE=$((PAGE + 1))
+          done
+          
+          # Clean up whitespace and count tags
+          ALL_TAGS=$(echo $ALL_TAGS | xargs)
+          TAG_COUNT=$(echo $ALL_TAGS | wc -w)
+          
+          if [ "$TAG_COUNT" -eq 0 ]; then
+            echo "✓ No tags to delete (only 'latest' found)"
           else
-            echo "No tags found or API error"
+            echo "Found $TAG_COUNT tags to delete"
+            
+            # Delete all tags
+            DELETED=0
+            for TAG in $ALL_TAGS; do
+              echo "Deleting: $TAG"
+              
+              STATUS=$(curl -s -o /dev/null -w "%{http_code}" -X DELETE \
+                -H "Authorization: Bearer ${{ secrets.DOCKERHUB_TOKEN }}" \
+                "https://hub.docker.com/v2/repositories/${{ secrets.DOCKERHUB_USERNAME }}/ambp/tags/$TAG/")
+              
+              if [ "$STATUS" = "204" ]; then
+                DELETED=$((DELETED + 1))
+              else
+                echo "  ✗ Failed (Status: $STATUS)"
+              fi
+            done
+            
+            echo "✓ Deleted: $DELETED/$TAG_COUNT tags"
           fi
           
-          echo "Cleanup completed."
+          echo "✓ Complete cleanup finished - only 'latest' remains"
+          echo "✓ Cache cleared automatically"
 
   deploy:
     needs: build
