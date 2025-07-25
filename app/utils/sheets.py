@@ -22,7 +22,8 @@ SHEETS = {
     'REF_TYPES': 'Ref_Types',
     'REF_COMPANIES': 'Ref_Companies',
     'REF_OWNERS': 'Ref_Owners',
-    'REF_LOCATION': 'Ref_Location'
+    'REF_LOCATION': 'Ref_Location',
+    'REF_BISNIS_UNIT': 'Ref_Bisnis_Unit'
 }
 
 CACHE_TTL = {
@@ -245,10 +246,12 @@ def _get_dropdown_options():
         companies = get_reference_data(SHEETS['REF_COMPANIES'])
         owners = get_reference_data(SHEETS['REF_OWNERS'])
         locations = get_reference_data(SHEETS['REF_LOCATION'])
+        business_units = get_reference_data(SHEETS['REF_BISNIS_UNIT'])
 
         category_names = [c.get('Category', '') for c in categories if 'Category' in c]
         company_names = [c.get('Company', '') for c in companies if 'Company' in c]
         owner_names = [o.get('Owner', '') for o in owners if 'Owner' in o]
+        business_unit_names = [b.get('Bisnis Unit', '') for b in business_units if 'Bisnis Unit' in b]
         location_dict = {}
         for loc in locations:
             location_name = loc.get('Location')
@@ -259,13 +262,14 @@ def _get_dropdown_options():
             'types': types,
             'companies': company_names,
             'owners': owner_names,
+            'business_units': business_unit_names,
             'locations': location_dict
         }
     except Exception as e:
         logging.error(f"Error getting dropdown options: {str(e)}")
         return {
             'categories': [], 'types': [], 'companies': [],
-            'owners': [], 'locations': {}
+            'owners': [], 'business_units': [], 'locations': {}
         }
 
 def get_reference_value(sheet_name, lookup_column, lookup_value, return_column):

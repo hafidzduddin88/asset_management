@@ -9,16 +9,18 @@ templates = Jinja2Templates(directory="app/templates")
 @router.get("/")
 async def damaged_assets_page(request: Request, current_user = Depends(get_current_user)):
     """Damaged assets page with search and log functionality"""
-    from app.utils.sheets import get_all_assets
+    from app.utils.sheets import get_all_assets, get_dropdown_options
     import logging
     
     # Get real asset data from Google Sheets
     all_assets = get_all_assets()
+    dropdown_options = get_dropdown_options()
     
     return templates.TemplateResponse("damaged_assets.html", {
         "request": request,
         "user": current_user,
-        "assets_data": all_assets
+        "assets_data": all_assets,
+        "dropdown_options": dropdown_options
     })
 
 @router.post("/lost")
