@@ -134,10 +134,7 @@ async def submit_damage_report(request: Request, current_user = Depends(get_curr
             'notes': data.get('notes', '')
         }
         
-        # Add to damage log
-        log_success = add_damage_log(damage_data)
-        
-        # Add to approval requests
+        # Only add to approval requests (damage log will be created when approved)
         approval_data = {
             'type': 'damage_report',
             'asset_id': data.get('asset_id'),
@@ -151,10 +148,10 @@ async def submit_damage_report(request: Request, current_user = Depends(get_curr
         
         approval_success = add_approval_request(approval_data)
         
-        if log_success and approval_success:
-            return {"status": "success", "message": "Damage report submitted and logged to Google Sheets"}
+        if approval_success:
+            return {"status": "success", "message": "Damage report submitted for approval"}
         else:
-            return {"status": "error", "message": "Failed to sync with Google Sheets"}
+            return {"status": "error", "message": "Failed to submit approval request"}
             
     except Exception as e:
         return {"status": "error", "message": str(e)}

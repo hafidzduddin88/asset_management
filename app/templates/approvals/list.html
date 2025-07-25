@@ -97,130 +97,175 @@
 
 <!-- Approvals List -->
 <div id="approvalsList" class="space-y-4">
-    <!-- Sample approval cards -->
-    <div class="approval-card bg-white rounded-lg shadow p-6">
-        <div class="flex justify-between items-start mb-4">
-            <div>
-                <h3 class="text-lg font-semibold text-gray-900">Kulkas 2 Pintu</h3>
-                <p class="text-sm text-gray-500">TOG-0105.GA22.002</p>
-            </div>
-            <span class="px-3 py-1 text-xs font-medium rounded-full status-pending">
-                Pending
-            </span>
-        </div>
-        
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-            <div>
-                <p class="text-sm font-medium text-gray-500">Type</p>
-                <p class="text-sm text-gray-900">Damage Report</p>
-            </div>
-            <div>
-                <p class="text-sm font-medium text-gray-500">Submitted By</p>
-                <p class="text-sm text-gray-900">Staff User</p>
-            </div>
-            <div>
-                <p class="text-sm font-medium text-gray-500">Date</p>
-                <p class="text-sm text-gray-900">2024-01-15</p>
-            </div>
-        </div>
-        
-        <p class="text-sm text-gray-600 mb-4">Kulkas rusak, perlu diperbaiki</p>
-        
-        <div class="flex space-x-2">
-            <button class="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700">
-                <i class="fas fa-check mr-1"></i>Approve
-            </button>
-            <button class="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700">
-                <i class="fas fa-times mr-1"></i>Reject
-            </button>
-        </div>
-    </div>
-    
-    <div class="approval-card bg-white rounded-lg shadow p-6">
-        <div class="flex justify-between items-start mb-4">
-            <div>
-                <h3 class="text-lg font-semibold text-gray-900">DAIKIN 2 PK</h3>
-                <p class="text-sm text-gray-500">TOG-0901.GA21.051</p>
-            </div>
-            <span class="px-3 py-1 text-xs font-medium rounded-full status-pending">
-                Pending
-            </span>
-        </div>
-        
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-            <div>
-                <p class="text-sm font-medium text-gray-500">Type</p>
-                <p class="text-sm text-gray-900">Repair Action</p>
-            </div>
-            <div>
-                <p class="text-sm font-medium text-gray-500">Submitted By</p>
-                <p class="text-sm text-gray-900">Staff User</p>
-            </div>
-            <div>
-                <p class="text-sm font-medium text-gray-500">Date</p>
-                <p class="text-sm text-gray-900">2024-01-14</p>
-            </div>
-        </div>
-        
-        <p class="text-sm text-gray-600 mb-4">Request to store asset after repair</p>
-        
-        <div class="flex space-x-2">
-            <button class="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700">
-                <i class="fas fa-check mr-1"></i>Approve
-            </button>
-            <button class="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700">
-                <i class="fas fa-times mr-1"></i>Reject
-            </button>
-        </div>
-    </div>
+    <!-- Approvals will be populated from Google Sheets -->
 </div>
 {% endblock %}
 
 {% block scripts %}
 <script>
+// Get real approval data from server
+const approvalsData = {{ approvals_data | tojson }};
+let currentFilter = 'all';
+
 document.addEventListener('DOMContentLoaded', function() {
-    // Tab switching functionality
-    const tabs = document.querySelectorAll('.tab-button');
-    tabs.forEach(tab => {
-        tab.addEventListener('click', function() {
-            // Remove active class from all tabs
-            tabs.forEach(t => {
-                t.classList.remove('active', 'border-blue-500', 'text-blue-600');
-                t.classList.add('border-transparent', 'text-gray-500');
-            });
-            
-            // Add active class to clicked tab
-            this.classList.add('active', 'border-blue-500', 'text-blue-600');
-            this.classList.remove('border-transparent', 'text-gray-500');
-        });
+    displayApprovals();
+    updateStats();
+    setupEventListeners();
+});
+
+function setupEventListeners() {
+    // Tab switching
+    document.getElementById('allTab').addEventListener('click', () => switchFilter('all'));
+    document.getElementById('pendingTab').addEventListener('click', () => switchFilter('pending'));
+    document.getElementById('damageTab').addEventListener('click', () => switchFilter('damage_report'));
+    document.getElementById('repairTab').addEventListener('click', () => switchFilter('repair_action'));
+}
+
+function switchFilter(filter) {
+    currentFilter = filter;
+    
+    // Update tab styles
+    document.querySelectorAll('.tab-button').forEach(tab => {
+        tab.classList.remove('active', 'border-blue-500', 'text-blue-600');
+        tab.classList.add('border-transparent', 'text-gray-500');
     });
     
-    // Approval button handlers
-    document.querySelectorAll('button').forEach(btn => {
-        if (btn.textContent.includes('Approve')) {
-            btn.addEventListener('click', function() {
-                alert('Request approved successfully!');
-                // Update UI to show approved status
-                const card = this.closest('.approval-card');
-                const statusBadge = card.querySelector('.status-pending');
-                statusBadge.className = 'px-3 py-1 text-xs font-medium rounded-full status-approved';
-                statusBadge.textContent = 'Approved';
-                this.parentElement.style.display = 'none';
-            });
-        }
-        
-        if (btn.textContent.includes('Reject')) {
-            btn.addEventListener('click', function() {
-                alert('Request rejected.');
-                // Update UI to show rejected status
-                const card = this.closest('.approval-card');
-                const statusBadge = card.querySelector('.status-pending');
-                statusBadge.className = 'px-3 py-1 text-xs font-medium rounded-full status-rejected';
-                statusBadge.textContent = 'Rejected';
-                this.parentElement.style.display = 'none';
-            });
-        }
+    const activeTab = document.getElementById(filter === 'all' ? 'allTab' : 
+                     filter === 'pending' ? 'pendingTab' :
+                     filter === 'damage_report' ? 'damageTab' : 'repairTab');
+    
+    activeTab.classList.add('active', 'border-blue-500', 'text-blue-600');
+    activeTab.classList.remove('border-transparent', 'text-gray-500');
+    
+    displayApprovals();
+}
+
+function displayApprovals() {
+    const filteredApprovals = approvalsData.filter(approval => {
+        if (currentFilter === 'all') return true;
+        if (currentFilter === 'pending') return approval.Status === 'Pending';
+        return approval.Type === currentFilter;
     });
-});
+    
+    const approvalsList = document.getElementById('approvalsList');
+    
+    if (filteredApprovals.length === 0) {
+        approvalsList.innerHTML = `
+            <div class="text-center py-12">
+                <i class="fas fa-inbox text-4xl text-gray-400 mb-4"></i>
+                <p class="text-gray-500">No approvals found for the selected filter</p>
+            </div>
+        `;
+        return;
+    }
+    
+    approvalsList.innerHTML = filteredApprovals.map(approval => `
+        <div class="approval-card bg-white rounded-lg shadow p-6">
+            <div class="flex justify-between items-start mb-4">
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900">${approval.Asset_Name || 'Unknown Asset'}</h3>
+                    <p class="text-sm text-gray-500">${approval.Asset_ID || 'No ID'}</p>
+                </div>
+                <span class="px-3 py-1 text-xs font-medium rounded-full status-${approval.Status.toLowerCase()}">
+                    ${approval.Status}
+                </span>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                <div>
+                    <p class="text-sm font-medium text-gray-500">Type</p>
+                    <p class="text-sm text-gray-900">${getTypeLabel(approval.Type)}</p>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-500">Submitted By</p>
+                    <p class="text-sm text-gray-900">${approval.Submitted_By || 'Unknown'}</p>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-500">Date</p>
+                    <p class="text-sm text-gray-900">${approval.Submitted_Date || 'Unknown'}</p>
+                </div>
+            </div>
+            
+            <p class="text-sm text-gray-600 mb-4">${approval.Description || 'No description'}</p>
+            
+            ${approval.Status === 'Pending' ? `
+                <div class="flex space-x-2">
+                    <button onclick="approveRequest(${approval.ID})" class="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700">
+                        <i class="fas fa-check mr-1"></i>Approve
+                    </button>
+                    <button onclick="rejectRequest(${approval.ID})" class="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700">
+                        <i class="fas fa-times mr-1"></i>Reject
+                    </button>
+                </div>
+            ` : ''}
+        </div>
+    `).join('');
+}
+
+function getTypeLabel(type) {
+    const labels = {
+        'damage_report': 'Damage Report',
+        'repair_action': 'Repair Action',
+        'lost_report': 'Lost Report',
+        'disposal_request': 'Disposal Request'
+    };
+    return labels[type] || type;
+}
+
+async function approveRequest(approvalId) {
+    try {
+        const response = await fetch(`/approvals/approve/${approvalId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        });
+        
+        const result = await response.json();
+        
+        if (result.status === 'success') {
+            alert('Request approved successfully!');
+            location.reload();
+        } else {
+            alert('Error: ' + result.message);
+        }
+    } catch (error) {
+        alert('Error approving request: ' + error.message);
+    }
+}
+
+async function rejectRequest(approvalId) {
+    try {
+        const response = await fetch(`/approvals/reject/${approvalId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        });
+        
+        const result = await response.json();
+        
+        if (result.status === 'success') {
+            alert('Request rejected.');
+            location.reload();
+        } else {
+            alert('Error: ' + result.message);
+        }
+    } catch (error) {
+        alert('Error rejecting request: ' + error.message);
+    }
+}
+
+function updateStats() {
+    const pending = approvalsData.filter(a => a.Status === 'Pending').length;
+    const approved = approvalsData.filter(a => a.Status === 'Approved').length;
+    const rejected = approvalsData.filter(a => a.Status === 'Rejected').length;
+    const total = approvalsData.length;
+    
+    document.getElementById('pendingCount').textContent = pending;
+    document.getElementById('approvedCount').textContent = approved;
+    document.getElementById('rejectedCount').textContent = rejected;
+    document.getElementById('totalCount').textContent = total;
+}
 </script>
 {% endblock %}
