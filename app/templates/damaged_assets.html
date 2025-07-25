@@ -28,14 +28,16 @@
 {% endblock %}
 
 {% block content %}
-<div class="mb-6 flex justify-between items-center">
-    <div>
-        <h1 class="text-2xl font-bold text-gray-900">Asset Issue Management</h1>
-        <p class="text-gray-600 mt-1">Report and manage asset issues, repairs, and disposal</p>
+<div class="mb-6">
+    <div class="flex justify-between items-start">
+        <div class="flex-1">
+            <h1 class="text-2xl font-bold text-gray-900 mb-1">Asset Issue Management</h1>
+            <p class="text-gray-600">Report and manage asset issues, repairs, and disposal</p>
+        </div>
+        <button onclick="refreshData()" class="ml-4 p-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors" title="Refresh Data">
+            <i class="fas fa-sync-alt"></i>
+        </button>
     </div>
-    <button onclick="refreshData()" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
-        <i class="fas fa-sync-alt mr-2"></i>Refresh Data
-    </button>
 </div>
 
 <!-- Tab Navigation -->
