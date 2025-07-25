@@ -21,9 +21,6 @@ async def damaged_assets_page(request: Request, current_user = Depends(get_curre
         "assets_data": all_assets
     })
 
-@router.post("/report")
-async def submit_damage_report(request: Request, current_user = Depends(get_current_user)):
-
 @router.post("/lost")
 async def submit_lost_report(request: Request, current_user = Depends(get_current_user)):
     """Submit lost report - syncs to Google Sheets"""
