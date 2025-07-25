@@ -484,13 +484,23 @@ function buildRoomsData() {
 
 function initializeFilters() {
     const locationFilter = document.getElementById('locationFilter');
+    const lostLocationFilter = document.getElementById('lostLocationFilter');
     const locations = [...new Set(allAssets.map(asset => asset.location))];
     
+    // Populate damage report location filter
     locations.forEach(location => {
         const option = document.createElement('option');
         option.value = location;
         option.textContent = location;
         locationFilter.appendChild(option);
+    });
+    
+    // Populate lost report location filter
+    locations.forEach(location => {
+        const option = document.createElement('option');
+        option.value = location;
+        option.textContent = location;
+        lostLocationFilter.appendChild(option);
     });
 }
 
@@ -501,7 +511,7 @@ function setupEventListeners() {
     document.getElementById('lostTab').addEventListener('click', () => switchTab('lost'));
     document.getElementById('disposalTab').addEventListener('click', () => switchTab('disposal'));
     
-    // Location filter
+    // Location filter for damage tab
     document.getElementById('locationFilter').addEventListener('change', function() {
         const selectedLocation = this.value;
         const roomFilter = document.getElementById('roomFilter');
@@ -522,8 +532,32 @@ function setupEventListeners() {
         filterAssets();
     });
     
-    // Room filter
+    // Room filter for damage tab
     document.getElementById('roomFilter').addEventListener('change', filterAssets);
+    
+    // Lost report filters
+    document.getElementById('lostLocationFilter').addEventListener('change', function() {
+        const selectedLocation = this.value;
+        const roomFilter = document.getElementById('lostRoomFilter');
+        
+        roomFilter.innerHTML = '<option value="">Select Room</option>';
+        roomFilter.disabled = !selectedLocation;
+        
+        if (selectedLocation && roomsData[selectedLocation]) {
+            roomsData[selectedLocation].forEach(room => {
+                const option = document.createElement('option');
+                option.value = room;
+                option.textContent = room;
+                roomFilter.appendChild(option);
+            });
+            roomFilter.disabled = false;
+        }
+        
+        filterLostAssets();
+    });
+    
+    // Room filter for lost tab
+    document.getElementById('lostRoomFilter').addEventListener('change', filterLostAssets);
     
     // Modal controls
     document.getElementById('closeModal').addEventListener('click', () => {
@@ -1000,6 +1034,58 @@ async function submitAllocation() {
     } catch (error) {
         alert('Error submitting allocation: ' + error.message);
     }
+}
+
+function filterLostAssets() {
+    const locationFilter = document.getElementById('lostLocationFilter').value;
+    const roomFilter = document.getElementById('lostRoomFilter').value;
+    
+    if (!locationFilter) {
+        document.getElementById('lostAssetsList').style.display = 'none';
+        return;
+    }
+    
+    const filteredAssets = allAssets.filter(asset => {
+        const matchesLocation = asset.location === locationFilter;
+        const matchesRoom = !roomFilter || asset.room === roomFilter;
+        return matchesLocation && matchesRoom;
+    });
+    
+    displayLostAssets(filteredAssets);
+}
+
+function displayLostAssets(assets) {
+    const assetsList = document.getElementById('lostAssetsList');
+    
+    if (assets.length === 0) {
+        assetsList.innerHTML = '<div class="col-span-full text-center py-8 text-gray-500">No assets found in selected location/room</div>';
+        assetsList.style.display = 'block';
+        return;
+    }
+    
+    assetsList.innerHTML = assets.map(asset => `
+        <div class="asset-card bg-white rounded-lg shadow p-4 border border-gray-200">
+            <div class="flex justify-between items-start mb-2">
+                <h3 class="font-medium text-gray-900">${asset.name}</h3>
+                <span class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">${asset.status}</span>
+            </div>
+            <p class="text-sm text-gray-600 mb-1"><i class="fas fa-map-marker-alt mr-1"></i>${asset.location}</p>
+            <p class="text-sm text-gray-600 mb-2"><i class="fas fa-door-open mr-1"></i>${asset.room}</p>
+            <p class="text-sm text-gray-500 mb-3">${asset.category}</p>
+            <button onclick="openLostModal(${asset.id}, '${asset.name}', '${asset.location}')" class="w-full bg-orange-600 text-white py-2 px-4 rounded-md hover:bg-orange-700 text-sm">
+                <i class="fas fa-search mr-1"></i>Report Lost
+            </button>
+        </div>
+    `).join('');
+    
+    assetsList.style.display = 'grid';
+}
+
+function openLostModal(assetId, assetName, lastLocation) {
+    document.getElementById('lostAssetId').value = assetId;
+    document.getElementById('lostAssetName').value = assetName;
+    document.querySelector('input[name="last_location"]').value = lastLocation;
+    document.getElementById('lostModal').style.display = 'block';
 }
 
 function showToast(message, color) {
