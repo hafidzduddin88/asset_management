@@ -54,7 +54,7 @@ async def submit_repair_action(request: Request, current_user = Depends(get_curr
             # Add to repair log
             log_success = add_repair_log(repair_data)
             
-            # Update asset in Assets sheet
+            # Update asset from Under Repair to Active
             update_data = {
                 'Status': 'Active',
                 'Bisnis Unit': data.get('business_unit', ''),

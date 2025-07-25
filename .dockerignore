@@ -65,9 +65,3 @@ docker-compose*.yml
 render.yaml
 .dockerignore
 Dockerfile*
-
-# Large static files that can be served from CDN in production
-app/static/img/*.png
-app/static/img/*.jpg
-app/static/img/*.jpeg
-app/static/img/*.gif
