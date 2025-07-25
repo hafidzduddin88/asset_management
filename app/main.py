@@ -13,8 +13,8 @@ logger = logging.getLogger(__name__)
 from app.config import load_config
 from app.database.database import engine, Base
 from app.routes import (
-    home, assets, asset_management, approvals, 
-    login, damage, export, health, offline, relocation, profile, storage, disposal
+    home, assets, asset_management, 
+    login, damage, health, offline, profile,
 )
 from app.middleware.session_auth import SessionAuthMiddleware
 from app.utils.flash import FlashMiddleware
@@ -66,13 +66,8 @@ app.include_router(home.router)
 app.include_router(login.router)
 app.include_router(assets.router)
 app.include_router(asset_management.router)
-app.include_router(approvals.router, prefix="/approvals")
 app.include_router(damage.router, prefix="/damage")
-app.include_router(export.router, prefix="")
 app.include_router(offline.router)
-app.include_router(relocation.router, prefix="/relocation")
-app.include_router(storage.router)
-app.include_router(disposal.router)
 app.include_router(profile.router)
 
 # Service worker route
