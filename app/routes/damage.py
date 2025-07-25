@@ -14,21 +14,6 @@ async def damaged_assets_page(request: Request, current_user = Depends(get_curre
     
     # Get real asset data from Google Sheets
     all_assets = get_all_assets()
-    logging.info(f"Asset Issue: Retrieved {len(all_assets)} total assets")
-    
-    # Debug: Check for Under Repair assets
-    under_repair_assets = [asset for asset in all_assets if asset.get("Status", "") == "Under Repair"]
-    logging.info(f"Asset Issue: Found {len(under_repair_assets)} Under Repair assets")
-    
-    # Debug: Log all unique statuses
-    statuses = set(asset.get("Status", "No Status") for asset in all_assets)
-    logging.info(f"Asset Issue: All statuses found: {statuses}")
-    
-    # Debug: Log sample asset if available
-    if all_assets:
-        sample_asset = all_assets[0]
-        logging.info(f"Asset Issue: Sample asset keys: {list(sample_asset.keys())}")
-        logging.info(f"Asset Issue: Sample asset status: '{sample_asset.get('Status', 'NO STATUS FIELD')}'")
     
     return templates.TemplateResponse("damaged_assets.html", {
         "request": request,

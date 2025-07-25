@@ -34,9 +34,6 @@ def get_sheets_client():
 
 def _create_sheets_client():
     try:
-        creds_debug = config.GOOGLE_CREDS_JSON.copy()
-        creds_debug['private_key'] = '[REDACTED]'
-        logging.info(f"Using Google credentials: {json.dumps(creds_debug)}")
         creds = Credentials.from_service_account_info(
             config.GOOGLE_CREDS_JSON,
             scopes=[
@@ -76,7 +73,6 @@ def _get_all_assets():
         return []
     try:
         records = sheet.get_all_records()
-        logging.info(f"Retrieved {len(records)} assets from sheet")
         return records
     except Exception as e:
         logging.error(f"Error getting records from Assets sheet: {str(e)}")
@@ -280,7 +276,6 @@ def _get_all_assets():
         return []
     try:
         records = sheet.get_all_records()
-        logging.info(f"Retrieved {len(records)} assets from sheet")
         return records
     except Exception as e:
         logging.error(f"Error getting records from Assets sheet: {str(e)}")

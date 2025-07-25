@@ -396,12 +396,12 @@ let underRepairAssets = [];
 
 // Process real asset data to find damaged and under repair assets
 function processAssetData() {
-    console.log('All assets:', allAssets); // Debug log
+
     
     // Filter assets with status "Under Repair" only
     underRepairAssets = allAssets.filter(asset => {
         const status = (asset.Status || asset.status || '').toString().trim();
-        console.log(`Asset: ${asset['Item Name']}, Status: "${status}"`); // Debug log
+
         return status === 'Under Repair';
     }).map(asset => ({
         id: asset.ID,
@@ -415,7 +415,7 @@ function processAssetData() {
         repair_date: asset['Purchase Date'] || new Date().toISOString().split('T')[0]
     }));
     
-    console.log('Under repair assets found:', underRepairAssets); // Debug log
+
     
     // Create damage log from all non-active assets
     damageLog = allAssets.filter(asset => {
