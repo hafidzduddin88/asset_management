@@ -13,6 +13,7 @@ config = load_config()
 
 SHEETS = {
     'ASSETS': 'Assets',
+    'APPROVALS': 'Approvals',
     'REF_CATEGORIES': 'Ref_Categories',
     'REF_TYPES': 'Ref_Types',
     'REF_COMPANIES': 'Ref_Companies',
@@ -58,9 +59,37 @@ def _get_sheet(sheet_name):
         if not client:
             return None
         spreadsheet = client.open_by_key(config.GOOGLE_SHEET_ID)
-        return spreadsheet.worksheet(sheet_name)
+        
+        try:
+            return spreadsheet.worksheet(sheet_name)
+        except Exception:
+            # Sheet doesn't exist, create it
+            if sheet_name == SHEETS['APPROVALS']:
+                return _create_approvals_sheet(spreadsheet)
+            else:
+                raise
     except Exception as e:
         logging.error(f"Error getting sheet {sheet_name}: {str(e)}")
+        return None
+
+def _create_approvals_sheet(spreadsheet):
+    """Create Approvals sheet with headers"""
+    try:
+        sheet = spreadsheet.add_worksheet(title=SHEETS['APPROVALS'], rows=1000, cols=15)
+        
+        # Add headers
+        headers = [
+            'ID', 'Type', 'Asset_ID', 'Asset_Name', 'Status', 
+            'Submitted_By', 'Submitted_Date', 'Description', 
+            'Damage_Type', 'Severity', 'Action', 'Location', 
+            'Approved_By', 'Approved_Date', 'Notes'
+        ]
+        
+        sheet.append_row(headers)
+        logging.info(f"Created {SHEETS['APPROVALS']} sheet with headers")
+        return sheet
+    except Exception as e:
+        logging.error(f"Error creating Approvals sheet: {str(e)}")
         return None
 
 def get_all_assets():
@@ -623,4 +652,89 @@ def update_asset(asset_id, update_data):
         return True
     except Exception as e:
         logging.error(f"Error updating asset: {str(e)}")
+        return False
+
+def get_all_approvals():
+    """Get all approval requests from Google Sheets"""
+    return cache.get_or_set('all_approvals', _get_all_approvals, CACHE_TTL['assets'])
+
+def _get_all_approvals():
+    sheet = get_sheet(SHEETS['APPROVALS'])
+    if not sheet:
+        return []
+    try:
+        records = sheet.get_all_records()
+        return records
+    except Exception as e:
+        logging.error(f"Error getting approvals: {str(e)}")
+        return []
+
+def add_approval_request(approval_data):
+    """Add new approval request to Google Sheets"""
+    try:
+        sheet = get_sheet(SHEETS['APPROVALS'])
+        if not sheet:
+            return False
+        
+        # Get next ID
+        approvals = get_all_approvals()
+        next_id = len(approvals) + 1
+        
+        # Prepare row data
+        row_data = [
+            str(next_id),
+            approval_data.get('type', ''),
+            approval_data.get('asset_id', ''),
+            approval_data.get('asset_name', ''),
+            'Pending',
+            approval_data.get('submitted_by', ''),
+            approval_data.get('submitted_date', ''),
+            approval_data.get('description', ''),
+            approval_data.get('damage_type', ''),
+            approval_data.get('severity', ''),
+            approval_data.get('action', ''),
+            approval_data.get('location', ''),
+            '',  # Approved_By
+            '',  # Approved_Date
+            ''   # Notes
+        ]
+        
+        sheet.append_row(row_data)
+        invalidate_cache()
+        return True
+    except Exception as e:
+        logging.error(f"Error adding approval request: {str(e)}")
+        return False
+
+def update_approval_status(approval_id, status, approved_by, notes=''):
+    """Update approval status in Google Sheets"""
+    try:
+        sheet = get_sheet(SHEETS['APPROVALS'])
+        if not sheet:
+            return False
+        
+        approvals = get_all_approvals()
+        row_index = None
+        
+        for i, approval in enumerate(approvals):
+            if str(approval.get('ID', '')) == str(approval_id):
+                row_index = i + 2  # +2 for header and 1-based indexing
+                break
+        
+        if row_index is None:
+            return False
+        
+        # Update status, approved_by, approved_date
+        from datetime import datetime
+        approved_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        
+        sheet.update_cell(row_index, 5, status)  # Status column
+        sheet.update_cell(row_index, 13, approved_by)  # Approved_By column
+        sheet.update_cell(row_index, 14, approved_date)  # Approved_Date column
+        sheet.update_cell(row_index, 15, notes)  # Notes column
+        
+        invalidate_cache()
+        return True
+    except Exception as e:
+        logging.error(f"Error updating approval status: {str(e)}")
         return False

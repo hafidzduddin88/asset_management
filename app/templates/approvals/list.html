@@ -1,0 +1,226 @@
+{% extends "layouts/modern_layout.html" %}
+
+{% block title %}Admin Approvals{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+    .approval-card {
+        transition: all 0.3s ease;
+    }
+    .approval-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    }
+    .status-pending { background-color: #FEF3C7; color: #92400E; }
+    .status-approved { background-color: #D1FAE5; color: #065F46; }
+    .status-rejected { background-color: #FEE2E2; color: #991B1B; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <h1 class="text-2xl font-bold text-gray-900">Admin Approvals</h1>
+    <p class="text-gray-600 mt-1">Review and approve pending requests</p>
+</div>
+
+<!-- Stats Cards -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+    <div class="bg-white rounded-lg shadow p-6">
+        <div class="flex items-center">
+            <div class="p-2 bg-yellow-100 rounded-lg">
+                <i class="fas fa-clock text-yellow-600"></i>
+            </div>
+            <div class="ml-4">
+                <p class="text-sm font-medium text-gray-500">Pending</p>
+                <p class="text-2xl font-semibold text-gray-900" id="pendingCount">2</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="bg-white rounded-lg shadow p-6">
+        <div class="flex items-center">
+            <div class="p-2 bg-green-100 rounded-lg">
+                <i class="fas fa-check text-green-600"></i>
+            </div>
+            <div class="ml-4">
+                <p class="text-sm font-medium text-gray-500">Approved</p>
+                <p class="text-2xl font-semibold text-gray-900" id="approvedCount">1</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="bg-white rounded-lg shadow p-6">
+        <div class="flex items-center">
+            <div class="p-2 bg-red-100 rounded-lg">
+                <i class="fas fa-times text-red-600"></i>
+            </div>
+            <div class="ml-4">
+                <p class="text-sm font-medium text-gray-500">Rejected</p>
+                <p class="text-2xl font-semibold text-gray-900" id="rejectedCount">1</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="bg-white rounded-lg shadow p-6">
+        <div class="flex items-center">
+            <div class="p-2 bg-blue-100 rounded-lg">
+                <i class="fas fa-list text-blue-600"></i>
+            </div>
+            <div class="ml-4">
+                <p class="text-sm font-medium text-gray-500">Total</p>
+                <p class="text-2xl font-semibold text-gray-900" id="totalCount">4</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filter Tabs -->
+<div class="bg-white rounded-lg shadow mb-6">
+    <div class="border-b border-gray-200">
+        <nav class="-mb-px flex space-x-8 px-6">
+            <button id="allTab" class="tab-button active py-4 px-1 border-b-2 border-blue-500 font-medium text-sm text-blue-600">
+                All Requests
+            </button>
+            <button id="pendingTab" class="tab-button py-4 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 font-medium text-sm">
+                Pending
+            </button>
+            <button id="damageTab" class="tab-button py-4 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 font-medium text-sm">
+                Damage Reports
+            </button>
+            <button id="repairTab" class="tab-button py-4 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 font-medium text-sm">
+                Repair Actions
+            </button>
+        </nav>
+    </div>
+</div>
+
+<!-- Approvals List -->
+<div id="approvalsList" class="space-y-4">
+    <!-- Sample approval cards -->
+    <div class="approval-card bg-white rounded-lg shadow p-6">
+        <div class="flex justify-between items-start mb-4">
+            <div>
+                <h3 class="text-lg font-semibold text-gray-900">Kulkas 2 Pintu</h3>
+                <p class="text-sm text-gray-500">TOG-0105.GA22.002</p>
+            </div>
+            <span class="px-3 py-1 text-xs font-medium rounded-full status-pending">
+                Pending
+            </span>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+            <div>
+                <p class="text-sm font-medium text-gray-500">Type</p>
+                <p class="text-sm text-gray-900">Damage Report</p>
+            </div>
+            <div>
+                <p class="text-sm font-medium text-gray-500">Submitted By</p>
+                <p class="text-sm text-gray-900">Staff User</p>
+            </div>
+            <div>
+                <p class="text-sm font-medium text-gray-500">Date</p>
+                <p class="text-sm text-gray-900">2024-01-15</p>
+            </div>
+        </div>
+        
+        <p class="text-sm text-gray-600 mb-4">Kulkas rusak, perlu diperbaiki</p>
+        
+        <div class="flex space-x-2">
+            <button class="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700">
+                <i class="fas fa-check mr-1"></i>Approve
+            </button>
+            <button class="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700">
+                <i class="fas fa-times mr-1"></i>Reject
+            </button>
+        </div>
+    </div>
+    
+    <div class="approval-card bg-white rounded-lg shadow p-6">
+        <div class="flex justify-between items-start mb-4">
+            <div>
+                <h3 class="text-lg font-semibold text-gray-900">DAIKIN 2 PK</h3>
+                <p class="text-sm text-gray-500">TOG-0901.GA21.051</p>
+            </div>
+            <span class="px-3 py-1 text-xs font-medium rounded-full status-pending">
+                Pending
+            </span>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+            <div>
+                <p class="text-sm font-medium text-gray-500">Type</p>
+                <p class="text-sm text-gray-900">Repair Action</p>
+            </div>
+            <div>
+                <p class="text-sm font-medium text-gray-500">Submitted By</p>
+                <p class="text-sm text-gray-900">Staff User</p>
+            </div>
+            <div>
+                <p class="text-sm font-medium text-gray-500">Date</p>
+                <p class="text-sm text-gray-900">2024-01-14</p>
+            </div>
+        </div>
+        
+        <p class="text-sm text-gray-600 mb-4">Request to store asset after repair</p>
+        
+        <div class="flex space-x-2">
+            <button class="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700">
+                <i class="fas fa-check mr-1"></i>Approve
+            </button>
+            <button class="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700">
+                <i class="fas fa-times mr-1"></i>Reject
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Tab switching functionality
+    const tabs = document.querySelectorAll('.tab-button');
+    tabs.forEach(tab => {
+        tab.addEventListener('click', function() {
+            // Remove active class from all tabs
+            tabs.forEach(t => {
+                t.classList.remove('active', 'border-blue-500', 'text-blue-600');
+                t.classList.add('border-transparent', 'text-gray-500');
+            });
+            
+            // Add active class to clicked tab
+            this.classList.add('active', 'border-blue-500', 'text-blue-600');
+            this.classList.remove('border-transparent', 'text-gray-500');
+        });
+    });
+    
+    // Approval button handlers
+    document.querySelectorAll('button').forEach(btn => {
+        if (btn.textContent.includes('Approve')) {
+            btn.addEventListener('click', function() {
+                alert('Request approved successfully!');
+                // Update UI to show approved status
+                const card = this.closest('.approval-card');
+                const statusBadge = card.querySelector('.status-pending');
+                statusBadge.className = 'px-3 py-1 text-xs font-medium rounded-full status-approved';
+                statusBadge.textContent = 'Approved';
+                this.parentElement.style.display = 'none';
+            });
+        }
+        
+        if (btn.textContent.includes('Reject')) {
+            btn.addEventListener('click', function() {
+                alert('Request rejected.');
+                // Update UI to show rejected status
+                const card = this.closest('.approval-card');
+                const statusBadge = card.querySelector('.status-pending');
+                statusBadge.className = 'px-3 py-1 text-xs font-medium rounded-full status-rejected';
+                statusBadge.textContent = 'Rejected';
+                this.parentElement.style.display = 'none';
+            });
+        }
+    });
+});
+</script>
+{% endblock %}

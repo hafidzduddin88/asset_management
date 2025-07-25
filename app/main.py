@@ -19,7 +19,7 @@ from app.routes import (
 from app.middleware.session_auth import SessionAuthMiddleware
 from app.utils.flash import FlashMiddleware
 
-# Create tables (only for users and approvals)
+# Create tables (only for users)
 Base.metadata.create_all(bind=engine)
 
 # Import dan jalankan seed script untuk membuat user default
