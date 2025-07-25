@@ -400,9 +400,8 @@ function processAssetData() {
 
     
     // Filter assets with status "Under Repair" only
-    underRepairAssets = allAssets.filter(asset => {
-        const status = (asset.Status || asset.status || '').toString().trim();
-
+    underRepairAssets = assetsData.filter(asset => {
+        const status = (asset.Status || '').toString().trim();
         return status === 'Under Repair';
     }).map(asset => ({
         id: asset.ID,  // Use ID column from Assets sheet
