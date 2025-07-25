@@ -405,7 +405,7 @@ function processAssetData() {
 
         return status === 'Under Repair';
     }).map(asset => ({
-        id: asset.ID,
+        id: asset.ID,  // Use ID column from Assets sheet
         asset_name: asset['Item Name'],
         location: asset.Location,
         room: asset.Room,
@@ -437,7 +437,7 @@ function processAssetData() {
 document.addEventListener('DOMContentLoaded', function() {
     // Process all asset data (don't filter by status here)
     allAssets = assetsData.map(asset => ({
-        id: asset.ID || asset.id,
+        id: asset.ID,  // Use ID column from Assets sheet
         name: asset['Item Name'] || asset['Asset Name'] || asset.Name || 'Unnamed Asset',
         location: asset.Location || '',
         room: asset.Room || '',
