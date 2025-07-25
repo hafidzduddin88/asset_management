@@ -396,28 +396,39 @@ let underRepairAssets = [];
 
 // Process real asset data to find damaged and under repair assets
 function processAssetData() {
-    // Filter assets with status "Under Repair" or "Damaged"
-    underRepairAssets = allAssets.filter(asset => 
-        asset.status === 'Under Repair' || asset.status === 'Damaged'
-    ).map(asset => ({
+    console.log('All assets:', allAssets); // Debug log
+    
+    // Filter assets with status "Under Repair" only
+    underRepairAssets = allAssets.filter(asset => {
+        const status = (asset.Status || asset.status || '').toString().trim();
+        console.log(`Asset: ${asset.name}, Status: "${status}"`); // Debug log
+        return status === 'Under Repair';
+    }).map(asset => ({
         id: asset.id,
         asset_name: asset.name,
         location: asset.location,
         room: asset.room,
+        category: asset.category,
+        book_value: asset.book_value || 0,
         damage_type: asset.damage_type || 'Not specified',
         severity: asset.severity || 'Medium',
         repair_date: asset.repair_date || new Date().toISOString().split('T')[0]
     }));
     
-    // Create damage log from damaged assets (sample structure)
-    damageLog = underRepairAssets.map((asset, index) => ({
+    console.log('Under repair assets found:', underRepairAssets); // Debug log
+    
+    // Create damage log from all non-active assets
+    damageLog = allAssets.filter(asset => {
+        const status = (asset.Status || asset.status || '').toString().trim();
+        return ['Under Repair', 'To be Disposed', 'Disposed', 'In Storage'].includes(status);
+    }).map((asset, index) => ({
         id: index + 1,
-        asset_name: asset.asset_name,
-        damage_type: asset.damage_type,
-        severity: asset.severity,
+        asset_name: asset.name,
+        damage_type: 'System Generated',
+        severity: 'Medium',
         reported_by: 'System',
-        date: asset.repair_date,
-        status: 'Approved'
+        date: new Date().toISOString().split('T')[0],
+        status: asset.Status || asset.status
     }));
 }
 
@@ -609,24 +620,70 @@ function openDamageModal(assetId, assetName) {
 
 function submitDamageReport() {
     const formData = new FormData(document.getElementById('damageForm'));
+    const assetId = document.getElementById('assetId').value;
     const assetName = document.getElementById('assetName').value;
     
-    // Add to damage log
-    const newEntry = {
-        id: damageLog.length + 1,
+    // Create damage report data
+    const damageReport = {
+        asset_id: assetId,
         asset_name: assetName,
         damage_type: formData.get('damage_type'),
+        damage_description: formData.get('damage_description'),
         severity: formData.get('severity'),
         reported_by: formData.get('reported_by'),
+        notes: formData.get('notes'),
         date: new Date().toISOString().split('T')[0],
         status: 'Pending Approval'
     };
     
-    damageLog.unshift(newEntry);
+    // Add to damage log
+    damageLog.unshift({
+        id: damageLog.length + 1,
+        asset_name: assetName,
+        damage_type: damageReport.damage_type,
+        severity: damageReport.severity,
+        reported_by: damageReport.reported_by,
+        date: damageReport.date,
+        status: 'Pending Approval'
+    });
+    
+    // Simulate admin approval (in real app, this would be done by admin)
+    setTimeout(() => {
+        approveDamageReport(damageReport);
+    }, 2000);
     
     // Close modal and show success
     document.getElementById('damageModal').style.display = 'none';
     document.getElementById('successModal').style.display = 'block';
+}
+
+function approveDamageReport(damageReport) {
+    // Find the asset in allAssets and update it
+    const assetIndex = allAssets.findIndex(asset => asset.id == damageReport.asset_id);
+    
+    if (assetIndex !== -1) {
+        // Update asset status and move to storage
+        allAssets[assetIndex].Status = 'Under Repair';
+        allAssets[assetIndex].status = 'Under Repair';
+        allAssets[assetIndex].Location = 'HO - Ciputat';
+        allAssets[assetIndex].location = 'HO - Ciputat';
+        allAssets[assetIndex].Room = '1022 - Gudang Support TOG';
+        allAssets[assetIndex].room = '1022 - Gudang Support TOG';
+        
+        // Update damage log status
+        const logEntry = damageLog.find(entry => entry.asset_name === damageReport.asset_name);
+        if (logEntry) {
+            logEntry.status = 'Approved';
+        }
+        
+        // Refresh data
+        processAssetData();
+        
+        // Show notification
+        showToast(`Damage report approved. ${damageReport.asset_name} moved to storage and status changed to Under Repair.`, 'green');
+        
+        console.log(`Asset ${damageReport.asset_name} approved: Status=Under Repair, Location=HO - Ciputat, Room=1022 - Gudang Support TOG`);
+    }
 }
 
 function loadDamageLog() {
@@ -681,19 +738,48 @@ function getStatusColor(status) {
 
 function submitDirectDamageReport() {
     const formData = new FormData(document.getElementById('directDamageForm'));
+    const assetIdentifier = formData.get('asset_identifier');
     
-    // Add to damage log
-    const newEntry = {
-        id: damageLog.length + 1,
-        asset_name: formData.get('asset_identifier'),
+    // Find asset by name or ID
+    const asset = allAssets.find(a => 
+        a.name === assetIdentifier || 
+        a.id == assetIdentifier ||
+        (a['Item Name'] && a['Item Name'] === assetIdentifier)
+    );
+    
+    if (!asset) {
+        alert('Asset not found. Please check the asset ID/name.');
+        return;
+    }
+    
+    // Create damage report
+    const damageReport = {
+        asset_id: asset.id,
+        asset_name: asset.name,
         damage_type: formData.get('damage_type'),
+        damage_description: formData.get('damage_description'),
         severity: formData.get('severity'),
         reported_by: formData.get('reported_by'),
+        notes: formData.get('notes'),
         date: new Date().toISOString().split('T')[0],
         status: 'Pending Approval'
     };
     
-    damageLog.unshift(newEntry);
+    // Add to damage log
+    damageLog.unshift({
+        id: damageLog.length + 1,
+        asset_name: asset.name,
+        damage_type: damageReport.damage_type,
+        severity: damageReport.severity,
+        reported_by: damageReport.reported_by,
+        date: damageReport.date,
+        status: 'Pending Approval'
+    });
+    
+    // Simulate admin approval
+    setTimeout(() => {
+        approveDamageReport(damageReport);
+    }, 2000);
     
     // Reset form and show success
     document.getElementById('directDamageForm').reset();
@@ -733,21 +819,15 @@ function loadUnderRepairAssets() {
         <tr>
             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${asset.asset_name}</td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${asset.location}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${asset.damage_type}</td>
-            <td class="px-6 py-4 whitespace-nowrap">
-                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getSeverityColor(asset.severity)}">${asset.severity}</span>
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${asset.repair_date}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${asset.category}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${asset.book_value.toLocaleString()}</td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                 <div class="flex space-x-2">
                     <button onclick="viewAssetDetail(${asset.id})" class="text-blue-600 hover:text-blue-900" title="View Details">
                         <i class="fas fa-eye"></i>
                     </button>
-                    <button onclick="markAsFixed(${asset.id})" class="text-green-600 hover:text-green-900" title="Mark as Fixed">
-                        <i class="fas fa-check"></i>
-                    </button>
-                    <button onclick="markForDisposal(${asset.id})" class="text-yellow-600 hover:text-yellow-900" title="Mark for Disposal">
-                        <i class="fas fa-trash-alt"></i>
+                    <button onclick="openRepairAction(${asset.id}, '${asset.asset_name}')" class="text-green-600 hover:text-green-900" title="Repair Action">
+                        <i class="fas fa-tools"></i>
                     </button>
                 </div>
             </td>
