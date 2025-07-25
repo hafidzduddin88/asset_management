@@ -401,10 +401,10 @@ let underRepairAssets = [];
 function processAssetData() {
 
     
-    // Filter assets with status "Under Repair" only
+    // Filter assets with status "Under Repair" only (exclude disposed)
     underRepairAssets = assetsData.filter(asset => {
         const status = (asset.Status || '').toString().trim();
-        return status === 'Under Repair';
+        return status === 'Under Repair' && status !== 'Disposed';
     }).map(asset => ({
         id: asset.ID,  // Use ID column from Assets sheet
         asset_name: asset['Item Name'],
@@ -454,8 +454,8 @@ document.addEventListener('DOMContentLoaded', function() {
         'Purchase Date': asset['Purchase Date'] || ''
     }));
     
-    // Filter active assets for damage reporting
-    const activeAssets = allAssets.filter(asset => asset.status === 'Active');
+    // Filter active assets for damage reporting (exclude disposed)
+    const activeAssets = allAssets.filter(asset => asset.status === 'Active' && asset.status !== 'Disposed');
     
     buildRoomsData();
     processAssetData();
@@ -631,7 +631,8 @@ function filterAssets() {
     filteredAssets = allAssets.filter(asset => {
         const matchesLocation = asset.location === locationFilter;
         const matchesRoom = !roomFilter || asset.room === roomFilter;
-        return matchesLocation && matchesRoom;
+        const notDisposed = asset.status !== 'Disposed';
+        return matchesLocation && matchesRoom && notDisposed;
     });
     
     displayAssets();
@@ -1061,7 +1062,8 @@ function filterLostAssets() {
     const filteredAssets = allAssets.filter(asset => {
         const matchesLocation = asset.location === locationFilter;
         const matchesRoom = !roomFilter || asset.room === roomFilter;
-        return matchesLocation && matchesRoom;
+        const notDisposed = asset.status !== 'Disposed';
+        return matchesLocation && matchesRoom && notDisposed;
     });
     
     displayLostAssets(filteredAssets);
