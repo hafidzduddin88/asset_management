@@ -79,7 +79,8 @@ async def approve_request(approval_id: int, request: Request, current_user = Dep
             add_repair_log(repair_data)
             
             # Update asset status to In Storage
-            update_asset(approval.get('Asset_ID'), {
+            from app.utils.sheets import update_asset as update_asset_status
+            update_asset_status(approval.get('Asset_ID'), {
                 'Status': 'In Storage',
                 'Bisnis Unit': 'General Affair',
                 'Location': 'HO - Ciputat',
