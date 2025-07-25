@@ -619,7 +619,7 @@ function openDamageModal(assetId, assetName) {
     document.getElementById('damageModal').style.display = 'block';
 }
 
-function submitDamageReport() {
+async function submitDamageReport() {
     const formData = new FormData(document.getElementById('damageForm'));
     const assetId = document.getElementById('assetId').value;
     const assetName = document.getElementById('assetName').value;
@@ -632,30 +632,36 @@ function submitDamageReport() {
         damage_description: formData.get('damage_description'),
         severity: formData.get('severity'),
         reported_by: formData.get('reported_by'),
-        notes: formData.get('notes'),
-        date: new Date().toISOString().split('T')[0],
-        status: 'Pending Approval'
+        notes: formData.get('notes')
     };
     
-    // Add to damage log
-    damageLog.unshift({
-        id: damageLog.length + 1,
-        asset_name: assetName,
-        damage_type: damageReport.damage_type,
-        severity: damageReport.severity,
-        reported_by: damageReport.reported_by,
-        date: damageReport.date,
-        status: 'Pending Approval'
-    });
-    
-    // Simulate admin approval (in real app, this would be done by admin)
-    setTimeout(() => {
-        approveDamageReport(damageReport);
-    }, 2000);
-    
-    // Close modal and show success
-    document.getElementById('damageModal').style.display = 'none';
-    document.getElementById('successModal').style.display = 'block';
+    try {
+        // Submit to server (will sync to Google Sheets)
+        const response = await fetch('/damage/report', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(damageReport)
+        });
+        
+        const result = await response.json();
+        
+        if (result.status === 'success') {
+            // Close modal and show success
+            document.getElementById('damageModal').style.display = 'none';
+            document.getElementById('successModal').style.display = 'block';
+            
+            // Refresh data
+            setTimeout(() => {
+                location.reload();
+            }, 2000);
+        } else {
+            alert('Error submitting damage report: ' + result.message);
+        }
+    } catch (error) {
+        alert('Error submitting damage report: ' + error.message);
+    }
 }
 
 function approveDamageReport(damageReport) {

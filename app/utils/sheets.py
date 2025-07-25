@@ -14,6 +14,10 @@ config = load_config()
 SHEETS = {
     'ASSETS': 'Assets',
     'APPROVALS': 'Approvals',
+    'DAMAGE_LOG': 'Damage_Log',
+    'REPAIR_LOG': 'Repair_Log',
+    'LOST_LOG': 'Lost_Log',
+    'DISPOSAL_LOG': 'Disposal_Log',
     'REF_CATEGORIES': 'Ref_Categories',
     'REF_TYPES': 'Ref_Types',
     'REF_COMPANIES': 'Ref_Companies',
@@ -70,6 +74,10 @@ def _get_sheet(sheet_name):
                 return _create_damage_log_sheet(spreadsheet)
             elif sheet_name == SHEETS['REPAIR_LOG']:
                 return _create_repair_log_sheet(spreadsheet)
+            elif sheet_name == SHEETS['LOST_LOG']:
+                return _create_lost_log_sheet(spreadsheet)
+            elif sheet_name == SHEETS['DISPOSAL_LOG']:
+                return _create_disposal_log_sheet(spreadsheet)
             else:
                 raise
     except Exception as e:
@@ -870,3 +878,109 @@ def get_repair_logs():
     except Exception as e:
         logging.error(f"Error getting repair logs: {str(e)}")
         return []
+
+def _create_lost_log_sheet(spreadsheet):
+    """Create Lost_Log sheet with headers"""
+    try:
+        sheet = spreadsheet.add_worksheet(title=SHEETS['LOST_LOG'], rows=1000, cols=12)
+        
+        # Add headers
+        headers = [
+            'ID', 'Asset_ID', 'Asset_Name', 'Last_Location', 'Last_Room',
+            'Date_Lost', 'Description', 'Reported_By', 'Report_Date', 
+            'Status', 'Investigation_Notes', 'Resolution'
+        ]
+        
+        sheet.append_row(headers)
+        logging.info(f"Created {SHEETS['LOST_LOG']} sheet with headers")
+        return sheet
+    except Exception as e:
+        logging.error(f"Error creating Lost_Log sheet: {str(e)}")
+        return None
+
+def _create_disposal_log_sheet(spreadsheet):
+    """Create Disposal_Log sheet with headers"""
+    try:
+        sheet = spreadsheet.add_worksheet(title=SHEETS['DISPOSAL_LOG'], rows=1000, cols=12)
+        
+        # Add headers
+        headers = [
+            'ID', 'Asset_ID', 'Asset_Name', 'Disposal_Reason', 'Disposal_Method',
+            'Description', 'Requested_By', 'Request_Date', 'Status',
+            'Disposal_Date', 'Disposed_By', 'Notes'
+        ]
+        
+        sheet.append_row(headers)
+        logging.info(f"Created {SHEETS['DISPOSAL_LOG']} sheet with headers")
+        return sheet
+    except Exception as e:
+        logging.error(f"Error creating Disposal_Log sheet: {str(e)}")
+        return None
+
+def add_lost_log(lost_data):
+    """Add lost report to Lost_Log sheet"""
+    try:
+        sheet = get_sheet(SHEETS['LOST_LOG'])
+        if not sheet:
+            return False
+        
+        # Get next ID
+        records = sheet.get_all_records()
+        next_id = len(records) + 1
+        
+        # Prepare row data
+        row_data = [
+            str(next_id),
+            lost_data.get('asset_id', ''),
+            lost_data.get('asset_name', ''),
+            lost_data.get('last_location', ''),
+            lost_data.get('last_room', ''),
+            lost_data.get('date_lost', ''),
+            lost_data.get('description', ''),
+            lost_data.get('reported_by', ''),
+            lost_data.get('report_date', ''),
+            'Reported',
+            lost_data.get('notes', ''),
+            ''
+        ]
+        
+        sheet.append_row(row_data)
+        invalidate_cache()
+        return True
+    except Exception as e:
+        logging.error(f"Error adding lost log: {str(e)}")
+        return False
+
+def add_disposal_log(disposal_data):
+    """Add disposal request to Disposal_Log sheet"""
+    try:
+        sheet = get_sheet(SHEETS['DISPOSAL_LOG'])
+        if not sheet:
+            return False
+        
+        # Get next ID
+        records = sheet.get_all_records()
+        next_id = len(records) + 1
+        
+        # Prepare row data
+        row_data = [
+            str(next_id),
+            disposal_data.get('asset_id', ''),
+            disposal_data.get('asset_name', ''),
+            disposal_data.get('disposal_reason', ''),
+            disposal_data.get('disposal_method', ''),
+            disposal_data.get('description', ''),
+            disposal_data.get('requested_by', ''),
+            disposal_data.get('request_date', ''),
+            'Requested',
+            '',  # Disposal_Date
+            '',  # Disposed_By
+            disposal_data.get('notes', '')
+        ]
+        
+        sheet.append_row(row_data)
+        invalidate_cache()
+        return True
+    except Exception as e:
+        logging.error(f"Error adding disposal log: {str(e)}")
+        return False
