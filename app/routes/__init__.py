@@ -5,12 +5,9 @@ from app.routes import (
     home,
     assets,
     asset_management,
-    approvals,
     login,
     damage,
-    export,
     health,
     offline,
-    relocation,
     profile
 )

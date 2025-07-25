@@ -470,9 +470,10 @@ function initializeFilters() {
 
 function setupEventListeners() {
     // Tab switching
-    document.getElementById('searchTab').addEventListener('click', () => switchTab('search'));
-    document.getElementById('logTab').addEventListener('click', () => switchTab('log'));
-    document.getElementById('reportTab').addEventListener('click', () => switchTab('report'));
+    document.getElementById('damageTab').addEventListener('click', () => switchTab('damage'));
+    document.getElementById('repairTab').addEventListener('click', () => switchTab('repair'));
+    document.getElementById('lostTab').addEventListener('click', () => switchTab('lost'));
+    document.getElementById('disposalTab').addEventListener('click', () => switchTab('disposal'));
     
     // Location filter
     document.getElementById('locationFilter').addEventListener('change', function() {
@@ -526,28 +527,32 @@ function setupEventListeners() {
 }
 
 function switchTab(tab) {
-    const searchTab = document.getElementById('searchTab');
-    const logTab = document.getElementById('logTab');
-    const reportTab = document.getElementById('reportTab');
-    const searchContent = document.getElementById('searchContent');
-    const logContent = document.getElementById('logContent');
-    const reportContent = document.getElementById('reportContent');
+    const damageTab = document.getElementById('damageTab');
+    const repairTab = document.getElementById('repairTab');
+    const lostTab = document.getElementById('lostTab');
+    const disposalTab = document.getElementById('disposalTab');
+    const damageContent = document.getElementById('damageContent');
+    const repairContent = document.getElementById('repairContent');
+    const lostContent = document.getElementById('lostContent');
+    const disposalContent = document.getElementById('disposalContent');
     
     // Remove active class from all tabs
-    [searchTab, logTab, reportTab].forEach(t => t.classList.remove('active'));
-    [searchContent, logContent, reportContent].forEach(c => c.style.display = 'none');
+    [damageTab, repairTab, lostTab, disposalTab].forEach(t => t.classList.remove('active'));
+    [damageContent, repairContent, lostContent, disposalContent].forEach(c => c.style.display = 'none');
     
-    if (tab === 'search') {
-        searchTab.classList.add('active');
-        searchContent.style.display = 'block';
-    } else if (tab === 'log') {
-        logTab.classList.add('active');
-        logContent.style.display = 'block';
-        loadDamageLog();
-    } else if (tab === 'report') {
-        reportTab.classList.add('active');
-        reportContent.style.display = 'block';
+    if (tab === 'damage') {
+        damageTab.classList.add('active');
+        damageContent.style.display = 'block';
+    } else if (tab === 'repair') {
+        repairTab.classList.add('active');
+        repairContent.style.display = 'block';
         loadUnderRepairAssets();
+    } else if (tab === 'lost') {
+        lostTab.classList.add('active');
+        lostContent.style.display = 'block';
+    } else if (tab === 'disposal') {
+        disposalTab.classList.add('active');
+        disposalContent.style.display = 'block';
     }
 }
 
