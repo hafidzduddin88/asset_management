@@ -23,7 +23,7 @@ async def approvals_list(request: Request, current_user = Depends(get_current_us
 @router.post("/approve/{approval_id}")
 async def approve_request(approval_id: int, request: Request, current_user = Depends(get_current_user)):
     """Approve a pending request"""
-    from app.utils.sheets import update_approval_status, get_all_approvals, add_damage_log, update_asset
+    from app.utils.sheets import update_approval_status, get_all_approvals, add_damage_log, update_asset, add_asset
     from datetime import datetime
     
     # Get approval details first
@@ -60,6 +60,14 @@ async def approve_request(approval_id: int, request: Request, current_user = Dep
                 'Location': 'HO - Ciputat',
                 'Room': '1022 - Gudang Support TOG'
             })
+            
+        elif approval.get('Type') == 'add_asset':
+            # Add new asset to Assets sheet when approved
+            import json
+            request_data = json.loads(approval.get('Request_Data', '{}'))
+            success = add_asset(request_data)
+            if not success:
+                return {"status": "error", "message": "Failed to add asset to Google Sheets"}
             
         elif approval.get('Type') == 'repair_action':
             # Add to repair log when store action approved

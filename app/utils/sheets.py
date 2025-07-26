@@ -601,14 +601,18 @@ def add_asset(asset_data):
             logging.error("Could not get Assets sheet")
             return False
             
-        # Get all assets to determine next ID
+        # Get all assets to determine next ID for new asset
         assets = get_all_assets()
         next_id = 1
         if assets:
             try:
-                # Find the highest ID and increment by 1
-                max_id = max(int(asset.get('ID', 0)) for asset in assets)
-                next_id = max_id + 1
+                # Find the highest ID and increment by 1 for new asset
+                existing_ids = [int(asset.get('ID', 0)) for asset in assets if asset.get('ID')]
+                if existing_ids:
+                    max_id = max(existing_ids)
+                    next_id = max_id + 1
+                else:
+                    next_id = 1
             except Exception as e:
                 logging.error(f"Error determining next ID: {str(e)}")
                 next_id = len(assets) + 1
