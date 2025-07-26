@@ -17,7 +17,7 @@ COPY requirements.txt .
 RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 RUN pip install --upgrade pip setuptools wheel
-RUN pip install --no-cache-dir uvicorn[standard]==0.27.1
+RUN pip install --no-cache-dir uvicorn==0.29.0
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Final stage
