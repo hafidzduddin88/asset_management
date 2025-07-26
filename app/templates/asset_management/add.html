@@ -125,9 +125,15 @@
                     <div class="sm:col-span-3">
                         <label for="bisnis_unit" class="block text-sm font-medium text-gray-700">Bisnis Unit</label>
                         <div class="mt-1">
-                            <input type="text" name="bisnis_unit" id="bisnis_unit"
-                                class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md"
-                                value="{{ form_data.bisnis_unit if form_data else '' }}">
+                            <select name="bisnis_unit" id="bisnis_unit"
+                                class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                                <option value="">Select Bisnis Unit</option>
+                                {% for unit in dropdown_options.business_units %}
+                                <option value="{{ unit }}" {% if form_data and form_data.bisnis_unit == unit %}selected{% endif %}>
+                                    {{ unit }}
+                                </option>
+                                {% endfor %}
+                            </select>
                         </div>
                     </div>
                     
@@ -209,9 +215,12 @@
                     <div class="sm:col-span-3">
                         <label for="warranty" class="block text-sm font-medium text-gray-700">Warranty</label>
                         <div class="mt-1">
-                            <input type="text" name="warranty" id="warranty"
-                                class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md"
-                                value="{{ form_data.warranty if form_data else '' }}">
+                            <select name="warranty" id="warranty"
+                                class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                                <option value="">Select Warranty</option>
+                                <option value="Yes" {% if form_data and form_data.warranty == 'Yes' %}selected{% endif %}>Yes</option>
+                                <option value="No" {% if form_data and form_data.warranty == 'No' %}selected{% endif %}>No</option>
+                            </select>
                         </div>
                     </div>
                     
