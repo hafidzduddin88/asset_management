@@ -64,10 +64,18 @@ async def approve_request(approval_id: int, request: Request, current_user = Dep
         elif approval.get('Type') == 'add_asset':
             # Add new asset to Assets sheet when approved
             import json
-            request_data = json.loads(approval.get('Request_Data', '{}'))
-            success = add_asset(request_data)
-            if not success:
-                return {"status": "error", "message": "Failed to add asset to Google Sheets"}
+            try:
+                request_data_str = approval.get('Request_Data', '{}')
+                if request_data_str:
+                    request_data = json.loads(request_data_str)
+                    success = add_asset(request_data)
+                    if not success:
+                        return {"status": "error", "message": "Failed to add asset to Google Sheets"}
+                else:
+                    return {"status": "error", "message": "No request data found in approval"}
+            except json.JSONDecodeError as e:
+                logging.error(f"Error parsing request data: {str(e)}")
+                return {"status": "error", "message": "Invalid request data format"}
             
         elif approval.get('Type') == 'repair_action':
             # Add to repair log when store action approved

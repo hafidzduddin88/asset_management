@@ -143,7 +143,7 @@ async def add_asset(
         'submitted_by': current_user.username,
         'submitted_date': datetime.now().strftime('%Y-%m-%d'),
         'description': f"Add new asset: {item_name}",
-        'request_data': json.dumps(asset_data)
+        'request_data': json.dumps(asset_data, ensure_ascii=False)
     }
     
     approval_success = add_approval_request(approval_data)
