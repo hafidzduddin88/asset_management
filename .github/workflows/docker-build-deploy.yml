@@ -13,18 +13,15 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
+      - name: Clear all caches
+        run: |
+          echo "Clearing all caches before build..."
+          rm -rf /tmp/.buildx-cache* || true
+          docker system prune -af --volumes || true
+          echo "All caches cleared"
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
-
-      - name: Restore Docker layer cache
-        uses: actions/cache@v3
-        id: docker-cache
-        with:
-          path: /tmp/.buildx-cache
-          key: buildx-cache-${{ github.ref_name }}-${{ github.sha }}
-          restore-keys: |
-            buildx-cache-${{ github.ref_name }}-
-            buildx-cache-
 
       - name: Login to Docker Hub
         uses: docker/login-action@v2
@@ -38,16 +35,9 @@ jobs:
           context: .
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/ambp:latest
-          cache-from: type=local,src=/tmp/.buildx-cache
-          cache-to: type=local,dest=/tmp/.buildx-cache-new,mode=max
-          build-args: |
-            BUILDKIT_INLINE_CACHE=1
-          no-cache: false
+          no-cache: true
 
-      - name: Move cache for future builds
-        run: |
-          rm -rf /tmp/.buildx-cache
-          mv /tmp/.buildx-cache-new /tmp/.buildx-cache
+
 
       - name: Complete DockerHub cleanup
         run: |

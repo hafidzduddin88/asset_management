@@ -9,7 +9,7 @@ import io
 import os
 
 from app.database.database import get_db
-from app.database.models import User, UserRole, Approval, ApprovalStatus
+from app.database.models import User, UserRole
 from app.database.dependencies import get_current_active_user, get_admin_user
 from app.utils.photo import resize_and_convert_image, upload_to_drive
 from app.utils.sheets import get_dropdown_options, add_asset as sheets_add_asset
@@ -132,17 +132,35 @@ async def add_asset(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
     
-    # If staff, create approval request
-    approval = Approval(
-        action_type="add",
-        request_data=json.dumps(asset_data),
-        requester_id=current_user.id,
-        status=ApprovalStatus.PENDING
-    )
+    # If staff, create approval request in Google Sheets
+    from app.utils.sheets import add_approval_request
+    from datetime import datetime
     
-    db.add(approval)
-    db.commit()
+    approval_data = {
+        'type': 'add_asset',
+        'asset_id': 'NEW',
+        'asset_name': item_name,
+        'submitted_by': current_user.username,
+        'submitted_date': datetime.now().strftime('%Y-%m-%d'),
+        'description': f"Add new asset: {item_name}",
+        'request_data': json.dumps(asset_data)
+    }
     
-    response = RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
-    set_flash(response, "Asset request submitted for approval", "success")
-    return response
+    approval_success = add_approval_request(approval_data)
+    
+    if approval_success:
+        response = RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
+        set_flash(response, "Asset request submitted for approval", "success")
+        return response
+    else:
+        return templates.TemplateResponse(
+            "asset_management/add.html",
+            {
+                "request": request,
+                "user": current_user,
+                "dropdown_options": dropdown_options,
+                "error": "Error submitting approval request",
+                "form_data": asset_data
+            },
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
