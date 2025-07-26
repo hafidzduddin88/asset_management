@@ -58,7 +58,7 @@ ENV PYTHONUNBUFFERED=1
 
 # Copy application code
 COPY app/ ./app/
-COPY requirements.txt .  # Optional
+COPY requirements.txt .  
 
 # Expose FastAPI default port
 EXPOSE 8000
