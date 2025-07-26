@@ -1,8 +1,8 @@
 # Web Framework
 fastapi==0.111.0  # Security fix
-httpx==0.27  # Compatible with h11 constraints
+httpx>=0.27.1   # Compatible with h11 constraints
 starlette>=0.37.2,<0.38.0  # Required by FastAPI
-httpcore==1.0.5  # Required by httpx, compatible with h11 constraints
+httpcore>=1.0.6	  # Required by httpx, compatible with h11 constraints
 uvicorn==0.29.0
 h11==0.16.0 # Explicit version to satisfy uvicorn (>=0.8) and httpcore from httpx (<0.15, >=0.13)
 pydantic==2.7.1 # Updated for FastAPI 0.111.0 compatibility
