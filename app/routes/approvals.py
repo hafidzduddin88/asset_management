@@ -8,11 +8,21 @@ templates = Jinja2Templates(directory="app/templates")
 
 @router.get("/")
 async def approvals_list(request: Request, current_user = Depends(get_current_user)):
-    """List all pending approvals for admin"""
+    """List pending approvals based on user role"""
     from app.utils.sheets import get_all_approvals
     
     # Get real approval data from Google Sheets
-    approvals_data = get_all_approvals()
+    all_approvals = get_all_approvals()
+    
+    # Filter approvals based on user role
+    if current_user.role == 'admin':
+        # Admin sees all approvals except disposal
+        approvals_data = [a for a in all_approvals if a.get('Type') != 'disposal']
+    elif current_user.role == 'manager':
+        # Manager only sees disposal approvals
+        approvals_data = [a for a in all_approvals if a.get('Type') == 'disposal']
+    else:
+        approvals_data = []
     
     return templates.TemplateResponse("approvals/list.html", {
         "request": request,
@@ -83,6 +93,25 @@ async def approve_request(approval_id: int, request: Request, current_user = Dep
             except Exception as e:
                 logging.error(f"Error processing add_asset approval: {str(e)}")
                 return {"status": "error", "message": f"Error processing approval: {str(e)}"}
+            
+        elif approval.get('Type') == 'disposal':
+            # Process disposal approval (manager only)
+            disposal_data = {
+                'asset_id': approval.get('Asset_ID'),
+                'asset_name': approval.get('Asset_Name'),
+                'disposal_reason': approval.get('Disposal_Reason', ''),
+                'disposal_method': approval.get('Disposal_Method', ''),
+                'description': approval.get('Description', ''),
+                'requested_by': approval.get('Submitted_By'),
+                'request_date': approval.get('Submitted_Date'),
+                'disposal_date': datetime.now().strftime('%Y-%m-%d'),
+                'disposed_by': current_user.username,
+                'notes': f"Approved by manager: {approval.get('Notes', '')}"
+            }
+            
+            from app.utils.sheets import add_disposal_log
+            add_disposal_log(disposal_data)
+            update_asset(approval.get('Asset_ID'), {'Status': 'Disposed'})
             
         elif approval.get('Type') == 'repair_action':
             # Add to repair log when store action approved

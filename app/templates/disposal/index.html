@@ -13,8 +13,8 @@
         <!-- Assets Table -->
         <div class="bg-white shadow overflow-hidden sm:rounded-md">
             <div class="px-4 py-5 sm:px-6">
-                <h3 class="text-lg leading-6 font-medium text-gray-900">Available Assets for Disposal</h3>
-                <p class="mt-1 max-w-2xl text-sm text-gray-500">Select assets to dispose permanently</p>
+                <h3 class="text-lg leading-6 font-medium text-gray-900">Assets Ready for Disposal</h3>
+                <p class="mt-1 max-w-2xl text-sm text-gray-500">Only assets marked 'To Be Disposed' can be disposed</p>
             </div>
             
             <div class="overflow-x-auto">
@@ -122,8 +122,8 @@
                     <button type="button" onclick="closeDisposalModal()" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400">
                         Cancel
                     </button>
-                    <button type="submit" onclick="return confirm('Are you sure you want to dispose this asset? This action cannot be undone.')" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">
-                        Dispose Asset
+                    <button type="submit" onclick="return confirm('Are you sure you want to submit this disposal request for manager approval?')" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">
+                        Submit for Approval
                     </button>
                 </div>
             </form>

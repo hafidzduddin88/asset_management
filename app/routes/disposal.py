@@ -21,9 +21,9 @@ async def disposal_page(
     current_user: User = Depends(get_admin_user)
 ):
     """Disposal assets page (admin only)."""
-    # Get assets that can be disposed (not already disposed)
+    # Get assets that are ready to dispose only
     all_assets = get_all_assets()
-    disposable_assets = [asset for asset in all_assets if asset.get('Status') != 'Disposed']
+    disposable_assets = [asset for asset in all_assets if asset.get('Status') == 'To Be Disposed']
     
     return templates.TemplateResponse(
         "disposal/index.html",
@@ -53,33 +53,31 @@ async def dispose_asset(
     if not asset:
         raise HTTPException(status_code=404, detail="Asset not found")
     
-    if asset.get('Status') == 'Disposed':
-        raise HTTPException(status_code=400, detail="Asset already disposed")
+    if asset.get('Status') != 'To Be Disposed':
+        raise HTTPException(status_code=400, detail="Asset must be marked 'To Be Disposed' first")
     
-    # Add to disposal log
-    disposal_data = {
+    # Create disposal approval request
+    from app.utils.sheets import add_approval_request
+    
+    approval_data = {
+        'type': 'disposal',
         'asset_id': asset_id,
         'asset_name': asset.get('Item Name', ''),
+        'submitted_by': current_user.username,
+        'submitted_date': datetime.now().strftime('%Y-%m-%d'),
+        'description': f"Disposal request: {disposal_reason} - {disposal_method}",
         'disposal_reason': disposal_reason,
         'disposal_method': disposal_method,
-        'description': description or '',
-        'requested_by': current_user.username,
-        'request_date': datetime.now().strftime('%Y-%m-%d'),
-        'disposal_date': datetime.now().strftime('%Y-%m-%d'),
-        'disposed_by': current_user.username,
-        'notes': notes or ''
+        'notes': f"Description: {description or ''} | Notes: {notes or ''}"
     }
     
-    log_success = add_disposal_log(disposal_data)
+    approval_success = add_approval_request(approval_data)
     
-    # Update asset status to Disposed
-    update_success = update_asset(asset_id, {'Status': 'Disposed'})
-    
-    if log_success and update_success:
+    if approval_success:
         response = RedirectResponse(url="/disposal", status_code=status.HTTP_303_SEE_OTHER)
-        set_flash(response, f"Asset {asset.get('Item Name', '')} disposed successfully", "success")
+        set_flash(response, f"Disposal request for {asset.get('Item Name', '')} submitted for manager approval", "success")
         return response
     else:
         response = RedirectResponse(url="/disposal", status_code=status.HTTP_303_SEE_OTHER)
-        set_flash(response, "Error disposing asset", "error")
+        set_flash(response, "Error submitting disposal request", "error")
         return response
