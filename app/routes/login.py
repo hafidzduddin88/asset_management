@@ -16,7 +16,7 @@ supabase: Client = create_client(config.APP_URL, config.SUPABASE_SERVICE_KEY)
 # ✅ GET Login Page
 @router.get("/login", response_class=HTMLResponse)
 async def login_page(request: Request, next: str = None):
-    return templates.TemplateResponse("login.html", {"request": request, "next": next})
+    return templates.TemplateResponse("login_logout.html", {"request": request, "next": next})
 
 
 # ✅ POST Login (HTML form)
@@ -34,7 +34,7 @@ async def login_form(
 
         if not response.user:
             return templates.TemplateResponse(
-                "login.html",
+                "login_logout.html",
                 {"request": request, "error": "Invalid email or password", "next": next},
                 status_code=status.HTTP_401_UNAUTHORIZED
             )
@@ -83,7 +83,7 @@ async def login_form(
 
     except Exception as e:
         return templates.TemplateResponse(
-            "login.html",
+            "login_logout.html",
             {"request": request, "error": f"Login failed: {str(e)}", "next": next},
             status_code=status.HTTP_400_BAD_REQUEST
         )
