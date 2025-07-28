@@ -20,11 +20,10 @@ class Config:
         db_url = os.getenv("DATABASE_URL")
         if not db_url:
             raise RuntimeError("DATABASE_URL is not set in environment")
-        # Fix PostgreSQL URL format if needed (Render.com/Supabase compatibility)
         if db_url.startswith("postgres://"):
             db_url = db_url.replace("postgres://", "postgresql://", 1)
         return db_url
-    
+
     @property
     def SECRET_KEY(self) -> str:
         """JWT Secret Key (Supabase Legacy JWT Secret)"""
@@ -32,17 +31,25 @@ class Config:
         if not secret:
             raise RuntimeError("SECRET_KEY is not set in environment")
         return secret
-        
+
+    @property
+    def SUPABASE_URL(self) -> str:
+        """Supabase Project URL"""
+        url = os.getenv("SUPABASE_URL")
+        if not url:
+            raise RuntimeError("SUPABASE_URL is not set in environment")
+        return url
+
     @property
     def SUPABASE_ANON_KEY(self) -> str:
         """Supabase Anonymous Key (optional)"""
         return os.getenv("SUPABASE_ANON_KEY", "")
-    
+
     @property
     def SUPABASE_SERVICE_KEY(self) -> str:
         """Supabase Service Role Key (optional)"""
         return os.getenv("SUPABASE_SERVICE_KEY", "")
-    
+
     @property
     def APP_URL(self) -> str:
         """Application URL for external services"""
@@ -55,10 +62,8 @@ class Config:
 
         creds_json = json.loads(creds_json_str)
         if "private_key" in creds_json:
-            # Fix multiple levels of escaping in private_key
             private_key = creds_json["private_key"]
-            private_key = private_key.replace('\\n', '\n')
-            private_key = private_key.replace('\\\\n', '\n')
+            private_key = private_key.replace('\\n', '\n').replace('\\\\n', '\n')
             creds_json["private_key"] = private_key
         return creds_json
 
