@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Request, Depends
 from starlette.templating import Jinja2Templates
-from app.utils.supabase_auth import get_current_profile
+from app.utils.auth import get_current_profile
 
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
