@@ -19,7 +19,7 @@ class User(Base):
     password_hash = Column(String)
     email = Column(String)
     full_name = Column(String)
-    role = Column(String, default=UserRole.STAFF)
+    role = Column(Enum(UserRole), default=UserRole.STAFF)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())

@@ -77,7 +77,7 @@ async def create_user(
         username=username,
         email=email,
         full_name=full_name,
-        hashed_password=hashed_password,
+        password_hash=hashed_password,
         role=UserRole(role),
         is_active=True
     )
@@ -103,7 +103,7 @@ async def reset_password(
         raise HTTPException(status_code=404, detail="User not found")
     
     # Update password
-    user.hashed_password = pwd_context.hash(new_password)
+    user.password_hash = pwd_context.hash(new_password)
     db.commit()
     
     response = RedirectResponse(url="/user_management", status_code=status.HTTP_303_SEE_OTHER)
