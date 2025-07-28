@@ -22,22 +22,11 @@ from app.utils.flash import FlashMiddleware
 # Create tables (only for users)
 Base.metadata.create_all(bind=engine)
 
-from app.database.migration import migrate_user_role  # Pastikan migration.py sudah dibuat
-
-@app.on_event("startup")
-async def run_migration_on_startup():
-    logger.info("Running database migration for user roles...")
-    try:
-        migrate_user_role()
-        logger.info("Migration completed successfully.")
-    except Exception as e:
-        logger.error(f"Migration failed: {e}")
-
 # Import dan jalankan seed script untuk membuat user default
-from app.database.seed import create_admin_user, create_manager_user, create_staff_user
-create_admin_user()
-create_manager_user()
-create_staff_user()
+#from app.database.seed import create_admin_user, create_manager_user, create_staff_user
+#create_admin_user()
+#create_manager_user()
+#create_staff_user()
 
 # Load configuration
 config = load_config()
