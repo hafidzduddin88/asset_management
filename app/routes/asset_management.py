@@ -50,12 +50,29 @@ async def asset_list(
     
     assets = get_all_assets()
     
+    # Get unique locations and rooms for filtering
+    locations = list(set(asset.get('Location', '') for asset in assets if asset.get('Location')))
+    location_rooms = {}
+    for asset in assets:
+        location = asset.get('Location', '')
+        room = asset.get('Room', '')
+        if location and room:
+            if location not in location_rooms:
+                location_rooms[location] = set()
+            location_rooms[location].add(room)
+    
+    # Convert sets to lists for JSON serialization
+    for location in location_rooms:
+        location_rooms[location] = list(location_rooms[location])
+    
     return templates.TemplateResponse(
         "asset_management/list.html",
         {
             "request": request,
             "user": current_user,
-            "assets": assets
+            "assets": assets,
+            "locations": sorted(locations),
+            "location_rooms": location_rooms
         }
     )
 
@@ -91,52 +108,25 @@ async def edit_asset_form(
 async def update_asset(
     asset_id: str,
     request: Request,
-    item_name: str = Form(...),
-    category: str = Form(...),
-    type: str = Form(...),
-    manufacture: str = Form(None),
-    model: str = Form(None),
-    serial_number: str = Form(None),
+    status: str = Form(...),
     company: str = Form(...),
-    bisnis_unit: str = Form(None),
     location: str = Form(...),
     room: str = Form(...),
-    notes: str = Form(None),
-    item_condition: str = Form(None),
-    purchase_date: str = Form(...),
-    purchase_cost: str = Form(...),
-    warranty: str = Form(None),
-    supplier: str = Form(None),
-    journal: str = Form(None),
-    owner: str = Form(...),
-    status: str = Form(...),
+    bisnis_unit: str = Form(None),
+    edit_reason: str = Form(...),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_admin_user)
 ):
     """Update existing asset (admin only)."""
     from app.utils.sheets import update_asset as sheets_update_asset, calculate_asset_financials
     
-    # Prepare update data
+    # Prepare update data (only allowed fields)
     update_data = {
-        "Item Name": item_name,
-        "Category": category,
-        "Type": type,
-        "Manufacture": manufacture or "",
-        "Model": model or "",
-        "Serial Number": serial_number or "",
+        "Status": status,
         "Company": company,
-        "Bisnis Unit": bisnis_unit or "",
         "Location": location,
         "Room": room,
-        "Notes": notes or "",
-        "Item Condition": item_condition or "",
-        "Purchase Date": purchase_date,
-        "Purchase Cost": purchase_cost,
-        "Warranty": warranty or "",
-        "Supplier": supplier or "",
-        "Journal": journal or "",
-        "Owner": owner,
-        "Status": status
+        "Bisnis Unit": bisnis_unit or ""
     }
     
     # Recalculate financials if purchase cost or date changed
@@ -160,7 +150,8 @@ async def update_asset(
         'asset_name': update_data.get('Item Name', ''),
         'submitted_by': current_user.username,
         'submitted_date': datetime.now().strftime('%Y-%m-%d'),
-        'description': f"Edit asset: {update_data.get('Item Name', '')}",
+        'description': f"Edit asset: {asset.get('Item Name', '')} - Reason: {edit_reason}",
+        'edit_reason': edit_reason,
         'request_data': json.dumps(update_data, ensure_ascii=False)
     }
     

@@ -35,29 +35,24 @@
         <form method="POST" class="mt-6 space-y-6 bg-white shadow sm:rounded-lg p-6">
             <div x-data="assetForm()" x-init="initializeForm()">
                 <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
-                    <!-- Item Name -->
-                    <div class="sm:col-span-3">
-                        <label for="item_name" class="block text-sm font-medium text-gray-700 required-field">Item Name</label>
-                        <div class="mt-1">
-                            <input type="text" name="item_name" id="item_name" required
-                                class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md"
-                                value="{{ asset.get('Item Name', '') }}">
+                    <!-- Asset Info (Read-only) -->
+                    <div class="sm:col-span-6 bg-gray-50 p-4 rounded-md">
+                        <h3 class="text-lg font-medium text-gray-900 mb-2">Asset Information</h3>
+                        <div class="grid grid-cols-2 gap-4 text-sm">
+                            <div><strong>Name:</strong> {{ asset.get('Item Name', '') }}</div>
+                            <div><strong>Category:</strong> {{ asset.get('Category', '') }}</div>
+                            <div><strong>ID:</strong> {{ asset.get('ID', '') }}</div>
+                            <div><strong>Asset Tag:</strong> {{ asset.get('Asset Tag', '') }}</div>
                         </div>
                     </div>
                     
-                    <!-- Category -->
-                    <div class="sm:col-span-3">
-                        <label for="category" class="block text-sm font-medium text-gray-700 required-field">Category</label>
+                    <!-- Edit Reason -->
+                    <div class="sm:col-span-6">
+                        <label for="edit_reason" class="block text-sm font-medium text-gray-700 required-field">Reason for Edit</label>
                         <div class="mt-1">
-                            <select name="category" id="category" required x-on:change="updateTypes()"
-                                class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md">
-                                <option value="">Select Category</option>
-                                {% for category in dropdown_options.categories %}
-                                <option value="{{ category }}" {% if asset.get('Category') == category %}selected{% endif %}>
-                                    {{ category }}
-                                </option>
-                                {% endfor %}
-                            </select>
+                            <textarea name="edit_reason" id="edit_reason" required rows="3"
+                                class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                                placeholder="Please explain why you need to edit this asset..."></textarea>
                         </div>
                     </div>
                     
@@ -138,48 +133,14 @@
                         </div>
                     </div>
                     
-                    <!-- Purchase Date -->
-                    <div class="sm:col-span-3">
-                        <label for="purchase_date" class="block text-sm font-medium text-gray-700 required-field">Purchase Date</label>
-                        <div class="mt-1">
-                            <input type="date" name="purchase_date" id="purchase_date" required
-                                class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md"
-                                value="{{ asset.get('Purchase Date', '') }}">
-                        </div>
-                    </div>
-                    
-                    <!-- Purchase Cost -->
-                    <div class="sm:col-span-3">
-                        <label for="purchase_cost" class="block text-sm font-medium text-gray-700 required-field">Purchase Cost</label>
-                        <div class="mt-1">
-                            <input type="number" name="purchase_cost" id="purchase_cost" required step="0.01"
-                                class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md"
-                                value="{{ asset.get('Purchase Cost', '') }}">
-                        </div>
-                    </div>
-                    
-                    <!-- Owner -->
-                    <div class="sm:col-span-3">
-                        <label for="owner" class="block text-sm font-medium text-gray-700 required-field">Owner</label>
-                        <div class="mt-1">
-                            <select name="owner" id="owner" required
-                                class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md">
-                                <option value="">Select Owner</option>
-                                {% for owner in dropdown_options.owners %}
-                                <option value="{{ owner }}" {% if asset.get('Owner') == owner %}selected{% endif %}>
-                                    {{ owner }}
-                                </option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                    </div>
+
                 </div>
                 
                 <div class="mt-6 flex justify-end">
                     <a href="/assets/{{ asset.get('ID') }}" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
                         Cancel
                     </a>
-                    <button type="submit" onclick="return confirm('Are you sure you want to submit this edit request for manager approval?')" class="ml-3 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                    <button type="submit" onclick="return confirmSubmit()" class="ml-3 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
                         Submit for Approval
                     </button>
                 </div>
@@ -217,6 +178,35 @@
                     : [];
             }
         }
+    }
+    
+    function confirmSubmit() {
+        const reason = document.getElementById('edit_reason').value.trim();
+        if (!reason) {
+            alert('Please provide a reason for editing this asset.');
+            return false;
+        }
+        
+        const changes = [];
+        const status = document.getElementById('status').value;
+        const company = document.getElementById('company').value;
+        const location = document.getElementById('location').value;
+        const room = document.getElementById('room').value;
+        const bisnisUnit = document.getElementById('bisnis_unit').value;
+        
+        if (status !== '{{ asset.get("Status", "") }}') changes.push('Status');
+        if (company !== '{{ asset.get("Company", "") }}') changes.push('Company');
+        if (location !== '{{ asset.get("Location", "") }}') changes.push('Location');
+        if (room !== '{{ asset.get("Room", "") }}') changes.push('Room');
+        if (bisnisUnit !== '{{ asset.get("Bisnis Unit", "") }}') changes.push('Bisnis Unit');
+        
+        if (changes.length === 0) {
+            alert('No changes detected. Please make changes before submitting.');
+            return false;
+        }
+        
+        const changesList = changes.join(', ');
+        return confirm(`You are about to submit changes for: ${changesList}\n\nReason: ${reason}\n\nThis will require manager approval. Continue?`);
     }
 </script>
 {% endblock %}
