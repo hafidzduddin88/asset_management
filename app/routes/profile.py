@@ -5,8 +5,8 @@ from sqlalchemy.orm import Session
 from datetime import datetime, timezone
 
 from app.database.database import get_db
-from app.database.models import User
-from app.database.dependencies import get_current_active_user
+from app.database.models import Profile
+from app.utils.auth import get_current_profile
 from app.utils.photo import resize_and_convert_image, upload_to_drive
 from app.utils.flash import set_flash
 
@@ -16,7 +16,7 @@ templates = Jinja2Templates(directory="app/templates")
 @router.get("/profile", response_class=HTMLResponse)
 async def profile_page(
     request: Request,
-    current_user: User = Depends(get_current_active_user)
+    current_user: Profile = Depends(get_current_profile)
 ):
     """User profile page."""
     return templates.TemplateResponse(
@@ -30,7 +30,7 @@ async def profile_page(
 @router.get("/profile/edit", response_class=HTMLResponse)
 async def edit_profile_page(
     request: Request,
-    current_user: User = Depends(get_current_active_user)
+    current_user: Profile = Depends(get_current_profile)
 ):
     """Edit user profile page."""
     return templates.TemplateResponse(
@@ -48,7 +48,7 @@ async def update_profile(
     email: str = Form(...),
     photo: UploadFile = File(None),
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
+    current_user: Profile = Depends(get_current_profile)
 ):
     """Update user profile."""
     # Update basic info
@@ -70,7 +70,7 @@ async def update_profile(
                 photo_url = upload_to_drive(
                     processed_image, 
                     photo.filename, 
-                    f"profile_{current_user.username}"
+                    f"profile_{current_user.email}"
                 )
                 if photo_url:
                     current_user.photo_url = photo_url
@@ -91,24 +91,4 @@ async def update_profile(
     # Redirect to profile page
     response = RedirectResponse(url="/profile", status_code=status.HTTP_303_SEE_OTHER)
     set_flash(response, "Profile updated successfully", "success")
-    return response
-
-@router.post("/profile/remember-me")
-async def toggle_remember_me(
-    request: Request,
-    remember_me: bool = Form(...),
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
-):
-    """Toggle remember me setting."""
-    if remember_me:
-        import secrets
-        current_user.remember_token = secrets.token_hex(32)
-    else:
-        current_user.remember_token = None
-    
-    db.commit()
-    
-    response = RedirectResponse(url="/profile", status_code=status.HTTP_303_SEE_OTHER)
-    set_flash(response, "Remember me setting updated", "success")
     return response

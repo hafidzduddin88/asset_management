@@ -7,7 +7,7 @@ from datetime import datetime
 
 from app.database.database import get_db
 from app.database.models import User
-from app.database.dependencies import get_admin_user
+from app.utils.auth import get_admin_user
 from app.utils.sheets import get_all_assets, update_asset, add_disposal_log
 from app.utils.flash import set_flash
 
