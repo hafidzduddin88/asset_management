@@ -95,7 +95,7 @@ def _create_approvals_sheet(spreadsheet):
             'ID', 'Type', 'Asset_ID', 'Asset_Name', 'Status', 
             'Submitted_By', 'Submitted_Date', 'Description', 
             'Damage_Type', 'Severity', 'Action', 'Location', 
-            'Approved_By', 'Approved_Date', 'Notes'
+            'Approved_By', 'Approved_Date', 'Notes', 'Request_Data'
         ]
         
         sheet.append_row(headers)
