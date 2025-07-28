@@ -9,20 +9,20 @@ supabase = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
 
 USERS = [
     {
-        "email": "admin@yourdomain.com",
-        "password": "AdminPass123",
+        "email": "m.hafidz@tog.co.id",
+        "password": "Admin123",
         "full_name": "Super Admin",
         "role": "admin"
     },
     {
-        "email": "manager@yourdomain.com",
-        "password": "ManagerPass123",
+        "email": "hafidzduddin@gmail.com",
+        "password": "Manager123",
         "full_name": "Project Manager",
         "role": "manager"
     },
     {
-        "email": "staff@yourdomain.com",
-        "password": "StaffPass123",
+        "email": "hafidzduddin85@gmail.com",
+        "password": "Staff123",
         "full_name": "Staff Member",
         "role": "staff"
     }
