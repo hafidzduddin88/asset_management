@@ -7,8 +7,8 @@ from datetime import datetime
 import json
 
 from app.database.database import get_db
-from app.database.models import User
-from app.database.dependencies import get_current_active_user
+from app.database.models import Profile
+from app.utils.auth import get_current_profile
 from app.utils.sheets import get_all_assets, get_dropdown_options, add_approval_request
 from app.utils.flash import set_flash
 
@@ -19,7 +19,7 @@ templates = Jinja2Templates(directory="app/templates")
 async def relocation_page(
     request: Request,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
+    current_user: Profile = Depends(get_current_profile)
 ):
     """Asset relocation page."""
     # Get assets and dropdown options
@@ -45,7 +45,7 @@ async def relocate_asset(
     reason: str = Form(...),
     notes: str = Form(None),
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
+    current_user: Profile = Depends(get_current_profile)
 ):
     """Submit asset relocation request."""
     from app.utils.sheets import get_asset_by_id
@@ -69,7 +69,7 @@ async def relocate_asset(
         'type': 'relocation',
         'asset_id': asset_id,
         'asset_name': asset.get('Item Name', ''),
-        'submitted_by': current_user.username,
+        'submitted_by': current_user.full_name or current_user.email,
         'submitted_date': datetime.now().strftime('%Y-%m-%d'),
         'description': f"Relocate from {asset.get('Location', '')} - {asset.get('Room', '')} to {new_location} - {new_room}",
         'request_data': json.dumps(relocation_data, ensure_ascii=False)

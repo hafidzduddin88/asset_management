@@ -12,7 +12,7 @@ from app.database.models import Profile, UserRole
 from app.utils.photo import resize_and_convert_image, upload_to_drive
 from app.utils.sheets import get_dropdown_options, add_asset as sheets_add_asset
 from app.utils.flash import set_flash
-from app.utils.auth import get_current_profile
+from app.utils.auth import get_current_profile, get_admin_user
 from app.config import load_config
 
 config = load_config()
@@ -143,7 +143,7 @@ async def update_asset(
         'type': 'edit_asset',
         'asset_id': asset_id,
         'asset_name': asset.get('Item Name', ''),
-        'submitted_by': current_profile.email,
+        'submitted_by': current_profile.full_name or current_profile.email,
         'submitted_date': datetime.now().strftime('%Y-%m-%d'),
         'description': f"Edit asset: {asset.get('Item Name', '')} - Reason: {edit_reason}",
         'edit_reason': edit_reason,
@@ -261,7 +261,7 @@ async def add_asset(
         'type': 'add_asset',
         'asset_id': 'NEW',
         'asset_name': item_name,
-        'submitted_by': current_profile.email,
+        'submitted_by': current_profile.full_name or current_profile.email,
         'submitted_date': datetime.now().strftime('%Y-%m-%d'),
         'description': f"Add new asset: {item_name}",
         'request_data': json.dumps(asset_data, ensure_ascii=False)

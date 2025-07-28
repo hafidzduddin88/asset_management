@@ -3,7 +3,7 @@ import logging
 from fastapi import APIRouter, Request, Depends
 from fastapi.responses import RedirectResponse
 from starlette.templating import Jinja2Templates
-from app.utils.auth import get_current_user
+from app.utils.auth import get_current_profile
 from app.utils.sheets import get_summary_data, get_chart_data, get_all_assets
 
 router = APIRouter()
@@ -14,7 +14,7 @@ async def redirect_root():
     return RedirectResponse("/dashboard")
 
 @router.get("/dashboard")
-async def home(request: Request, current_user = Depends(get_current_user)):
+async def home(request: Request, current_user = Depends(get_current_profile)):
     try:
         # Summary and chart data
         summary_data = get_summary_data()

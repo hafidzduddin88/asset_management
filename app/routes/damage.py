@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Request, Depends
 from starlette.templating import Jinja2Templates
-from app.utils.auth import get_current_profile  # ✅ ganti get_current_user
+from app.utils.auth import get_current_profile
 
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
@@ -38,7 +38,7 @@ async def submit_lost_report(request: Request, current_user = Depends(get_curren
             'last_room': data.get('last_room', ''),
             'date_lost': data.get('date_lost'),
             'description': data.get('description'),
-            'reported_by': current_user.username,
+            'reported_by': current_user.full_name or current_user.email,
             'report_date': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
             'notes': data.get('notes', '')
         }
@@ -49,7 +49,7 @@ async def submit_lost_report(request: Request, current_user = Depends(get_curren
             'type': 'lost_report',
             'asset_id': data.get('asset_id'),
             'asset_name': data.get('asset_name'),
-            'submitted_by': current_user.username,
+            'submitted_by': current_user.full_name or current_user.email,
             'submitted_date': datetime.now().strftime('%Y-%m-%d'),
             'description': f"Lost report: {data.get('description')}",
             'location': data.get('last_location')
@@ -81,7 +81,7 @@ async def submit_disposal_request(request: Request, current_user = Depends(get_c
             'disposal_reason': data.get('disposal_reason'),
             'disposal_method': data.get('disposal_method', 'Standard'),
             'description': data.get('description'),
-            'requested_by': current_user.username,
+            'requested_by': current_user.full_name or current_user.email,
             'request_date': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
             'notes': data.get('notes', '')
         }
@@ -92,7 +92,7 @@ async def submit_disposal_request(request: Request, current_user = Depends(get_c
             'type': 'disposal_request',
             'asset_id': data.get('asset_id'),
             'asset_name': data.get('asset_name'),
-            'submitted_by': current_user.username,
+            'submitted_by': current_user.full_name or current_user.email,
             'submitted_date': datetime.now().strftime('%Y-%m-%d'),
             'description': f"Disposal request: {data.get('description')}"
         }
@@ -123,7 +123,7 @@ async def submit_damage_report(request: Request, current_user = Depends(get_curr
             'damage_type': data.get('damage_type'),
             'severity': data.get('severity'),
             'description': data.get('damage_description'),
-            'reported_by': current_user.username,
+            'reported_by': current_user.full_name or current_user.email,
             'report_date': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
             'location': data.get('location', ''),
             'room': data.get('room', ''),
@@ -134,7 +134,7 @@ async def submit_damage_report(request: Request, current_user = Depends(get_curr
             'type': 'damage_report',
             'asset_id': data.get('asset_id'),
             'asset_name': data.get('asset_name'),
-            'submitted_by': current_user.username,
+            'submitted_by': current_user.full_name or current_user.email,
             'submitted_date': datetime.now().strftime('%Y-%m-%d'),
             'description': f"Damage report: {data.get('damage_description')}",
             'damage_type': data.get('damage_type'),
