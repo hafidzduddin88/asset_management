@@ -1,84 +1,86 @@
 from fastapi import Depends, HTTPException, status, Request
-from sqlalchemy.orm import Session
 from jose import JWTError, jwt
 import logging
+from typing import Dict, Optional
 
-from app.database.database import get_db
-from app.database.models import User, UserRole
 from app.config import load_config
 
 # Load configuration
 config = load_config()
 
-def get_token_from_request(request: Request) -> str:
-    """Get token from request headers or cookies."""
-    # Try to get token from Authorization header
+def get_token_from_request(request: Request) -> Optional[str]:
+    """
+    Ambil token JWT dari header Authorization atau cookie.
+    """
+    # Ambil dari Authorization header
     auth_header = request.headers.get("Authorization")
     if auth_header and auth_header.startswith("Bearer "):
         return auth_header.split(" ", 1)[1]
     
-    # Try to get token from cookies
-    token = request.cookies.get("access_token")
-    return token
+    # Ambil dari cookie
+    return request.cookies.get("access_token")
 
-def get_current_user(request: Request, db: Session = Depends(get_db)) -> User:
-    """Get current user from JWT token."""
+def get_current_user(request: Request) -> Dict:
+    """
+    Decode token Supabase JWT & return user info.
+    """
     token = get_token_from_request(request)
-    
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
-    
+
     if not token:
-        logging.warning("No token found in request")
-        raise credentials_exception
-    
+        logging.warning("Token tidak ditemukan dalam request")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token tidak ditemukan",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
     try:
-        # Decode token
+        # Decode Supabase JWT
         payload = jwt.decode(
-            token, 
-            config.SECRET_KEY, 
+            token,
+            config.SECRET_KEY,  # Supabase JWT Secret
             algorithms=["HS256"]
         )
-        
-        username: str = payload.get("sub")
-        if username is None:
-            logging.warning("No username in token payload")
-            raise credentials_exception
-            
+
+        user_id: str = payload.get("sub")
+        role: str = payload.get("role", "user")
+        email: str = payload.get("email")
+
+        if user_id is None:
+            logging.warning("sub (user_id) tidak ada di token")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid token",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
+        return {
+            "id": user_id,
+            "email": email,
+            "role": role
+        }
+
     except JWTError as e:
         logging.error(f"JWT Error: {str(e)}")
-        raise credentials_exception
-    
-    # Get user from database
-    user = db.query(User).filter(User.username == username).first()
-    
-    if user is None:
-        logging.warning(f"User {username} not found in database")
-        raise credentials_exception
-    
-    if not user.is_active:
-        logging.warning(f"User {username} is inactive")
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Inactive user"
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token",
+            headers={"WWW-Authenticate": "Bearer"},
         )
-    
-    return user
 
-def get_current_active_user(current_user: User = Depends(get_current_user)) -> User:
-    """Get current active user."""
-    if not current_user.is_active:
-        raise HTTPException(status_code=400, detail="Inactive user")
+def get_current_active_user(current_user: Dict = Depends(get_current_user)) -> Dict:
+    """
+    Pastikan user aktif (Supabase tidak punya flag is_active, jadi hanya cek token).
+    """
     return current_user
 
-def get_admin_user(current_user: User = Depends(get_current_user)) -> User:
-    """Get current admin user."""
-    if current_user.role != UserRole.ADMIN:
+def get_admin_user(current_user: Dict = Depends(get_current_user)) -> Dict:
+    """
+    Pastikan user punya role admin.
+    """
+    if current_user["role"] != "admin":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not enough permissions"
+            detail="Anda tidak memiliki akses"
         )
     return current_user
