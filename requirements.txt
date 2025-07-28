@@ -25,15 +25,15 @@ passlib[argon2]==1.7.4
 argon2-cffi==23.1.0 # Required for passlib with argon2
 
 # Google API
-gspread==5.9.0
-google-auth==2.17.3
+gspread==6.2.1
+google-auth==2.40.3
 
 # Export
-openpyxl==3.1.2
-fpdf2==2.7.4
-xlsxwriter==3.1.0
-numpy==1.26.4  # Must be installed before pandas
-pandas==2.2.2  # Required for Excel export functionality
+openpyxl==3.1.5 # Required for Excel export functionality
+xlsxwriter==3.2.5   # For Excel export functionality
+fpdf2==2.8.3    # For PDF export functionality
+numpy==2.3.2    # Required for Excel export functionality        
+pandas==2.3.1 # For data manipulation and export functionality
 
 # Image Processing
 Pillow==10.3.0
@@ -42,7 +42,7 @@ Pillow==10.3.0
 requests==2.32.4
 
 # Date handling
-python-dateutil==2.8.2
+python-dateutil==2.9.0.post0
 
 # Build tools
 setuptools>=69  # Security fix for CVE-2022-40897
