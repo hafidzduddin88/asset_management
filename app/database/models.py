@@ -1,12 +1,13 @@
-from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, Text, DateTime, Enum
-from sqlalchemy.orm import relationship
+from sqlalchemy import Boolean, Column, Integer, String, Text, DateTime, Enum as SqlEnum
 from sqlalchemy.sql import func
-import enum
+from sqlalchemy.orm import relationship
 from datetime import datetime
+from enum import Enum
 
 from app.database.database import Base
 
-class UserRole(enum.Enum):
+# Enum untuk Role User (gunakan str agar JSON-friendly)
+class UserRole(str, Enum):
     ADMIN = "admin"
     MANAGER = "manager"
     STAFF = "staff"
@@ -15,15 +16,18 @@ class User(Base):
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, index=True)
-    username = Column(String, unique=True, index=True, nullable=False)
-    password_hash = Column(String, nullable=False)
-    email = Column(String)
-    full_name = Column(String)
-    role = Column(Enum(UserRole), nullable=False, default=UserRole.STAFF)
+    username = Column(String(50), unique=True, index=True, nullable=False)
+    password_hash = Column(String(255), nullable=False)
+    email = Column(String(100), unique=True, index=True, nullable=True)  # bisa nullable jika opsional
+    full_name = Column(String(100), nullable=True)
+    
+    # Simpan Enum sebagai string agar mudah diubah (native_enum=False)
+    role = Column(SqlEnum(UserRole, native_enum=False), nullable=False, default=UserRole.STAFF)
+    
     is_active = Column(Boolean, nullable=False, default=True)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
-    photo_url = Column(String)
-    last_login = Column(DateTime(timezone=True))
-    remember_token = Column(String)
-
+    last_login = Column(DateTime(timezone=True), nullable=True)
+    
+    photo_url = Column(Text, nullable=True)
+    remember_token = Column(String(64), nullable=True)
