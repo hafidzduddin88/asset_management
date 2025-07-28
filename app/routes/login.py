@@ -1,160 +1,102 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Request, Response, Form
-from fastapi.security import OAuth2PasswordRequestForm
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi import APIRouter, Request, Form, Depends, HTTPException, status, Response
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
-from sqlalchemy.orm import Session
-from datetime import timedelta, datetime, timezone
-import secrets
+from fastapi.security import OAuth2PasswordRequestForm
+import os
+from supabase import create_client, Client
 
-from app.database.database import get_db
-from app.database.models import User
-from app.utils.auth import verify_password, create_access_token, create_refresh_token, decode_token
-from app.config import load_config
+# Load Supabase
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY")
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_ANON_KEY)
 
-config = load_config()
 router = APIRouter(tags=["authentication"])
 templates = Jinja2Templates(directory="app/templates")
 
-# GET login page
+# ✅ GET Login Page
 @router.get("/login", response_class=HTMLResponse)
 @router.head("/login", response_class=HTMLResponse)
-async def login_page(request: Request, next: str = None):
+async def login_page(request: Request, next: str = "/"):
     return templates.TemplateResponse("login_logout.html", {"request": request, "next": next})
 
-# POST login (HTML form)
+# ✅ POST Login (HTML Form)
 @router.post("/login", response_class=HTMLResponse)
 async def login_form(
     request: Request,
     username: str = Form(...),
     password: str = Form(...),
-    next: str = Form(None),
-    remember: bool = Form(False),
-    db: Session = Depends(get_db)
+    next: str = Form("/")
 ):
-    user = db.query(User).filter(User.username == username, User.is_active == True).first()
-    if not user or not verify_password(password, user.password_hash):
+    try:
+        auth_res = supabase.auth.sign_in_with_password({"email": username, "password": password})
+        if not auth_res or not auth_res.session:
+            return templates.TemplateResponse(
+                "login_logout.html",
+                {"request": request, "error": "Invalid username or password", "next": next},
+                status_code=status.HTTP_401_UNAUTHORIZED
+            )
+
+        access_token = auth_res.session.access_token
+        refresh_token = auth_res.session.refresh_token
+
+        response = RedirectResponse(url=next, status_code=status.HTTP_303_SEE_OTHER)
+        response.set_cookie("access_token", access_token, httponly=True, samesite="lax", max_age=86400)  # 1 day
+        response.set_cookie("refresh_token", refresh_token, httponly=True, samesite="lax", max_age=604800)  # 7 days
+        return response
+
+    except Exception as e:
         return templates.TemplateResponse(
             "login_logout.html",
-            {"request": request, "error": "Invalid username or password", "next": next},
-            status_code=status.HTTP_401_UNAUTHORIZED
+            {"request": request, "error": f"Login failed: {str(e)}", "next": next},
+            status_code=status.HTTP_400_BAD_REQUEST
         )
 
-    user.last_login = datetime.now(timezone.utc)
-
-    # Set remember_token if remember option is checked
-    if remember:
-        user.remember_token = secrets.token_hex(32)
-
-    db.commit()
-
-    # Generate tokens
-    access_token_expires = timedelta(minutes=60 * 24)  # 1 day
-    refresh_token_expires = timedelta(days=7)
-    access_token = create_access_token(
-        data={"sub": user.username, "role": user.role},
-        expires_delta=access_token_expires
-    )
-    refresh_token = create_refresh_token(
-        data={"sub": user.username},
-        expires_delta=refresh_token_expires
-    )
-
-    # Redirect to original URL if available, otherwise home
-    redirect_url = next if next else "/"
-    response = RedirectResponse(url=redirect_url, status_code=status.HTTP_303_SEE_OTHER)
-
-    # Set cookies
-    response.set_cookie(
-        key="access_token",
-        value=access_token,
-        httponly=True,
-        max_age=60 * 60 * 24,
-        samesite="lax",
-        secure=False  # Change to True in production
-    )
-    response.set_cookie(
-        key="refresh_token",
-        value=refresh_token,
-        httponly=True,
-        max_age=60 * 60 * 24 * 7,
-        samesite="lax",
-        secure=False
-    )
-    if remember and user.remember_token:
-        response.set_cookie(
-            key="remember_token",
-            value=user.remember_token,
-            httponly=True,
-            max_age=60 * 60 * 24 * 30,  # 30 days
-            samesite="lax",
-            secure=False
-        )
-
-    return response
-
-# Token-only login (API)
+# ✅ API Login (Token Only)
 @router.post("/login/token")
-async def login_for_access_token(
-    form_data: OAuth2PasswordRequestForm = Depends(),
-    db: Session = Depends(get_db)
-):
-    user = db.query(User).filter(User.username == form_data.username, User.is_active == True).first()
-    if not user or not verify_password(password=form_data.password, hashed_password=user.password_hash):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect username or password",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
+    try:
+        auth_res = supabase.auth.sign_in_with_password({
+            "email": form_data.username,
+            "password": form_data.password
+        })
+        if not auth_res or not auth_res.session:
+            raise HTTPException(status_code=401, detail="Invalid credentials")
 
-    user.last_login = datetime.now(timezone.utc)
-    db.commit()
+        return {
+            "access_token": auth_res.session.access_token,
+            "refresh_token": auth_res.session.refresh_token,
+            "token_type": "bearer",
+            "user_id": auth_res.user.id,
+            "email": auth_res.user.email
+        }
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Login failed: {str(e)}")
 
-    access_token_expires = timedelta(minutes=60 * 24)
-    access_token = create_access_token(
-        data={"sub": user.username, "role": user.role},
-        expires_delta=access_token_expires
-    )
-
-    return {
-        "access_token": access_token,
-        "token_type": "bearer",
-        "username": user.username,
-        "role": user.role
-    }
-
-# Refresh token
+# ✅ Refresh Token (using Supabase)
 @router.post("/refresh")
-async def refresh_token(request: Request, response: Response, db: Session = Depends(get_db)):
+async def refresh_token(request: Request, response: Response):
     refresh_token = request.cookies.get("refresh_token")
-    payload = decode_token(refresh_token)
-    if not payload or payload.get("type") != "refresh":
-        raise HTTPException(status_code=401, detail="Invalid refresh token")
+    if not refresh_token:
+        raise HTTPException(status_code=401, detail="Missing refresh token")
 
-    username = payload.get("sub")
-    user = db.query(User).filter(User.username == username, User.is_active == True).first()
-    if not user:
-        raise HTTPException(status_code=401, detail="User not found")
+    try:
+        session = supabase.auth.refresh_session(refresh_token)
+        if not session or not session.session:
+            raise HTTPException(status_code=401, detail="Invalid refresh token")
 
-    access_token_expires = timedelta(minutes=60 * 24)
-    access_token = create_access_token(
-        data={"sub": user.username, "role": user.role},
-        expires_delta=access_token_expires
-    )
-    response.set_cookie(
-        key="access_token",
-        value=access_token,
-        httponly=True,
-        max_age=60 * 60 * 24,
-        samesite="lax",
-        secure=False
-    )
-    return {"access_token": access_token}
+        new_access = session.session.access_token
+        new_refresh = session.session.refresh_token
 
-# Logout
+        response.set_cookie("access_token", new_access, httponly=True, samesite="lax", max_age=86400)
+        response.set_cookie("refresh_token", new_refresh, httponly=True, samesite="lax", max_age=604800)
+        return {"access_token": new_access}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Refresh failed: {str(e)}")
+
+# ✅ Logout
 @router.get("/logout")
 async def logout():
     response = RedirectResponse(url="/login", status_code=status.HTTP_303_SEE_OTHER)
-    response.delete_cookie(key="access_token")
-    response.delete_cookie(key="refresh_token")
-    response.delete_cookie(key="remember_token")
+    response.delete_cookie("access_token")
+    response.delete_cookie("refresh_token")
     return response
