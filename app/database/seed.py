@@ -11,10 +11,10 @@ def run_seed():
     try:
         # ✅ Ambil daftar user dari Supabase Auth
         response = supabase.auth.admin.list_users()
-        if not isinstance(response, list):
+        if not hasattr(response, "users"):
             raise ValueError("Unexpected response format from Supabase")
 
-        existing_emails = [u.get("email") for u in response if "email" in u]
+        existing_emails = [u.email for u in response.users]
 
         # ✅ Data user default
         users = [
@@ -35,17 +35,18 @@ def run_seed():
                 "email_confirm": True
             })
 
-            if not created or not created.get("user"):
+            if not created.user:
                 logging.error(f"Failed to create user {user['email']}")
                 continue
 
-            user_id = created["user"]["id"]
+            user_id = created.user.id
             logging.info(f"Created user {user['email']} with ID {user_id}")
 
             # ✅ Tambahkan ke tabel profiles
             supabase.table("profiles").insert({
                 "auth_user_id": user_id,
-                "role": user["role"]
+                "role": user["role"],
+                "is_active": True
             }).execute()
 
         logging.info("✅ User seeding completed.")
