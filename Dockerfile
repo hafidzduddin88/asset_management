@@ -4,21 +4,13 @@ FROM python:3.12.11-alpine AS builder
 WORKDIR /app
 
 # Install build dependencies
-RUN apk add --no-cache \
+RUN apk add --no-cache --virtual .build-deps \
     build-base \
-    libpq-dev \
     postgresql-dev \
+    libffi-dev \
     jpeg-dev \
     zlib-dev \
-    freetype-dev \
-    openblas-dev \
-    tiff-dev \
-    lcms2-dev \
-    libwebp-dev \
-    libxml2-dev \
-    libxslt-dev \
-    libffi-dev \
-    python3-dev
+    freetype-dev
 
 # Create virtual environment
 RUN python -m venv /opt/venv
@@ -26,8 +18,9 @@ ENV PATH="/opt/venv/bin:$PATH"
 
 # Copy and install requirements
 COPY requirements.txt ./
-RUN pip install --upgrade pip setuptools wheel \
- && pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel \
+ && pip install --no-cache-dir -r requirements.txt \
+ && apk del .build-deps
 
 # ---------- Final Runtime Stage ----------
 FROM python:3.12.11-alpine
@@ -40,12 +33,6 @@ RUN apk add --no-cache \
     libjpeg \
     zlib \
     freetype \
-    openblas \
-    tiff \
-    lcms2 \
-    libwebp \
-    libxml2 \
-    libxslt \
     libffi
 
 # Copy virtualenv
@@ -58,7 +45,10 @@ ENV PYTHONUNBUFFERED=1
 
 # Copy application code
 COPY app/ ./app/
-COPY requirements.txt .  
+
+# Create non-root user
+RUN adduser -D -s /bin/sh appuser && chown -R appuser:appuser /app
+USER appuser
 
 # Expose FastAPI default port
 EXPOSE 8000
