@@ -1,54 +1,54 @@
-# seed.py
+import logging
 from supabase import create_client
-import os
+from app.config import load_config
 
-SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_KEY")
-
-supabase = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
-
-USERS = [
-    {
-        "email": "m.hafidz@tog.co.id",
-        "password": "Admin123",
-        "full_name": "Super Admin",
-        "role": "admin"
-    },
-    {
-        "email": "hafidzduddin@gmail.com",
-        "password": "Manager123",
-        "full_name": "Project Manager",
-        "role": "manager"
-    },
-    {
-        "email": "hafidzduddin85@gmail.com",
-        "password": "Staff123",
-        "full_name": "Staff Member",
-        "role": "staff"
-    }
-]
+config = load_config()
+supabase = create_client(config.SUPABASE_URL, config.SUPABASE_SERVICE_KEY)
 
 def run_seed():
-    print("🔍 Running user seeding...")
-    try:
-        existing_users = supabase.auth.admin.list_users()
-        existing_emails = [user.email for user in existing_users.users]
+    logging.info("Running user seeding...")
 
-        for user in USERS:
+    try:
+        # ✅ Ambil daftar user dari Supabase Auth
+        response = supabase.auth.admin.list_users()
+        if not isinstance(response, list):
+            raise ValueError("Unexpected response format from Supabase")
+
+        existing_emails = [u.get("email") for u in response if "email" in u]
+
+        # ✅ Data user default
+        users = [
+            {"email": "m.hafidz@tog.co.id", "password": "Admin123!", "role": "admin"},
+            {"email": "hafidzduddin@gmail.com", "password": "Manager123!", "role": "manager"},
+            {"email": "hafidzduddin85@gmail.com", "password": "Staff123!", "role": "staff"},
+        ]
+
+        for user in users:
             if user["email"] in existing_emails:
-                print(f"✅ User already exists: {user['email']}")
+                logging.info(f"User {user['email']} already exists.")
                 continue
 
-            response = supabase.auth.admin.create_user({
+            # ✅ Buat user di Auth
+            created = supabase.auth.admin.create_user({
                 "email": user["email"],
                 "password": user["password"],
-                "email_confirm": True,
-                "user_metadata": {
-                    "full_name": user["full_name"],
-                    "role": user["role"]
-                }
+                "email_confirm": True
             })
-            print(f"✅ Created {user['role']} user: {user['email']}")
+
+            if not created or not created.get("user"):
+                logging.error(f"Failed to create user {user['email']}")
+                continue
+
+            user_id = created["user"]["id"]
+            logging.info(f"Created user {user['email']} with ID {user_id}")
+
+            # ✅ Tambahkan ke tabel profiles
+            supabase.table("profiles").insert({
+                "auth_user_id": user_id,
+                "role": user["role"]
+            }).execute()
+
+        logging.info("✅ User seeding completed.")
 
     except Exception as e:
-        print(f"❌ Error seeding users: {str(e)}")
+        logging.error(f"❌ Error seeding users: {str(e)}")
