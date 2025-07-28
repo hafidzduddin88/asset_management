@@ -20,8 +20,13 @@
 
 {% block content %}
 <div class="mb-6">
+    {% if user.role.value == 'admin' %}
     <h1 class="text-2xl font-bold text-gray-900">Admin Approvals</h1>
-    <p class="text-gray-600 mt-1">Review and approve pending requests</p>
+    <p class="text-gray-600 mt-1">Review and approve admin-level requests</p>
+    {% else %}
+    <h1 class="text-2xl font-bold text-gray-900">Manager Approvals</h1>
+    <p class="text-gray-600 mt-1">Review and approve manager-level requests</p>
+    {% endif %}
 </div>
 
 <!-- Stats Cards -->

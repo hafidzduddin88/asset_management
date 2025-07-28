@@ -43,9 +43,12 @@ async def add_asset_form(
 async def asset_list(
     request: Request,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_admin_user)
+    current_user: User = Depends(get_current_active_user)
 ):
-    """List assets for editing (admin only)."""
+    """List assets for editing (admin and manager only)."""
+    # Check if user has permission
+    if current_user.role.value not in ['admin', 'manager']:
+        raise HTTPException(status_code=403, detail="Access denied")
     from app.utils.sheets import get_all_assets
     
     assets = get_all_assets()
@@ -81,7 +84,7 @@ async def edit_asset_form(
     asset_id: str,
     request: Request,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_admin_user)
+    current_user: User = Depends(get_current_active_user)
 ):
     """Form to edit an existing asset (admin only)."""
     from app.utils.sheets import get_asset_by_id
@@ -115,9 +118,12 @@ async def update_asset(
     bisnis_unit: str = Form(None),
     edit_reason: str = Form(...),
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_admin_user)
+    current_user: User = Depends(get_current_active_user)
 ):
-    """Update existing asset (admin only)."""
+    """Update existing asset (admin and manager only)."""
+    # Check if user has permission
+    if current_user.role.value not in ['admin', 'manager']:
+        raise HTTPException(status_code=403, detail="Access denied")
     from app.utils.sheets import update_asset as sheets_update_asset, calculate_asset_financials
     
     # Prepare update data (only allowed fields)

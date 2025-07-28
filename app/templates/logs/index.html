@@ -5,7 +5,13 @@
 {% block content %}
 <div class="py-6">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h1 class="text-2xl font-bold text-gray-900 mb-6">Approval Logs</h1>
+        {% if user.role.value == 'admin' %}
+        <h1 class="text-2xl font-bold text-gray-900 mb-6">Admin Approvals</h1>
+        {% elif user.role.value == 'manager' %}
+        <h1 class="text-2xl font-bold text-gray-900 mb-6">Manager Approvals</h1>
+        {% else %}
+        <h1 class="text-2xl font-bold text-gray-900 mb-6">My Requests</h1>
+        {% endif %}
         
         <!-- Tabs -->
         <div class="border-b border-gray-200 mb-6">
@@ -23,8 +29,13 @@
         <div id="pending-content" class="tab-content">
             <div class="bg-white shadow overflow-hidden sm:rounded-md">
                 <div class="px-4 py-5 sm:px-6">
+                    {% if user.role.value in ['admin', 'manager'] %}
                     <h3 class="text-lg leading-6 font-medium text-gray-900">Pending Approvals</h3>
-                    <p class="mt-1 max-w-2xl text-sm text-gray-500">Requests waiting for approval</p>
+                    <p class="mt-1 max-w-2xl text-sm text-gray-500">Requests waiting for your approval</p>
+                    {% else %}
+                    <h3 class="text-lg leading-6 font-medium text-gray-900">Pending Requests</h3>
+                    <p class="mt-1 max-w-2xl text-sm text-gray-500">Your requests waiting for approval</p>
+                    {% endif %}
                 </div>
                 
                 {% if pending_approvals %}
@@ -71,8 +82,13 @@
         <div id="completed-content" class="tab-content hidden">
             <div class="bg-white shadow overflow-hidden sm:rounded-md">
                 <div class="px-4 py-5 sm:px-6">
+                    {% if user.role.value in ['admin', 'manager'] %}
                     <h3 class="text-lg leading-6 font-medium text-gray-900">Completed Approvals</h3>
-                    <p class="mt-1 max-w-2xl text-sm text-gray-500">Approved or rejected requests</p>
+                    <p class="mt-1 max-w-2xl text-sm text-gray-500">Requests you have approved or rejected</p>
+                    {% else %}
+                    <h3 class="text-lg leading-6 font-medium text-gray-900">Completed Requests</h3>
+                    <p class="mt-1 max-w-2xl text-sm text-gray-500">Your approved or rejected requests</p>
+                    {% endif %}
                 </div>
                 
                 {% if completed_approvals %}

@@ -16,11 +16,11 @@ async def approvals_list(request: Request, current_user = Depends(get_current_us
     
     # Filter approvals based on user role
     if current_user.role == 'admin':
-        # Admin sees all approvals except disposal
-        approvals_data = [a for a in all_approvals if a.get('Type') != 'disposal']
+        # Admin sees all approvals except disposal and edit_asset
+        approvals_data = [a for a in all_approvals if a.get('Type') not in ['disposal', 'edit_asset']]
     elif current_user.role == 'manager':
-        # Manager only sees disposal approvals
-        approvals_data = [a for a in all_approvals if a.get('Type') == 'disposal']
+        # Manager sees disposal and edit_asset approvals
+        approvals_data = [a for a in all_approvals if a.get('Type') in ['disposal', 'edit_asset']]
     else:
         approvals_data = []
     
@@ -93,6 +93,23 @@ async def approve_request(approval_id: int, request: Request, current_user = Dep
             except Exception as e:
                 logging.error(f"Error processing add_asset approval: {str(e)}")
                 return {"status": "error", "message": f"Error processing approval: {str(e)}"}
+            
+        elif approval.get('Type') == 'relocation':
+            # Process relocation approval
+            import json
+            try:
+                request_data_str = approval.get('Request_Data', '')
+                if request_data_str:
+                    relocation_data = json.loads(request_data_str)
+                    update_data = {
+                        'Location': relocation_data.get('new_location'),
+                        'Room': relocation_data.get('new_room')
+                    }
+                    success = update_asset(approval.get('Asset_ID'), update_data)
+                    if not success:
+                        return {"status": "error", "message": "Failed to relocate asset"}
+            except Exception as e:
+                return {"status": "error", "message": f"Error processing relocation: {str(e)}"}
             
         elif approval.get('Type') == 'edit_asset':
             # Process edit asset approval (manager only)
