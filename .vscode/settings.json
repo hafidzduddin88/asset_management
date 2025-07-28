@@ -10,5 +10,6 @@
     "git.path": "C:\\Program Files\\Git\\cmd\\git.exe",
     "git.enableSmartCommit": true,
     "git.enabled": true,
+    "Codegeex.CommitMessageStyle": "Default",
 
 }
