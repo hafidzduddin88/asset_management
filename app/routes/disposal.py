@@ -23,7 +23,15 @@ async def disposal_page(
     """Disposal assets page (admin only)."""
     # Get assets that are ready to dispose only
     all_assets = get_all_assets()
-    disposable_assets = [asset for asset in all_assets if str(asset.get('Status', '')).strip() == 'To Be Disposed']
+    # Debug: check all statuses
+    statuses = [str(asset.get('Status', '')).strip() for asset in all_assets]
+    print(f"All statuses found: {set(statuses)}")
+    
+    disposable_assets = []
+    for asset in all_assets:
+        status = str(asset.get('Status', '')).strip()
+        if status in ['To Be Disposed', 'To be Disposed', 'TO BE DISPOSED']:
+            disposable_assets.append(asset)
     
     return templates.TemplateResponse(
         "disposal/index.html",

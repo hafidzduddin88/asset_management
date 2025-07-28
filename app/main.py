@@ -14,7 +14,7 @@ from app.config import load_config
 from app.database.database import engine, Base
 from app.routes import (
     home, assets, asset_management, 
-    login, damage, health, offline, profile, repair, approvals, disposal
+    login, damage, health, offline, profile, repair, approvals, disposal, user_management
 )
 from app.middleware.session_auth import SessionAuthMiddleware
 from app.utils.flash import FlashMiddleware
@@ -70,6 +70,7 @@ app.include_router(damage.router, prefix="/damage")
 app.include_router(repair.router, prefix="/repair")
 app.include_router(approvals.router, prefix="/approvals")
 app.include_router(disposal.router)
+app.include_router(user_management.router)
 app.include_router(offline.router)
 app.include_router(profile.router)
 
