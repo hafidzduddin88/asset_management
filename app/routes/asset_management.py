@@ -39,6 +39,26 @@ async def add_asset_form(
         }
     )
 
+@router.get("/list", response_class=HTMLResponse)
+async def asset_list(
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_admin_user)
+):
+    """List assets for editing (admin only)."""
+    from app.utils.sheets import get_all_assets
+    
+    assets = get_all_assets()
+    
+    return templates.TemplateResponse(
+        "asset_management/list.html",
+        {
+            "request": request,
+            "user": current_user,
+            "assets": assets
+        }
+    )
+
 @router.get("/edit/{asset_id}", response_class=HTMLResponse)
 async def edit_asset_form(
     asset_id: str,
@@ -130,12 +150,25 @@ async def update_asset(
     for key, value in financials.items():
         update_data[key] = value
     
-    # Update asset in Google Sheets
-    success = sheets_update_asset(asset_id, update_data)
+    # Create edit approval request for manager
+    from app.utils.sheets import add_approval_request
+    import json
     
-    if success:
-        response = RedirectResponse(url=f"/assets/{asset_id}", status_code=status.HTTP_303_SEE_OTHER)
-        set_flash(response, "Asset updated successfully", "success")
+    approval_data = {
+        'type': 'edit_asset',
+        'asset_id': asset_id,
+        'asset_name': update_data.get('Item Name', ''),
+        'submitted_by': current_user.username,
+        'submitted_date': datetime.now().strftime('%Y-%m-%d'),
+        'description': f"Edit asset: {update_data.get('Item Name', '')}",
+        'request_data': json.dumps(update_data, ensure_ascii=False)
+    }
+    
+    approval_success = add_approval_request(approval_data)
+    
+    if approval_success:
+        response = RedirectResponse(url="/asset_management/list", status_code=status.HTTP_303_SEE_OTHER)
+        set_flash(response, "Asset edit request submitted for manager approval", "success")
         return response
     else:
         # Get dropdown options for form redisplay
@@ -149,7 +182,7 @@ async def update_asset(
                 "user": current_user,
                 "asset": asset,
                 "dropdown_options": dropdown_options,
-                "error": "Error updating asset in Google Sheets"
+                "error": "Error submitting edit request"
             },
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
         )

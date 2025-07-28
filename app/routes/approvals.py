@@ -94,6 +94,20 @@ async def approve_request(approval_id: int, request: Request, current_user = Dep
                 logging.error(f"Error processing add_asset approval: {str(e)}")
                 return {"status": "error", "message": f"Error processing approval: {str(e)}"}
             
+        elif approval.get('Type') == 'edit_asset':
+            # Process edit asset approval (manager only)
+            import json
+            try:
+                request_data_str = approval.get('Request_Data', '')
+                if request_data_str:
+                    update_data = json.loads(request_data_str)
+                    from app.utils.sheets import update_asset as sheets_update_asset
+                    success = sheets_update_asset(approval.get('Asset_ID'), update_data)
+                    if not success:
+                        return {"status": "error", "message": "Failed to update asset"}
+            except Exception as e:
+                return {"status": "error", "message": f"Error processing edit: {str(e)}"}
+            
         elif approval.get('Type') == 'disposal':
             # Process disposal approval (manager only)
             disposal_data = {
