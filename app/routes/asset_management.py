@@ -39,6 +39,121 @@ async def add_asset_form(
         }
     )
 
+@router.get("/edit/{asset_id}", response_class=HTMLResponse)
+async def edit_asset_form(
+    asset_id: str,
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_admin_user)
+):
+    """Form to edit an existing asset (admin only)."""
+    from app.utils.sheets import get_asset_by_id
+    
+    # Get asset data
+    asset = get_asset_by_id(asset_id)
+    if not asset:
+        raise HTTPException(status_code=404, detail="Asset not found")
+    
+    # Get dropdown options
+    dropdown_options = get_dropdown_options()
+    
+    return templates.TemplateResponse(
+        "asset_management/edit.html",
+        {
+            "request": request,
+            "user": current_user,
+            "asset": asset,
+            "dropdown_options": dropdown_options
+        }
+    )
+
+@router.post("/edit/{asset_id}")
+async def update_asset(
+    asset_id: str,
+    request: Request,
+    item_name: str = Form(...),
+    category: str = Form(...),
+    type: str = Form(...),
+    manufacture: str = Form(None),
+    model: str = Form(None),
+    serial_number: str = Form(None),
+    company: str = Form(...),
+    bisnis_unit: str = Form(None),
+    location: str = Form(...),
+    room: str = Form(...),
+    notes: str = Form(None),
+    item_condition: str = Form(None),
+    purchase_date: str = Form(...),
+    purchase_cost: str = Form(...),
+    warranty: str = Form(None),
+    supplier: str = Form(None),
+    journal: str = Form(None),
+    owner: str = Form(...),
+    status: str = Form(...),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_admin_user)
+):
+    """Update existing asset (admin only)."""
+    from app.utils.sheets import update_asset as sheets_update_asset, calculate_asset_financials
+    
+    # Prepare update data
+    update_data = {
+        "Item Name": item_name,
+        "Category": category,
+        "Type": type,
+        "Manufacture": manufacture or "",
+        "Model": model or "",
+        "Serial Number": serial_number or "",
+        "Company": company,
+        "Bisnis Unit": bisnis_unit or "",
+        "Location": location,
+        "Room": room,
+        "Notes": notes or "",
+        "Item Condition": item_condition or "",
+        "Purchase Date": purchase_date,
+        "Purchase Cost": purchase_cost,
+        "Warranty": warranty or "",
+        "Supplier": supplier or "",
+        "Journal": journal or "",
+        "Owner": owner,
+        "Status": status
+    }
+    
+    # Recalculate financials if purchase cost or date changed
+    financials = calculate_asset_financials(
+        purchase_cost,
+        purchase_date,
+        category
+    )
+    
+    # Add financial data
+    for key, value in financials.items():
+        update_data[key] = value
+    
+    # Update asset in Google Sheets
+    success = sheets_update_asset(asset_id, update_data)
+    
+    if success:
+        response = RedirectResponse(url=f"/assets/{asset_id}", status_code=status.HTTP_303_SEE_OTHER)
+        set_flash(response, "Asset updated successfully", "success")
+        return response
+    else:
+        # Get dropdown options for form redisplay
+        dropdown_options = get_dropdown_options()
+        asset = get_asset_by_id(asset_id)
+        
+        return templates.TemplateResponse(
+            "asset_management/edit.html",
+            {
+                "request": request,
+                "user": current_user,
+                "asset": asset,
+                "dropdown_options": dropdown_options,
+                "error": "Error updating asset in Google Sheets"
+            },
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
 @router.post("/add")
 async def add_asset(
     request: Request,

@@ -617,8 +617,9 @@ def add_asset(asset_data):
                 logging.error(f"Error determining next ID: {str(e)}")
                 next_id = len(assets) + 1
         
-        # Add ID to asset data
+        # Add ID and ensure Status is Active for new assets
         asset_data['ID'] = str(next_id)
+        asset_data['Status'] = 'Active'
         
         # Generate asset tag if not provided
         if not asset_data.get('Asset Tag'):

@@ -1,0 +1,222 @@
+{% extends "layouts/modern_layout.html" %}
+
+{% block title %}Edit Asset - Asset Management{% endblock %}
+
+{% block head %}
+<style>
+    .required-field::after {
+        content: "*";
+        color: red;
+        margin-left: 4px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="py-6">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h1 class="text-2xl font-semibold text-gray-900">Edit Asset - {{ asset.get('Item Name', 'Unknown') }}</h1>
+        
+        {% if error %}
+        <div class="mt-4 rounded-md bg-red-50 p-4">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <svg class="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                    </svg>
+                </div>
+                <div class="ml-3">
+                    <h3 class="text-sm font-medium text-red-800">{{ error }}</h3>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        <form method="POST" class="mt-6 space-y-6 bg-white shadow sm:rounded-lg p-6">
+            <div x-data="assetForm()" x-init="initializeForm()">
+                <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
+                    <!-- Item Name -->
+                    <div class="sm:col-span-3">
+                        <label for="item_name" class="block text-sm font-medium text-gray-700 required-field">Item Name</label>
+                        <div class="mt-1">
+                            <input type="text" name="item_name" id="item_name" required
+                                class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                                value="{{ asset.get('Item Name', '') }}">
+                        </div>
+                    </div>
+                    
+                    <!-- Category -->
+                    <div class="sm:col-span-3">
+                        <label for="category" class="block text-sm font-medium text-gray-700 required-field">Category</label>
+                        <div class="mt-1">
+                            <select name="category" id="category" required x-on:change="updateTypes()"
+                                class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                                <option value="">Select Category</option>
+                                {% for category in dropdown_options.categories %}
+                                <option value="{{ category }}" {% if asset.get('Category') == category %}selected{% endif %}>
+                                    {{ category }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Status -->
+                    <div class="sm:col-span-3">
+                        <label for="status" class="block text-sm font-medium text-gray-700 required-field">Status</label>
+                        <div class="mt-1">
+                            <select name="status" id="status" required
+                                class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                                <option value="Active" {% if asset.get('Status') == 'Active' %}selected{% endif %}>Active</option>
+                                <option value="Under Repair" {% if asset.get('Status') == 'Under Repair' %}selected{% endif %}>Under Repair</option>
+                                <option value="In Storage" {% if asset.get('Status') == 'In Storage' %}selected{% endif %}>In Storage</option>
+                                <option value="To Be Disposed" {% if asset.get('Status') == 'To Be Disposed' %}selected{% endif %}>To Be Disposed</option>
+                                <option value="Disposed" {% if asset.get('Status') == 'Disposed' %}selected{% endif %}>Disposed</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Company -->
+                    <div class="sm:col-span-3">
+                        <label for="company" class="block text-sm font-medium text-gray-700 required-field">Company</label>
+                        <div class="mt-1">
+                            <select name="company" id="company" required
+                                class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                                <option value="">Select Company</option>
+                                {% for company in dropdown_options.companies %}
+                                <option value="{{ company }}" {% if asset.get('Company') == company %}selected{% endif %}>
+                                    {{ company }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Bisnis Unit -->
+                    <div class="sm:col-span-3">
+                        <label for="bisnis_unit" class="block text-sm font-medium text-gray-700">Bisnis Unit</label>
+                        <div class="mt-1">
+                            <select name="bisnis_unit" id="bisnis_unit"
+                                class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                                <option value="">Select Bisnis Unit</option>
+                                {% for unit in dropdown_options.business_units %}
+                                <option value="{{ unit }}" {% if asset.get('Bisnis Unit') == unit %}selected{% endif %}>
+                                    {{ unit }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Location -->
+                    <div class="sm:col-span-3">
+                        <label for="location" class="block text-sm font-medium text-gray-700 required-field">Location</label>
+                        <div class="mt-1">
+                            <select name="location" id="location" required x-on:change="updateRooms()"
+                                class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                                <option value="">Select Location</option>
+                                {% for location in dropdown_options.locations.keys() %}
+                                <option value="{{ location }}" {% if asset.get('Location') == location %}selected{% endif %}>
+                                    {{ location }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Room -->
+                    <div class="sm:col-span-3">
+                        <label for="room" class="block text-sm font-medium text-gray-700 required-field">Room</label>
+                        <div class="mt-1">
+                            <select name="room" id="room" required
+                                class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                                <option value="">Select Room</option>
+                                <template x-for="room in filteredRooms" :key="room">
+                                    <option :value="room" x-text="room" :selected="room === '{{ asset.get('Room', '') }}'"></option>
+                                </template>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Purchase Date -->
+                    <div class="sm:col-span-3">
+                        <label for="purchase_date" class="block text-sm font-medium text-gray-700 required-field">Purchase Date</label>
+                        <div class="mt-1">
+                            <input type="date" name="purchase_date" id="purchase_date" required
+                                class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                                value="{{ asset.get('Purchase Date', '') }}">
+                        </div>
+                    </div>
+                    
+                    <!-- Purchase Cost -->
+                    <div class="sm:col-span-3">
+                        <label for="purchase_cost" class="block text-sm font-medium text-gray-700 required-field">Purchase Cost</label>
+                        <div class="mt-1">
+                            <input type="number" name="purchase_cost" id="purchase_cost" required step="0.01"
+                                class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                                value="{{ asset.get('Purchase Cost', '') }}">
+                        </div>
+                    </div>
+                    
+                    <!-- Owner -->
+                    <div class="sm:col-span-3">
+                        <label for="owner" class="block text-sm font-medium text-gray-700 required-field">Owner</label>
+                        <div class="mt-1">
+                            <select name="owner" id="owner" required
+                                class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                                <option value="">Select Owner</option>
+                                {% for owner in dropdown_options.owners %}
+                                <option value="{{ owner }}" {% if asset.get('Owner') == owner %}selected{% endif %}>
+                                    {{ owner }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-6 flex justify-end">
+                    <a href="/assets/{{ asset.get('ID') }}" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                        Cancel
+                    </a>
+                    <button type="submit" onclick="return confirm('Are you sure you want to update this asset?')" class="ml-3 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                        Update Asset
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function assetForm() {
+        return {
+            types: {{ dropdown_options.types|tojson }},
+            locations: {{ dropdown_options.locations|tojson }},
+            filteredTypes: [],
+            filteredRooms: [],
+            
+            initializeForm() {
+                this.updateTypes();
+                this.updateRooms();
+            },
+            
+            updateTypes() {
+                const category = document.getElementById('category').value;
+                this.filteredTypes = category 
+                    ? this.types.filter(type => type.Category === category)
+                    : [];
+            },
+            
+            updateRooms() {
+                const location = document.getElementById('location').value;
+                this.filteredRooms = location && this.locations[location] 
+                    ? this.locations[location] 
+                    : [];
+            }
+        }
+    }
+</script>
+{% endblock %}
