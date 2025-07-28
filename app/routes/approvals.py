@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Request, Depends, HTTPException
 from starlette.templating import Jinja2Templates
-from app.utils.supabase_auth import get_current_profile
+from app.utils.auth import get_current_profile
 from app.database.models import UserRole
 
 router = APIRouter()
