@@ -1,111 +1,72 @@
 from datetime import datetime, timedelta, timezone
-from jose import JWTError, jwt
+from jose import jwt, JWTError
 from fastapi import Depends, HTTPException, status, Request
-from fastapi.security import OAuth2PasswordBearer
-from sqlalchemy.orm import Session
-from passlib.context import CryptContext
+from supabase import create_client
 from typing import Optional, List
+import logging
 
-from app.database.database import get_db
-from app.database.models import User, UserRole
 from app.config import load_config
 
 config = load_config()
+supabase = create_client(config.SUPABASE_URL, config.SUPABASE_SERVICE_KEY)
+
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24  # 24 hours
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login/token")
-pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
-
-
-# ✅ Password utilities
-def verify_password(plain_password: str, hashed_password: str) -> bool:
-    try:
-        return pwd_context.verify(plain_password, hashed_password)
-    except Exception:
-        return False
-
-def get_password_hash(password: str) -> str:
-    return pwd_context.hash(password)
-
-
-# ✅ JWT token utilities
-def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
-    to_encode = data.copy()
-    expire = datetime.now(timezone.utc) + (expires_delta or timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
-    to_encode.update({"exp": expire})
-    return jwt.encode(to_encode, config.SECRET_KEY, algorithm=ALGORITHM)
-
-def create_refresh_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
-    to_encode = data.copy()
-    expire = datetime.now(timezone.utc) + (expires_delta or timedelta(days=7))
-    to_encode.update({"exp": expire, "type": "refresh"})
-    return jwt.encode(to_encode, config.SECRET_KEY, algorithm=ALGORITHM)
-
+# ✅ Decode Supabase JWT
 def decode_token(token: str) -> Optional[dict]:
     try:
         return jwt.decode(token, config.SECRET_KEY, algorithms=[ALGORITHM])
     except JWTError:
         return None
 
-
-# ✅ Extract token from request (Authorization header or cookie)
+# ✅ Ambil token dari request
 def get_token_from_request(request: Request) -> Optional[str]:
     auth_header = request.headers.get("Authorization")
     if auth_header and auth_header.startswith("Bearer "):
         return auth_header.split(" ", 1)[1]
     return request.cookies.get("access_token")
 
-
-# ✅ Get current authenticated user
-def get_current_user(request: Request, db: Session = Depends(get_db)) -> User:
+# ✅ Ambil user dari Supabase Auth + profiles
+async def get_current_user(request: Request) -> dict:
     token = get_token_from_request(request)
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
-
     if not token:
-        raise credentials_exception
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
 
     payload = decode_token(token)
     if not payload:
-        raise credentials_exception
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
 
-    username: str = payload.get("sub")
-    if not username:
-        raise credentials_exception
+    user_id = payload.get("sub")
+    if not user_id:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token payload")
 
-    user = db.query(User).filter(User.username == username).first()
-    if not user or not user.is_active:
-        raise credentials_exception
+    # ✅ Ambil data user dari tabel profiles
+    response = supabase.table("profiles").select("*").eq("auth_user_id", user_id).execute()
+    if not response.data:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+    user = response.data[0]
+    if "is_active" in user and not user["is_active"]:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Inactive user")
 
     return user
 
-
-# ✅ Role-based access control (RBAC)
-def require_roles(allowed_roles: List[UserRole]):
-    def role_checker(user: User = Depends(get_current_user)) -> User:
-        if user.role not in allowed_roles:
+# ✅ Role-based Access Control
+def require_roles(allowed_roles: List[str]):
+    async def role_checker(current_user: dict = Depends(get_current_user)) -> dict:
+        if current_user.get("role") not in allowed_roles:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Not enough permissions"
             )
-        return user
+        return current_user
     return role_checker
 
-
-# ✅ Shortcuts
-def get_admin_user(current_user: User = Depends(get_current_user)) -> User:
-    if current_user.role != UserRole.ADMIN:
+# ✅ Shortcut untuk admin
+async def get_admin_user(current_user: dict = Depends(get_current_user)) -> dict:
+    if current_user.get("role") != "admin":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not enough permissions"
         )
-    return current_user
-
-def get_current_active_user(current_user: User = Depends(get_current_user)) -> User:
-    if not current_user.is_active:
-        raise HTTPException(status_code=400, detail="Inactive user")
     return current_user
