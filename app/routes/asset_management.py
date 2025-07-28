@@ -6,54 +6,51 @@ from sqlalchemy.orm import Session
 import json
 from datetime import datetime
 import io
-import os
 
 from app.database.database import get_db
-from app.database.models import User, UserRole
-from app.database.dependencies import get_current_active_user, get_admin_user
+from app.database.models import Profile, UserRole
 from app.utils.photo import resize_and_convert_image, upload_to_drive
 from app.utils.sheets import get_dropdown_options, add_asset as sheets_add_asset
 from app.utils.flash import set_flash
+from app.utils.supabase_auth import get_current_profile
 from app.config import load_config
 
 config = load_config()
 router = APIRouter(prefix="/asset_management", tags=["asset_management"])
 templates = Jinja2Templates(directory="app/templates")
 
+
 @router.get("/add", response_class=HTMLResponse)
 async def add_asset_form(
     request: Request,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
+    current_profile: Profile = Depends(get_current_profile)
 ):
     """Form to add a new asset."""
-    # Get dropdown options from Google Sheets
     dropdown_options = get_dropdown_options()
-    
     return templates.TemplateResponse(
         "asset_management/add.html",
         {
             "request": request,
-            "user": current_user,
+            "user": current_profile,
             "dropdown_options": dropdown_options
         }
     )
+
 
 @router.get("/list", response_class=HTMLResponse)
 async def asset_list(
     request: Request,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
+    current_profile: Profile = Depends(get_current_profile)
 ):
     """List assets for editing (admin and manager only)."""
-    # Check if user has permission
-    if current_user.role.value not in ['admin', 'manager']:
+    if current_profile.role not in [UserRole.ADMIN, UserRole.MANAGER]:
         raise HTTPException(status_code=403, detail="Access denied")
-    from app.utils.sheets import get_all_assets
     
+    from app.utils.sheets import get_all_assets
     assets = get_all_assets()
     
-    # Get unique locations and rooms for filtering
     locations = list(set(asset.get('Location', '') for asset in assets if asset.get('Location')))
     location_rooms = {}
     for asset in assets:
@@ -64,7 +61,6 @@ async def asset_list(
                 location_rooms[location] = set()
             location_rooms[location].add(room)
     
-    # Convert sets to lists for JSON serialization
     for location in location_rooms:
         location_rooms[location] = list(location_rooms[location])
     
@@ -72,40 +68,42 @@ async def asset_list(
         "asset_management/list.html",
         {
             "request": request,
-            "user": current_user,
+            "user": current_profile,
             "assets": assets,
             "locations": sorted(locations),
             "location_rooms": location_rooms
         }
     )
 
+
 @router.get("/edit/{asset_id}", response_class=HTMLResponse)
 async def edit_asset_form(
     asset_id: str,
     request: Request,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
+    current_profile: Profile = Depends(get_current_profile)
 ):
-    """Form to edit an existing asset (admin only)."""
+    """Form to edit an existing asset (admin/manager only)."""
+    if current_profile.role not in [UserRole.ADMIN, UserRole.MANAGER]:
+        raise HTTPException(status_code=403, detail="Access denied")
+
     from app.utils.sheets import get_asset_by_id
-    
-    # Get asset data
     asset = get_asset_by_id(asset_id)
     if not asset:
         raise HTTPException(status_code=404, detail="Asset not found")
     
-    # Get dropdown options
     dropdown_options = get_dropdown_options()
     
     return templates.TemplateResponse(
         "asset_management/edit.html",
         {
             "request": request,
-            "user": current_user,
+            "user": current_profile,
             "asset": asset,
             "dropdown_options": dropdown_options
         }
     )
+
 
 @router.post("/edit/{asset_id}")
 async def update_asset(
@@ -118,15 +116,15 @@ async def update_asset(
     bisnis_unit: str = Form(None),
     edit_reason: str = Form(...),
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
+    current_profile: Profile = Depends(get_current_profile)
 ):
     """Update existing asset (admin and manager only)."""
-    # Check if user has permission
-    if current_user.role.value not in ['admin', 'manager']:
+    if current_profile.role not in [UserRole.ADMIN, UserRole.MANAGER]:
         raise HTTPException(status_code=403, detail="Access denied")
-    from app.utils.sheets import update_asset as sheets_update_asset, calculate_asset_financials
     
-    # Prepare update data (only allowed fields)
+    from app.utils.sheets import update_asset as sheets_update_asset, calculate_asset_financials, get_asset_by_id
+    asset = get_asset_by_id(asset_id)
+
     update_data = {
         "Status": status,
         "Company": company,
@@ -135,26 +133,17 @@ async def update_asset(
         "Bisnis Unit": bisnis_unit or ""
     }
     
-    # Recalculate financials if purchase cost or date changed
-    financials = calculate_asset_financials(
-        purchase_cost,
-        purchase_date,
-        category
-    )
+    # Jika perlu hitung ulang nilai finansial, misalnya setelah perubahan harga
+    # financials = calculate_asset_financials(purchase_cost, purchase_date, category)
+    # update_data.update(financials)
     
-    # Add financial data
-    for key, value in financials.items():
-        update_data[key] = value
-    
-    # Create edit approval request for manager
     from app.utils.sheets import add_approval_request
-    import json
     
     approval_data = {
         'type': 'edit_asset',
         'asset_id': asset_id,
-        'asset_name': update_data.get('Item Name', ''),
-        'submitted_by': current_user.username,
+        'asset_name': asset.get('Item Name', ''),
+        'submitted_by': current_profile.email,
         'submitted_date': datetime.now().strftime('%Y-%m-%d'),
         'description': f"Edit asset: {asset.get('Item Name', '')} - Reason: {edit_reason}",
         'edit_reason': edit_reason,
@@ -168,21 +157,19 @@ async def update_asset(
         set_flash(response, "Asset edit request submitted for manager approval", "success")
         return response
     else:
-        # Get dropdown options for form redisplay
         dropdown_options = get_dropdown_options()
-        asset = get_asset_by_id(asset_id)
-        
         return templates.TemplateResponse(
             "asset_management/edit.html",
             {
                 "request": request,
-                "user": current_user,
+                "user": current_profile,
                 "asset": asset,
                 "dropdown_options": dropdown_options,
                 "error": "Error submitting edit request"
             },
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
+
 
 @router.post("/add")
 async def add_asset(
@@ -207,13 +194,11 @@ async def add_asset(
     owner: str = Form(...),
     photo: UploadFile = File(None),
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
+    current_profile: Profile = Depends(get_current_profile)
 ):
     """Process add asset form."""
-    # Get dropdown options for form redisplay if needed
     dropdown_options = get_dropdown_options()
     
-    # Prepare asset data for Google Sheets
     asset_data = {
         "Item Name": item_name,
         "Category": category,
@@ -236,28 +221,21 @@ async def add_asset(
         "Status": "Active"
     }
     
-    # Handle photo upload
     photo_url = None
     if photo and photo.filename:
         try:
-            # Process image
             contents = await photo.read()
             image_file = io.BytesIO(contents)
             processed_image = resize_and_convert_image(image_file)
             
             if processed_image:
-                # Upload to Google Drive
-                # We'll use a placeholder asset_id since we don't have the ID yet
-                # In a real implementation, you might want to update this later
                 photo_url = upload_to_drive(processed_image, photo.filename, "new")
                 if photo_url:
                     asset_data["Photo URL"] = photo_url
         except Exception as e:
-            # Log error and continue without photo
             print(f"Error processing photo: {str(e)}")
     
-    # If admin, add asset directly to Google Sheets
-    if current_user.role == UserRole.ADMIN:
+    if current_profile.role == UserRole.ADMIN:
         success = sheets_add_asset(asset_data)
         
         if success:
@@ -269,7 +247,7 @@ async def add_asset(
                 "asset_management/add.html",
                 {
                     "request": request,
-                    "user": current_user,
+                    "user": current_profile,
                     "dropdown_options": dropdown_options,
                     "error": "Error adding asset to Google Sheets",
                     "form_data": asset_data
@@ -277,15 +255,13 @@ async def add_asset(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
     
-    # If staff, create approval request in Google Sheets
     from app.utils.sheets import add_approval_request
-    from datetime import datetime
     
     approval_data = {
         'type': 'add_asset',
         'asset_id': 'NEW',
         'asset_name': item_name,
-        'submitted_by': current_user.username,
+        'submitted_by': current_profile.email,
         'submitted_date': datetime.now().strftime('%Y-%m-%d'),
         'description': f"Add new asset: {item_name}",
         'request_data': json.dumps(asset_data, ensure_ascii=False)
@@ -302,7 +278,7 @@ async def add_asset(
             "asset_management/add.html",
             {
                 "request": request,
-                "user": current_user,
+                "user": current_profile,
                 "dropdown_options": dropdown_options,
                 "error": "Error submitting approval request",
                 "form_data": asset_data
