@@ -1,86 +1,63 @@
 from fastapi import Depends, HTTPException, status, Request
-from jose import JWTError, jwt
+from jose import jwt, JWTError
+from supabase import create_client
 import logging
-from typing import Dict, Optional
 
 from app.config import load_config
 
 # Load configuration
 config = load_config()
 
-def get_token_from_request(request: Request) -> Optional[str]:
-    """
-    Ambil token JWT dari header Authorization atau cookie.
-    """
-    # Ambil dari Authorization header
+# Supabase client
+supabase = create_client(config.SUPABASE_URL, config.SUPABASE_SERVICE_KEY)
+
+def get_token_from_request(request: Request) -> str:
+    """Ambil token dari cookies atau header Authorization."""
     auth_header = request.headers.get("Authorization")
     if auth_header and auth_header.startswith("Bearer "):
         return auth_header.split(" ", 1)[1]
-    
-    # Ambil dari cookie
-    return request.cookies.get("access_token")
 
-def get_current_user(request: Request) -> Dict:
-    """
-    Decode token Supabase JWT & return user info.
-    """
+    token = request.cookies.get("access_token")
+    return token
+
+async def get_current_user(request: Request) -> dict:
+    """Ambil user dari Supabase JWT & tabel profiles."""
     token = get_token_from_request(request)
-
     if not token:
-        logging.warning("Token tidak ditemukan dalam request")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token tidak ditemukan",
-            headers={"WWW-Authenticate": "Bearer"},
+            detail="Not authenticated"
         )
 
     try:
-        # Decode Supabase JWT
-        payload = jwt.decode(
-            token,
-            config.SECRET_KEY,  # Supabase JWT Secret
-            algorithms=["HS256"]
-        )
-
-        user_id: str = payload.get("sub")
-        role: str = payload.get("role", "user")
-        email: str = payload.get("email")
-
-        if user_id is None:
-            logging.warning("sub (user_id) tidak ada di token")
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid token",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
-
-        return {
-            "id": user_id,
-            "email": email,
-            "role": role
-        }
-
+        # Decode JWT dengan Supabase JWT secret
+        payload = jwt.decode(token, config.SECRET_KEY, algorithms=["HS256"])
+        user_id = payload.get("sub")
+        if not user_id:
+            raise HTTPException(status_code=401, detail="Invalid token")
     except JWTError as e:
         logging.error(f"JWT Error: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid token",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+        raise HTTPException(status_code=401, detail="Invalid token")
 
-def get_current_active_user(current_user: Dict = Depends(get_current_user)) -> Dict:
-    """
-    Pastikan user aktif (Supabase tidak punya flag is_active, jadi hanya cek token).
-    """
+    # Ambil data user dari tabel profiles
+    response = supabase.table("profiles").select("*").eq("auth_user_id", user_id).execute()
+    if not response.data:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    return response.data[0]
+
+async def get_current_active_user(current_user: dict = Depends(get_current_user)) -> dict:
+    """Pastikan user aktif (bisa ditambahkan flag is_active di profiles)."""
+    # Jika ada kolom is_active di profiles:
+    if "is_active" in current_user and not current_user["is_active"]:
+        raise HTTPException(status_code=400, detail="Inactive user")
     return current_user
 
-def get_admin_user(current_user: Dict = Depends(get_current_user)) -> Dict:
-    """
-    Pastikan user punya role admin.
-    """
-    if current_user["role"] != "admin":
+async def get_admin_user(current_user: dict = Depends(get_current_user)) -> dict:
+    """Hanya admin yang boleh akses."""
+    if current_user.get("role") != "admin":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Anda tidak memiliki akses"
+            detail="Not enough permissions"
         )
     return current_user
