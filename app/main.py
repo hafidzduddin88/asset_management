@@ -23,10 +23,8 @@ from app.utils.flash import FlashMiddleware
 Base.metadata.create_all(bind=engine)
 
 # Import dan jalankan seed script untuk membuat user default
-#from app.database.seed import create_admin_user, create_manager_user, create_staff_user
-#create_admin_user()
-#create_manager_user()
-#create_staff_user()
+from app.database.seed import run_seed()
+run_seed()
 
 # Load configuration
 config = load_config()
