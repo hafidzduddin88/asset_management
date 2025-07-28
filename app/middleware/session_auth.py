@@ -1,43 +1,46 @@
+# app/middleware/session_auth.py
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.responses import RedirectResponse
 from jose import jwt, JWTError
 from fastapi import Request
-from fastapi.responses import RedirectResponse
-from starlette.middleware.base import BaseHTTPMiddleware
-from urllib.parse import quote
 import logging
-from app.config import load_config
+import os
 
-config = load_config()
+logger = logging.getLogger(__name__)
+
+SECRET_KEY = os.getenv("SECRET_KEY")  # Supabase JWT Secret
+ALGORITHM = "HS256"  # Supabase default JWT algorithm
 
 class SessionAuthMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
-        # Path yang tidak butuh autentikasi
-        public_paths = [
-            "/login", "/login/token", "/health",
-            "/static", "/favicon.ico", "/manifest.json", "/service-worker.js"
-        ]
-        if any(request.url.path.startswith(p) for p in public_paths):
+        # Daftar path yang dilewati (tanpa auth)
+        public_paths = ["/login", "/static", "/api/docs", "/api/redoc", "/health"]
+        
+        if any(request.url.path.startswith(path) for path in public_paths):
             return await call_next(request)
 
-        # Ambil token dari cookie atau header
-        token = request.cookies.get("access_token") or request.headers.get("Authorization", "").replace("Bearer ", "")
+        token = request.cookies.get("access_token")
 
         if not token:
-            return RedirectResponse(url=f"/login?next={quote(str(request.url))}")
+            logger.warning("No access token found, redirecting to login")
+            return RedirectResponse(url="/login", status_code=303)
 
         try:
-            # Decode Supabase JWT
-            payload = jwt.decode(token, config.SECRET_KEY, algorithms=["HS256"])
-            # Pastikan ada sub (user_id)
-            if "sub" not in payload:
-                raise JWTError("Missing sub claim")
+            payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+            username: str = payload.get("sub")
+            role: str = payload.get("role")
+
+            if username is None:
+                raise JWTError("Invalid token: no username")
+
             # Simpan user info di request.state
             request.state.user = {
-                "id": payload.get("sub"),
-                "email": payload.get("email"),
-                "role": payload.get("role", "staff")  # default staff
+                "username": username,
+                "role": role
             }
+
         except JWTError as e:
-            logging.error(f"JWT decode error: {str(e)}")
-            return RedirectResponse(url=f"/login?next={quote(str(request.url))}")
+            logger.error(f"JWT validation error: {e}")
+            return RedirectResponse(url="/login", status_code=303)
 
         return await call_next(request)
