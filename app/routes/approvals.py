@@ -2,6 +2,7 @@
 from fastapi import APIRouter, Request, Depends
 from starlette.templating import Jinja2Templates
 from app.utils.auth import get_current_user
+from app.database.models import UserRole
 
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
@@ -15,10 +16,10 @@ async def approvals_list(request: Request, current_user = Depends(get_current_us
     all_approvals = get_all_approvals()
     
     # Filter approvals based on user role
-    if current_user.role == 'admin':
+    if current_user.role == UserRole.ADMIN:
         # Admin sees all approvals except disposal and edit_asset
         approvals_data = [a for a in all_approvals if a.get('Type') not in ['disposal', 'edit_asset']]
-    elif current_user.role == 'manager':
+    elif current_user.role == UserRole.MANAGER:
         # Manager sees disposal and edit_asset approvals
         approvals_data = [a for a in all_approvals if a.get('Type') in ['disposal', 'edit_asset']]
     else:

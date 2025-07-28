@@ -5,7 +5,7 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
 from app.database.database import get_db
-from app.database.models import User
+from app.database.models import User, UserRole
 from app.database.dependencies import get_current_active_user
 from app.utils.sheets import get_all_approvals
 
@@ -22,7 +22,7 @@ async def logs_page(
     all_approvals = get_all_approvals()
     
     # Filter based on user role
-    if current_user.role == 'staff':
+    if current_user.role == UserRole.STAFF:
         # Staff can only see their own requests
         approvals = [a for a in all_approvals if a.get('Submitted_By') == current_user.username]
     else:

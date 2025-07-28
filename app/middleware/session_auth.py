@@ -50,7 +50,7 @@ class SessionAuthMiddleware(BaseHTTPMiddleware):
                     if user and user.is_active:
                         # Create new access token
                         access_token = create_access_token(
-                            data={"sub": user.username, "role": user.role}
+                            data={"sub": user.username, "role": user.role.value}
                         )
                         
                         # Create response with the original request

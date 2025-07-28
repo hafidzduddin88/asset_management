@@ -34,7 +34,7 @@ async def login_form(
     remember: bool = Form(False),
     db: Session = Depends(get_db)
 ):
-    user = db.query(User).filter(User.username == username).first()
+    user = db.query(User).filter(User.username == username, User.is_active == True).first()
     if not user or not verify_password(password, user.password_hash):
         return templates.TemplateResponse(
             "login_logout.html",
@@ -53,7 +53,7 @@ async def login_form(
     access_token_expires = timedelta(minutes=60 * 24)  # 1 day
     refresh_token_expires = timedelta(days=7)
     access_token = create_access_token(
-        data={"sub": user.username, "role": user.role.value if hasattr(user.role, 'value') else user.role},
+        data={"sub": user.username, "role": user.role.value},
         expires_delta=access_token_expires
     )
     refresh_token = create_refresh_token(
@@ -101,7 +101,7 @@ async def login_for_access_token(
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: Session = Depends(get_db)
 ):
-    user = db.query(User).filter(User.username == form_data.username).first()
+    user = db.query(User).filter(User.username == form_data.username, User.is_active == True).first()
     if not user or not verify_password(password=form_data.password, hashed_password=user.password_hash):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -116,7 +116,7 @@ async def login_for_access_token(
     access_token = create_access_token(
         data={
             "sub": user.username,
-            "role": user.role
+            "role": user.role.value
         },
         expires_delta=access_token_expires
     )
@@ -125,7 +125,7 @@ async def login_for_access_token(
         "access_token": access_token,
         "token_type": "bearer",
         "username": user.username,
-        "role": user.role
+        "role": user.role.value
     }
 
 # Refresh access token
@@ -136,12 +136,12 @@ async def refresh_token(request: Request, response: Response, db: Session = Depe
     if not payload or payload.get("type") != "refresh":
         raise HTTPException(status_code=401, detail="Invalid refresh token")
     username = payload.get("sub")
-    user = db.query(User).filter(User.username == username).first()
+    user = db.query(User).filter(User.username == username, User.is_active == True).first()
     if not user:
         raise HTTPException(status_code=401, detail="User not found")
     access_token_expires = timedelta(minutes=60 * 24)
     access_token = create_access_token(
-        data={"sub": user.username, "role": user.role},
+        data={"sub": user.username, "role": user.role.value},
         expires_delta=access_token_expires
     )
     response.set_cookie(
