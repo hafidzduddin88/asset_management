@@ -84,16 +84,15 @@
                 </div>
                 
                 <div class="mb-4">
-                    <label for="new_password" class="block text-sm font-medium text-gray-700 mb-2">New Password *</label>
-                    <input type="password" name="new_password" id="new_password" required class="w-full border border-gray-300 rounded-md px-3 py-2">
+                    <p class="text-sm text-gray-600">Password will be reset to: <strong><span id="defaultPassword"></span></strong></p>
                 </div>
                 
                 <div class="flex justify-end space-x-3">
                     <button type="button" onclick="closeResetModal()" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400">
                         Cancel
                     </button>
-                    <button type="submit" onclick="return confirm('Are you sure you want to reset this user password?')" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
-                        Reset Password
+                    <button type="submit" onclick="return confirm('Are you sure you want to reset this user password to default?')" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                        Reset to Default
                     </button>
                 </div>
             </form>
@@ -104,6 +103,7 @@
 <script>
 function openResetModal(userId, username) {
     document.getElementById('resetUsername').textContent = username;
+    document.getElementById('defaultPassword').textContent = username + '123';
     document.getElementById('resetForm').action = `/user_management/reset_password/${userId}`;
     document.getElementById('resetModal').classList.remove('hidden');
 }

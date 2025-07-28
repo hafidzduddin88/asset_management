@@ -93,21 +93,21 @@ async def create_user(
 async def reset_password(
     user_id: int,
     request: Request,
-    new_password: str = Form(...),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_admin_user)
 ):
-    """Reset user password (admin only)."""
+    """Reset user password to default (username123) (admin only)."""
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     
-    # Update password
-    user.password_hash = pwd_context.hash(new_password)
+    # Set default password: username + "123"
+    default_password = f"{user.username}123"
+    user.password_hash = pwd_context.hash(default_password)
     db.commit()
     
     response = RedirectResponse(url="/user_management", status_code=status.HTTP_303_SEE_OTHER)
-    set_flash(response, f"Password reset for {user.username}", "success")
+    set_flash(response, f"Password reset to {default_password} for {user.username}", "success")
     return response
 
 @router.post("/toggle_status/{user_id}")
