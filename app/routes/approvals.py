@@ -1,56 +1,54 @@
-# /app/app/routes/approvals.py
-from fastapi import APIRouter, Request, Depends
+from fastapi import APIRouter, Request, Depends, HTTPException
 from starlette.templating import Jinja2Templates
-from app.utils.auth import get_current_user
+from app.utils.supabase_auth import get_current_profile
 from app.database.models import UserRole
 
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
 
+
 @router.get("/")
-async def approvals_list(request: Request, current_user = Depends(get_current_user)):
+async def approvals_list(request: Request, current_profile=Depends(get_current_profile)):
     """List pending approvals based on user role"""
     from app.utils.sheets import get_all_approvals
     
-    # Get real approval data from Google Sheets
     all_approvals = get_all_approvals()
     
-    # Filter approvals based on user role
-    if current_user.role == UserRole.ADMIN:
-        # Admin sees all approvals except disposal and edit_asset
+    if current_profile.role == UserRole.ADMIN:
         approvals_data = [a for a in all_approvals if a.get('Type') not in ['disposal', 'edit_asset']]
-    elif current_user.role == UserRole.MANAGER:
-        # Manager sees disposal and edit_asset approvals
+    elif current_profile.role == UserRole.MANAGER:
         approvals_data = [a for a in all_approvals if a.get('Type') in ['disposal', 'edit_asset']]
     else:
         approvals_data = []
     
     return templates.TemplateResponse("approvals/list.html", {
         "request": request,
-        "user": current_user,
+        "user": current_profile,
         "approvals_data": approvals_data
     })
 
+
 @router.post("/approve/{approval_id}")
-async def approve_request(approval_id: int, request: Request, current_user = Depends(get_current_user)):
+async def approve_request(approval_id: int, request: Request, current_profile=Depends(get_current_profile)):
     """Approve a pending request"""
     from app.utils.sheets import update_approval_status, get_all_approvals, add_damage_log, update_asset, add_asset
     from datetime import datetime
+    import json
+    import logging
     
-    # Get approval details first
     approvals = get_all_approvals()
     approval = next((a for a in approvals if str(a.get('ID')) == str(approval_id)), None)
     
     if not approval:
         return {"status": "error", "message": "Approval not found"}
     
-    # Update approval status
-    success = update_approval_status(approval_id, 'Approved', current_user.username)
+    success = update_approval_status(approval_id, 'Approved', current_profile.email)
     
-    if success:
-        # Process based on approval type
+    if not success:
+        return {"status": "error", "message": "Failed to approve request"}
+    
+    try:
         if approval.get('Type') == 'damage_report':
-            # Add to damage log when approved
             damage_data = {
                 'asset_id': approval.get('Asset_ID'),
                 'asset_name': approval.get('Asset_Name'),
@@ -61,73 +59,38 @@ async def approve_request(approval_id: int, request: Request, current_user = Dep
                 'report_date': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
                 'location': approval.get('Location', ''),
                 'room': '',
-                'notes': 'Approved by admin'
+                'notes': f'Approved by {current_profile.email}'
             }
             add_damage_log(damage_data)
-            
-            # Update asset status to Under Repair and move to storage
             update_asset(approval.get('Asset_ID'), {
                 'Status': 'Under Repair',
                 'Location': 'HO - Ciputat',
                 'Room': '1022 - Gudang Support TOG'
             })
-            
+        
         elif approval.get('Type') == 'add_asset':
-            # Add new asset to Assets sheet when approved
-            import json
-            try:
-                request_data_str = approval.get('Request_Data', '')
-                logging.info(f"Request data from approval: {request_data_str}")
-                
-                if request_data_str and request_data_str != '{}':
-                    request_data = json.loads(request_data_str)
-                    logging.info(f"Parsed request data: {request_data}")
-                    success = add_asset(request_data)
-                    if not success:
-                        return {"status": "error", "message": "Failed to add asset to Google Sheets"}
-                else:
-                    logging.error("No valid request data found in approval")
-                    return {"status": "error", "message": "No request data found in approval"}
-            except json.JSONDecodeError as e:
-                logging.error(f"Error parsing request data: {str(e)}")
-                return {"status": "error", "message": "Invalid request data format"}
-            except Exception as e:
-                logging.error(f"Error processing add_asset approval: {str(e)}")
-                return {"status": "error", "message": f"Error processing approval: {str(e)}"}
-            
+            request_data_str = approval.get('Request_Data', '')
+            if request_data_str and request_data_str != '{}':
+                request_data = json.loads(request_data_str)
+                success = add_asset(request_data)
+                if not success:
+                    return {"status": "error", "message": "Failed to add asset to Google Sheets"}
+            else:
+                return {"status": "error", "message": "No valid request data found in approval"}
+        
         elif approval.get('Type') == 'relocation':
-            # Process relocation approval
-            import json
-            try:
-                request_data_str = approval.get('Request_Data', '')
-                if request_data_str:
-                    relocation_data = json.loads(request_data_str)
-                    update_data = {
-                        'Location': relocation_data.get('new_location'),
-                        'Room': relocation_data.get('new_room')
-                    }
-                    success = update_asset(approval.get('Asset_ID'), update_data)
-                    if not success:
-                        return {"status": "error", "message": "Failed to relocate asset"}
-            except Exception as e:
-                return {"status": "error", "message": f"Error processing relocation: {str(e)}"}
-            
+            relocation_data = json.loads(approval.get('Request_Data', '{}'))
+            update_asset(approval.get('Asset_ID'), {
+                'Location': relocation_data.get('new_location'),
+                'Room': relocation_data.get('new_room')
+            })
+        
         elif approval.get('Type') == 'edit_asset':
-            # Process edit asset approval (manager only)
-            import json
-            try:
-                request_data_str = approval.get('Request_Data', '')
-                if request_data_str:
-                    update_data = json.loads(request_data_str)
-                    from app.utils.sheets import update_asset as sheets_update_asset
-                    success = sheets_update_asset(approval.get('Asset_ID'), update_data)
-                    if not success:
-                        return {"status": "error", "message": "Failed to update asset"}
-            except Exception as e:
-                return {"status": "error", "message": f"Error processing edit: {str(e)}"}
-            
+            update_data = json.loads(approval.get('Request_Data', '{}'))
+            from app.utils.sheets import update_asset as sheets_update_asset
+            sheets_update_asset(approval.get('Asset_ID'), update_data)
+        
         elif approval.get('Type') == 'disposal':
-            # Process disposal approval (manager only)
             disposal_data = {
                 'asset_id': approval.get('Asset_ID'),
                 'asset_name': approval.get('Asset_Name'),
@@ -137,16 +100,14 @@ async def approve_request(approval_id: int, request: Request, current_user = Dep
                 'requested_by': approval.get('Submitted_By'),
                 'request_date': approval.get('Submitted_Date'),
                 'disposal_date': datetime.now().strftime('%Y-%m-%d'),
-                'disposed_by': current_user.username,
-                'notes': f"Approved by manager: {approval.get('Notes', '')}"
+                'disposed_by': current_profile.email,
+                'notes': f"Approved by {current_profile.email}"
             }
-            
             from app.utils.sheets import add_disposal_log
             add_disposal_log(disposal_data)
             update_asset(approval.get('Asset_ID'), {'Status': 'Disposed'})
-            
+        
         elif approval.get('Type') == 'repair_action':
-            # Add to repair log when store action approved
             from app.utils.sheets import add_repair_log
             repair_data = {
                 'asset_id': approval.get('Asset_ID'),
@@ -154,15 +115,13 @@ async def approve_request(approval_id: int, request: Request, current_user = Dep
                 'repair_action': 'Store Asset',
                 'action_type': 'store',
                 'description': approval.get('Description'),
-                'performed_by': current_user.username,
+                'performed_by': current_profile.email,
                 'action_date': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
                 'new_location': 'HO - Ciputat',
                 'new_room': '1022 - Gudang Support TOG',
-                'notes': 'Approved by admin'
+                'notes': f"Approved by {current_profile.email}"
             }
             add_repair_log(repair_data)
-            
-            # Update asset status from Under Repair to In Storage
             update_asset(approval.get('Asset_ID'), {
                 'Status': 'In Storage',
                 'Bisnis Unit': 'General Affair',
@@ -171,15 +130,18 @@ async def approve_request(approval_id: int, request: Request, current_user = Dep
             })
         
         return {"status": "success", "message": "Request approved successfully"}
-    else:
-        return {"status": "error", "message": "Failed to approve request"}
+    
+    except Exception as e:
+        logging.error(f"Error processing approval: {str(e)}")
+        return {"status": "error", "message": f"Error: {str(e)}"}
+
 
 @router.post("/reject/{approval_id}")
-async def reject_request(approval_id: int, request: Request, current_user = Depends(get_current_user)):
+async def reject_request(approval_id: int, request: Request, current_profile=Depends(get_current_profile)):
     """Reject a pending request"""
     from app.utils.sheets import update_approval_status
     
-    success = update_approval_status(approval_id, 'Rejected', current_user.username)
+    success = update_approval_status(approval_id, 'Rejected', current_profile.email)
     
     if success:
         return {"status": "success", "message": "Request rejected"}
