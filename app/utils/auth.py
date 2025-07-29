@@ -2,6 +2,7 @@ from datetime import datetime, timezone
 from fastapi import Depends, HTTPException, status, Request
 from jose import jwt, jwk
 from jose.exceptions import JWTError
+from supabase import create_client, Client
 from typing import Optional, List
 import requests
 import logging
@@ -10,21 +11,14 @@ from app.database.models import Profile, UserRole
 from app.config import load_config
 
 config = load_config()
+supabase: Client = create_client(config.SUPABASE_URL, config.SUPABASE_ANON_KEY)
 
-<<<<<<< HEAD
 # JWKS cache for key rotation support
-=======
-JWKS_URL = f"{config.SUPABASE_URL}/auth/v1/.well-known/jwks.json"
-REST_API_URL = f"{config.SUPABASE_URL}/rest/v1"
-SUPABASE_API_KEY = config.SUPABASE_ANON_KEY
-
->>>>>>> 0370b2e9779d6e32aa0e8b809552bc3fa00ab00a
 _jwks_cache: Optional[dict] = None
 _jwks_cache_time: Optional[datetime] = None
 JWKS_CACHE_TTL = 300  # 5 minutes
 
 def get_jwks() -> dict:
-<<<<<<< HEAD
     """Get JWKS with caching for key rotation support"""
     global _jwks_cache, _jwks_cache_time
     
@@ -47,24 +41,11 @@ def get_jwks() -> dict:
 
 def decode_supabase_jwt(token: str) -> Optional[dict]:
     """Decode Supabase JWT with key rotation support"""
-=======
-    """Fetch JWKS from Supabase (cached)"""
-    global _jwks_cache
-    if _jwks_cache is None:
-        resp = requests.get(JWKS_URL)
-        resp.raise_for_status()
-        _jwks_cache = resp.json()
-    return _jwks_cache
-
-def decode_supabase_token(token: str) -> Optional[dict]:
-    """Decode and verify Supabase JWT token using JWKS"""
->>>>>>> 0370b2e9779d6e32aa0e8b809552bc3fa00ab00a
     try:
         # Get token header
         headers = jwt.get_unverified_header(token)
         kid = headers.get("kid")
         alg = headers.get("alg", "ES256")
-<<<<<<< HEAD
         
         # Get JWKS
         jwks = get_jwks()
@@ -139,36 +120,6 @@ def refresh_supabase_token(refresh_token: str) -> Optional[dict]:
 def get_token_from_request(request: Request) -> tuple[Optional[str], Optional[str]]:
     """Get access and refresh tokens from request"""
     # Try Authorization header first
-=======
-        jwks = get_jwks()
-
-        key_data = None
-        if kid:
-            key_data = next((k for k in jwks.get("keys", []) if k.get("kid") == kid), None)
-
-        if not key_data:
-            # Try all keys if no match
-            for key in jwks.get("keys", []):
-                try:
-                    test_key = jwk.construct(key)
-                    jwt.decode(token, test_key, algorithms=[alg])
-                    key_data = key
-                    break
-                except Exception:
-                    continue
-
-        if not key_data:
-            return None
-
-        public_key = jwk.construct(key_data)
-        return jwt.decode(token, public_key, algorithms=[alg])
-
-    except (JWTError, Exception):
-        return None
-
-def get_token_from_request(request: Request) -> Optional[str]:
-    """Extract JWT from Authorization header or cookie"""
->>>>>>> 0370b2e9779d6e32aa0e8b809552bc3fa00ab00a
     auth_header = request.headers.get("Authorization")
     if auth_header and auth_header.startswith("Bearer "):
         access_token = auth_header.split(" ", 1)[1]
@@ -216,7 +167,6 @@ def validate_and_refresh_token(request: Request) -> Optional[dict]:
     return None
 
 def get_current_profile(request: Request) -> Profile:
-<<<<<<< HEAD
     """Get current user profile with token validation and refresh"""
     # First check if middleware already validated
     if hasattr(request.state, 'user') and request.state.user:
@@ -239,9 +189,6 @@ def get_current_profile(request: Request) -> Profile:
     
     # Get profile from Supabase
     try:
-        # Set API key for Supabase requests
-        supabase.postgrest.auth(config.SUPABASE_ANON_KEY)
-        
         response = supabase.table("profiles").select("*").eq("auth_user_id", user_id).execute()
         
         if not response.data or not response.data[0].get("is_active"):
@@ -253,36 +200,6 @@ def get_current_profile(request: Request) -> Profile:
         profile_data = response.data[0]
         
         # Create Profile object
-=======
-    """Decode token and fetch user profile from Supabase"""
-    token = get_token_from_request(request)
-    if not token:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
-
-    payload = decode_supabase_token(token)
-    if not payload or "sub" not in payload:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
-
-    user_id = payload.get("sub")
-
-    try:
-        url = f"{REST_API_URL}/profiles?auth_user_id=eq.{user_id}&select=*"
-        headers = {
-            "apikey": SUPABASE_API_KEY,
-            "Authorization": f"Bearer {SUPABASE_API_KEY}",
-            "Accept": "application/json"
-        }
-
-        res = requests.get(url, headers=headers)
-        res.raise_for_status()
-        data = res.json()
-
-        if not data or not data[0].get("is_active"):
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not active or not found")
-
-        profile_data = data[0]
-
->>>>>>> 0370b2e9779d6e32aa0e8b809552bc3fa00ab00a
         profile = Profile()
         profile.id = profile_data.get("id")
         profile.auth_user_id = profile_data.get("auth_user_id")
@@ -293,7 +210,6 @@ def get_current_profile(request: Request) -> Profile:
         profile.photo_url = profile_data.get("photo_url")
         
         return profile
-<<<<<<< HEAD
         
     except HTTPException:
         raise
@@ -306,14 +222,6 @@ def get_current_profile(request: Request) -> Profile:
 
 def require_roles(allowed_roles: List[UserRole]):
     """Decorator for role-based access control"""
-=======
-
-    except Exception:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Failed to fetch user profile")
-
-def require_roles(allowed_roles: List[UserRole]):
-    """Dependency to restrict routes to specific roles"""
->>>>>>> 0370b2e9779d6e32aa0e8b809552bc3fa00ab00a
     def role_checker(current_profile: Profile = Depends(get_current_profile)) -> Profile:
         if current_profile.role not in allowed_roles:
             raise HTTPException(
@@ -324,11 +232,7 @@ def require_roles(allowed_roles: List[UserRole]):
     return role_checker
 
 def get_admin_user(current_profile: Profile = Depends(get_current_profile)) -> Profile:
-<<<<<<< HEAD
     """Get current user if admin"""
-=======
-    """Shortcut to restrict to ADMIN only"""
->>>>>>> 0370b2e9779d6e32aa0e8b809552bc3fa00ab00a
     if current_profile.role != UserRole.ADMIN:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, 
