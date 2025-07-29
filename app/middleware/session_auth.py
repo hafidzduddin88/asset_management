@@ -3,81 +3,89 @@ from fastapi.responses import RedirectResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 from supabase import create_client, Client
 from app.config import load_config
+from jose import jwt, jwk
+from jose.exceptions import JWTError
+from jose.utils import base64url_decode
+import requests
 import logging
 from urllib.parse import quote
+from datetime import datetime, timezone
+from typing import Optional
 
 config = load_config()
 supabase: Client = create_client(config.SUPABASE_URL, config.SUPABASE_ANON_KEY)
 
+# Optional: cache JWKS for 5 minutes (can be improved with TTL or async caching lib)
+_cached_jwks: Optional[dict] = None
+
+def get_jwks():
+    global _cached_jwks
+    if _cached_jwks is None:
+        jwks_url = f"{config.SUPABASE_URL}/auth/v1/.well-known/jwks.json"
+        resp = requests.get(jwks_url)
+        resp.raise_for_status()
+        _cached_jwks = resp.json()
+    return _cached_jwks
+
+def decode_supabase_jwt(token: str) -> dict:
+    headers = jwt.get_unverified_header(token)
+    kid = headers.get("kid")
+    alg = headers.get("alg")
+
+    if not kid or not alg:
+        raise Exception("Missing 'kid' or 'alg' in token header")
+
+    jwks = get_jwks()
+    key_data = next((k for k in jwks["keys"] if k["kid"] == kid), None)
+    if not key_data:
+        raise Exception("Matching key not found in JWKS")
+
+    public_key = jwk.construct(key_data)
+    return jwt.decode(token, public_key, algorithms=[alg])  # alg: RS256 / ES256
+
 class SessionAuthMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
-        # Skip authentication for static files and login
+        # Skip authentication for selected paths
         if (
-            request.url.path.startswith("/static") or
-            request.url.path == "/login" or
-            request.url.path == "/health" or
-            request.url.path == "/offline" or
-            request.url.path == "/service-worker.js" or
-            request.url.path == "/manifest.json" or
-            request.url.path == "/favicon.ico" or
-            request.method == "HEAD" or
-            (request.url.path == "/login" and request.method == "POST")
+            request.url.path.startswith("/static")
+            or request.url.path in [
+                "/login", "/health", "/offline",
+                "/service-worker.js", "/manifest.json", "/favicon.ico"
+            ]
+            or request.method == "HEAD"
+            or (request.url.path == "/login" and request.method == "POST")
         ):
             return await call_next(request)
-        
+
         token = request.cookies.get("sb_access_token")
-        
         if not token:
-            original_url = request.url.path
-            if request.query_params:
-                original_url += "?" + str(request.query_params)
-            
             return RedirectResponse(
-                url=f"/login?next={quote(original_url)}", 
+                url=f"/login?next={quote(str(request.url.path + '?' + str(request.query_params) if request.query_params else request.url.path))}",
                 status_code=303
             )
-        
+
         try:
-            from jose import jwt
-            # Use JWKS verification
-            from jose import jwt, jwk
-            import requests
-            
-            jwks_url = f"{config.SUPABASE_URL}/auth/v1/.well-known/jwks.json"
-            jwks = requests.get(jwks_url).json()
-            header = jwt.get_unverified_header(token)
-            kid = header.get('kid')
-            
-            key_data = None
-            for key in jwks['keys']:
-                if key['kid'] == kid:
-                    key_data = key
-                    break
-            
-            if not key_data:
-                raise Exception("Key not found")
-                
-            public_key = jwk.construct(key_data).to_pem()
-            payload = jwt.decode(token, public_key, algorithms=["ES256"])
+            payload = decode_supabase_jwt(token)
+
+            # Optional expiry check
+            exp = payload.get("exp")
+            if exp and datetime.fromtimestamp(exp, tz=timezone.utc) < datetime.now(tz=timezone.utc):
+                raise Exception("Token expired")
+
             user_id = payload.get("sub")
-            
             if not user_id:
                 raise Exception("Invalid token")
-            
+
             request.state.user = {
                 "id": user_id,
                 "email": payload.get("email", "")
             }
-            
+
         except Exception as e:
-            original_url = request.url.path
-            if request.query_params:
-                original_url += "?" + str(request.query_params)
-            
             logging.error(f"Auth middleware error: {str(e)}")
             return RedirectResponse(
-                url=f"/login?next={quote(original_url)}", 
+                url=f"/login?next={quote(str(request.url.path))}",
                 status_code=303
             )
-        
+
         return await call_next(request)
