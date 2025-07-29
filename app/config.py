@@ -42,13 +42,19 @@ class Config:
 
     @property
     def SUPABASE_ANON_KEY(self) -> str:
-        """Supabase Anonymous Key (optional)"""
-        return os.getenv("SUPABASE_ANON_KEY", "")
+        """Supabase Anonymous Key"""
+        key = os.getenv("SUPABASE_ANON_KEY")
+        if not key:
+            raise RuntimeError("SUPABASE_ANON_KEY is not set in environment")
+        return key
 
     @property
     def SUPABASE_SERVICE_KEY(self) -> str:
-        """Supabase Service Role Key (optional)"""
-        return os.getenv("SUPABASE_SERVICE_KEY", "")
+        """Supabase Service Role Key"""
+        key = os.getenv("SUPABASE_SERVICE_KEY")
+        if not key:
+            raise RuntimeError("SUPABASE_SERVICE_KEY is not set in environment")
+        return key
 
     @property
     def APP_URL(self) -> str:

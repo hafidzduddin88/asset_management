@@ -1,67 +1,60 @@
-from datetime import datetime, timezone
 from fastapi import Depends, HTTPException, status, Request
-from fastapi.security import OAuth2PasswordBearer
-from jose import JWTError, jwt
-from sqlalchemy.orm import Session
-from typing import Optional, List
-
-from app.database.database import get_db
-from app.database.models import Profile, UserRole
+from supabase import create_client, Client
 from app.config import load_config
+import logging
 
 config = load_config()
-ALGORITHM = "HS256"  # Supabase JWT uses HS256
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/token")
+supabase: Client = create_client(config.SUPABASE_URL, config.SUPABASE_ANON_KEY)
 
+class CurrentUser:
+    def __init__(self, id: str, email: str, username: str, role: str, full_name: str = None):
+        self.id = id
+        self.email = email
+        self.username = username
+        self.role = role
+        self.full_name = full_name
 
-# ✅ Decode Supabase JWT
-def decode_supabase_token(token: str) -> Optional[dict]:
-    try:
-        return jwt.decode(token, config.SUPABASE_JWT_SECRET, algorithms=[ALGORITHM])
-    except JWTError:
-        return None
-
-
-# ✅ Extract token (from header or cookie)
-def get_token_from_request(request: Request) -> Optional[str]:
-    auth_header = request.headers.get("Authorization")
-    if auth_header and auth_header.startswith("Bearer "):
-        return auth_header.split(" ", 1)[1]
-    return request.cookies.get("access_token")
-
-
-# ✅ Ambil profile user yang sedang login
-def get_current_profile(request: Request, db: Session = Depends(get_db)) -> Profile:
-    token = get_token_from_request(request)
+async def get_current_user(request: Request) -> CurrentUser:
+    token = request.cookies.get("sb_access_token")
     if not token:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated"
+        )
+    
+    try:
+        user_response = supabase.auth.get_user(token)
+        if not user_response.user:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid token"
+            )
+        
+        profile_response = supabase.table('profiles').select('*').eq('id', user_response.user.id).single().execute()
+        if not profile_response.data or not profile_response.data.get('is_active'):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Account inactive"
+            )
+        
+        return CurrentUser(
+            id=user_response.user.id,
+            email=user_response.user.email,
+            username=profile_response.data.get('username', user_response.user.email),
+            role=profile_response.data.get('role', 'staff'),
+            full_name=profile_response.data.get('full_name')
+        )
+    except Exception as e:
+        logging.error(f"Auth error: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication failed"
+        )
 
-    payload = decode_supabase_token(token)
-    if not payload:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
-
-    user_id: str = payload.get("sub")
-    if not user_id:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token payload")
-
-    profile = db.query(Profile).filter(Profile.auth_user_id == user_id).first()
-    if not profile or not profile.is_active:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not active or not found")
-
-    return profile
-
-
-# ✅ Role-based access
-def require_roles(allowed_roles: List[UserRole]):
-    def role_checker(current_profile: Profile = Depends(get_current_profile)) -> Profile:
-        if current_profile.role not in allowed_roles:
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions")
-        return current_profile
-    return role_checker
-
-
-# ✅ Shortcuts
-def get_admin_user(current_profile: Profile = Depends(get_current_profile)) -> Profile:
-    if current_profile.role != UserRole.ADMIN:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions")
-    return current_profile
+def get_admin_user(current_user: CurrentUser = Depends(get_current_user)) -> CurrentUser:
+    if current_user.role != 'admin':
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not enough permissions"
+        )
+    return current_user

@@ -1,99 +1,79 @@
-from fastapi import APIRouter, Depends, Request, Form, status
+from fastapi import APIRouter, Request, Response, Form, HTTPException, status
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from supabase import create_client, Client
 from app.config import load_config
-import secrets
+import logging
 
 config = load_config()
+supabase: Client = create_client(config.SUPABASE_URL, config.SUPABASE_ANON_KEY)
+
 router = APIRouter(tags=["authentication"])
 templates = Jinja2Templates(directory="app/templates")
 
-# Supabase client
-supabase: Client = create_client(config.APP_URL, config.SUPABASE_SERVICE_KEY)
-
-
-# ✅ GET Login Page
 @router.get("/login", response_class=HTMLResponse)
+@router.head("/login", response_class=HTMLResponse)
 async def login_page(request: Request, next: str = None):
     return templates.TemplateResponse("login_logout.html", {"request": request, "next": next})
 
-
-# ✅ POST Login (HTML form)
 @router.post("/login", response_class=HTMLResponse)
 async def login_form(
     request: Request,
     email: str = Form(...),
     password: str = Form(...),
-    remember: bool = Form(False),
     next: str = Form(None)
 ):
     try:
-        # Call Supabase Auth sign-in
-        response = supabase.auth.sign_in_with_password({"email": email, "password": password})
-
+        response = supabase.auth.sign_in_with_password({
+            "email": email,
+            "password": password
+        })
+        
         if not response.user:
             return templates.TemplateResponse(
                 "login_logout.html",
                 {"request": request, "error": "Invalid email or password", "next": next},
-                status_code=status.HTTP_401_UNAUTHORIZED
+                status_code=401
             )
-
-        # Get access token and refresh token
-        access_token = response.session.access_token
-        refresh_token = response.session.refresh_token
-
-        # Redirect to next page or home
+        
+        # Get user profile
+        profile_response = supabase.table('profiles').select('*').eq('id', response.user.id).single().execute()
+        if not profile_response.data or not profile_response.data.get('is_active'):
+            return templates.TemplateResponse(
+                "login_logout.html",
+                {"request": request, "error": "Account is inactive", "next": next},
+                status_code=401
+            )
+        
         redirect_url = next if next else "/"
-        redirect_response = RedirectResponse(url=redirect_url, status_code=status.HTTP_303_SEE_OTHER)
-
-        # Set cookies
-        max_age_access = 60 * 60 * 24  # 1 day
-        max_age_refresh = 60 * 60 * 24 * 7  # 7 days
-
+        redirect_response = RedirectResponse(url=redirect_url, status_code=303)
+        
         redirect_response.set_cookie(
-            key="access_token",
-            value=access_token,
+            key="sb_access_token",
+            value=response.session.access_token,
             httponly=True,
-            max_age=max_age_access,
-            samesite="lax",
-            secure=False  # change to True in production
-        )
-
-        redirect_response.set_cookie(
-            key="refresh_token",
-            value=refresh_token,
-            httponly=True,
-            max_age=max_age_refresh,
+            max_age=3600,
             samesite="lax",
             secure=False
         )
-
-        if remember:
-            redirect_response.set_cookie(
-                key="remember_me",
-                value=secrets.token_hex(16),
-                httponly=True,
-                max_age=60 * 60 * 24 * 30,  # 30 days
-                samesite="lax",
-                secure=False
-            )
-
+        
         return redirect_response
-
+        
     except Exception as e:
+        logging.error(f"Login error: {str(e)}")
         return templates.TemplateResponse(
             "login_logout.html",
-            {"request": request, "error": f"Login failed: {str(e)}", "next": next},
-            status_code=status.HTTP_400_BAD_REQUEST
+            {"request": request, "error": "Login failed", "next": next},
+            status_code=401
         )
 
-
-# ✅ Logout
 @router.get("/logout")
 async def logout():
-    response = RedirectResponse(url="/login", status_code=status.HTTP_303_SEE_OTHER)
-    response.delete_cookie(key="access_token")
-    response.delete_cookie(key="refresh_token")
-    response.delete_cookie(key="remember_me")
+    try:
+        supabase.auth.sign_out()
+    except:
+        pass
+    
+    response = RedirectResponse(url="/login", status_code=303)
+    response.delete_cookie(key="sb_access_token")
     return response
