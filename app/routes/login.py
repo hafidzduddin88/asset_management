@@ -24,7 +24,11 @@ async def login_form(
     next: str = Form(None)
 ):
     try:
-        response = supabase.auth.sign_in_with_password({
+        # Use service key client for admin operations
+        from supabase import create_client
+        admin_supabase = create_client(config.SUPABASE_URL, config.SUPABASE_SERVICE_KEY)
+        
+        response = admin_supabase.auth.sign_in_with_password({
             "email": email,
             "password": password
         })
@@ -37,7 +41,7 @@ async def login_form(
             )
         
         # Get user profile
-        profile_response = supabase.table('profiles').select('*').eq('id', response.user.id).single().execute()
+        profile_response = admin_supabase.table('profiles').select('*').eq('id', response.user.id).single().execute()
         if not profile_response.data or not profile_response.data.get('is_active'):
             return templates.TemplateResponse(
                 "login_logout.html",
@@ -54,7 +58,7 @@ async def login_form(
             httponly=True,
             max_age=3600,
             samesite="lax",
-            secure=False
+            secure=True
         )
         
         return redirect_response

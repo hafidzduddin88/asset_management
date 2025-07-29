@@ -4,7 +4,7 @@ from app.config import load_config
 import logging
 
 config = load_config()
-supabase: Client = create_client(config.SUPABASE_URL, config.SUPABASE_ANON_KEY)
+supabase: Client = create_client(config.SUPABASE_URL, config.SUPABASE_SERVICE_KEY)
 
 class CurrentUser:
     def __init__(self, id: str, email: str, username: str, role: str, full_name: str = None):
