@@ -72,6 +72,10 @@ async def login_form(
             status_code=401
         )
 
+@router.get("/auth/callback")
+async def auth_callback(request: Request):
+    return templates.TemplateResponse("auth_callback.html", {"request": request})
+
 @router.get("/logout")
 async def logout():
     try:
