@@ -36,6 +36,9 @@ def get_current_profile(request: Request) -> Profile:
     if not user_id:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token payload")
 
+    # Set JWT token for authenticated request
+    supabase.auth.set_session(token, None)
+    
     # Query profiles table using Supabase
     response = supabase.table("profiles").select("*").eq("auth_user_id", user_id).execute()
     
