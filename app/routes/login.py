@@ -58,7 +58,8 @@ async def login_form(
             httponly=True,
             max_age=3600,
             samesite="lax",
-            secure=False
+            secure=True,
+            domain=".onrender.com"
         )
         
         return redirect_response
