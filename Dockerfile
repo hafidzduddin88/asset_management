@@ -1,57 +1,50 @@
 # ---------- Build Stage ----------
 FROM python:3.12.11-alpine AS builder
 
-WORKDIR /app
-
 # Install build dependencies
-RUN apk add --no-cache --virtual .build-deps \
-    build-base \
-    postgresql-dev \
+RUN apk add --no-cache \
+    gcc \
+    musl-dev \
     libffi-dev \
-    jpeg-dev \
-    zlib-dev \
-    freetype-dev
+    postgresql-dev \
+    build-base
 
 # Create virtual environment
 RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
-# Copy and install requirements
-COPY requirements.txt ./
-RUN pip install --no-cache-dir --upgrade pip setuptools wheel \
- && pip install --no-cache-dir -r requirements.txt \
- && apk del .build-deps
+# Copy requirements and install
+COPY requirements.txt .
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
 
-# ---------- Final Runtime Stage ----------
+# ---------- Production Stage ----------
 FROM python:3.12.11-alpine
 
-WORKDIR /app
-
-# Install runtime libraries only
+# Install runtime dependencies
 RUN apk add --no-cache \
-    libpq \
-    libjpeg \
-    zlib \
-    freetype \
-    libffi
+    postgresql-libs \
+    curl \
+    && rm -rf /var/cache/apk/*
 
-# Copy virtualenv
+# Copy virtual environment from builder
 COPY --from=builder /opt/venv /opt/venv
-
-# Set environment variables
 ENV PATH="/opt/venv/bin:$PATH"
-ENV PYTHONPATH="/app"
-ENV PYTHONUNBUFFERED=1
-
-# Copy application code
-COPY app/ ./app/
 
 # Create non-root user
-RUN adduser -D -s /bin/sh appuser && chown -R appuser:appuser /app
-USER appuser
+RUN adduser -D -s /bin/sh app
+USER app
+WORKDIR /home/app
 
-# Expose FastAPI default port
+# Copy application
+COPY --chown=app:app . .
+
+# Expose port
 EXPOSE 8000
 
-# Run the app
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
+
+# Run application
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

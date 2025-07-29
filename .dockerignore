@@ -1,67 +1,67 @@
-# Byte-compiled / cache files
-__pycache__/
-*.py[cod]
+# Git
+.git
+.gitignore
+
+# Python
+__pycache__
+*.pyc
 *.pyo
 *.pyd
-*.pyc
-.pytest_cache/
+.Python
+env
+pip-log.txt
+pip-delete-this-directory.txt
+.tox
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.log
+.git
+.mypy_cache
+.pytest_cache
+.hypothesis
 
 # Virtual environments
 venv/
 env/
-.venv/
-.env/
+ENV/
 
-# Git
-.git/
-.gitignore
-.gitattributes
-.github/
-
-# Editor / IDE configs
+# IDE
 .vscode/
 .idea/
 *.swp
 *.swo
+*~
 
-# Logs and dumps
-*.log
-*.out
-*.bak
-*.tmp
-*.old
-logs/
-
-# OS-specific
+# OS
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
+
+# Project specific
+*.sqlite
+*.db
+.env
+.env.local
+.env.production
+
+# Documentation
+README.md
+docs/
+*.md
 
 # Tests
 tests/
-test/
+test_*
 
-# Documentation
-docs/
-README.md
-LICENSE
-CHANGELOG.md
-
-# Local build/output
-dist/
-build/
-*.egg-info/
-
-# CI/CD or Docker secrets
-secrets/
-docker-compose*.yml
-
-# Amazon Q specific
-.amazonq/
-
-# Development files not needed in production
-*.md
-*.example
-*.sample
-render.yaml
-.dockerignore
-Dockerfile*
+# Development
+docker-compose.yml
+docker-compose.*.yml
+Dockerfile.dev
