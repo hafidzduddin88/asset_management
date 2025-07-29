@@ -1,36 +1,29 @@
-import os
-import logging
-import requests
-from datetime import datetime, timezone
-from urllib.parse import quote_plus
-from typing import Optional
-
-from fastapi import Request
+from fastapi import Request, Response
 from fastapi.responses import RedirectResponse
 from starlette.middleware.base import BaseHTTPMiddleware
-
-from jose import jwt, jwk
-from jose.exceptions import JWTError
-
 from supabase import create_client, Client
 from app.config import load_config
+from jose import jwt, jwk
+from jose.exceptions import JWTError
+import requests
+import logging
+from urllib.parse import quote
+from datetime import datetime, timezone
+from typing import Optional
 
-# Load config for Supabase ANON_KEY only
 config = load_config()
-SUPABASE_URL = os.getenv("SUPABASE_URL")
-supabase: Client = create_client(SUPABASE_URL, config.SUPABASE_ANON_KEY)
+supabase: Client = create_client(config.SUPABASE_URL, config.SUPABASE_ANON_KEY)
 
-# Simple JWKS cache
-_jwks_cache: Optional[dict] = None
+_cached_jwks: Optional[dict] = None
 
-def get_jwks() -> dict:
-    global _jwks_cache
-    if _jwks_cache is None:
-        jwks_url = f"{SUPABASE_URL}/auth/v1/.well-known/jwks.json"
+def get_jwks():
+    global _cached_jwks
+    if _cached_jwks is None:
+        jwks_url = f"{config.SUPABASE_URL}/auth/v1/.well-known/jwks.json"
         resp = requests.get(jwks_url)
         resp.raise_for_status()
-        _jwks_cache = resp.json()
-    return _jwks_cache
+        _cached_jwks = resp.json()
+    return _cached_jwks
 
 def decode_supabase_jwt(token: str) -> dict:
     try:
@@ -39,79 +32,154 @@ def decode_supabase_jwt(token: str) -> dict:
         alg = headers.get("alg", "ES256")
 
         jwks = get_jwks()
-        key_data = next((k for k in jwks.get("keys", []) if k.get("kid") == kid), None)
-
-        # Try all keys if specific kid not found
+        
+        # Find key by kid
+        key_data = None
+        if kid:
+            for key in jwks.get("keys", []):
+                if key.get("kid") == kid:
+                    key_data = key
+                    break
+        
+        # If no kid match, try all keys until one works
         if not key_data:
-            logging.warning(f"Kid {kid} not found in JWKS, trying fallback keys")
             for key in jwks.get("keys", []):
                 try:
-                    jwt.decode(token, jwk.construct(key), algorithms=[alg])
+                    test_key = jwk.construct(key)
+                    jwt.decode(token, test_key, algorithms=[alg])
                     key_data = key
-                    logging.info(f"Using fallback key kid={key.get('kid')}")
                     break
-                except Exception:
+                except:
                     continue
-
+        
         if not key_data:
             raise Exception("No suitable key found in JWKS")
 
         public_key = jwk.construct(key_data)
         return jwt.decode(token, public_key, algorithms=[alg])
-
+        
     except Exception as e:
         logging.error(f"JWT decode error: {str(e)}")
         raise
 
+def refresh_access_token(refresh_token: str) -> Optional[dict]:
+    """Refresh access token using refresh token"""
+    try:
+        response = supabase.auth.refresh_session(refresh_token)
+        if response.session:
+            return {
+                "access_token": response.session.access_token,
+                "refresh_token": response.session.refresh_token
+            }
+    except Exception as e:
+        logging.error(f"Token refresh failed: {str(e)}")
+    return None
+
 class SessionAuthMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
-        # Allow unauthenticated access to these paths
-        public_paths = {
-            "/login", "/signup", "/health", "/offline",
-            "/service-worker.js", "/manifest.json", "/favicon.ico"
-        }
-
+        # Skip authentication for selected paths
         if (
-            request.url.path.startswith("/static") or
-            request.method == "HEAD" or
-            request.url.path in public_paths or
-            (request.url.path == "/login" and request.method == "POST")
+            request.url.path.startswith("/static")
+            or request.url.path in [
+                "/login", "/signup", "/health", "/offline",
+                "/service-worker.js", "/manifest.json", "/favicon.ico",
+                "/auth/callback", "/auth/confirm"
+            ]
+            or request.method == "HEAD"
+            or (request.url.path in ["/login", "/signup"] and request.method == "POST")
         ):
             return await call_next(request)
 
-        token = request.cookies.get("sb_access_token")
-        if not token:
-            next_path = request.url.path
-            if request.query_params:
-                next_path += f"?{request.query_params}"
+        access_token = request.cookies.get("sb_access_token")
+        refresh_token = request.cookies.get("sb_refresh_token")
+        
+        if not access_token and not refresh_token:
             return RedirectResponse(
-                url=f"/login?next={quote_plus(next_path)}",
+                url=f"/login?next={quote(str(request.url.path))}", 
                 status_code=303
             )
 
-        try:
-            payload = decode_supabase_jwt(token)
+        # Try to validate access token
+        payload = None
+        if access_token:
+            try:
+                payload = decode_supabase_jwt(access_token)
+                
+                # Check if token is about to expire (within 5 minutes)
+                exp = payload.get("exp")
+                if exp:
+                    exp_time = datetime.fromtimestamp(exp, tz=timezone.utc)
+                    now = datetime.now(tz=timezone.utc)
+                    if (exp_time - now).total_seconds() < 300:  # 5 minutes
+                        # Token expiring soon, refresh it
+                        if refresh_token:
+                            new_tokens = refresh_access_token(refresh_token)
+                            if new_tokens:
+                                # Update tokens and continue
+                                request.state.new_tokens = new_tokens
+                                payload = decode_supabase_jwt(new_tokens["access_token"])
+                            else:
+                                payload = None
+                        else:
+                            payload = None
+                            
+            except Exception:
+                payload = None
 
-            # Expiry validation
-            exp = payload.get("exp")
-            if exp and datetime.fromtimestamp(exp, tz=timezone.utc) < datetime.now(tz=timezone.utc):
-                raise Exception("Token expired")
+        # If access token invalid/expired, try refresh
+        if not payload and refresh_token:
+            new_tokens = refresh_access_token(refresh_token)
+            if new_tokens:
+                request.state.new_tokens = new_tokens
+                try:
+                    payload = decode_supabase_jwt(new_tokens["access_token"])
+                except Exception:
+                    payload = None
 
-            user_id = payload.get("sub")
-            if not user_id:
-                raise Exception("Invalid token payload: no 'sub'")
-
-            # Attach user info to request
-            request.state.user = {
-                "id": user_id,
-                "email": payload.get("email", "")
-            }
-
-        except Exception as e:
-            logging.error(f"Auth middleware error: {str(e)}")
+        if not payload:
             return RedirectResponse(
-                url=f"/login?next={quote_plus(str(request.url.path))}",
+                url=f"/login?next={quote(str(request.url.path))}", 
                 status_code=303
             )
 
-        return await call_next(request)
+        # Set user info
+        user_id = payload.get("sub")
+        if not user_id:
+            return RedirectResponse(
+                url=f"/login?next={quote(str(request.url.path))}", 
+                status_code=303
+            )
+
+        request.state.user = {
+            "id": user_id,
+            "email": payload.get("email", "")
+        }
+
+        # Process request
+        response = await call_next(request)
+
+        # Update cookies if tokens were refreshed
+        if hasattr(request.state, 'new_tokens'):
+            new_tokens = request.state.new_tokens
+            
+            # Set new access token
+            response.set_cookie(
+                key="sb_access_token",
+                value=new_tokens["access_token"],
+                httponly=True,
+                secure=not config.APP_URL.startswith("http://localhost"),
+                samesite="lax",
+                max_age=3600
+            )
+            
+            # Set new refresh token
+            response.set_cookie(
+                key="sb_refresh_token", 
+                value=new_tokens["refresh_token"],
+                httponly=True,
+                secure=not config.APP_URL.startswith("http://localhost"),
+                samesite="lax",
+                max_age=86400 * 30
+            )
+
+        return response

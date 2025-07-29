@@ -57,6 +57,7 @@ async def login_form(
 
         max_age = 60 * 60 * 24 * 7 if remember_me else 3600  # 7 days or 1 hour
 
+        # Store access token
         redirect_response.set_cookie(
             key="sb_access_token",
             value=response.session.access_token,
@@ -64,6 +65,17 @@ async def login_form(
             secure=not os.getenv("DEV", False),
             samesite="lax",
             max_age=max_age,
+            domain=domain
+        )
+        
+        # Store refresh token for JWT rotation
+        redirect_response.set_cookie(
+            key="sb_refresh_token",
+            value=response.session.refresh_token,
+            httponly=True,
+            secure=not os.getenv("DEV", False),
+            samesite="lax",
+            max_age=86400 * 30,  # 30 days
             domain=domain
         )
 
@@ -168,6 +180,27 @@ async def confirm_email(request: Request):
         return {"success": False, "error": "Confirmation failed"}
 
 
+@router.post("/auth/refresh")
+async def refresh_token(request: Request):
+    """Manual token refresh endpoint"""
+    refresh_token = request.cookies.get("sb_refresh_token")
+    if not refresh_token:
+        return {"success": False, "error": "No refresh token"}
+    
+    try:
+        response = supabase.auth.refresh_session(refresh_token)
+        if response.session:
+            return {
+                "success": True,
+                "access_token": response.session.access_token,
+                "refresh_token": response.session.refresh_token
+            }
+        else:
+            return {"success": False, "error": "Refresh failed"}
+    except Exception as e:
+        logging.error(f"Token refresh failed: {str(e)}")
+        return {"success": False, "error": "Refresh failed"}
+
 @router.get("/logout")
 async def logout():
     try:
@@ -177,4 +210,5 @@ async def logout():
 
     response = RedirectResponse(url="/login", status_code=303)
     response.delete_cookie("sb_access_token")
+    response.delete_cookie("sb_refresh_token")
     return response
