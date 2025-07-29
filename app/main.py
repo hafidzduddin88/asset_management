@@ -1,7 +1,11 @@
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from app.middleware.session_auth import SessionAuthMiddleware
-from app.routes import login
+from app.routes import (
+    login, health, offline, home, assets, asset_management,
+    damage, profile, repair, approvals, disposal, user_management,
+    logs, relocation
+)
 import logging
 
 # Configure logging
@@ -16,8 +20,21 @@ app.add_middleware(SessionAuthMiddleware)
 # Mount static files
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
-# Include routers
+# Include all routers
 app.include_router(login.router)
+app.include_router(health.router)
+app.include_router(offline.router)
+app.include_router(home.router)
+app.include_router(assets.router)
+app.include_router(asset_management.router)
+app.include_router(damage.router)
+app.include_router(profile.router)
+app.include_router(repair.router)
+app.include_router(approvals.router)
+app.include_router(disposal.router)
+app.include_router(user_management.router)
+app.include_router(logs.router)
+app.include_router(relocation.router)
 
 # Health check
 @app.get("/health")

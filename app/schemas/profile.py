@@ -1,13 +1,12 @@
-from pydantic import BaseModel, EmailStr
-from uuid import UUID
-from datetime import datetime
+from pydantic import BaseModel, Field
 from typing import Optional
-from app.database.models import UserRole  # Reuse dari models
+from datetime import datetime
+from app.database.models import UserRole
 
-class ProfileSchema(BaseModel):
-    id: UUID
-    auth_user_id: UUID
-    email: EmailStr
+class ProfileResponse(BaseModel):
+    id: str
+    auth_user_id: str
+    email: str
     full_name: Optional[str] = None
     role: UserRole
     is_active: bool
@@ -16,4 +15,4 @@ class ProfileSchema(BaseModel):
     updated_at: Optional[datetime] = None
 
     class Config:
-        from_attributes = True  # Pydantic v2 style
+        from_attributes = True

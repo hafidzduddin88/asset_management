@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from fastapi import Request, HTTPException, status
+from fastapi import Request, HTTPException, status, Depends
 from jose import jwt, jwk
 from jose.exceptions import JWTError
 from supabase import create_client, Client
@@ -8,6 +8,7 @@ import requests
 import logging
 
 from app.database.models import Profile, UserRole
+from app.schemas.profile import ProfileResponse
 from app.config import load_config
 
 config = load_config()
@@ -115,7 +116,7 @@ def refresh_supabase_token(refresh_token: str) -> Optional[dict]:
         logging.error(f"Token refresh failed: {e}")
         return None
 
-def get_current_profile(request: Request) -> Profile:
+def get_current_profile(request: Request) -> ProfileResponse:
     """Get current authenticated user's profile."""
     if not hasattr(request.state, 'user') or not request.state.user:
         raise HTTPException(
@@ -139,16 +140,15 @@ def get_current_profile(request: Request) -> Profile:
             )
 
         profile_data = response.data[0]
-        profile = Profile()
-        profile.id = profile_data.get("id")
-        profile.auth_user_id = profile_data.get("auth_user_id")
-        profile.email = profile_data.get("email")
-        profile.full_name = profile_data.get("full_name")
-        profile.role = UserRole(profile_data.get("role"))
-        profile.is_active = profile_data.get("is_active")
-        profile.photo_url = profile_data.get("photo_url")
-
-        return profile
+        return ProfileResponse(
+            id=str(profile_data.get("id")),
+            auth_user_id=str(profile_data.get("auth_user_id")),
+            email=profile_data.get("email"),
+            full_name=profile_data.get("full_name"),
+            role=UserRole(profile_data.get("role")),
+            is_active=profile_data.get("is_active"),
+            photo_url=profile_data.get("photo_url")
+        )
 
     except Exception as e:
         logging.error(f"Failed to get user profile: {e}")
@@ -159,7 +159,7 @@ def get_current_profile(request: Request) -> Profile:
 
 def require_roles(allowed_roles: List[UserRole]):
     """Check if current profile has one of the allowed roles."""
-    def role_checker(current_profile: Profile = get_current_profile) -> Profile:
+    def role_checker(current_profile: ProfileResponse = Depends(get_current_profile)) -> ProfileResponse:
         if current_profile.role not in allowed_roles:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
@@ -168,7 +168,7 @@ def require_roles(allowed_roles: List[UserRole]):
         return current_profile
     return role_checker
 
-def get_admin_user(current_profile: Profile = get_current_profile) -> Profile:
+def get_admin_user(current_profile: ProfileResponse = Depends(get_current_profile)) -> ProfileResponse:
     if current_profile.role != UserRole.ADMIN:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -176,7 +176,7 @@ def get_admin_user(current_profile: Profile = get_current_profile) -> Profile:
         )
     return current_profile
 
-def get_manager_user(current_profile: Profile = get_current_profile) -> Profile:
+def get_manager_user(current_profile: ProfileResponse = Depends(get_current_profile)) -> ProfileResponse:
     if current_profile.role not in [UserRole.ADMIN, UserRole.MANAGER]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
