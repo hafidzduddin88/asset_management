@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 from fastapi import Depends, HTTPException, status, Request
-from jose import JWTError, jwt
+from jose import JWTError, jwt, jwk
+import requests
 from supabase import create_client, Client
 from typing import Optional, List
 
@@ -8,13 +9,37 @@ from app.database.models import Profile, UserRole
 from app.config import load_config
 
 config = load_config()
-ALGORITHM = "HS256"
+ALGORITHM = "ES256"
+JWKS_URL = f"{config.SUPABASE_URL}/auth/v1/.well-known/jwks.json"
 supabase: Client = create_client(config.SUPABASE_URL, config.SUPABASE_ANON_KEY)
+
+def get_jwks():
+    response = requests.get(JWKS_URL)
+    return response.json()
 
 def decode_supabase_token(token: str) -> Optional[dict]:
     try:
-        return jwt.decode(token, config.SUPABASE_JWT_SECRET, algorithms=[ALGORITHM])
-    except JWTError:
+        # Get JWKS and find the right key
+        jwks = get_jwks()
+        header = jwt.get_unverified_header(token)
+        kid = header.get('kid')
+        
+        # Find the key with matching kid
+        key_data = None
+        for key in jwks['keys']:
+            if key['kid'] == kid:
+                key_data = key
+                break
+        
+        if not key_data:
+            return None
+            
+        # Convert JWK to PEM format
+        public_key = jwk.construct(key_data).to_pem()
+        
+        # Decode with ES256
+        return jwt.decode(token, public_key, algorithms=[ALGORITHM])
+    except Exception:
         return None
 
 def get_token_from_request(request: Request) -> Optional[str]:

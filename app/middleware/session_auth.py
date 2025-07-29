@@ -39,7 +39,26 @@ class SessionAuthMiddleware(BaseHTTPMiddleware):
         
         try:
             from jose import jwt
-            payload = jwt.decode(token, config.SUPABASE_JWT_SECRET, algorithms=["HS256"])
+            # Use JWKS verification
+            from jose import jwt, jwk
+            import requests
+            
+            jwks_url = f"{config.SUPABASE_URL}/auth/v1/.well-known/jwks.json"
+            jwks = requests.get(jwks_url).json()
+            header = jwt.get_unverified_header(token)
+            kid = header.get('kid')
+            
+            key_data = None
+            for key in jwks['keys']:
+                if key['kid'] == kid:
+                    key_data = key
+                    break
+            
+            if not key_data:
+                raise Exception("Key not found")
+                
+            public_key = jwk.construct(key_data).to_pem()
+            payload = jwt.decode(token, public_key, algorithms=["ES256"])
             user_id = payload.get("sub")
             
             if not user_id:
