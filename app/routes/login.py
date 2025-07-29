@@ -307,6 +307,39 @@ async def refresh_token_endpoint(request: Request):
             status_code=500
         )
 
+@router.post("/auth/forgot-password")
+async def forgot_password(request: Request):
+    """Password reset endpoint"""
+    try:
+        data = await request.json()
+        email = data.get("email")
+        
+        if not email:
+            return JSONResponse(
+                content={"success": False, "error": "Email is required"},
+                status_code=400
+            )
+        
+        # Setup Supabase auth
+        setup_supabase_auth()
+        
+        # Send password reset email
+        response = supabase.auth.reset_password_email(email)
+        
+        logging.info(f"Password reset requested for {email}")
+        
+        return JSONResponse(content={
+            "success": True,
+            "message": "Password reset link sent to your email"
+        })
+        
+    except Exception as e:
+        logging.error(f"Password reset failed: {str(e)}")
+        return JSONResponse(
+            content={"success": False, "error": "Failed to send reset link"},
+            status_code=500
+        )
+
 @router.get("/logout")
 async def logout(request: Request):
     """Enhanced logout with proper cleanup"""
