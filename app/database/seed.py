@@ -45,7 +45,7 @@ def run_seed():
             # ✅ Tambahkan ke tabel profiles
             supabase.table("profiles").insert({
                 "auth_user_id": user_id,
-                "role": user["role"],
+                "role": user["role"].upper(),
                 "is_active": True
             }).execute()
 

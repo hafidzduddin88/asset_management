@@ -71,7 +71,7 @@ async def create_user(
     new_user = Profile(
         email=email,
         full_name=full_name,
-        role=UserRole(role),
+        role=getattr(UserRole, role.upper()),
         is_active=True
     )
     
