@@ -28,20 +28,32 @@ def get_jwks():
     return _cached_jwks
 
 def decode_supabase_jwt(token: str) -> dict:
-    headers = jwt.get_unverified_header(token)
-    kid = headers.get("kid")
-    alg = headers.get("alg")
+    try:
+        headers = jwt.get_unverified_header(token)
+        kid = headers.get("kid")
+        alg = headers.get("alg", "ES256")
 
-    if not kid or not alg:
-        raise Exception("Missing 'kid' or 'alg' in token header")
+        jwks = get_jwks()
+        
+        # Try to find key by kid
+        key_data = None
+        if kid:
+            key_data = next((k for k in jwks.get("keys", []) if k.get("kid") == kid), None)
+        
+        # Fallback: use first available key if kid not found
+        if not key_data and jwks.get("keys"):
+            key_data = jwks["keys"][0]
+            logging.warning(f"Using fallback key, original kid: {kid}")
+        
+        if not key_data:
+            raise Exception("No suitable key found in JWKS")
 
-    jwks = get_jwks()
-    key_data = next((k for k in jwks["keys"] if k["kid"] == kid), None)
-    if not key_data:
-        raise Exception("Matching key not found in JWKS")
-
-    public_key = jwk.construct(key_data)
-    return jwt.decode(token, public_key, algorithms=[alg])  # alg: RS256 / ES256
+        public_key = jwk.construct(key_data)
+        return jwt.decode(token, public_key, algorithms=[alg])
+        
+    except Exception as e:
+        logging.error(f"JWT decode error: {str(e)}")
+        raise
 
 class SessionAuthMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
