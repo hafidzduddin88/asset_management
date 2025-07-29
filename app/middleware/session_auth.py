@@ -32,16 +32,16 @@ def decode_supabase_jwt(token: str) -> dict:
         alg = headers.get("alg", "ES256")
 
         jwks = get_jwks()
-        
-        # Find key by kid
         key_data = None
+
+        # Cari key berdasarkan kid
         if kid:
             for key in jwks.get("keys", []):
                 if key.get("kid") == kid:
                     key_data = key
                     break
-        
-        # If no kid match, try all keys until one works
+
+        # Coba semua key jika kid tidak ditemukan
         if not key_data:
             for key in jwks.get("keys", []):
                 try:
@@ -49,35 +49,47 @@ def decode_supabase_jwt(token: str) -> dict:
                     jwt.decode(token, test_key, algorithms=[alg])
                     key_data = key
                     break
-                except:
+                except Exception:
                     continue
-        
+
         if not key_data:
             raise Exception("No suitable key found in JWKS")
 
         public_key = jwk.construct(key_data)
         return jwt.decode(token, public_key, algorithms=[alg])
-        
+
     except Exception as e:
         logging.error(f"JWT decode error: {str(e)}")
         raise
 
 def refresh_access_token(refresh_token: str) -> Optional[dict]:
-    """Refresh access token using refresh token"""
+    """Manual refresh Supabase session"""
     try:
-        response = supabase.auth.refresh_session(refresh_token)
-        if response.session:
-            return {
-                "access_token": response.session.access_token,
-                "refresh_token": response.session.refresh_token
-            }
+        url = f"{config.SUPABASE_URL}/auth/v1/token?grant_type=refresh_token"
+        headers = {
+            "apikey": config.SUPABASE_ANON_KEY,
+            "Content-Type": "application/json"
+        }
+        payload = {
+            "refresh_token": refresh_token
+        }
+
+        res = requests.post(url, headers=headers, json=payload)
+        res.raise_for_status()
+        data = res.json()
+
+        return {
+            "access_token": data.get("access_token"),
+            "refresh_token": data.get("refresh_token", refresh_token)
+        }
+
     except Exception as e:
         logging.error(f"Token refresh failed: {str(e)}")
-    return None
+        return None
 
 class SessionAuthMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
-        # Skip authentication for selected paths
+        # Bypass auth untuk path tertentu
         if (
             request.url.path.startswith("/static")
             or request.url.path in [
@@ -92,41 +104,36 @@ class SessionAuthMiddleware(BaseHTTPMiddleware):
 
         access_token = request.cookies.get("sb_access_token")
         refresh_token = request.cookies.get("sb_refresh_token")
-        
+
         if not access_token and not refresh_token:
             return RedirectResponse(
-                url=f"/login?next={quote(str(request.url.path))}", 
+                url=f"/login?next={quote(str(request.url.path))}",
                 status_code=303
             )
 
-        # Try to validate access token
         payload = None
+
+        # Validasi access token
         if access_token:
             try:
                 payload = decode_supabase_jwt(access_token)
-                
-                # Check if token is about to expire (within 5 minutes)
+
+                # Cek apakah token hampir kedaluwarsa (< 5 menit)
                 exp = payload.get("exp")
                 if exp:
-                    exp_time = datetime.fromtimestamp(exp, tz=timezone.utc)
                     now = datetime.now(tz=timezone.utc)
-                    if (exp_time - now).total_seconds() < 300:  # 5 minutes
-                        # Token expiring soon, refresh it
-                        if refresh_token:
-                            new_tokens = refresh_access_token(refresh_token)
-                            if new_tokens:
-                                # Update tokens and continue
-                                request.state.new_tokens = new_tokens
-                                payload = decode_supabase_jwt(new_tokens["access_token"])
-                            else:
-                                payload = None
+                    exp_time = datetime.fromtimestamp(exp, tz=timezone.utc)
+                    if (exp_time - now).total_seconds() < 300 and refresh_token:
+                        new_tokens = refresh_access_token(refresh_token)
+                        if new_tokens:
+                            request.state.new_tokens = new_tokens
+                            payload = decode_supabase_jwt(new_tokens["access_token"])
                         else:
                             payload = None
-                            
             except Exception:
                 payload = None
 
-        # If access token invalid/expired, try refresh
+        # Jika token tidak valid, coba refresh manual
         if not payload and refresh_token:
             new_tokens = refresh_access_token(refresh_token)
             if new_tokens:
@@ -138,31 +145,28 @@ class SessionAuthMiddleware(BaseHTTPMiddleware):
 
         if not payload:
             return RedirectResponse(
-                url=f"/login?next={quote(str(request.url.path))}", 
+                url=f"/login?next={quote(str(request.url.path))}",
                 status_code=303
             )
 
-        # Set user info
         user_id = payload.get("sub")
         if not user_id:
             return RedirectResponse(
-                url=f"/login?next={quote(str(request.url.path))}", 
+                url=f"/login?next={quote(str(request.url.path))}",
                 status_code=303
             )
 
         request.state.user = {
             "id": user_id,
-            "email": payload.get("email", "")
+            "email": payload.get("email") or payload.get("user_metadata", {}).get("email", "")
         }
 
-        # Process request
         response = await call_next(request)
 
-        # Update cookies if tokens were refreshed
+        # Perbarui cookie jika token berhasil di-refresh
         if hasattr(request.state, 'new_tokens'):
             new_tokens = request.state.new_tokens
-            
-            # Set new access token
+
             response.set_cookie(
                 key="sb_access_token",
                 value=new_tokens["access_token"],
@@ -171,10 +175,8 @@ class SessionAuthMiddleware(BaseHTTPMiddleware):
                 samesite="lax",
                 max_age=3600
             )
-            
-            # Set new refresh token
             response.set_cookie(
-                key="sb_refresh_token", 
+                key="sb_refresh_token",
                 value=new_tokens["refresh_token"],
                 httponly=True,
                 secure=not config.APP_URL.startswith("http://localhost"),
