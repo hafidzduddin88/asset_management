@@ -132,20 +132,24 @@ def decode_supabase_jwt(token: str) -> Optional[dict]:
         return None
 
 def refresh_supabase_token(refresh_token: str) -> Optional[dict]:
-    """Refresh Supabase tokens"""
+    """Refresh Supabase tokens using direct API call"""
     try:
-        # Set API key header
-        supabase.auth._client.headers.update({
-            "apikey": config.SUPABASE_ANON_KEY
-        })
+        url = f"{config.SUPABASE_URL}/auth/v1/token?grant_type=refresh_token"
+        headers = {
+            "apikey": config.SUPABASE_ANON_KEY,
+            "Content-Type": "application/json"
+        }
+        payload = {"refresh_token": refresh_token}
         
-        response = supabase.auth.refresh_session(refresh_token)
-        if response.session:
-            return {
-                "access_token": response.session.access_token,
-                "refresh_token": response.session.refresh_token,
-                "expires_at": response.session.expires_at
-            }
+        response = requests.post(url, headers=headers, json=payload)
+        response.raise_for_status()
+        data = response.json()
+        
+        return {
+            "access_token": data["access_token"],
+            "refresh_token": data.get("refresh_token", refresh_token),
+            "expires_at": data.get("expires_at")
+        }
     except Exception as e:
         logging.error(f"Token refresh failed: {e}")
     return None
@@ -153,25 +157,20 @@ def refresh_supabase_token(refresh_token: str) -> Optional[dict]:
 # Removed duplicate functions - handled by middleware
 
 def get_current_profile(request: Request) -> Profile:
-    """Get current user profile with token validation and refresh"""
-    # First check if middleware already validated
-    if hasattr(request.state, 'user') and request.state.user:
-        user_id = request.state.user.get("id")
-    else:
-        # Validate token ourselves
-        payload = validate_and_refresh_token(request)
-        if not payload:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED, 
-                detail="Not authenticated"
-            )
-        
-        user_id = payload.get("sub")
-        if not user_id:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED, 
-                detail="Invalid token payload"
-            )
+    """Get current user profile from middleware state"""
+    # Get user from middleware
+    if not hasattr(request.state, 'user') or not request.state.user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, 
+            detail="Not authenticated"
+        )
+    
+    user_id = request.state.user.get("id")
+    if not user_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, 
+            detail="Invalid user session"
+        )
     
     # Get profile from Supabase
     try:
