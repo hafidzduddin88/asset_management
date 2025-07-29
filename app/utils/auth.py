@@ -58,6 +58,8 @@ def decode_supabase_jwt(token: str) -> Optional[dict]:
             return None
         
         logging.info(f"Available JWKS keys: {[k.get('kid') for k in keys]}")
+        for key in keys:
+            logging.info(f"Key details - kid: {key.get('kid')}, kty: {key.get('kty')}, alg: {key.get('alg')}, crv: {key.get('crv')}")
         
         # Try to find key by kid first
         key_data = None
@@ -68,23 +70,44 @@ def decode_supabase_jwt(token: str) -> Optional[dict]:
             else:
                 logging.warning(f"No key found for kid: {kid}")
         
-        # If kid not found or not provided, try all keys
+        # If kid not found, try all keys (ignore kid mismatch)
         if not key_data:
+            logging.warning(f"Kid mismatch - trying all available keys")
+            
             for key in keys:
                 try:
-                    public_key = jwk.construct(key)
-                    payload = jwt.decode(token, public_key, algorithms=[alg])
+                    # Force ES256 for ECC P-256 keys
+                    if key.get("crv") == "P-256" and key.get("kty") == "EC":
+                        public_key = jwk.construct(key)
+                        payload = jwt.decode(token, public_key, algorithms=["ES256"])
+                        
+                        exp = payload.get("exp")
+                        if not exp or datetime.fromtimestamp(exp, tz=timezone.utc) >= datetime.now(tz=timezone.utc):
+                            logging.info(f"Successfully decoded ES256 token with key {key.get('kid')}")
+                            return payload
                     
-                    # Validate expiry
-                    exp = payload.get("exp")
-                    if exp and datetime.fromtimestamp(exp, tz=timezone.utc) < datetime.now(tz=timezone.utc):
-                        continue
-                    
-                    return payload
-                except Exception:
+                    # Try other algorithms
+                    for try_alg in ["ES256", "RS256", "HS256"]:
+                        try:
+                            if try_alg == "HS256":
+                                payload = jwt.decode(token, config.SUPABASE_ANON_KEY, algorithms=["HS256"])
+                            else:
+                                public_key = jwk.construct(key)
+                                payload = jwt.decode(token, public_key, algorithms=[try_alg])
+                            
+                            exp = payload.get("exp")
+                            if not exp or datetime.fromtimestamp(exp, tz=timezone.utc) >= datetime.now(tz=timezone.utc):
+                                logging.info(f"Successfully decoded with {try_alg} using key {key.get('kid')}")
+                                return payload
+                                
+                        except Exception:
+                            continue
+                            
+                except Exception as e:
+                    logging.debug(f"Key {key.get('kid')} failed: {e}")
                     continue
             
-            logging.error("No valid key found for token")
+            logging.error(f"No valid key found. Token kid: {kid}, Available: {[k.get('kid') for k in keys]}")
             return None
         
         # Use found key
