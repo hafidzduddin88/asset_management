@@ -1,13 +1,14 @@
 # app/routes/login.py
-from fastapi import APIRouter, Request, Form
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi import APIRouter, Request, Form, HTTPException, status
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from supabase import create_client, Client
 from app.config import load_config
-from app.utils.auth import decode_supabase_token
+from app.utils.auth import decode_supabase_jwt, refresh_supabase_token
 import logging
 import os
 from urllib.parse import urlparse
+from datetime import datetime, timezone
 
 config = load_config()
 supabase: Client = create_client(config.SUPABASE_URL, config.SUPABASE_ANON_KEY)
@@ -15,22 +16,83 @@ supabase: Client = create_client(config.SUPABASE_URL, config.SUPABASE_ANON_KEY)
 router = APIRouter(tags=["authentication"])
 templates = Jinja2Templates(directory="app/templates")
 
+def setup_supabase_auth():
+    """Setup Supabase client with proper API key"""
+    supabase.auth._client.headers.update({
+        "apikey": config.SUPABASE_ANON_KEY,
+        "Authorization": f"Bearer {config.SUPABASE_ANON_KEY}"
+    })
+
+def get_cookie_settings() -> dict:
+    """Get secure cookie settings based on environment"""
+    parsed_url = urlparse(config.APP_URL)
+    is_secure = not config.APP_URL.startswith("http://localhost")
+    domain = parsed_url.hostname if parsed_url.hostname not in [None, "localhost"] else None
+    
+    return {
+        "httponly": True,
+        "secure": is_secure,
+        "samesite": "lax",
+        "domain": domain
+    }
+
+def set_auth_cookies(response, session, remember_me: bool = False):
+    """Set authentication cookies with proper security"""
+    cookie_settings = get_cookie_settings()
+    
+    # Access token (short-lived)
+    access_max_age = 60 * 60 * 24 * 7 if remember_me else 3600  # 7 days or 1 hour
+    response.set_cookie(
+        key="sb_access_token",
+        value=session.access_token,
+        max_age=access_max_age,
+        **cookie_settings
+    )
+    
+    # Refresh token (long-lived)
+    refresh_max_age = 60 * 60 * 24 * 30  # 30 days
+    response.set_cookie(
+        key="sb_refresh_token",
+        value=session.refresh_token,
+        max_age=refresh_max_age,
+        **cookie_settings
+    )
+
+def clear_auth_cookies(response):
+    """Clear authentication cookies"""
+    cookie_settings = get_cookie_settings()
+    response.delete_cookie("sb_access_token", **{k: v for k, v in cookie_settings.items() if k != 'httponly'})
+    response.delete_cookie("sb_refresh_token", **{k: v for k, v in cookie_settings.items() if k != 'httponly'})
+
+def is_user_authenticated(request: Request) -> bool:
+    """Check if user is already authenticated"""
+    access_token = request.cookies.get("sb_access_token")
+    refresh_token = request.cookies.get("sb_refresh_token")
+    
+    if access_token:
+        payload = decode_supabase_jwt(access_token)
+        if payload and payload.get("sub"):
+            return True
+    
+    if refresh_token:
+        new_tokens = refresh_supabase_token(refresh_token)
+        if new_tokens:
+            return True
+    
+    return False
 
 @router.get("/login", response_class=HTMLResponse)
 @router.head("/login", response_class=HTMLResponse)
 async def login_page(request: Request, next: str = None):
-    token = request.cookies.get("sb_access_token")
-
-    if token:
-        try:
-            payload = decode_supabase_token(token)
-            if payload.get("sub"):
-                return RedirectResponse(url=next or "/", status_code=303)
-        except:
-            pass
-
-    return templates.TemplateResponse("login_logout.html", {"request": request, "next": next})
-
+    """Login page with authentication check"""
+    # Redirect if already authenticated
+    if is_user_authenticated(request):
+        return RedirectResponse(url=next or "/", status_code=303)
+    
+    return templates.TemplateResponse("login_logout.html", {
+        "request": request, 
+        "next": next
+    })
 
 @router.post("/login")
 async def login_form(
@@ -40,49 +102,41 @@ async def login_form(
     remember_me: bool = Form(False),
     next: str = Form(None)
 ):
+    """Enhanced login with Supabase auth and JWT rotation support"""
     try:
+        # Setup Supabase auth
+        setup_supabase_auth()
+        
+        # Attempt login
         response = supabase.auth.sign_in_with_password({
             "email": email,
             "password": password
         })
-
-        if not response.session or not response.session.access_token:
-            raise Exception("Invalid credentials or no session")
-
-        redirect_response = RedirectResponse(url=next or "/", status_code=303)
-
-        # Cookie config
-        parsed_url = urlparse(os.getenv("APP_URL", ""))
-        domain = parsed_url.hostname if parsed_url.hostname not in [None, "localhost"] else None
-
-        max_age = 60 * 60 * 24 * 7 if remember_me else 3600  # 7 days or 1 hour
-
-        # Store access token
-        redirect_response.set_cookie(
-            key="sb_access_token",
-            value=response.session.access_token,
-            httponly=True,
-            secure=not os.getenv("DEV", False),
-            samesite="lax",
-            max_age=max_age,
-            domain=domain
-        )
         
-        # Store refresh token for JWT rotation
-        redirect_response.set_cookie(
-            key="sb_refresh_token",
-            value=response.session.refresh_token,
-            httponly=True,
-            secure=not os.getenv("DEV", False),
-            samesite="lax",
-            max_age=86400 * 30,  # 30 days
-            domain=domain
-        )
-
+        # Validate response
+        if not response.session or not response.session.access_token:
+            raise Exception("Invalid credentials or no session returned")
+        
+        # Validate JWT token
+        payload = decode_supabase_jwt(response.session.access_token)
+        if not payload or not payload.get("sub"):
+            raise Exception("Invalid JWT token received")
+        
+        # Create redirect response
+        redirect_url = next or "/"
+        redirect_response = RedirectResponse(url=redirect_url, status_code=303)
+        
+        # Set authentication cookies
+        set_auth_cookies(redirect_response, response.session, remember_me)
+        
+        logging.info(f"User {email} logged in successfully")
         return redirect_response
-
+        
     except Exception as e:
-        logging.error(f"Login failed: {str(e)}")
+        error_msg = str(e)
+        logging.error(f"Login failed for {email}: {error_msg}")
+        
+        # Return error response
         return templates.TemplateResponse(
             "login_logout.html",
             {
@@ -93,21 +147,14 @@ async def login_form(
             status_code=401
         )
 
-
 @router.get("/signup", response_class=HTMLResponse)
 async def signup_page(request: Request):
-    token = request.cookies.get("sb_access_token")
-
-    if token:
-        try:
-            payload = decode_supabase_token(token)
-            if payload.get("sub"):
-                return RedirectResponse(url="/", status_code=303)
-        except:
-            pass
-
+    """Signup page with authentication check"""
+    # Redirect if already authenticated
+    if is_user_authenticated(request):
+        return RedirectResponse(url="/", status_code=303)
+    
     return templates.TemplateResponse("signup.html", {"request": request})
-
 
 @router.post("/signup")
 async def signup_form(
@@ -116,7 +163,12 @@ async def signup_form(
     password: str = Form(...),
     full_name: str = Form(...)
 ):
+    """Enhanced signup with Supabase auth"""
     try:
+        # Setup Supabase auth
+        setup_supabase_auth()
+        
+        # Attempt signup
         response = supabase.auth.sign_up({
             "email": email,
             "password": password,
@@ -126,89 +178,159 @@ async def signup_form(
                 }
             }
         })
-
+        
         if not response.user:
-            raise Exception("Signup failed or user already exists")
-
+            raise Exception("Signup failed - user may already exist")
+        
+        logging.info(f"User {email} signed up successfully")
+        
         return templates.TemplateResponse(
             "signup.html",
             {
                 "request": request,
-                "success": "Account created! Please check your email to verify."
+                "success": "Account created! Please check your email to verify your account."
             }
         )
-
+        
     except Exception as e:
-        logging.error(f"Signup failed: {str(e)}")
+        error_msg = str(e)
+        logging.error(f"Signup failed for {email}: {error_msg}")
+        
         return templates.TemplateResponse(
             "signup.html",
             {
                 "request": request,
-                "error": "Signup failed. Please try again."
+                "error": "Signup failed. Please try again or contact support."
             },
             status_code=400
         )
 
-
 @router.get("/auth/callback")
 async def auth_callback(request: Request):
+    """OAuth callback handler"""
     return templates.TemplateResponse("auth_callback.html", {"request": request})
-
 
 @router.post("/auth/confirm")
 async def confirm_email(request: Request):
+    """Email confirmation endpoint"""
     try:
         data = await request.json()
         token_hash = data.get("token_hash")
         type_param = data.get("type")
-
+        
         if not token_hash or type_param != "signup":
-            return {"success": False, "error": "Invalid parameters"}
-
+            return JSONResponse(
+                content={"success": False, "error": "Invalid parameters"},
+                status_code=400
+            )
+        
+        # Setup Supabase auth
+        setup_supabase_auth()
+        
+        # Verify OTP
         response = supabase.auth.verify_otp({
             "token_hash": token_hash,
             "type": "signup"
         })
-
+        
         if response.user:
-            return {"success": True}
+            logging.info(f"Email confirmed for user {response.user.email}")
+            return JSONResponse(content={"success": True})
         else:
-            return {"success": False, "error": "Verification failed"}
-
+            return JSONResponse(
+                content={"success": False, "error": "Verification failed"},
+                status_code=400
+            )
+            
     except Exception as e:
         logging.error(f"Email confirmation failed: {str(e)}")
-        return {"success": False, "error": "Confirmation failed"}
-
+        return JSONResponse(
+            content={"success": False, "error": "Confirmation failed"},
+            status_code=500
+        )
 
 @router.post("/auth/refresh")
-async def refresh_token(request: Request):
-    """Manual token refresh endpoint"""
-    refresh_token = request.cookies.get("sb_refresh_token")
-    if not refresh_token:
-        return {"success": False, "error": "No refresh token"}
-    
+async def refresh_token_endpoint(request: Request):
+    """Manual token refresh endpoint for client-side use"""
     try:
-        response = supabase.auth.refresh_session(refresh_token)
-        if response.session:
-            return {
-                "success": True,
-                "access_token": response.session.access_token,
-                "refresh_token": response.session.refresh_token
-            }
-        else:
-            return {"success": False, "error": "Refresh failed"}
+        refresh_token = request.cookies.get("sb_refresh_token")
+        if not refresh_token:
+            return JSONResponse(
+                content={"success": False, "error": "No refresh token found"},
+                status_code=401
+            )
+        
+        # Attempt token refresh
+        new_tokens = refresh_supabase_token(refresh_token)
+        if not new_tokens:
+            return JSONResponse(
+                content={"success": False, "error": "Token refresh failed"},
+                status_code=401
+            )
+        
+        # Validate new token
+        payload = decode_supabase_jwt(new_tokens["access_token"])
+        if not payload or not payload.get("sub"):
+            return JSONResponse(
+                content={"success": False, "error": "Invalid refreshed token"},
+                status_code=401
+            )
+        
+        # Create response with new tokens
+        response = JSONResponse(content={
+            "success": True,
+            "message": "Token refreshed successfully"
+        })
+        
+        # Update cookies
+        cookie_settings = get_cookie_settings()
+        response.set_cookie(
+            key="sb_access_token",
+            value=new_tokens["access_token"],
+            max_age=3600,
+            **cookie_settings
+        )
+        response.set_cookie(
+            key="sb_refresh_token",
+            value=new_tokens["refresh_token"],
+            max_age=86400 * 30,
+            **cookie_settings
+        )
+        
+        logging.info(f"Token refreshed for user {payload.get('sub')}")
+        return response
+        
     except Exception as e:
-        logging.error(f"Token refresh failed: {str(e)}")
-        return {"success": False, "error": "Refresh failed"}
+        logging.error(f"Token refresh endpoint error: {str(e)}")
+        return JSONResponse(
+            content={"success": False, "error": "Internal server error"},
+            status_code=500
+        )
 
 @router.get("/logout")
-async def logout():
+async def logout(request: Request):
+    """Enhanced logout with proper cleanup"""
     try:
+        # Get current user info for logging
+        access_token = request.cookies.get("sb_access_token")
+        user_email = "unknown"
+        
+        if access_token:
+            payload = decode_supabase_jwt(access_token)
+            if payload:
+                user_email = payload.get("email", "unknown")
+        
+        # Setup Supabase auth and sign out
+        setup_supabase_auth()
         supabase.auth.sign_out()
+        
+        logging.info(f"User {user_email} logged out successfully")
+        
     except Exception as e:
         logging.warning(f"Logout warning: {str(e)}")
-
+    
+    # Create redirect response and clear cookies
     response = RedirectResponse(url="/login", status_code=303)
-    response.delete_cookie("sb_access_token")
-    response.delete_cookie("sb_refresh_token")
+    clear_auth_cookies(response)
+    
     return response
