@@ -7,7 +7,6 @@ from datetime import datetime
 
 from app.database.database import get_db
 from app.database.models import Profile
-from app.schemas.profile import ProfileSchema
 from app.utils.auth import get_admin_user
 from app.utils.sheets import get_all_assets, update_asset, add_disposal_log
 from app.utils.flash import set_flash
