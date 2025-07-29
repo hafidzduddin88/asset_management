@@ -33,14 +33,24 @@ def decode_supabase_token(token: str) -> Optional[dict]:
 
         jwks = get_jwks()
         
-        # Try to find key by kid
+        # Find key by kid - must match exactly
         key_data = None
         if kid:
-            key_data = next((k for k in jwks.get("keys", []) if k.get("kid") == kid), None)
+            for key in jwks.get("keys", []):
+                if key.get("kid") == kid:
+                    key_data = key
+                    break
         
-        # Fallback: use first available key if kid not found
-        if not key_data and jwks.get("keys"):
-            key_data = jwks["keys"][0]
+        # If no kid match, try all keys until one works
+        if not key_data:
+            for key in jwks.get("keys", []):
+                try:
+                    test_key = jwk.construct(key)
+                    jwt.decode(token, test_key, algorithms=[alg])
+                    key_data = key
+                    break
+                except:
+                    continue
         
         if not key_data:
             return None
