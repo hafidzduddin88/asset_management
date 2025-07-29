@@ -15,7 +15,7 @@ from app.utils.flash import set_flash
 router = APIRouter(prefix="/disposal", tags=["disposal"])
 templates = Jinja2Templates(directory="app/templates")
 
-@router.get("/", response_class=HTMLResponse, response_model=ProfileSchema)
+@router.get("/", response_class=HTMLResponse)
 async def disposal_page(
     request: Request,
     db: Session = Depends(get_db),

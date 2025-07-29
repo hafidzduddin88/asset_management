@@ -25,20 +25,25 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Delete old Docker images
+      - name: Delete ALL Docker images
         run: |
-          TAGS=$(curl -s "https://hub.docker.com/v2/repositories/${{ env.DOCKER_REPO }}/tags/?page_size=50" | \
-                 jq -r '.results[] | select(.name != "latest") | .name' | head -10)
-          
+          # Get Docker Hub token
           TOKEN=$(curl -s -H "Content-Type: application/json" \
                   -X POST -d '{"username": "${{ secrets.DOCKERHUB_USERNAME }}", "password": "${{ secrets.DOCKERHUB_TOKEN }}"}' \
                   https://hub.docker.com/v2/users/login/ | jq -r .token)
           
+          # Get ALL tags
+          TAGS=$(curl -s "https://hub.docker.com/v2/repositories/${{ env.DOCKER_REPO }}/tags/?page_size=100" | \
+                 jq -r '.results[].name')
+          
+          # Delete ALL existing tags
           for tag in $TAGS; do
             echo "Deleting tag: $tag"
             curl -X DELETE -H "Authorization: JWT $TOKEN" \
                  "https://hub.docker.com/v2/repositories/${{ env.DOCKER_REPO }}/tags/$tag/" || true
           done
+          
+          echo "All images deleted. Fresh build will create latest tag."
 
       - name: Clear Docker cache
         run: |
@@ -50,9 +55,7 @@ jobs:
         with:
           context: .
           push: true
-          tags: |
-            ${{ env.DOCKER_REPO }}:latest
-            ${{ env.DOCKER_REPO }}:${{ github.sha }}
+          tags: ${{ env.DOCKER_REPO }}:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
           platforms: linux/amd64
