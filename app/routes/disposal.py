@@ -7,6 +7,7 @@ from datetime import datetime
 
 from app.database.database import get_db
 from app.database.models import Profile
+from app.schemas.profile import ProfileSchema
 from app.utils.auth import get_admin_user
 from app.utils.sheets import get_all_assets, update_asset, add_disposal_log
 from app.utils.flash import set_flash
@@ -14,7 +15,7 @@ from app.utils.flash import set_flash
 router = APIRouter(prefix="/disposal", tags=["disposal"])
 templates = Jinja2Templates(directory="app/templates")
 
-@router.get("/", response_class=HTMLResponse)
+@router.get("/", response_class=HTMLResponse, response_model=ProfileSchema)
 async def disposal_page(
     request: Request,
     db: Session = Depends(get_db),

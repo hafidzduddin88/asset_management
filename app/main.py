@@ -10,26 +10,25 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI(title="Asset Management System")
 
-# Add session auth middleware
+# Add middleware
 app.add_middleware(SessionAuthMiddleware)
 
-# Mount static files (CSS, JS, images, etc.)
+# Mount static files
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
-# Include route modules
+# Include routers
 app.include_router(login.router)
 
-# Health check endpoint
+# Health check
 @app.get("/health")
 async def health_check():
     return {"status": "healthy"}
 
-# Root endpoint (optional redirect)
+# Root redirect
 @app.get("/")
 async def root():
     return {"message": "Asset Management System"}
 
-# Run with `python main.py` in local development
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run(app, host="0.0.0.0", port=8000)
