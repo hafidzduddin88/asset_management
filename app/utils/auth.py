@@ -30,7 +30,15 @@ def get_jwks() -> dict:
             jwks_url = f"{config.SUPABASE_URL}/auth/v1/.well-known/jwks.json"
             resp = requests.get(jwks_url, timeout=10)
             resp.raise_for_status()
-            _jwks_cache = resp.json()
+            new_jwks = resp.json()
+            
+            # Log if keys changed
+            if _jwks_cache and _jwks_cache != new_jwks:
+                old_kids = [k.get('kid') for k in _jwks_cache.get('keys', [])]
+                new_kids = [k.get('kid') for k in new_jwks.get('keys', [])]
+                logging.info(f"JWKS keys updated: {old_kids} -> {new_kids}")
+            
+            _jwks_cache = new_jwks
             _jwks_cache_time = now
         except Exception as e:
             logging.error(f"Failed to fetch JWKS: {e}")
@@ -72,18 +80,28 @@ def decode_supabase_jwt(token: str) -> Optional[dict]:
         
         # Handle algorithm mismatch - token is HS256 but key is ES256
         if not key_data or alg == "HS256":
-            logging.warning(f"Algorithm mismatch or kid not found - trying HMAC with anon key")
+            logging.warning(f"Algorithm mismatch or kid not found - trying HMAC secrets")
             
-            # For HS256 tokens, use anon key as HMAC secret
+            # For HS256 tokens, try multiple HMAC secrets
             if alg == "HS256":
-                try:
-                    payload = jwt.decode(token, config.SUPABASE_ANON_KEY, algorithms=["HS256"])
-                    exp = payload.get("exp")
-                    if not exp or datetime.fromtimestamp(exp, tz=timezone.utc) >= datetime.now(tz=timezone.utc):
-                        logging.info("Successfully decoded HS256 token with anon key")
-                        return payload
-                except Exception as e:
-                    logging.debug(f"HS256 with anon key failed: {e}")
+                secrets_to_try = [
+                    config.SUPABASE_ANON_KEY,
+                    config.SUPABASE_JWT_SECRET if hasattr(config, 'SUPABASE_JWT_SECRET') else None,
+                    config.SUPABASE_SERVICE_KEY if hasattr(config, 'SUPABASE_SERVICE_KEY') else None
+                ]
+                
+                for secret in secrets_to_try:
+                    if not secret:
+                        continue
+                    try:
+                        payload = jwt.decode(token, secret, algorithms=["HS256"])
+                        exp = payload.get("exp")
+                        if not exp or datetime.fromtimestamp(exp, tz=timezone.utc) >= datetime.now(tz=timezone.utc):
+                            logging.info(f"Successfully decoded HS256 token with secret")
+                            return payload
+                    except Exception as e:
+                        logging.debug(f"HS256 with secret failed: {e}")
+                        continue
             
             # Try all available keys with their native algorithms
             for key in keys:
