@@ -25,51 +25,41 @@ async def login_form(
     next: str = Form(None)
 ):
     try:
-        # Use service key client for admin operations
-        from supabase import create_client
-        admin_supabase = create_client(config.SUPABASE_URL, config.SUPABASE_SERVICE_KEY)
-        
-        response = admin_supabase.auth.sign_in_with_password({
+        response = supabase.auth.sign_in_with_password({
             "email": email,
             "password": password
         })
+        # Render.com specific cookie configuration
+        render_domain = urlparse(os.getenv('APP_URL', '')).netloc
         
-        if not response.user:
-            return templates.TemplateResponse(
-                "login_logout.html",
-                {"request": request, "error": "Invalid email or password", "next": next},
-                status_code=401
-            )
+        redirect_response = RedirectResponse(url=next or "/", status_code=303)
         
-        # Get user profile
-        profile_response = admin_supabase.table('profiles').select('*').eq('id', response.user.id).single().execute()
-        if not profile_response.data or not profile_response.data.get('is_active'):
-            return templates.TemplateResponse(
-                "login_logout.html",
-                {"request": request, "error": "Account is inactive", "next": next},
-                status_code=401
-            )
-        
-        redirect_url = next if next else "/"
-        redirect_response = RedirectResponse(url=redirect_url, status_code=303)
-        
+        # Adjust cookie settings for Render
         redirect_response.set_cookie(
             key="sb_access_token",
             value=response.session.access_token,
             httponly=True,
-            max_age=3600,
-            samesite="lax",
             secure=True,
-            domain=".onrender.com"
+            samesite="lax",
+            max_age=3600,
+            domain=render_domain or None  # Use None if domain parsing fails
         )
         
         return redirect_response
-        
     except Exception as e:
-        logging.error(f"Login error: {str(e)}")
+        # Detailed logging
+        logging.error(f"Login Error on Render: {str(e)}", extra={
+            'email': email,
+            'render_url': os.getenv('RENDER_EXTERNAL_URL')
+        })
+        
         return templates.TemplateResponse(
             "login_logout.html",
-            {"request": request, "error": "Login failed", "next": next},
+            {
+                "request": request, 
+                "error": "Login failed. Please check your credentials.",
+                "next": next
+            },
             status_code=401
         )
 
