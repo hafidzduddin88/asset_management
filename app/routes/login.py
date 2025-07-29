@@ -104,9 +104,6 @@ async def login_form(
 ):
     """Enhanced login with Supabase auth and JWT rotation support"""
     try:
-        # Setup Supabase auth
-        setup_supabase_auth()
-        
         # Attempt login
         response = supabase.auth.sign_in_with_password({
             "email": email,
@@ -165,9 +162,6 @@ async def signup_form(
 ):
     """Enhanced signup with Supabase auth"""
     try:
-        # Setup Supabase auth
-        setup_supabase_auth()
-        
         # Attempt signup
         response = supabase.auth.sign_up({
             "email": email,
@@ -223,9 +217,6 @@ async def confirm_email(request: Request):
                 content={"success": False, "error": "Invalid parameters"},
                 status_code=400
             )
-        
-        # Setup Supabase auth
-        setup_supabase_auth()
         
         # Verify OTP
         response = supabase.auth.verify_otp({
@@ -320,9 +311,6 @@ async def forgot_password(request: Request):
                 status_code=400
             )
         
-        # Setup Supabase auth
-        setup_supabase_auth()
-        
         # Send password reset email
         response = supabase.auth.reset_password_email(email)
         
@@ -353,8 +341,7 @@ async def logout(request: Request):
             if payload:
                 user_email = payload.get("email", "unknown")
         
-        # Setup Supabase auth and sign out
-        setup_supabase_auth()
+        # Sign out
         supabase.auth.sign_out()
         
         logging.info(f"User {user_email} logged out successfully")
