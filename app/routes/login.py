@@ -4,7 +4,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from supabase import create_client, Client
 from app.config import load_config
-from app.auth import decode_supabase_token
+from app.utils.auth import decode_supabase_token
 import logging
 import os
 from urllib.parse import urlparse
