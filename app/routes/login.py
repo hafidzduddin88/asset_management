@@ -60,6 +60,82 @@ async def login_form(
             status_code=401
         )
 
+@router.get("/signup", response_class=HTMLResponse)
+async def signup_page(request: Request):
+    return templates.TemplateResponse("signup.html", {"request": request})
+
+@router.post("/signup")
+async def signup_form(
+    request: Request,
+    email: str = Form(...),
+    password: str = Form(...),
+    full_name: str = Form(...)
+):
+    try:
+        # Create user in Supabase Auth
+        response = supabase.auth.sign_up({
+            "email": email,
+            "password": password,
+            "options": {
+                "data": {
+                    "full_name": full_name
+                }
+            }
+        })
+        
+        if not response.user:
+            raise Exception("Signup failed")
+        
+        return templates.TemplateResponse(
+            "signup.html",
+            {
+                "request": request,
+                "success": "Account created! Please check your email to verify."
+            }
+        )
+        
+    except Exception as e:
+        logging.error(f"Signup failed: {str(e)}")
+        return templates.TemplateResponse(
+            "signup.html",
+            {
+                "request": request,
+                "error": "Signup failed. Please try again."
+            },
+            status_code=400
+        )
+
+@router.get("/auth/callback")
+async def auth_callback(request: Request):
+    return templates.TemplateResponse("auth_callback.html", {"request": request})
+
+@router.post("/auth/confirm")
+async def confirm_email(
+    request: Request
+):
+    try:
+        data = await request.json()
+        token_hash = data.get('token_hash')
+        type_param = data.get('type')
+        
+        if not token_hash or type_param != 'signup':
+            return {"success": False, "error": "Invalid parameters"}
+        
+        # Verify email with Supabase
+        response = supabase.auth.verify_otp({
+            "token_hash": token_hash,
+            "type": "signup"
+        })
+        
+        if response.user:
+            return {"success": True}
+        else:
+            return {"success": False, "error": "Verification failed"}
+            
+    except Exception as e:
+        logging.error(f"Email confirmation failed: {str(e)}")
+        return {"success": False, "error": "Confirmation failed"}
+
 @router.get("/logout")
 async def logout():
     try:

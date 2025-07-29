@@ -1,21 +1,75 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Processing...</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Confirmation - AMBP</title>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-    <script>
-        // Extract token from URL fragment
-        const hash = window.location.hash.substring(1);
-        const params = new URLSearchParams(hash);
-        const accessToken = params.get('access_token');
+<body class="bg-gray-50 min-h-screen flex items-center justify-center">
+    <div class="max-w-md w-full space-y-8 text-center">
+        <div id="loading" class="hidden">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+            <p class="mt-4 text-gray-600">Confirming your email...</p>
+        </div>
         
-        if (accessToken) {
-            // Set cookie and redirect
-            document.cookie = `sb_access_token=${accessToken}; path=/; max-age=3600; secure; samesite=lax`;
-            window.location.href = '/dashboard';
+        <div id="success" class="hidden">
+            <div class="bg-green-100 p-6 rounded-lg">
+                <h2 class="text-2xl font-bold text-green-800 mb-4">Email Confirmed!</h2>
+                <p class="text-green-700 mb-4">Your account has been verified successfully.</p>
+                <a href="/login" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                    Sign In Now
+                </a>
+            </div>
+        </div>
+        
+        <div id="error" class="hidden">
+            <div class="bg-red-100 p-6 rounded-lg">
+                <h2 class="text-2xl font-bold text-red-800 mb-4">Confirmation Failed</h2>
+                <p class="text-red-700 mb-4">Invalid or expired confirmation link.</p>
+                <a href="/signup" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                    Sign Up Again
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('loading').classList.remove('hidden');
+        
+        // Get URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const tokenHash = urlParams.get('token_hash');
+        const type = urlParams.get('type');
+        
+        if (tokenHash && type === 'signup') {
+            // Confirm email with Supabase
+            fetch('/auth/confirm', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    token_hash: tokenHash,
+                    type: type
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('loading').classList.add('hidden');
+                if (data.success) {
+                    document.getElementById('success').classList.remove('hidden');
+                } else {
+                    document.getElementById('error').classList.remove('hidden');
+                }
+            })
+            .catch(error => {
+                document.getElementById('loading').classList.add('hidden');
+                document.getElementById('error').classList.remove('hidden');
+            });
         } else {
-            window.location.href = '/login';
+            document.getElementById('loading').classList.add('hidden');
+            document.getElementById('error').classList.remove('hidden');
         }
     </script>
 </body>
