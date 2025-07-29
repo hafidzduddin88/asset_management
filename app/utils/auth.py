@@ -4,7 +4,7 @@ from app.config import load_config
 import logging
 
 config = load_config()
-supabase: Client = create_client(config.SUPABASE_URL, config.SUPABASE_SERVICE_KEY)
+supabase: Client = create_client(config.SUPABASE_URL, config.SUPABASE_ANON_KEY)
 
 class CurrentUser:
     def __init__(self, id: str, email: str, username: str, role: str, full_name: str = None):
@@ -34,7 +34,7 @@ async def get_current_user(request: Request) -> CurrentUser:
                 detail="Invalid token"
             )
         
-        profile_response = supabase.table('profiles').select('*').eq('id', user_id).single().execute()
+        profile_response = supabase.table('profiles').select('*').eq('auth_user_id', user_id).single().execute()
         if not profile_response.data or not profile_response.data.get('is_active'):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
