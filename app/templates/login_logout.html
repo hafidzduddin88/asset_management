@@ -7,27 +7,27 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
 </head>
-<body class="bg-gray-50 min-h-screen flex items-center justify-center">
-    <div class="max-w-md w-full space-y-8" x-data="authForm()">
+<body class="bg-gray-50 min-h-screen flex items-center justify-center px-4 py-8">
+    <div class="max-w-md w-full space-y-6" x-data="authForm()">
         <!-- Header -->
         <div class="text-center">
-            <h2 class="mt-6 text-3xl font-extrabold text-gray-900" x-text="currentMode === 'login' ? 'Sign In' : currentMode === 'signup' ? 'Create Account' : 'Reset Password'"></h2>
-            <p class="mt-2 text-sm text-gray-600">Asset Management Business Platform</p>
+            <h2 class="text-2xl sm:text-3xl font-extrabold text-gray-900" x-text="currentMode === 'login' ? 'Sign In' : currentMode === 'signup' ? 'Create Account' : 'Reset Password'"></h2>
+            <p class="mt-2 text-xs sm:text-sm text-gray-600">Asset Management Business Platform</p>
         </div>
 
         <!-- Login Form -->
-        <form x-show="currentMode === 'login'" method="POST" action="/login" class="mt-8 space-y-6">
+        <form x-show="currentMode === 'login'" method="POST" action="/login" class="space-y-4">
             <input type="hidden" name="next" value="{{ next or '' }}">
             
             <div class="rounded-md shadow-sm -space-y-px">
                 <div>
                     <input type="email" name="email" required
-                           class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+                           class="appearance-none rounded-none relative block w-full px-3 py-3 sm:py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 text-base sm:text-sm"
                            placeholder="Email address">
                 </div>
                 <div>
                     <input type="password" name="password" required
-                           class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+                           class="appearance-none rounded-none relative block w-full px-3 py-3 sm:py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 text-base sm:text-sm"
                            placeholder="Password">
                 </div>
             </div>
@@ -46,7 +46,7 @@
 
             <div>
                 <button type="submit"
-                        class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        class="group relative w-full flex justify-center py-3 sm:py-2 px-4 border border-transparent text-base sm:text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 touch-manipulation">
                     Sign In
                 </button>
             </div>
@@ -60,28 +60,28 @@
         </form>
 
         <!-- Signup Form -->
-        <form x-show="currentMode === 'signup'" method="POST" action="/signup" class="mt-8 space-y-6">
+        <form x-show="currentMode === 'signup'" method="POST" action="/signup" class="space-y-4">
             <div class="rounded-md shadow-sm -space-y-px">
                 <div>
                     <input type="text" name="full_name" required
-                           class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+                           class="appearance-none rounded-none relative block w-full px-3 py-3 sm:py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 text-base sm:text-sm"
                            placeholder="Full Name">
                 </div>
                 <div>
                     <input type="email" name="email" required
-                           class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+                           class="appearance-none rounded-none relative block w-full px-3 py-3 sm:py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 text-base sm:text-sm"
                            placeholder="Email address">
                 </div>
                 <div>
                     <input type="password" name="password" required minlength="6"
-                           class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+                           class="appearance-none rounded-none relative block w-full px-3 py-3 sm:py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 text-base sm:text-sm"
                            placeholder="Password (min 6 characters)">
                 </div>
             </div>
 
             <div>
                 <button type="submit"
-                        class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                        class="group relative w-full flex justify-center py-3 sm:py-2 px-4 border border-transparent text-base sm:text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 touch-manipulation">
                     Create Account
                 </button>
             </div>
@@ -95,16 +95,16 @@
         </form>
 
         <!-- Forgot Password Form -->
-        <form x-show="currentMode === 'forgot'" @submit="handleForgotPassword" class="mt-8 space-y-6">
+        <form x-show="currentMode === 'forgot'" @submit="handleForgotPassword" class="space-y-4">
             <div class="rounded-md shadow-sm">
                 <input type="email" x-model="forgotEmail" required
-                       class="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+                       class="appearance-none relative block w-full px-3 py-3 sm:py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 text-base sm:text-sm"
                        placeholder="Enter your email address">
             </div>
 
             <div>
                 <button type="submit"
-                        class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500">
+                        class="group relative w-full flex justify-center py-3 sm:py-2 px-4 border border-transparent text-base sm:text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 touch-manipulation">
                     Send Reset Link
                 </button>
             </div>

@@ -1,6 +1,5 @@
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
 from app.middleware.session_auth import SessionAuthMiddleware
 from app.routes import login
 import logging
@@ -11,25 +10,26 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI(title="Asset Management System")
 
-# Add middleware
+# Add session auth middleware
 app.add_middleware(SessionAuthMiddleware)
 
-# Mount static files
+# Mount static files (CSS, JS, images, etc.)
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
-# Include routers
+# Include route modules
 app.include_router(login.router)
 
-# Health check
+# Health check endpoint
 @app.get("/health")
 async def health_check():
     return {"status": "healthy"}
 
-# Root redirect
+# Root endpoint (optional redirect)
 @app.get("/")
 async def root():
     return {"message": "Asset Management System"}
 
+# Run with `python main.py` in local development
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
