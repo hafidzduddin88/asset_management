@@ -25,11 +25,11 @@ class Config:
         return db_url
 
     @property
-    def SECRET_KEY(self) -> str:
+    def SUPABASE_JWT_SECRET(self) -> str:
         """JWT Secret Key (Supabase Legacy JWT Secret)"""
-        secret = os.getenv("SECRET_KEY")
+        secret = os.getenv("SUPABASE_JWT_SECRET")
         if not secret:
-            raise RuntimeError("SECRET_KEY is not set in environment")
+            raise RuntimeError("SUPABASE_JWT_SECRET is not set in environment")
         return secret
 
     @property

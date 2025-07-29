@@ -39,7 +39,7 @@ class SessionAuthMiddleware(BaseHTTPMiddleware):
         
         try:
             from jose import jwt
-            payload = jwt.decode(token, config.SECRET_KEY, algorithms=["HS256"])
+            payload = jwt.decode(token, config.SUPABASE_JWT_SECRET, algorithms=["HS256"])
             user_id = payload.get("sub")
             
             if not user_id:
