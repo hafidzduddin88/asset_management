@@ -29,7 +29,10 @@ async def login_form(
     try:
         response = supabase.auth.sign_in_with_password({
             "email": email,
-            "password": password
+            "password": password,
+            "options": {
+                "captcha_token": None
+            }
         })
         # Render.com specific cookie configuration
         render_domain = urlparse(os.getenv('APP_URL', '')).netloc
