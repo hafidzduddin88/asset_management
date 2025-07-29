@@ -27,20 +27,25 @@ def get_jwks() -> dict:
 
 def decode_supabase_token(token: str) -> Optional[dict]:
     try:
+        headers = jwt.get_unverified_header(token)
+        kid = headers.get("kid")
+        alg = headers.get("alg", "ES256")
+
         jwks = get_jwks()
-        header = jwt.get_unverified_header(token)
-        kid = header.get("kid")
-        alg = header.get("alg")
-
-        if not kid or not alg:
-            return None
-
-        key_data = next((key for key in jwks["keys"] if key["kid"] == kid), None)
+        
+        # Try to find key by kid
+        key_data = None
+        if kid:
+            key_data = next((k for k in jwks.get("keys", []) if k.get("kid") == kid), None)
+        
+        # Fallback: use first available key if kid not found
+        if not key_data and jwks.get("keys"):
+            key_data = jwks["keys"][0]
+        
         if not key_data:
             return None
 
         public_key = jwk.construct(key_data)
-
         payload = jwt.decode(token, public_key, algorithms=[alg])
 
         # Optional: check expiry
