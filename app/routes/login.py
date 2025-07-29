@@ -58,7 +58,7 @@ async def login_form(
             httponly=True,
             max_age=3600,
             samesite="lax",
-            secure=True
+            secure=False
         )
         
         return redirect_response

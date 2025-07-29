@@ -20,7 +20,8 @@ class SessionAuthMiddleware(BaseHTTPMiddleware):
             request.url.path == "/service-worker.js" or
             request.url.path == "/manifest.json" or
             request.url.path == "/favicon.ico" or
-            request.method == "HEAD"
+            request.method == "HEAD" or
+            (request.url.path == "/login" and request.method == "POST")
         ):
             return await call_next(request)
         
