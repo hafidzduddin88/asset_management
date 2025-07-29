@@ -5,6 +5,8 @@ from fastapi.templating import Jinja2Templates
 from supabase import create_client, Client
 from app.config import load_config
 import logging
+import os
+from urllib.parse import urlparse
 
 config = load_config()
 supabase: Client = create_client(config.SUPABASE_URL, config.SUPABASE_ANON_KEY)

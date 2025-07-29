@@ -21,7 +21,7 @@ def get_token_from_request(request: Request) -> Optional[str]:
     auth_header = request.headers.get("Authorization")
     if auth_header and auth_header.startswith("Bearer "):
         return auth_header.split(" ", 1)[1]
-    return request.cookies.get("access_token")
+    return request.cookies.get("sb_access_token")
 
 def get_current_profile(request: Request) -> Profile:
     token = get_token_from_request(request)
