@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from fastapi import Depends, HTTPException, status, Request
+from fastapi import Request, HTTPException, status
 from jose import jwt, jwk
 from jose.exceptions import JWTError
 from supabase import create_client, Client
@@ -16,33 +16,42 @@ supabase: Client = create_client(config.SUPABASE_URL, config.SUPABASE_ANON_KEY)
 # JWKS cache
 _jwks_cache: Optional[dict] = None
 _jwks_cache_time: Optional[datetime] = None
-JWKS_CACHE_TTL = 300  # 5 minutes
+JWKS_CACHE_TTL = 300  # seconds (5 minutes)
 
 def get_jwks() -> dict:
-    """Fetch and cache Supabase JWKS (public keys)"""
+    """Fetch JWKS keys with caching."""
     global _jwks_cache, _jwks_cache_time
+
     now = datetime.now()
-    if _jwks_cache is None or (
-        _jwks_cache_time and (now - _jwks_cache_time).total_seconds() > JWKS_CACHE_TTL
-    ):
+    if _jwks_cache is None or (_jwks_cache_time and (now - _jwks_cache_time).total_seconds() > JWKS_CACHE_TTL):
         try:
-            url = f"{config.SUPABASE_URL}/auth/v1/.well-known/jwks.json"
-            resp = requests.get(url, timeout=10)
+            jwks_url = f"{config.SUPABASE_URL}/auth/v1/.well-known/jwks.json"
+            resp = requests.get(jwks_url, timeout=10)
             resp.raise_for_status()
-            _jwks_cache = resp.json()
+            new_jwks = resp.json()
+
+            if _jwks_cache and _jwks_cache != new_jwks:
+                old_kids = [k.get('kid') for k in _jwks_cache.get('keys', [])]
+                new_kids = [k.get('kid') for k in new_jwks.get('keys', [])]
+                logging.info(f"JWKS keys updated: {old_kids} -> {new_kids}")
+            else:
+                logging.info("JWKS cache updated")
+
+            _jwks_cache = new_jwks
             _jwks_cache_time = now
-            logging.info("JWKS cache updated")
         except Exception as e:
             logging.error(f"Failed to fetch JWKS: {e}")
-            raise
+            if _jwks_cache is None:
+                raise
+
     return _jwks_cache
 
 def decode_supabase_jwt(token: str) -> Optional[dict]:
-    """Decode Supabase JWT using ES256 public key from JWKS"""
+    """Decode Supabase JWT using ES256 with public key (JWKS)."""
     try:
         headers = jwt.get_unverified_header(token)
         kid = headers.get("kid")
-        alg = headers.get("alg")
+        alg = headers.get("alg", "ES256")
 
         if alg != "ES256":
             logging.error(f"Unsupported JWT alg: {alg}. Only ES256 is allowed.")
@@ -50,30 +59,41 @@ def decode_supabase_jwt(token: str) -> Optional[dict]:
 
         jwks = get_jwks()
         keys = jwks.get("keys", [])
-        key_data = next((k for k in keys if k.get("kid") == kid), None)
+        if not keys:
+            logging.error("No JWKS keys available")
+            return None
 
+        key_data = next((k for k in keys if k.get("kid") == kid), None)
         if not key_data:
-            logging.error(f"No matching JWKS key found for kid: {kid}")
+            logging.error(f"No key found for kid: {kid}")
             return None
 
         public_key = jwk.construct(key_data)
-        payload = jwt.decode(token, public_key, algorithms=["ES256"])
+        payload = jwt.decode(
+            token,
+            public_key,
+            algorithms=["ES256"],
+            options={"verify_aud": False}  # Disable audience check
+        )
 
-        # Check expiry
+        # Validate expiration
         exp = payload.get("exp")
         if exp and datetime.fromtimestamp(exp, tz=timezone.utc) < datetime.now(tz=timezone.utc):
             logging.warning(f"Token expired for user {payload.get('sub')}")
             return None
 
-        logging.info(f"Token successfully decoded for user {payload.get('sub')}")
+        logging.info(f"Successfully decoded token for user {payload.get('sub')}")
         return payload
 
-    except Exception as e:
+    except JWTError as e:
         logging.error(f"JWT decode error: {e}")
+        return None
+    except Exception as e:
+        logging.error(f"Unexpected JWT error: {e}")
         return None
 
 def refresh_supabase_token(refresh_token: str) -> Optional[dict]:
-    """Refresh Supabase access token using the refresh token"""
+    """Refresh access/refresh tokens using Supabase API."""
     try:
         url = f"{config.SUPABASE_URL}/auth/v1/token?grant_type=refresh_token"
         headers = {
@@ -81,6 +101,7 @@ def refresh_supabase_token(refresh_token: str) -> Optional[dict]:
             "Content-Type": "application/json"
         }
         payload = {"refresh_token": refresh_token}
+
         response = requests.post(url, headers=headers, json=payload)
         response.raise_for_status()
         data = response.json()
@@ -95,18 +116,27 @@ def refresh_supabase_token(refresh_token: str) -> Optional[dict]:
         return None
 
 def get_current_profile(request: Request) -> Profile:
-    """Get user profile from middleware state"""
+    """Get current authenticated user's profile."""
     if not hasattr(request.state, 'user') or not request.state.user:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated"
+        )
 
     user_id = request.state.user.get("id")
     if not user_id:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid user session")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid user session"
+        )
 
     try:
         response = supabase.table("profiles").select("*").eq("auth_user_id", user_id).execute()
         if not response.data or not response.data[0].get("is_active"):
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not active or not found")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="User not active or not found"
+            )
 
         profile_data = response.data[0]
         profile = Profile()
@@ -117,30 +147,39 @@ def get_current_profile(request: Request) -> Profile:
         profile.role = UserRole(profile_data.get("role"))
         profile.is_active = profile_data.get("is_active")
         profile.photo_url = profile_data.get("photo_url")
+
         return profile
 
-    except HTTPException:
-        raise
     except Exception as e:
-        logging.error(f"Failed to fetch user profile: {e}")
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Failed to get user profile")
+        logging.error(f"Failed to get user profile: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Failed to get user profile"
+        )
 
 def require_roles(allowed_roles: List[UserRole]):
-    """Dependency to restrict routes to specific roles"""
-    def role_checker(current_profile: Profile = Depends(get_current_profile)) -> Profile:
+    """Check if current profile has one of the allowed roles."""
+    def role_checker(current_profile: Profile = get_current_profile) -> Profile:
         if current_profile.role not in allowed_roles:
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions")
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Not enough permissions"
+            )
         return current_profile
     return role_checker
 
-def get_admin_user(current_profile: Profile = Depends(get_current_profile)) -> Profile:
-    """Ensure current user is an admin"""
+def get_admin_user(current_profile: Profile = get_current_profile) -> Profile:
     if current_profile.role != UserRole.ADMIN:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin access required")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin access required"
+        )
     return current_profile
 
-def get_manager_user(current_profile: Profile = Depends(get_current_profile)) -> Profile:
-    """Ensure current user is a manager or admin"""
+def get_manager_user(current_profile: Profile = get_current_profile) -> Profile:
     if current_profile.role not in [UserRole.ADMIN, UserRole.MANAGER]:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Manager access required")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Manager access required"
+        )
     return current_profile
