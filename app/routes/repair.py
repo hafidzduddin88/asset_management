@@ -1,13 +1,13 @@
 # /app/app/routes/repair.py
 from fastapi import APIRouter, Request, Depends
 from starlette.templating import Jinja2Templates
-from app.utils.auth import get_current_user
+from app.utils.auth import get_current_profile
 
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
 
 @router.post("/action")
-async def submit_repair_action(request: Request, current_user = Depends(get_current_user)):
+async def submit_repair_action(request: Request, current_user = Depends(get_current_profile)):
     """Submit repair action - creates approval request for store, direct action for allocate"""
     from app.utils.sheets import add_repair_log, update_asset, add_approval_request
     from datetime import datetime
@@ -23,7 +23,7 @@ async def submit_repair_action(request: Request, current_user = Depends(get_curr
                 'type': 'repair_action',
                 'asset_id': data.get('asset_id'),
                 'asset_name': data.get('asset_name'),
-                'submitted_by': current_user.username,
+                'submitted_by': current_user.full_name or current_user.email,
                 'submitted_date': datetime.now().strftime('%Y-%m-%d'),
                 'description': f"Request to store asset: {data.get('description')}",
                 'action': 'Store Asset'
@@ -44,7 +44,7 @@ async def submit_repair_action(request: Request, current_user = Depends(get_curr
                 'repair_action': 'Allocate Asset',
                 'action_type': action_type,
                 'description': data.get('description', ''),
-                'performed_by': current_user.username,
+                'performed_by': current_user.full_name or current_user.email,
                 'action_date': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
                 'new_location': data.get('location', ''),
                 'new_room': data.get('room', ''),

@@ -9,5 +9,11 @@ from app.routes import (
     damage,
     health,
     offline,
-    profile
+    profile,
+    repair,
+    approvals,
+    disposal,
+    user_management,
+    logs,
+    relocation
 )
