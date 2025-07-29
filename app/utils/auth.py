@@ -132,7 +132,7 @@ def get_current_profile(request: Request) -> ProfileResponse:
         )
 
     try:
-        response = supabase.table("profiles").select("*").eq("auth_user_id", user_id).execute()
+        response = supabase.table("profiles").select("*").eq("id", user_id).execute()
         if not response.data or not response.data[0].get("is_active"):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
@@ -142,11 +142,11 @@ def get_current_profile(request: Request) -> ProfileResponse:
         profile_data = response.data[0]
         return ProfileResponse(
             id=str(profile_data.get("id")),
-            auth_user_id=str(profile_data.get("auth_user_id")),
+            auth_user_id=str(profile_data.get("id")),  # Use id as auth_user_id
             email=profile_data.get("email"),
             full_name=profile_data.get("full_name"),
-            role=UserRole(profile_data.get("role")),
-            is_active=profile_data.get("is_active"),
+            role=UserRole(profile_data.get("role", "staff")),
+            is_active=profile_data.get("is_active", True),
             photo_url=profile_data.get("photo_url")
         )
 
