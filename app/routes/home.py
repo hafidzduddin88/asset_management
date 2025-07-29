@@ -13,7 +13,7 @@ templates = Jinja2Templates(directory="app/templates")
 async def redirect_root():
     return RedirectResponse("/dashboard")
 
-@router.get("/dashboard")
+@router.get("/dashboard", response_model=None)
 async def home(request: Request, current_profile = Depends(get_current_profile)):
     try:
         # Summary and chart data
