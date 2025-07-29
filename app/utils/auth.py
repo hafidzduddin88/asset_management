@@ -1,64 +1,69 @@
+from datetime import datetime, timezone
 from fastapi import Depends, HTTPException, status, Request
+from jose import JWTError, jwt
 from supabase import create_client, Client
+from typing import Optional, List
+
+from app.database.models import Profile, UserRole
 from app.config import load_config
-import logging
 
 config = load_config()
+ALGORITHM = "HS256"
 supabase: Client = create_client(config.SUPABASE_URL, config.SUPABASE_ANON_KEY)
 
-class CurrentUser:
-    def __init__(self, id: str, email: str, username: str, role: str, full_name: str = None):
-        self.id = id
-        self.email = email
-        self.username = username
-        self.role = role
-        self.full_name = full_name
-
-async def get_current_user(request: Request) -> CurrentUser:
-    token = request.cookies.get("sb_access_token")
-    if not token:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Not authenticated"
-        )
-    
+def decode_supabase_token(token: str) -> Optional[dict]:
     try:
-        # Verify JWT token with Supabase secret
-        from jose import jwt
-        payload = jwt.decode(token, config.SECRET_KEY, algorithms=["HS256"])
-        user_id = payload.get("sub")
-        
-        if not user_id:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid token"
-            )
-        
-        profile_response = supabase.table('profiles').select('*').eq('auth_user_id', user_id).single().execute()
-        if not profile_response.data or not profile_response.data.get('is_active'):
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Account inactive"
-            )
-        
-        return CurrentUser(
-            id=user_id,
-            email=payload.get('email', ''),
-            username=profile_response.data.get('username', payload.get('email', '')),
-            role=profile_response.data.get('role', 'staff'),
-            full_name=profile_response.data.get('full_name')
-        )
-    except Exception as e:
-        logging.error(f"Auth error: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Authentication failed"
-        )
+        return jwt.decode(token, config.SUPABASE_JWT_SECRET, algorithms=[ALGORITHM])
+    except JWTError:
+        return None
 
-def get_admin_user(current_user: CurrentUser = Depends(get_current_user)) -> CurrentUser:
-    if current_user.role != 'admin':
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not enough permissions"
-        )
-    return current_user
+def get_token_from_request(request: Request) -> Optional[str]:
+    auth_header = request.headers.get("Authorization")
+    if auth_header and auth_header.startswith("Bearer "):
+        return auth_header.split(" ", 1)[1]
+    return request.cookies.get("access_token")
+
+def get_current_profile(request: Request) -> Profile:
+    token = get_token_from_request(request)
+    if not token:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
+
+    payload = decode_supabase_token(token)
+    if not payload:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
+
+    user_id: str = payload.get("sub")
+    if not user_id:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token payload")
+
+    # Query profiles table using Supabase
+    response = supabase.table("profiles").select("*").eq("auth_user_id", user_id).execute()
+    
+    if not response.data or not response.data[0].get("is_active"):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not active or not found")
+
+    profile_data = response.data[0]
+    
+    # Create Profile object
+    profile = Profile()
+    profile.id = profile_data.get("id")
+    profile.auth_user_id = profile_data.get("auth_user_id")
+    profile.email = profile_data.get("email")
+    profile.full_name = profile_data.get("full_name")
+    profile.role = UserRole(profile_data.get("role"))
+    profile.is_active = profile_data.get("is_active")
+    profile.photo_url = profile_data.get("photo_url")
+
+    return profile
+
+def require_roles(allowed_roles: List[UserRole]):
+    def role_checker(current_profile: Profile = Depends(get_current_profile)) -> Profile:
+        if current_profile.role not in allowed_roles:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions")
+        return current_profile
+    return role_checker
+
+def get_admin_user(current_profile: Profile = Depends(get_current_profile)) -> Profile:
+    if current_profile.role != UserRole.ADMIN:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions")
+    return current_profile

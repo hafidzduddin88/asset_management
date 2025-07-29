@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 
 from app.database.database import get_db
 from app.database.models import Profile
-from app.utils.auth import get_current_user
+from app.utils.auth import get_current_profile
 from app.utils.photo import resize_and_convert_image, upload_to_drive
 from app.utils.flash import set_flash
 

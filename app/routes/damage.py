@@ -1,7 +1,7 @@
 # app/routes/damage.py
 from fastapi import APIRouter, Request, Depends
 from starlette.templating import Jinja2Templates
-from app.utils.auth import get_current_user
+from app.utils.auth import get_current_profile
 
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")

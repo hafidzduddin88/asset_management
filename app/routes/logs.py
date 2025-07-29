@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.database.database import get_db
 from app.database.models import Profile
-from app.utils.auth import get_current_user
+from app.utils.auth import get_current_profile
 from app.utils.sheets import get_all_approvals
 
 router = APIRouter(prefix="/logs", tags=["logs"])

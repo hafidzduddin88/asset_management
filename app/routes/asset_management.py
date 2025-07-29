@@ -12,7 +12,7 @@ from app.database.models import Profile, UserRole
 from app.utils.photo import resize_and_convert_image, upload_to_drive
 from app.utils.sheets import get_dropdown_options, add_asset as sheets_add_asset
 from app.utils.flash import set_flash
-from app.utils.auth import get_current_user, get_admin_user
+from app.utils.auth import get_current_profile, get_admin_user
 from app.config import load_config
 
 config = load_config()

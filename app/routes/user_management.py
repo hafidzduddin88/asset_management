@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.database.database import get_db
 from app.database.models import Profile, UserRole
-from app.utils.auth import get_current_user, get_admin_user
+from app.utils.auth import get_current_profile, get_admin_user
 from app.utils.flash import set_flash
 
 router = APIRouter(prefix="/user_management", tags=["user_management"])
