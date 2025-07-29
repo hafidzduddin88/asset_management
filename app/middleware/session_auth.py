@@ -10,32 +10,31 @@ from datetime import datetime, timezone
 config = load_config()
 
 class SessionAuthMiddleware(BaseHTTPMiddleware):
-    """Minimal session auth middleware for JWT token management"""
-    
+    """Middleware to validate and refresh Supabase JWT sessions (ES256 only)"""
+
     SKIP_PATHS = {
         "/login", "/signup", "/health", "/favicon.ico", "/static",
         "/auth/callback", "/auth/confirm", "/auth/refresh", "/auth/forgot-password"
     }
-    
+
     async def dispatch(self, request: Request, call_next):
-        # Skip auth for public paths
+        # Skip auth for public and static paths
         if any(request.url.path.startswith(path) for path in self.SKIP_PATHS):
             return await call_next(request)
-        
+
         if request.method in ["HEAD", "OPTIONS"]:
             return await call_next(request)
-        
-        # Get tokens
+
         access_token = request.cookies.get("sb_access_token")
         refresh_token = request.cookies.get("sb_refresh_token")
-        
+
         if not access_token and not refresh_token:
             return RedirectResponse(f"/login?next={quote(request.url.path)}", status_code=303)
-        
+
         user_info = None
         new_tokens = None
-        
-        # Validate access token
+
+        # Try access token first
         if access_token:
             payload = decode_supabase_jwt(access_token)
             if payload:
@@ -44,8 +43,8 @@ class SessionAuthMiddleware(BaseHTTPMiddleware):
                     "email": payload.get("email", ""),
                     "exp": payload.get("exp")
                 }
-                
-                # Check if token expires soon (5 minutes)
+
+                # Check if expiring soon
                 exp = payload.get("exp")
                 if exp and refresh_token:
                     exp_time = datetime.fromtimestamp(exp, tz=timezone.utc)
@@ -60,8 +59,8 @@ class SessionAuthMiddleware(BaseHTTPMiddleware):
                                     "email": new_payload.get("email", ""),
                                     "exp": new_payload.get("exp")
                                 }
-        
-        # Try refresh if no valid access token
+
+        # Fallback to refresh if no access token
         if not user_info and refresh_token:
             new_tokens = refresh_supabase_token(refresh_token)
             if new_tokens:
@@ -72,21 +71,20 @@ class SessionAuthMiddleware(BaseHTTPMiddleware):
                         "email": payload.get("email", ""),
                         "exp": payload.get("exp")
                     }
-        
-        # Redirect if no valid user
+
         if not user_info or not user_info.get("id"):
             return RedirectResponse(f"/login?next={quote(request.url.path)}", status_code=303)
-        
-        # Set user in request state
+
+        # Attach user info to request
         request.state.user = user_info
-        
-        # Process request
+
+        # Continue processing request
         response = await call_next(request)
-        
-        # Update cookies if tokens refreshed
+
+        # Refresh cookies if token was refreshed
         if new_tokens:
             is_secure = not config.APP_URL.startswith("http://localhost")
-            
+
             response.set_cookie(
                 key="sb_access_token",
                 value=new_tokens["access_token"],
@@ -95,14 +93,13 @@ class SessionAuthMiddleware(BaseHTTPMiddleware):
                 samesite="lax",
                 max_age=3600
             )
-            
             response.set_cookie(
-                key="sb_refresh_token", 
+                key="sb_refresh_token",
                 value=new_tokens["refresh_token"],
                 httponly=True,
                 secure=is_secure,
                 samesite="lax",
                 max_age=86400 * 30
             )
-        
+
         return response
