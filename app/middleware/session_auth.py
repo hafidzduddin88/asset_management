@@ -37,13 +37,16 @@ class SessionAuthMiddleware(BaseHTTPMiddleware):
             )
         
         try:
-            user_response = supabase.auth.get_user(token)
-            if not user_response.user:
+            from jose import jwt
+            payload = jwt.decode(token, config.SECRET_KEY, algorithms=["HS256"])
+            user_id = payload.get("sub")
+            
+            if not user_id:
                 raise Exception("Invalid token")
             
             request.state.user = {
-                "id": user_response.user.id,
-                "email": user_response.user.email
+                "id": user_id,
+                "email": payload.get("email", "")
             }
             
         except Exception as e:

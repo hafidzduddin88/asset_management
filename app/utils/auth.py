@@ -23,14 +23,18 @@ async def get_current_user(request: Request) -> CurrentUser:
         )
     
     try:
-        user_response = supabase.auth.get_user(token)
-        if not user_response.user:
+        # Verify JWT token with Supabase secret
+        from jose import jwt
+        payload = jwt.decode(token, config.SECRET_KEY, algorithms=["HS256"])
+        user_id = payload.get("sub")
+        
+        if not user_id:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid token"
             )
         
-        profile_response = supabase.table('profiles').select('*').eq('id', user_response.user.id).single().execute()
+        profile_response = supabase.table('profiles').select('*').eq('id', user_id).single().execute()
         if not profile_response.data or not profile_response.data.get('is_active'):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
@@ -38,9 +42,9 @@ async def get_current_user(request: Request) -> CurrentUser:
             )
         
         return CurrentUser(
-            id=user_response.user.id,
-            email=user_response.user.email,
-            username=profile_response.data.get('username', user_response.user.email),
+            id=user_id,
+            email=payload.get('email', ''),
+            username=profile_response.data.get('username', payload.get('email', '')),
             role=profile_response.data.get('role', 'staff'),
             full_name=profile_response.data.get('full_name')
         )
