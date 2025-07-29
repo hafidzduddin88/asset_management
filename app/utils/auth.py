@@ -150,54 +150,7 @@ def refresh_supabase_token(refresh_token: str) -> Optional[dict]:
         logging.error(f"Token refresh failed: {e}")
     return None
 
-def get_token_from_request(request: Request) -> tuple[Optional[str], Optional[str]]:
-    """Get access and refresh tokens from request"""
-    # Try Authorization header first
-    auth_header = request.headers.get("Authorization")
-    if auth_header and auth_header.startswith("Bearer "):
-        access_token = auth_header.split(" ", 1)[1]
-        refresh_token = request.cookies.get("sb_refresh_token")
-        return access_token, refresh_token
-    
-    # Try cookies
-    access_token = request.cookies.get("sb_access_token")
-    refresh_token = request.cookies.get("sb_refresh_token")
-    return access_token, refresh_token
-
-def validate_and_refresh_token(request: Request) -> Optional[dict]:
-    """Validate token and refresh if needed"""
-    access_token, refresh_token = get_token_from_request(request)
-    
-    if not access_token and not refresh_token:
-        return None
-    
-    # Try to validate access token
-    if access_token:
-        payload = decode_supabase_jwt(access_token)
-        if payload:
-            # Check if token expires soon (within 5 minutes)
-            exp = payload.get("exp")
-            if exp:
-                exp_time = datetime.fromtimestamp(exp, tz=timezone.utc)
-                now = datetime.now(tz=timezone.utc)
-                if (exp_time - now).total_seconds() < 300 and refresh_token:
-                    # Token expiring soon, try to refresh
-                    new_tokens = refresh_supabase_token(refresh_token)
-                    if new_tokens:
-                        # Store new tokens for middleware to set cookies
-                        request.state.new_tokens = new_tokens
-                        return decode_supabase_jwt(new_tokens["access_token"])
-            
-            return payload
-    
-    # Access token invalid/expired, try refresh
-    if refresh_token:
-        new_tokens = refresh_supabase_token(refresh_token)
-        if new_tokens:
-            request.state.new_tokens = new_tokens
-            return decode_supabase_jwt(new_tokens["access_token"])
-    
-    return None
+# Removed duplicate functions - handled by middleware
 
 def get_current_profile(request: Request) -> Profile:
     """Get current user profile with token validation and refresh"""
