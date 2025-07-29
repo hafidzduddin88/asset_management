@@ -8,7 +8,7 @@ templates = Jinja2Templates(directory="app/templates")
 
 
 @router.get("/")
-async def damaged_assets_page(request: Request, current_user = Depends(get_current_user)):
+async def damaged_assets_page(request: Request, current_profile = Depends(get_current_profile)):
     """Damaged assets page with search and log functionality"""
     from app.utils.sheets import get_all_assets, get_dropdown_options
 
@@ -17,14 +17,14 @@ async def damaged_assets_page(request: Request, current_user = Depends(get_curre
 
     return templates.TemplateResponse("damaged_assets.html", {
         "request": request,
-        "user": current_user,
+        "user": current_profile,
         "assets_data": all_assets,
         "dropdown_options": dropdown_options
     })
 
 
 @router.post("/lost")
-async def submit_lost_report(request: Request, current_user = Depends(get_current_user)):
+async def submit_lost_report(request: Request, current_profile = Depends(get_current_profile)):
     """Submit lost report - syncs to Google Sheets"""
     from app.utils.sheets import add_lost_log, add_approval_request
     from datetime import datetime
@@ -39,7 +39,7 @@ async def submit_lost_report(request: Request, current_user = Depends(get_curren
             'last_room': data.get('last_room', ''),
             'date_lost': data.get('date_lost'),
             'description': data.get('description'),
-            'reported_by': current_user.full_name or current_user.email,
+            'reported_by': current_profile.full_name or current_profile.email,
             'report_date': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
             'notes': data.get('notes', '')
         }
@@ -50,7 +50,7 @@ async def submit_lost_report(request: Request, current_user = Depends(get_curren
             'type': 'lost_report',
             'asset_id': data.get('asset_id'),
             'asset_name': data.get('asset_name'),
-            'submitted_by': current_user.full_name or current_user.email,
+            'submitted_by': current_profile.full_name or current_profile.email,
             'submitted_date': datetime.now().strftime('%Y-%m-%d'),
             'description': f"Lost report: {data.get('description')}",
             'location': data.get('last_location')
@@ -68,7 +68,7 @@ async def submit_lost_report(request: Request, current_user = Depends(get_curren
 
 
 @router.post("/disposal")
-async def submit_disposal_request(request: Request, current_user = Depends(get_current_user)):
+async def submit_disposal_request(request: Request, current_profile = Depends(get_current_profile)):
     """Submit disposal request - syncs to Google Sheets"""
     from app.utils.sheets import add_disposal_log, add_approval_request
     from datetime import datetime
@@ -82,7 +82,7 @@ async def submit_disposal_request(request: Request, current_user = Depends(get_c
             'disposal_reason': data.get('disposal_reason'),
             'disposal_method': data.get('disposal_method', 'Standard'),
             'description': data.get('description'),
-            'requested_by': current_user.full_name or current_user.email,
+            'requested_by': current_profile.full_name or current_profile.email,
             'request_date': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
             'notes': data.get('notes', '')
         }
@@ -93,7 +93,7 @@ async def submit_disposal_request(request: Request, current_user = Depends(get_c
             'type': 'disposal_request',
             'asset_id': data.get('asset_id'),
             'asset_name': data.get('asset_name'),
-            'submitted_by': current_user.full_name or current_user.email,
+            'submitted_by': current_profile.full_name or current_profile.email,
             'submitted_date': datetime.now().strftime('%Y-%m-%d'),
             'description': f"Disposal request: {data.get('description')}"
         }
@@ -110,7 +110,7 @@ async def submit_disposal_request(request: Request, current_user = Depends(get_c
 
 
 @router.post("/report")
-async def submit_damage_report(request: Request, current_user = Depends(get_current_user)):
+async def submit_damage_report(request: Request, current_profile = Depends(get_current_profile)):
     """Submit damage report - syncs to Google Sheets"""
     from app.utils.sheets import add_damage_log, add_approval_request
     from datetime import datetime
@@ -124,7 +124,7 @@ async def submit_damage_report(request: Request, current_user = Depends(get_curr
             'damage_type': data.get('damage_type'),
             'severity': data.get('severity'),
             'description': data.get('damage_description'),
-            'reported_by': current_user.full_name or current_user.email,
+            'reported_by': current_profile.full_name or current_profile.email,
             'report_date': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
             'location': data.get('location', ''),
             'room': data.get('room', ''),
@@ -135,7 +135,7 @@ async def submit_damage_report(request: Request, current_user = Depends(get_curr
             'type': 'damage_report',
             'asset_id': data.get('asset_id'),
             'asset_name': data.get('asset_name'),
-            'submitted_by': current_user.full_name or current_user.email,
+            'submitted_by': current_profile.full_name or current_profile.email,
             'submitted_date': datetime.now().strftime('%Y-%m-%d'),
             'description': f"Damage report: {data.get('damage_description')}",
             'damage_type': data.get('damage_type'),

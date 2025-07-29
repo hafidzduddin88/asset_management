@@ -19,7 +19,7 @@ templates = Jinja2Templates(directory="app/templates")
 async def relocation_page(
     request: Request,
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_user)
+    current_profile = Depends(get_current_profile)
 ):
     """Asset relocation page."""
     # Get assets and dropdown options
@@ -30,7 +30,7 @@ async def relocation_page(
         "relocation/index.html",
         {
             "request": request,
-            "user": current_user,
+            "user": current_profile,
             "assets": all_assets,
             "dropdown_options": dropdown_options
         }
@@ -45,7 +45,7 @@ async def relocate_asset(
     reason: str = Form(...),
     notes: str = Form(None),
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_user)
+    current_profile = Depends(get_current_profile)
 ):
     """Submit asset relocation request."""
     from app.utils.sheets import get_asset_by_id
@@ -69,7 +69,7 @@ async def relocate_asset(
         'type': 'relocation',
         'asset_id': asset_id,
         'asset_name': asset.get('Item Name', ''),
-        'submitted_by': current_user.full_name or current_user.email,
+        'submitted_by': current_profile.full_name or current_profile.email,
         'submitted_date': datetime.now().strftime('%Y-%m-%d'),
         'description': f"Relocate from {asset.get('Location', '')} - {asset.get('Room', '')} to {new_location} - {new_room}",
         'request_data': json.dumps(relocation_data, ensure_ascii=False)

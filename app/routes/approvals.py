@@ -15,20 +15,20 @@ templates = Jinja2Templates(directory="app/templates")
 async def approvals_page(
     request: Request,
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_user)
+    current_profile = Depends(get_current_profile)
 ):
     """Approvals page for admin and manager."""
-    if current_user.role not in ['admin', 'manager']:
+    if current_profile.role not in ['admin', 'manager']:
         raise HTTPException(status_code=403, detail="Access denied")
     
     # Get all approvals from Google Sheets
     all_approvals = get_all_approvals()
     
     # Filter approvals based on user role
-    if current_user.role == 'admin':
+    if current_profile.role == 'admin':
         # Admin sees all approvals except disposal and edit_asset
         approvals_data = [a for a in all_approvals if a.get('Type') not in ['disposal', 'edit_asset']]
-    elif current_user.role == 'manager':
+    elif current_profile.role == 'manager':
         # Manager sees disposal and edit_asset approvals
         approvals_data = [a for a in all_approvals if a.get('Type') in ['disposal', 'edit_asset']]
     else:
@@ -38,7 +38,7 @@ async def approvals_page(
         "approvals/list.html",
         {
             "request": request,
-            "user": current_user,
+            "user": current_profile,
             "approvals_data": approvals_data
         }
     )
@@ -48,10 +48,10 @@ async def approve_request(
     approval_id: str,
     request: Request,
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_user)
+    current_profile = Depends(get_current_profile)
 ):
     """Approve a request."""
-    if current_user.role not in ['admin', 'manager']:
+    if current_profile.role not in ['admin', 'manager']:
         raise HTTPException(status_code=403, detail="Access denied")
     
     # Get approval details
@@ -105,7 +105,7 @@ async def approve_request(
         # Update approval status
         approval_update = {
             'Status': 'Approved',
-            'Approved_By': current_user.full_name or current_user.email,
+            'Approved_By': current_profile.full_name or current_profile.email,
             'Approved_Date': __import__('datetime').datetime.now().strftime('%Y-%m-%d')
         }
         
@@ -124,16 +124,16 @@ async def reject_request(
     approval_id: str,
     request: Request,
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_user)
+    current_profile = Depends(get_current_profile)
 ):
     """Reject a request."""
-    if current_user.role not in ['admin', 'manager']:
+    if current_profile.role not in ['admin', 'manager']:
         raise HTTPException(status_code=403, detail="Access denied")
     
     # Update approval status
     approval_update = {
         'Status': 'Rejected',
-        'Approved_By': current_user.full_name or current_user.email,
+        'Approved_By': current_profile.full_name or current_profile.email,
         'Approved_Date': __import__('datetime').datetime.now().strftime('%Y-%m-%d')
     }
     

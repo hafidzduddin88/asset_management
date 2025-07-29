@@ -17,28 +17,28 @@ templates = Jinja2Templates(directory="app/templates")
 @router.get("/profile", response_class=HTMLResponse)
 async def profile_page(
     request: Request,
-    current_user = Depends(get_current_user)
+    current_profile = Depends(get_current_profile)
 ):
     """User profile page."""
     return templates.TemplateResponse(
         "profile/view.html",
         {
             "request": request,
-            "user": current_user
+            "user": current_profile
         }
     )
 
 @router.get("/profile/edit", response_class=HTMLResponse)
 async def edit_profile_page(
     request: Request,
-    current_user = Depends(get_current_user)
+    current_profile = Depends(get_current_profile)
 ):
     """Edit user profile page."""
     return templates.TemplateResponse(
         "profile/edit.html",
         {
             "request": request,
-            "user": current_user
+            "user": current_profile
         }
     )
 
@@ -49,13 +49,13 @@ async def update_profile(
     email: str = Form(...),
     photo: UploadFile = File(None),
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_user)
+    current_profile = Depends(get_current_profile)
 ):
     """Update user profile."""
     # Update basic info
-    current_user.full_name = full_name
-    current_user.email = email
-    current_user.updated_at = datetime.now(timezone.utc)
+    current_profile.full_name = full_name
+    current_profile.email = email
+    current_profile.updated_at = datetime.now(timezone.utc)
     
     # Handle photo upload if provided
     if photo and photo.filename:
@@ -71,16 +71,16 @@ async def update_profile(
                 photo_url = upload_to_drive(
                     processed_image, 
                     photo.filename, 
-                    f"profile_{current_user.email}"
+                    f"profile_{current_profile.email}"
                 )
                 if photo_url:
-                    current_user.photo_url = photo_url
+                    current_profile.photo_url = photo_url
         except Exception as e:
             return templates.TemplateResponse(
                 "profile/edit.html",
                 {
                     "request": request,
-                    "user": current_user,
+                    "user": current_profile,
                     "error": f"Error uploading photo: {str(e)}"
                 },
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR

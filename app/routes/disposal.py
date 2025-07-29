@@ -18,7 +18,7 @@ templates = Jinja2Templates(directory="app/templates")
 async def disposal_page(
     request: Request,
     db: Session = Depends(get_db),
-    current_user = Depends(get_admin_user)
+    current_profile = Depends(get_admin_user)
 ):
     """Disposal assets page (admin only)."""
     # Get assets that are ready to dispose only
@@ -37,7 +37,7 @@ async def disposal_page(
         "disposal/index.html",
         {
             "request": request,
-            "user": current_user,
+            "user": current_profile,
             "assets": disposable_assets
         }
     )
@@ -51,7 +51,7 @@ async def dispose_asset(
     description: str = Form(None),
     notes: str = Form(None),
     db: Session = Depends(get_db),
-    current_user = Depends(get_admin_user)
+    current_profile = Depends(get_admin_user)
 ):
     """Dispose an asset (admin only)."""
     from app.utils.sheets import get_asset_by_id
@@ -71,7 +71,7 @@ async def dispose_asset(
         'type': 'disposal',
         'asset_id': asset_id,
         'asset_name': asset.get('Item Name', ''),
-        'submitted_by': current_user.full_name or current_user.email,
+        'submitted_by': current_profile.full_name or current_profile.email,
         'submitted_date': datetime.now().strftime('%Y-%m-%d'),
         'description': f"Disposal request: {disposal_reason} - {disposal_method}",
         'disposal_reason': disposal_reason,

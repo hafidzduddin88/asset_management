@@ -24,7 +24,7 @@ templates = Jinja2Templates(directory="app/templates")
 async def add_asset_form(
     request: Request,
     db: Session = Depends(get_db),
-    current_profile = Depends(get_current_user)
+    current_profile = Depends(get_current_profile)
 ):
     """Form to add a new asset."""
     dropdown_options = get_dropdown_options()
@@ -42,7 +42,7 @@ async def add_asset_form(
 async def asset_list(
     request: Request,
     db: Session = Depends(get_db),
-    current_profile = Depends(get_current_user)
+    current_profile = Depends(get_current_profile)
 ):
     """List assets for editing (admin and manager only)."""
     if current_profile.role not in [UserRole.ADMIN, UserRole.MANAGER]:
@@ -81,7 +81,7 @@ async def edit_asset_form(
     asset_id: str,
     request: Request,
     db: Session = Depends(get_db),
-    current_profile = Depends(get_current_user)
+    current_profile = Depends(get_current_profile)
 ):
     """Form to edit an existing asset (admin/manager only)."""
     if current_profile.role not in [UserRole.ADMIN, UserRole.MANAGER]:
@@ -116,7 +116,7 @@ async def update_asset(
     bisnis_unit: str = Form(None),
     edit_reason: str = Form(...),
     db: Session = Depends(get_db),
-    current_profile = Depends(get_current_user)
+    current_profile = Depends(get_current_profile)
 ):
     """Update existing asset (admin and manager only)."""
     if current_profile.role not in [UserRole.ADMIN, UserRole.MANAGER]:
@@ -194,7 +194,7 @@ async def add_asset(
     owner: str = Form(...),
     photo: UploadFile = File(None),
     db: Session = Depends(get_db),
-    current_profile = Depends(get_current_user)
+    current_profile = Depends(get_current_profile)
 ):
     """Process add asset form."""
     dropdown_options = get_dropdown_options()

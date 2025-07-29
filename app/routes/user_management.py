@@ -16,7 +16,7 @@ templates = Jinja2Templates(directory="app/templates")
 async def user_list(
     request: Request,
     db: Session = Depends(get_db),
-    current_user = Depends(get_admin_user)
+    current_profile = Depends(get_admin_user)
 ):
     """List all users (admin only)."""
     users = db.query(Profile).all()
@@ -25,7 +25,7 @@ async def user_list(
         "user_management/list.html",
         {
             "request": request,
-            "user": current_user,
+            "user": current_profile,
             "users": users
         }
     )
@@ -34,14 +34,14 @@ async def user_list(
 async def create_user_form(
     request: Request,
     db: Session = Depends(get_db),
-    current_user = Depends(get_admin_user)
+    current_profile = Depends(get_admin_user)
 ):
     """Create user form (admin only)."""
     return templates.TemplateResponse(
         "user_management/create.html",
         {
             "request": request,
-            "user": current_user
+            "user": current_profile
         }
     )
 
@@ -52,7 +52,7 @@ async def create_user(
     full_name: str = Form(...),
     role: str = Form(...),
     db: Session = Depends(get_db),
-    current_user = Depends(get_admin_user)
+    current_profile = Depends(get_admin_user)
 ):
     """Create new user (admin only)."""
     # Check if user exists
@@ -62,7 +62,7 @@ async def create_user(
             "user_management/create.html",
             {
                 "request": request,
-                "user": current_user,
+                "user": current_profile,
                 "error": "Email already exists"
             }
         )
@@ -87,7 +87,7 @@ async def reset_password(
     user_id: str,
     request: Request,
     db: Session = Depends(get_db),
-    current_user = Depends(get_admin_user)
+    current_profile = Depends(get_admin_user)
 ):
     """Reset user password to default (admin only)."""
     user = db.query(Profile).filter(Profile.id == user_id).first()
@@ -107,7 +107,7 @@ async def toggle_user_status(
     request: Request,
     is_active: bool = Form(...),
     db: Session = Depends(get_db),
-    current_user = Depends(get_admin_user)
+    current_profile = Depends(get_admin_user)
 ):
     """Toggle user active status (admin only)."""
     user = db.query(Profile).filter(Profile.id == user_id).first()

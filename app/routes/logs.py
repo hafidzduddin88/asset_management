@@ -16,15 +16,15 @@ templates = Jinja2Templates(directory="app/templates")
 async def logs_page(
     request: Request,
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_user)
+    current_profile = Depends(get_current_profile)
 ):
     """View approval logs based on user role."""
     all_approvals = get_all_approvals()
     
     # Filter based on user role
-    if current_user.role.value == 'staff':
+    if current_profile.role.value == 'staff':
         # Staff can only see their own requests
-        user_identifier = current_user.full_name or current_user.email
+        user_identifier = current_profile.full_name or current_profile.email
         approvals = [a for a in all_approvals if a.get('Submitted_By') == user_identifier]
     else:
         # Manager and admin can see all approvals
@@ -38,7 +38,7 @@ async def logs_page(
         "logs/index.html",
         {
             "request": request,
-            "user": current_user,
+            "user": current_profile,
             "pending_approvals": pending_approvals,
             "completed_approvals": completed_approvals
         }
