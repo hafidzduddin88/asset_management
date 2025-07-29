@@ -52,7 +52,7 @@ async def login_form(
         # Detailed logging
         logging.error(f"Login Error on Render: {str(e)}", extra={
             'email': email,
-            'render_url': os.getenv('RENDER_EXTERNAL_URL')
+            'render_url': os.getenv('APP_URL')
         })
         
         return templates.TemplateResponse(
