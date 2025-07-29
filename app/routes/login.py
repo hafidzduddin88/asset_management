@@ -16,12 +16,39 @@ supabase: Client = create_client(config.SUPABASE_URL, config.SUPABASE_ANON_KEY)
 router = APIRouter(tags=["authentication"])
 templates = Jinja2Templates(directory="app/templates")
 
-def setup_supabase_auth():
-    """Setup Supabase client with proper API key"""
-    supabase.auth._client.headers.update({
-        "apikey": config.SUPABASE_ANON_KEY,
-        "Authorization": f"Bearer {config.SUPABASE_ANON_KEY}"
-    })
+def sign_in_with_email(email: str, password: str):
+    """Login with email and password - Supabase style"""
+    try:
+        response = supabase.auth.sign_in_with_password({"email": email, "password": password})
+        
+        if hasattr(response, 'error') and response.error:
+            return {"success": False, "error": response.error.message}
+        
+        # Supabase automatically handles JWT rotation
+        return {
+            "success": True,
+            "session": response.session,
+            "user": response.user
+        }
+    except Exception as err:
+        return {"success": False, "error": str(err)}
+
+def refresh_session():
+    """Manual token refresh if needed"""
+    try:
+        response = supabase.auth.refresh_session()
+        if hasattr(response, 'error') and response.error:
+            return None
+        return response.session
+    except Exception:
+        return None
+
+def sign_out():
+    """Logout function"""
+    try:
+        supabase.auth.sign_out()
+    except Exception as err:
+        logging.error(f"Error signing out: {err}")
 
 def get_cookie_settings() -> dict:
     """Get secure cookie settings based on environment"""
@@ -104,18 +131,17 @@ async def login_form(
 ):
     """Enhanced login with Supabase auth and JWT rotation support"""
     try:
-        # Attempt login
-        response = supabase.auth.sign_in_with_password({
-            "email": email,
-            "password": password
-        })
+        # Use Supabase-style login
+        result = sign_in_with_email(email, password)
         
-        # Validate response
-        if not response.session or not response.session.access_token:
-            raise Exception("Invalid credentials or no session returned")
+        if not result["success"]:
+            raise Exception(result["error"])
+        
+        response = result
+        session = result["session"]
         
         # Validate JWT token
-        payload = decode_supabase_jwt(response.session.access_token)
+        payload = decode_supabase_jwt(session.access_token)
         if not payload or not payload.get("sub"):
             raise Exception("Invalid JWT token received")
         
@@ -124,7 +150,7 @@ async def login_form(
         redirect_response = RedirectResponse(url=redirect_url, status_code=303)
         
         # Set authentication cookies
-        set_auth_cookies(redirect_response, response.session, remember_me)
+        set_auth_cookies(redirect_response, session, remember_me)
         
         logging.info(f"User {email} logged in successfully")
         return redirect_response
@@ -341,8 +367,8 @@ async def logout(request: Request):
             if payload:
                 user_email = payload.get("email", "unknown")
         
-        # Sign out
-        supabase.auth.sign_out()
+        # Sign out using Supabase-style function
+        sign_out()
         
         logging.info(f"User {user_email} logged out successfully")
         
