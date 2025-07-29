@@ -47,6 +47,8 @@ def decode_supabase_jwt(token: str) -> Optional[dict]:
         kid = headers.get("kid")
         alg = headers.get("alg", "ES256")
         
+        logging.info(f"Token header - kid: {kid}, alg: {alg}")
+        
         # Get JWKS
         jwks = get_jwks()
         keys = jwks.get("keys", [])
@@ -55,10 +57,16 @@ def decode_supabase_jwt(token: str) -> Optional[dict]:
             logging.error("No keys found in JWKS")
             return None
         
+        logging.info(f"Available JWKS keys: {[k.get('kid') for k in keys]}")
+        
         # Try to find key by kid first
         key_data = None
         if kid:
             key_data = next((k for k in keys if k.get("kid") == kid), None)
+            if key_data:
+                logging.info(f"Found matching key for kid: {kid}")
+            else:
+                logging.warning(f"No key found for kid: {kid}")
         
         # If kid not found or not provided, try all keys
         if not key_data:
@@ -87,11 +95,13 @@ def decode_supabase_jwt(token: str) -> Optional[dict]:
             # Validate expiry
             exp = payload.get("exp")
             if exp and datetime.fromtimestamp(exp, tz=timezone.utc) < datetime.now(tz=timezone.utc):
+                logging.warning(f"Token expired for user {payload.get('sub')}")
                 return None
             
+            logging.info(f"Successfully decoded token for user {payload.get('sub')}")
             return payload
         except Exception as e:
-            logging.error(f"JWT decode failed with matched key: {e}")
+            logging.error(f"JWT decode failed with matched key {key_data.get('kid')}: {e}")
             return None
             
     except Exception as e:
