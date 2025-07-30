@@ -147,7 +147,9 @@ def get_current_profile(request: Request) -> ProfileResponse:
                 "role": "staff",
                 "is_active": True
             }
-            supabase.table("profiles").insert(profile_data).execute()
+            # Use service key for admin operations
+            admin_supabase = create_client(config.SUPABASE_URL, config.SUPABASE_SERVICE_KEY)
+            admin_supabase.table("profiles").insert(profile_data).execute()
             response = supabase.table("profiles").select("*").eq("id", user_id).execute()
         
         if not response.data or not response.data[0].get("is_active"):
