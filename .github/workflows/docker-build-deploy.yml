@@ -64,34 +64,3 @@ jobs:
                 "https://hub.docker.com/v2/repositories/$REPO/tags/$tag/" || true
               sleep 1
             done
-
-            PAGE=$((PAGE + 1))
-            if [ $PAGE -gt 5 ]; then break; fi
-          done
-
-          echo "✅ Docker tag cleanup completed."
-
-      - name: Clear old GitHub Actions cache (keep last 5)
-        run: |
-          echo "🧹 Cleaning up old GitHub Actions cache..."
-          gh cache list --limit 100 | tail -n +6 | cut -f1 | xargs -I {} gh cache delete {} || true
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  deploy:
-    needs: build-and-clear
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
-
-    steps:
-      - name: Trigger redeploy on Render
-        run: |
-          echo "🔁 Triggering redeploy on Render via webhook..."
-          curl -X POST ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
-          echo "✅ Render redeploy triggered."
-
-      - name: Deploy notification
-        run: |
-          echo "✅ Docker image pushed to Docker Hub"
-          echo "🚀 Render is redeploying from ${{ env.DOCKER_REPO }}:latest"
-          echo "📋 Check: https://dashboard.render.com"
