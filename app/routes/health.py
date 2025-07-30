@@ -34,3 +34,8 @@ async def health_check(db: Session = Depends(get_db)):
         "google_sheets": sheets_status,
         "response_time_ms": round(response_time * 1000, 2)
     }
+
+@router.get("/wake")
+async def wake_up():
+    """Wake up endpoint for keeping service alive."""
+    return {"status": "awake", "timestamp": time.time()}
