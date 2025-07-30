@@ -8,46 +8,51 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout (required for repo context)
-      uses: actions/checkout@v4
+      - name: Checkout (required for repo context)
+        uses: actions/checkout@v4
 
-    - name: Install GitHub CLI
-      run: sudo apt-get install -y gh
+      - name: Install GitHub CLI
+        run: sudo apt-get install -y gh
 
-    - name: Install gh-actions-cache extension
-      run: gh extension install actions/gh-actions-cache
+      - name: Install gh-actions-cache extension
+        run: gh extension install actions/gh-actions-cache
 
-    - name: Authenticate GitHub CLI
-      env:
-        GH_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
-      run: echo "${GH_TOKEN}" | gh auth login --with-token
+      - name: Authenticate GitHub CLI
+        env:
+          GH_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+        run: echo "${GH_TOKEN}" | gh auth login --with-token
 
-    - name: List and Delete All GitHub Actions Cache
-      run: |
-        echo "🧹 Deleting all GitHub Actions cache..."
-        gh actions-cache list -R ${{ github.repository }} | cut -f 1 | while read -r cache_key; do
-          echo "Deleting cache: $cache_key"
-          gh actions-cache delete "$cache_key" -R ${{ github.repository }} --confirm
-        done
+      - name: List and Delete All GitHub Actions Cache
+        env:
+          GH_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+        run: |
+          echo "🧹 Deleting all GitHub Actions cache..."
+          gh actions-cache list -R ${{ github.repository }} | cut -f 1 | while read -r cache_key; do
+            echo "Deleting cache: $cache_key"
+            gh actions-cache delete "$cache_key" -R ${{ github.repository }} --confirm
+          done
 
-    - name: Log in to Docker Hub
-      env:
-        DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
-        DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
-      run: echo "${DOCKERHUB_TOKEN}" | docker login -u "${DOCKERHUB_USERNAME}" --password-stdin
+      - name: Log in to Docker Hub
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+        run: echo "${DOCKERHUB_TOKEN}" | docker login -u "${DOCKERHUB_USERNAME}" --password-stdin
 
-    - name: Clean Docker Hub Tags (except latest)
-      env:
-        DOCKERHUB_REPO: ${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.DOCKERHUB_PROJECT }}
-      run: |
-        echo "🧹 Cleaning up old Docker Hub tags (except 'latest')..."
-        tags=$(curl -s -u "${{ secrets.DOCKERHUB_USERNAME }}:${{ secrets.DOCKERHUB_TOKEN }}" \
-          "https://hub.docker.com/v2/repositories/${DOCKERHUB_REPO}/tags?page_size=100" | jq -r '.results[].name')
+      - name: Clean Docker Hub Tags (except latest)
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+          DOCKERHUB_PROJECT: ${{ secrets.DOCKERHUB_PROJECT }}
+        run: |
+          echo "🧹 Cleaning up old Docker Hub tags (except 'latest')..."
+          REPO="${DOCKERHUB_USERNAME}/${DOCKERHUB_PROJECT}"
+          TAGS=$(curl -s -u "${DOCKERHUB_USERNAME}:${DOCKERHUB_TOKEN}" \
+            "https://hub.docker.com/v2/repositories/${REPO}/tags?page_size=100" | jq -r '.results[].name')
 
-        for tag in $tags; do
-          if [ "$tag" != "latest" ]; then
-            echo "Deleting tag: $tag"
-            curl -s -X DELETE -u "${{ secrets.DOCKERHUB_USERNAME }}:${{ secrets.DOCKERHUB_TOKEN }}" \
-              "https://hub.docker.com/v2/repositories/${DOCKERHUB_REPO}/tags/$tag/"
-          fi
-        done
+          for tag in $TAGS; do
+            if [ "$tag" != "latest" ]; then
+              echo "Deleting tag: $tag"
+              curl -s -X DELETE -u "${DOCKERHUB_USERNAME}:${DOCKERHUB_TOKEN}" \
+                "https://hub.docker.com/v2/repositories/${REPO}/tags/${tag}/"
+            fi
+          done
