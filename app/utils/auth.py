@@ -147,10 +147,10 @@ def get_current_profile(request: Request) -> ProfileResponse:
                 "role": "staff",
                 "is_active": True
             }
-            # Use service key for admin operations
+            # Use service key for admin operations with upsert
             admin_supabase = create_client(config.SUPABASE_URL, config.SUPABASE_SERVICE_KEY)
-            admin_supabase.table("profiles").insert(profile_data).execute()
-            response = supabase.table("profiles").select("*").eq("id", user_id).execute()
+            admin_supabase.table("profiles").upsert(profile_data).execute()
+            response = admin_supabase.table("profiles").select("*").eq("id", user_id).execute()
         
         if not response.data or not response.data[0].get("is_active"):
             raise HTTPException(
