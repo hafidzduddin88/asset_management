@@ -1,17 +1,20 @@
-name: Build and Deploy
+name: Build and Deploy Docker Image
 
 on:
   push:
     branches: [ main ]
-  workflow_dispatch:
+  pull_request:
+    branches: [ main ]
 
 env:
-  DOCKER_REPO: ${{ secrets.DOCKERHUB_USERNAME }}/ambp
+  DOCKER_REPO: ${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.DOCKERHUB_PROJECT }}
 
 jobs:
-  cleanup-build-deploy:
+  build-and-clear:
     runs-on: ubuntu-latest
-
+    outputs:
+      image-digest: ${{ steps.build.outputs.digest }}
+    
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -25,69 +28,8 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Delete ALL Docker images and manifests
-        run: |
-          # Get Docker Hub token
-          TOKEN=$(curl -s -H "Content-Type: application/json" \
-                  -X POST -d '{"username": "${{ secrets.DOCKERHUB_USERNAME }}", "password": "${{ secrets.DOCKERHUB_TOKEN }}"}' \
-                  https://hub.docker.com/v2/users/login/ | jq -r .token)
-          
-          # Delete ALL tags first
-          PAGE=1
-          while true; do
-            RESPONSE=$(curl -s "https://hub.docker.com/v2/repositories/${{ env.DOCKER_REPO }}/tags/?page_size=100&page=$PAGE")
-            TAGS=$(echo "$RESPONSE" | jq -r '.results[]?.name // empty')
-            
-            if [ -z "$TAGS" ]; then
-              echo "No more tags found on page $PAGE"
-              break
-            fi
-            
-            for tag in $TAGS; do
-              echo "Deleting tag: $tag"
-              curl -X DELETE -H "Authorization: JWT $TOKEN" \
-                   "https://hub.docker.com/v2/repositories/${{ env.DOCKER_REPO }}/tags/$tag/" || true
-              sleep 1
-            done
-            
-            PAGE=$((PAGE + 1))
-            if [ $PAGE -gt 10 ]; then break; fi
-          done
-          
-          # Delete untagged manifests by digest
-          echo "Deleting untagged manifests..."
-          PAGE=1
-          while true; do
-            RESPONSE=$(curl -s -H "Authorization: JWT $TOKEN" \
-                       "https://hub.docker.com/v2/repositories/${{ env.DOCKER_REPO }}/tags/?page_size=100&page=$PAGE")
-            
-            # Get digests of remaining images
-            DIGESTS=$(echo "$RESPONSE" | jq -r '.results[]?.digest // empty' | grep -v "null" | head -20)
-            
-            if [ -z "$DIGESTS" ]; then
-              echo "No more manifests found on page $PAGE"
-              break
-            fi
-            
-            for digest in $DIGESTS; do
-              echo "Deleting manifest: $digest"
-              curl -X DELETE -H "Authorization: JWT $TOKEN" \
-                   "https://hub.docker.com/v2/repositories/${{ env.DOCKER_REPO }}/manifests/$digest" || true
-              sleep 2
-            done
-            
-            PAGE=$((PAGE + 1))
-            if [ $PAGE -gt 5 ]; then break; fi
-          done
-          
-          echo "All images and manifests deleted."
-
-      - name: Clear Docker cache
-        run: |
-          docker builder prune -af
-          docker system prune -af
-
       - name: Build and push Docker image
+        id: build
         uses: docker/build-push-action@v5
         with:
           context: .
@@ -95,11 +37,57 @@ jobs:
           tags: ${{ env.DOCKER_REPO }}:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          platforms: linux/amd64
-          provenance: false
 
+      - name: Delete old Docker images and manifests
+        run: |
+          # Get Docker Hub token
+          TOKEN=$(curl -s -H "Content-Type: application/json" \
+                  -X POST -d '{"username": "${{ secrets.DOCKERHUB_USERNAME }}", "password": "${{ secrets.DOCKERHUB_TOKEN }}"}' \
+                  https://hub.docker.com/v2/users/login/ | jq -r .token)
+          
+          # Get current image digest to preserve
+          CURRENT_DIGEST="${{ steps.build.outputs.digest }}"
+          echo "Preserving current image: $CURRENT_DIGEST"
+          
+          # Delete old tags (keep latest)
+          PAGE=1
+          while true; do
+            RESPONSE=$(curl -s "https://hub.docker.com/v2/repositories/${{ env.DOCKER_REPO }}/tags/?page_size=100&page=$PAGE")
+            TAGS=$(echo "$RESPONSE" | jq -r '.results[] | select(.name != "latest") | .name')
+            
+            if [ -z "$TAGS" ]; then
+              echo "No more old tags found on page $PAGE"
+              break
+            fi
+            
+            for tag in $TAGS; do
+              echo "Deleting old tag: $tag"
+              curl -X DELETE -H "Authorization: JWT $TOKEN" \
+                   "https://hub.docker.com/v2/repositories/${{ env.DOCKER_REPO }}/tags/$tag/" || true
+              sleep 1
+            done
+            
+            PAGE=$((PAGE + 1))
+            if [ $PAGE -gt 5 ]; then break; fi
+          done
+          
+          echo "Old images cleanup completed."
+
+      - name: Clear old GitHub Actions cache
+        run: |
+          # Delete old cache entries (keep last 5)
+          gh cache list --limit 100 | tail -n +6 | cut -f1 | xargs -I {} gh cache delete {} || true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  deploy:
+    needs: build-and-clear
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
       - name: Deploy to Render
-        uses: johnbeynon/render-deploy-action@v0.0.8
-        with:
-          service-id: ${{ secrets.RENDER_SERVICE_ID }}
-          api-key: ${{ secrets.RENDER_API_KEY }}
+        run: |
+          echo "Triggering Render deployment..."
+          curl -X POST "https://api.render.com/deploy/srv-${{ secrets.RENDER_SERVICE_ID }}?key=${{ secrets.RENDER_API_KEY }}"
+          echo "Deployment triggered successfully"
