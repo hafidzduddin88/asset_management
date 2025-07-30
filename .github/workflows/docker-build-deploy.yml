@@ -83,11 +83,22 @@ jobs:
   deploy:
     needs: build-and-clear
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
+if: github.ref == 'refs/heads/main'
     
     steps:
       - name: Deploy to Render
         run: |
           echo "Triggering Render deployment..."
-          curl -X POST "https://api.render.com/deploy/srv-${{ secrets.RENDER_SERVICE_ID }}?key=${{ secrets.RENDER_API_KEY }}"
-          echo "Deployment triggered successfully"
+          RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "https://api.render.com/deploy/srv-${{ secrets.RENDER_SERVICE_ID }}?key=${{ secrets.RENDER_API_KEY }}")
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          BODY=$(echo "$RESPONSE" | head -n -1)
+          
+          echo "HTTP Status: $HTTP_CODE"
+          echo "Response: $BODY"
+          
+          if [ "$HTTP_CODE" -eq 200 ] || [ "$HTTP_CODE" -eq 201 ]; then
+            echo "✅ Deployment triggered successfully"
+          else
+            echo "❌ Deployment failed with status $HTTP_CODE"
+            exit 1
+          fi
