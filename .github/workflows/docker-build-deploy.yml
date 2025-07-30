@@ -7,7 +7,7 @@ on:
     branches: [ main ]
 
 env:
-  DOCKER_REPO:   DOCKER_REPO: ${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.DOCKERHUB_PROJECT }}
+  DOCKER_REPO: ${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.DOCKERHUB_PROJECT }}
 
 jobs:
   build-and-clear:
@@ -86,8 +86,14 @@ jobs:
     if: github.ref == 'refs/heads/main'
     
     steps:
+      - name: Trigger redeploy on Render
+        run: |
+          echo "🔁 Triggering redeploy on Render via webhook..."
+          curl -X POST ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+          echo "✅ Render redeploy triggered."
+
       - name: Deploy notification
         run: |
           echo "✅ Docker image pushed to Docker Hub"
-          echo "🚀 Render will auto-deploy from hafidzduddin/ambp:latest"
-          echo "📋 Check deployment status at: https://dashboard.render.com"
+          echo "🚀 Render is redeploying from ${{ env.DOCKER_REPO }}:latest"
+          echo "📋 Check: https://dashboard.render.com"
