@@ -1,198 +1,112 @@
 {% extends "layouts/modern_layout.html" %}
 
-{% block title %}User Management - Admin{% endblock %}
+{% block title %}User Management - Asset Management{% endblock %}
 
 {% block content %}
 <div class="py-6">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="mb-6 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-            <div>
-                <h1 class="text-2xl font-bold text-gray-900">User Management</h1>
-                <p class="text-gray-600 mt-1">Manage system users and permissions</p>
-            </div>
-            <a href="/user_management/create" class="inline-flex items-center justify-center px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors">
-                <i class="fas fa-plus mr-2"></i>Create User
+        <div class="flex items-center justify-between">
+            <h1 class="text-2xl font-semibold text-gray-900">User Management</h1>
+            <a href="/user_management/create" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700">
+                Add New User
             </a>
         </div>
-
-        <!-- Desktop View -->
-        <div class="hidden md:block bg-white shadow-sm rounded-lg overflow-hidden">
-            <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
-                    <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                    </tr>
-                </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
-                    {% for u in users %}
-                    <tr class="hover:bg-gray-50">
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="flex items-center">
-                                <div class="h-10 w-10 flex-shrink-0">
-                                    <div class="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
-                                        <i class="fas fa-user text-gray-600"></i>
-                                    </div>
-                                </div>
-                                <div class="ml-4">
-                                    <div class="text-sm font-medium text-gray-900">{{ u.full_name }}</div>
-                                    <div class="text-sm text-gray-500">{{ u.email }}</div>
-                                </div>
-                            </div>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                {% if u.role == 'admin' %}bg-red-100 text-red-800
-                                {% elif u.role == 'manager' %}bg-blue-100 text-blue-800
-                                {% else %}bg-green-100 text-green-800{% endif %}">
-                                {{ u.role.value.title() if u.role else 'Unknown' }}
-                            </span>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            {% if u.is_active %}
-                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Active</span>
-                            {% else %}
-                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">Inactive</span>
-                            {% endif %}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                            <div class="flex space-x-2">
-                                <button onclick="openResetModal('{{ u.id }}', '{{ u.email }}')" class="text-blue-600 hover:text-blue-900" title="Reset Password">
-                                    <i class="fas fa-key"></i>
-                                </button>
-                                {% if u.is_active %}
-                                <button onclick="toggleUserStatus('{{ u.id }}', false)" class="text-red-600 hover:text-red-900" title="Deactivate">
-                                    <i class="fas fa-user-slash"></i>
-                                </button>
+        
+        {% if error %}
+        <div class="mt-4 rounded-md bg-red-50 p-4">
+            <div class="text-sm text-red-800">{{ error }}</div>
+        </div>
+        {% endif %}
+        
+        <div class="mt-6 bg-white shadow overflow-hidden sm:rounded-md">
+            <ul class="divide-y divide-gray-200">
+                {% for user_item in users %}
+                <li class="px-6 py-4">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0">
+                                {% if user_item.photo_url %}
+                                <img src="{{ user_item.photo_url }}" alt="Profile" class="h-10 w-10 rounded-full object-cover">
                                 {% else %}
-                                <button onclick="toggleUserStatus('{{ u.id }}', true)" class="text-green-600 hover:text-green-900" title="Activate">
-                                    <i class="fas fa-user-check"></i>
-                                </button>
+                                <div class="h-10 w-10 rounded-full bg-primary-100 flex items-center justify-center text-primary-800 font-semibold">
+                                    {{ user_item.full_name[0].upper() if user_item.full_name else user_item.username[0].upper() }}
+                                </div>
                                 {% endif %}
                             </div>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-
-        <!-- Mobile View -->
-        <div class="md:hidden space-y-4">
-            {% for u in users %}
-            <div class="bg-white rounded-lg shadow-sm p-4">
-                <div class="flex items-center justify-between mb-3">
-                    <div class="flex items-center">
-                        <div class="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center mr-3">
-                            <i class="fas fa-user text-gray-600"></i>
+                            <div class="ml-4">
+                                <div class="text-sm font-medium text-gray-900">{{ user_item.full_name or user_item.username }}</div>
+                                <div class="text-sm text-gray-500">{{ user_item.username }}</div>
+                                <div class="text-xs text-gray-400">{{ user_item.business_unit or 'No department' }}</div>
+                            </div>
                         </div>
-                        <div>
-                            <h3 class="text-sm font-medium text-gray-900">{{ u.full_name }}</h3>
-                            <p class="text-xs text-gray-500">{{ u.email.split('@')[0] }}</p>
+                        <div class="flex items-center space-x-2">
+                            <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full {% if user_item.is_active %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
+                                {% if user_item.is_active %}Active{% else %}Inactive{% endif %}
+                            </span>
+                            <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                                {{ user_item.role.title() }}
+                            </span>
+                            {% if user_item.email_verified %}
+                            <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                Verified
+                            </span>
+                            {% else %}
+                            <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                                Unverified
+                            </span>
+                            {% endif %}
                         </div>
                     </div>
-                    <div class="flex items-center space-x-2">
-                        <span class="px-2 py-1 text-xs font-semibold rounded-full 
-                            {% if u.role == 'admin' %}bg-red-100 text-red-800
-                            {% elif u.role == 'manager' %}bg-blue-100 text-blue-800
-                            {% else %}bg-green-100 text-green-800{% endif %}">
-                            {{ u.role.value.title() if u.role else 'Unknown' }}
-                        </span>
-                        {% if u.is_active %}
-                            <span class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">Active</span>
-                        {% else %}
-                            <span class="px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">Inactive</span>
+                    <div class="mt-3 flex space-x-2">
+                        <!-- Toggle Status -->
+                        <form method="POST" action="/user_management/toggle_status/{{ user_item.id }}" class="inline" 
+                              onsubmit="return confirm('Are you sure you want to {% if user_item.is_active %}deactivate{% else %}activate{% endif %} this user?')">
+                            <input type="hidden" name="is_active" value="{% if user_item.is_active %}false{% else %}true{% endif %}">
+                            <button type="submit" class="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded text-white {% if user_item.is_active %}bg-red-600 hover:bg-red-700{% else %}bg-green-600 hover:bg-green-700{% endif %}">
+                                {% if user_item.is_active %}Deactivate{% else %}Activate{% endif %}
+                            </button>
+                        </form>
+                        
+                        <!-- Reset Password -->
+                        <form method="POST" action="/user_management/reset_password/{{ user_item.id }}" class="inline"
+                              onsubmit="return confirm('Are you sure you want to reset password to 54321 for {{ user_item.username }}?')">
+                            <button type="submit" class="inline-flex items-center px-3 py-1 border border-gray-300 text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50">
+                                Reset Password
+                            </button>
+                        </form>
+                        
+                        <!-- Verify Email -->
+                        {% if not user_item.email_verified %}
+                        <form method="POST" action="/user_management/verify_email/{{ user_item.id }}" class="inline"
+                              onsubmit="return confirm('Are you sure you want to manually verify {{ user_item.username }}?')">
+                            <button type="submit" class="inline-flex items-center px-3 py-1 border border-blue-300 text-xs font-medium rounded text-blue-700 bg-blue-50 hover:bg-blue-100">
+                                Verify Email
+                            </button>
+                        </form>
                         {% endif %}
                     </div>
-                </div>
-                
-                <div class="text-xs text-gray-500 mb-3">{{ u.email }}</div>
-                
-                <div class="flex space-x-3">
-                    <button onclick="openResetModal('{{ u.id }}', '{{ u.email }}')" class="flex-1 bg-blue-50 text-blue-700 px-3 py-2 rounded-md text-sm font-medium hover:bg-blue-100">
-                        <i class="fas fa-key mr-1"></i>Reset Password
-                    </button>
-                    {% if u.is_active %}
-                    <button onclick="toggleUserStatus('{{ u.id }}', false)" class="flex-1 bg-red-50 text-red-700 px-3 py-2 rounded-md text-sm font-medium hover:bg-red-100">
-                        <i class="fas fa-user-slash mr-1"></i>Deactivate
-                    </button>
-                    {% else %}
-                    <button onclick="toggleUserStatus('{{ u.id }}', true)" class="flex-1 bg-green-50 text-green-700 px-3 py-2 rounded-md text-sm font-medium hover:bg-green-100">
-                        <i class="fas fa-user-check mr-1"></i>Activate
-                    </button>
-                    {% endif %}
-                </div>
-            </div>
-            {% endfor %}
+                </li>
+                {% endfor %}
+            </ul>
         </div>
-    </div>
-</div>
-
-<!-- Reset Password Modal -->
-<div id="resetModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
-    <div class="relative top-20 mx-auto p-5 border w-full max-w-md shadow-lg rounded-lg bg-white">
-        <div class="mt-3">
-            <div class="flex items-center justify-between mb-4">
-                <h3 class="text-lg font-medium text-gray-900">Reset Password</h3>
-                <button onclick="closeResetModal()" class="text-gray-400 hover:text-gray-600">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            
-            <form id="resetForm" method="POST">
-                <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
-                    <p id="resetUsername" class="text-sm text-gray-900 bg-gray-50 p-2 rounded"></p>
-                </div>
-                
-                <div class="mb-4">
-                    <p class="text-sm text-gray-600">Password will be reset to: <strong><span id="defaultPassword"></span></strong></p>
-                </div>
-                
-                <div class="flex justify-end space-x-3">
-                    <button type="button" onclick="closeResetModal()" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400">
-                        Cancel
-                    </button>
-                    <button type="submit" onclick="return confirm('Are you sure you want to reset this user password to default?')" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
-                        Reset to Default
-                    </button>
-                </div>
-            </form>
+        
+        {% if not users %}
+        <div class="mt-6 text-center py-12">
+            <div class="text-gray-500">No users found</div>
         </div>
+        {% endif %}
     </div>
 </div>
 
 <script>
-function openResetModal(userId, email) {
-    document.getElementById('resetUsername').textContent = email;
-    document.getElementById('defaultPassword').textContent = email.split('@')[0] + '123';
-    document.getElementById('resetForm').action = `/user_management/reset_password/${userId}`;
-    document.getElementById('resetModal').classList.remove('hidden');
-}
-
-function closeResetModal() {
-    document.getElementById('resetModal').classList.add('hidden');
-    document.getElementById('resetForm').reset();
-}
-
-function toggleUserStatus(userId, activate) {
-    const action = activate ? 'activate' : 'deactivate';
-    if (confirm(`Are you sure you want to ${action} this user?`)) {
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.action = `/user_management/toggle_status/${userId}`;
-        
-        const input = document.createElement('input');
-        input.type = 'hidden';
-        input.name = 'is_active';
-        input.value = activate;
-        
-        form.appendChild(input);
-        document.body.appendChild(form);
-        form.submit();
-    }
-}
+// Auto-hide flash messages after 5 seconds
+setTimeout(function() {
+    const alerts = document.querySelectorAll('.bg-green-50, .bg-red-50');
+    alerts.forEach(alert => {
+        alert.style.transition = 'opacity 0.5s';
+        alert.style.opacity = '0';
+        setTimeout(() => alert.remove(), 500);
+    });
+}, 5000);
 </script>
 {% endblock %}

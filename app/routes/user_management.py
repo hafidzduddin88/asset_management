@@ -84,7 +84,7 @@ async def create_user(
         # Create user in Supabase Auth
         auth_response = supabase.auth.admin.create_user({
             "email": email,
-            "password": f"{email.split('@')[0]}123",  # Default password
+            "password": "54321",  # Default password
             "email_confirm": True
         })
         
@@ -99,12 +99,21 @@ async def create_user(
                     "username": email,
                     "full_name": full_name,
                     "role": role.lower(),
-                    "is_active": True
+                    "is_active": True,
+                    "email_verified": True
                 }
                 supabase.table("profiles").insert(profile_data).execute()
             
+            # Log user creation
+            supabase.table("user_management_logs").insert({
+                "admin_id": current_profile.id,
+                "target_user_id": auth_response.user.id,
+                "action": "CREATE_USER",
+                "details": f"Created user {email} with role {role}"
+            }).execute()
+            
             response = RedirectResponse(url="/user_management", status_code=status.HTTP_303_SEE_OTHER)
-            set_flash(response, f"User {email} created successfully", "success")
+            set_flash(response, f"User {email} created successfully with password: 54321", "success")
             return response
         else:
             raise Exception("Failed to create user")
@@ -135,11 +144,19 @@ async def reset_password(
         
         user_email = user_response.data[0]["username"]
         
-        # Send password reset email via Supabase
-        supabase.auth.reset_password_email(user_email)
+        # Reset password to default
+        supabase.auth.admin.update_user_by_id(user_id, {"password": "54321"})
+        
+        # Log password reset
+        supabase.table("user_management_logs").insert({
+            "admin_id": current_profile.id,
+            "target_user_id": user_id,
+            "action": "RESET_PASSWORD",
+            "details": f"Reset password for {user_email} to default"
+        }).execute()
         
         response = RedirectResponse(url="/user_management", status_code=status.HTTP_303_SEE_OTHER)
-        set_flash(response, f"Password reset email sent to {user_email}", "success")
+        set_flash(response, f"Password reset to 54321 for {user_email}", "success")
         return response
         
     except Exception as e:
@@ -164,6 +181,15 @@ async def toggle_user_status(
         
         if response.data:
             status_text = "activated" if is_active else "deactivated"
+            
+            # Log status change
+            supabase.table("user_management_logs").insert({
+                "admin_id": current_profile.id,
+                "target_user_id": user_id,
+                "action": "TOGGLE_STATUS",
+                "details": f"User {status_text}"
+            }).execute()
+            
             redirect_response = RedirectResponse(url="/user_management", status_code=status.HTTP_303_SEE_OTHER)
             set_flash(redirect_response, f"User {status_text} successfully", "success")
             return redirect_response
@@ -174,4 +200,40 @@ async def toggle_user_status(
         logging.error(f"Failed to toggle user status: {e}")
         redirect_response = RedirectResponse(url="/user_management", status_code=status.HTTP_303_SEE_OTHER)
         set_flash(redirect_response, "Failed to update user status", "error")
+        return redirect_response
+
+@router.post("/verify_email/{user_id}")
+async def verify_email(
+    user_id: str,
+    request: Request,
+    current_profile = Depends(get_admin_user)
+):
+    """Manually verify user email (admin only)."""
+    try:
+        # Update email_verified status
+        response = supabase.table("profiles").update({
+            "email_verified": True
+        }).eq("id", user_id).execute()
+        
+        if response.data:
+            user_email = response.data[0].get("username", "Unknown")
+            
+            # Log email verification
+            supabase.table("user_management_logs").insert({
+                "admin_id": current_profile.id,
+                "target_user_id": user_id,
+                "action": "VERIFY_EMAIL",
+                "details": f"Manually verified email for {user_email}"
+            }).execute()
+            
+            redirect_response = RedirectResponse(url="/user_management", status_code=status.HTTP_303_SEE_OTHER)
+            set_flash(redirect_response, f"Email verified for {user_email}", "success")
+            return redirect_response
+        else:
+            raise HTTPException(status_code=404, detail="User not found")
+            
+    except Exception as e:
+        logging.error(f"Failed to verify email: {e}")
+        redirect_response = RedirectResponse(url="/user_management", status_code=status.HTTP_303_SEE_OTHER)
+        set_flash(redirect_response, "Failed to verify email", "error")
         return redirect_response
