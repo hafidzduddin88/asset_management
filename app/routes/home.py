@@ -143,14 +143,8 @@ async def home(request: Request, current_profile = Depends(get_current_profile))
         
         # Process assets to ensure they have a display_name field
         for asset in latest_assets:
-            # Try different possible field names for the asset name
-            name_fields = ["Name", "Asset Name", "AssetName", "Item Name", "Description", "Item"]
-            display_name = None
-            
-            for field in name_fields:
-                if asset.get(field):
-                    display_name = asset.get(field)
-                    break
+            # Use the correct field name from Google Sheets
+            display_name = asset.get("Item Name")
             
             # If no name found, use a default
             if not display_name:
