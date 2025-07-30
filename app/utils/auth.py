@@ -136,20 +136,19 @@ def get_current_profile(request: Request) -> ProfileResponse:
         
         # If profile doesn't exist, create it
         if not response.data:
-            # Get user info from auth
-            auth_response = supabase.auth.get_user()
-            if auth_response.user:
-                user_data = auth_response.user
-                # Create profile
-                profile_data = {
-                    "id": user_id,
-                    "username": user_data.email,
-                    "full_name": user_data.user_metadata.get("full_name", ""),
-                    "role": "staff",
-                    "is_active": True
-                }
-                supabase.table("profiles").insert(profile_data).execute()
-                response = supabase.table("profiles").select("*").eq("id", user_id).execute()
+            # Get user email from request state
+            user_email = request.state.user.get("email", "unknown@example.com")
+            
+            # Create profile with basic data
+            profile_data = {
+                "id": user_id,
+                "username": user_email,
+                "full_name": "",
+                "role": "staff",
+                "is_active": True
+            }
+            supabase.table("profiles").insert(profile_data).execute()
+            response = supabase.table("profiles").select("*").eq("id", user_id).execute()
         
         if not response.data or not response.data[0].get("is_active"):
             raise HTTPException(
