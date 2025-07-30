@@ -7,9 +7,11 @@ class ProfileResponse(BaseModel):
     id: str
     username: str
     full_name: Optional[str] = None
+    business_unit: Optional[str] = None
     role: UserRole
     is_active: bool
     photo_url: Optional[str] = None
+    last_login_at: Optional[datetime] = None
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
     

@@ -47,6 +47,7 @@ async def update_profile(
     request: Request,
     username: str = Form(...),
     full_name: str = Form(...),
+    business_unit: str = Form(...),
     photo: UploadFile = File(None),
     current_profile = Depends(get_current_profile)
 ):
@@ -62,6 +63,7 @@ async def update_profile(
     update_data = {
         "username": username,
         "full_name": full_name,
+        "business_unit": business_unit,
         "updated_at": datetime.now(timezone.utc).isoformat()
     }
     

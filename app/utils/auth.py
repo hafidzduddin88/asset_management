@@ -163,9 +163,11 @@ def get_current_profile(request: Request) -> ProfileResponse:
             id=str(profile_data.get("id")),
             username=profile_data.get("username"),
             full_name=profile_data.get("full_name"),
+            business_unit=profile_data.get("business_unit"),
             role=UserRole(profile_data.get("role", "staff")),
             is_active=profile_data.get("is_active", True),
             photo_url=profile_data.get("photo_url"),
+            last_login_at=profile_data.get("last_login_at"),
             created_at=profile_data.get("created_at"),
             updated_at=profile_data.get("updated_at")
         )
