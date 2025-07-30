@@ -1,9 +1,11 @@
 name: 🚀 Build & Push Docker Image
 
 on:
-  push:
-    branches: [main]
-  workflow_dispatch:
+  push:  # Build on every commit to any branch
+  pull_request:
+  schedule:
+    - cron: '0 2 * * *'  # Daily at 2 AM UTC
+  workflow_dispatch:  # Manual trigger
 
 env:
   DOCKERHUB_REPO: ${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.DOCKERHUB_PROJECT }}
