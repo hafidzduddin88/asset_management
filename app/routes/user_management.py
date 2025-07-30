@@ -89,15 +89,19 @@ async def create_user(
         })
         
         if auth_response.user:
-            # Create profile
-            profile_data = {
-                "id": auth_response.user.id,
-                "username": email,
-                "full_name": full_name,
-                "role": role.lower(),
-                "is_active": True
-            }
-            supabase.table("profiles").insert(profile_data).execute()
+            # Check if profile already exists
+            existing_profile = supabase.table("profiles").select("id").eq("id", auth_response.user.id).execute()
+            
+            if not existing_profile.data:
+                # Create profile only if doesn't exist
+                profile_data = {
+                    "id": auth_response.user.id,
+                    "username": email,
+                    "full_name": full_name,
+                    "role": role.lower(),
+                    "is_active": True
+                }
+                supabase.table("profiles").insert(profile_data).execute()
             
             response = RedirectResponse(url="/user_management", status_code=status.HTTP_303_SEE_OTHER)
             set_flash(response, f"User {email} created successfully", "success")
