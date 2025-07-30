@@ -2,8 +2,13 @@ name: Cleanup
 
 on:
   schedule:
+<<<<<<< HEAD
     - cron: '0 17 * * *' # Jam 00:00 WIB (UTC+7)
   workflow_dispatch: # Bisa juga manual trigger dari GitHub
+=======
+    - cron: '0 17 * * *'  # Setiap hari pukul 00:00 WIB
+  workflow_dispatch:
+>>>>>>> 197bc832484f474ee6bf3f4c4b3e56b7ca44476d
 
 jobs:
   cleanup:
