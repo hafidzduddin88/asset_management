@@ -86,36 +86,27 @@ jobs:
     if: github.ref == 'refs/heads/main'
     
     steps:
-      - name: Deploy to Render
+      - name: Auto-deploy to Render
         run: |
-          echo "Triggering Render deployment..."
-          # Try both deploy endpoints
-          RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "https://api.render.com/v1/services/${{ secrets.RENDER_SERVICE_ID }}/deploys" \
+          echo "🚀 Auto-deploying to Render after image push..."
+          
+          RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
+            "https://api.render.com/v1/services/${{ secrets.RENDER_SERVICE_ID }}/deploys" \
             -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" \
             -H "Content-Type: application/json" \
-            -d '{}')
+            -d '{"clearCache": false}')
+          
           HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
           BODY=$(echo "$RESPONSE" | head -n -1)
           
           echo "HTTP Status: $HTTP_CODE"
           echo "Response: $BODY"
           
-          if [ "$HTTP_CODE" -eq 200 ] || [ "$HTTP_CODE" -eq 201 ]; then
-            echo "✅ Deployment triggered successfully"
+          if [ "$HTTP_CODE" -eq 201 ] || [ "$HTTP_CODE" -eq 200 ]; then
+            echo "✅ Auto-deployment triggered successfully"
+            DEPLOY_ID=$(echo "$BODY" | jq -r '.id // "unknown"')
+            echo "Deploy ID: $DEPLOY_ID"
           else
-            echo "❌ V1 API failed, trying legacy endpoint..."
-            # Fallback to legacy endpoint
-            RESPONSE2=$(curl -s -w "\n%{http_code}" -X POST "https://api.render.com/deploy/srv-${{ secrets.RENDER_SERVICE_ID }}?key=${{ secrets.RENDER_API_KEY }}")
-            HTTP_CODE2=$(echo "$RESPONSE2" | tail -n1)
-            BODY2=$(echo "$RESPONSE2" | head -n -1)
-            
-            echo "Legacy HTTP Status: $HTTP_CODE2"
-            echo "Legacy Response: $BODY2"
-            
-            if [ "$HTTP_CODE2" -eq 200 ] || [ "$HTTP_CODE2" -eq 201 ]; then
-              echo "✅ Legacy deployment triggered successfully"
-            else
-              echo "❌ Both endpoints failed"
-              exit 1
-            fi
+            echo "❌ Auto-deployment failed"
+            exit 1
           fi
