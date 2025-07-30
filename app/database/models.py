@@ -20,11 +20,10 @@ class Profile(Base):
     id = Column(
         UUID(as_uuid=True),
         primary_key=True,
-        default=uuid.uuid4  # Cross-platform UUID (instead of PostgreSQL-only function)
+        default=uuid.uuid4
     )
-    auth_user_id = Column(UUID(as_uuid=True), unique=True, nullable=False)
-    email = Column(String(100), nullable=False)
-    full_name = Column(String(100), nullable=True)
+    username = Column(String(255), unique=True, nullable=False)
+    full_name = Column(Text, nullable=True)
     role = Column(
         SqlEnum(UserRole, name="user_role", native_enum=False),
         nullable=False,
@@ -32,5 +31,7 @@ class Profile(Base):
     )
     is_active = Column(Boolean, nullable=False, default=True)
     photo_url = Column(Text, nullable=True)
-    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
-    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    business_unit = Column(Text, nullable=True)
+    last_login_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=True)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=True)

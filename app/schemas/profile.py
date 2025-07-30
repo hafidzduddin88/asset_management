@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime
 from app.database.models import UserRole
@@ -7,13 +7,13 @@ class ProfileResponse(BaseModel):
     id: str
     username: str
     full_name: Optional[str] = None
-    business_unit: Optional[str] = None
     role: UserRole
     is_active: bool
-    photo_url: Optional[str] = None
-    last_login_at: Optional[datetime] = None
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
+    photo_url: Optional[str] = None
+    business_unit: Optional[str] = None
+    last_login_at: Optional[datetime] = None
     
     # Computed fields for compatibility
     @property

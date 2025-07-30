@@ -134,17 +134,18 @@ def get_current_profile(request: Request) -> ProfileResponse:
     try:
         response = supabase.table("profiles").select("*").eq("id", user_id).execute()
         
-        # If profile doesn't exist, return error instead of creating
+        # Profile must exist - no auto-creation
         if not response.data:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="Profile not found. Please contact administrator."
+                detail="Profile not found. Please contact administrator to create your profile."
             )
         
-        if not response.data or not response.data[0].get("is_active"):
+        # Check if user is active
+        if not response.data[0].get("is_active"):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="User not active or not found"
+                detail="User account is inactive"
             )
 
         profile_data = response.data[0]
