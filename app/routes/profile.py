@@ -48,6 +48,7 @@ async def update_profile(
     username: str = Form(...),
     full_name: str = Form(...),
     business_unit: str = Form(...),
+    role: str = Form(None),
     photo: UploadFile = File(None),
     current_profile = Depends(get_current_profile)
 ):
@@ -66,6 +67,10 @@ async def update_profile(
         "business_unit": business_unit,
         "updated_at": datetime.now(timezone.utc).isoformat()
     }
+    
+    # Only admin can update role
+    if current_profile.role == "admin" and role:
+        update_data["role"] = role
     
     admin_supabase.table("profiles").update(update_data).eq("id", current_profile.id).execute()
     

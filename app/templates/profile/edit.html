@@ -73,6 +73,19 @@
                         </div>
                     </div>
                     
+                    {% if user.role == 'admin' %}
+                    <div>
+                        <label for="role" class="block text-sm font-medium text-gray-700">Role (Admin Only)</label>
+                        <div class="mt-1">
+                            <select name="role" id="role" class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                                <option value="staff" {% if user.role == 'staff' %}selected{% endif %}>Staff</option>
+                                <option value="manager" {% if user.role == 'manager' %}selected{% endif %}>Manager</option>
+                                <option value="admin" {% if user.role == 'admin' %}selected{% endif %}>Admin</option>
+                            </select>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
                     <div class="flex justify-between">
                         <a href="/profile/reset-password" class="inline-flex justify-center py-2 px-4 border border-red-300 shadow-sm text-sm font-medium rounded-md text-red-700 bg-red-50 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
                             Reset Password
