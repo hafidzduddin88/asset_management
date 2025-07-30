@@ -161,12 +161,13 @@ def get_current_profile(request: Request) -> ProfileResponse:
         profile_data = response.data[0]
         return ProfileResponse(
             id=str(profile_data.get("id")),
-            auth_user_id=str(profile_data.get("id")),  # Use id as auth_user_id
-            email=profile_data.get("username"),  # username is email
+            username=profile_data.get("username"),
             full_name=profile_data.get("full_name"),
             role=UserRole(profile_data.get("role", "staff")),
             is_active=profile_data.get("is_active", True),
-            photo_url=None  # No photo_url in schema
+            photo_url=profile_data.get("photo_url"),
+            created_at=profile_data.get("created_at"),
+            updated_at=profile_data.get("updated_at")
         )
 
     except Exception as e:
