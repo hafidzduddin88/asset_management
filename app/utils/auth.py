@@ -134,23 +134,12 @@ def get_current_profile(request: Request) -> ProfileResponse:
     try:
         response = supabase.table("profiles").select("*").eq("id", user_id).execute()
         
-        # If profile doesn't exist, create it
+        # If profile doesn't exist, return error instead of creating
         if not response.data:
-            # Get user email from request state
-            user_email = request.state.user.get("email", "unknown@example.com")
-            
-            # Create profile with basic data
-            profile_data = {
-                "id": user_id,
-                "username": user_email,
-                "full_name": "",
-                "role": "staff",
-                "is_active": True
-            }
-            # Use service key for admin operations with upsert
-            admin_supabase = create_client(config.SUPABASE_URL, config.SUPABASE_SERVICE_KEY)
-            admin_supabase.table("profiles").upsert(profile_data).execute()
-            response = admin_supabase.table("profiles").select("*").eq("id", user_id).execute()
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Profile not found. Please contact administrator."
+            )
         
         if not response.data or not response.data[0].get("is_active"):
             raise HTTPException(

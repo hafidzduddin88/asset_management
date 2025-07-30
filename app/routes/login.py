@@ -66,6 +66,10 @@ async def login_form(
         if not payload or not payload.get("sub"):
             raise Exception("Invalid JWT token received")
 
+        # Create profile if doesn't exist (first time login)
+        from app.utils.profile_utils import create_profile_if_not_exists
+        create_profile_if_not_exists(payload.get("sub"), email)
+        
         # Set cookie
         redirect_response = RedirectResponse(url=next or "/", status_code=303)
         set_auth_cookies(redirect_response, session, remember_me)
