@@ -1,6 +1,8 @@
 name: 🔥 Cleanup Cache & Docker Images
 
 on:
+  schedule:
+    - cron: '0 17 * * *'  # Setiap hari pukul 00:00 WIB
   workflow_dispatch:
 
 jobs:
