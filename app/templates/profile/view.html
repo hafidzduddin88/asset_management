@@ -62,10 +62,7 @@
                         <dt class="text-sm font-medium text-gray-500">Username</dt>
                         <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{ user.username }}</dd>
                     </div>
-                    <div class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                        <dt class="text-sm font-medium text-gray-500">Email address</dt>
-                        <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{ user.email }}</dd>
-                    </div>
+
                     <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                         <dt class="text-sm font-medium text-gray-500">Department</dt>
                         <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{ user.business_unit or 'Not specified' }}</dd>
@@ -106,24 +103,7 @@
                             {% endif %}
                         </dd>
                     </div>
-                    <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                        <dt class="text-sm font-medium text-gray-500">Remember Me</dt>
-                        <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                            <form method="POST" action="/profile/remember-me">
-                                <div class="flex items-center">
-                                    <input id="remember_me" name="remember_me" type="checkbox" 
-                                        {% if user.remember_token %}checked{% endif %}
-                                        class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded">
-                                    <label for="remember_me" class="ml-2 block text-sm text-gray-900">
-                                        Keep me logged in on this device
-                                    </label>
-                                    <button type="submit" class="ml-4 inline-flex items-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded text-primary-700 bg-primary-100 hover:bg-primary-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
-                                        Update
-                                    </button>
-                                </div>
-                            </form>
-                        </dd>
-                    </div>
+
                 </dl>
             </div>
         </div>

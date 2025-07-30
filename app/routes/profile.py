@@ -45,7 +45,6 @@ async def edit_profile_page(
 @router.post("/profile/edit")
 async def update_profile(
     request: Request,
-    username: str = Form(...),
     full_name: str = Form(...),
     business_unit: str = Form(...),
     role: str = Form(None),
@@ -62,7 +61,6 @@ async def update_profile(
     
     # Update profile data
     update_data = {
-        "username": username,
         "full_name": full_name,
         "business_unit": business_unit,
         "updated_at": datetime.now(timezone.utc).isoformat()
