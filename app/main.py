@@ -24,10 +24,7 @@ async def health_check():
 async def wake_up():
     return {"status": "awake"}
 
-# Root redirect
-@app.get("/")
-async def root():
-    return {"message": "Asset Management System"}
+# Root redirect handled by home router
 
 # Lazy load routes on startup
 @app.on_event("startup")
