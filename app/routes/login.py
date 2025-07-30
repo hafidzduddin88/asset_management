@@ -31,14 +31,14 @@ def set_auth_cookies(response, session, remember_me: bool = False):
     access_max_age = 60 * 60 * 24 * 7 if remember_me else 3600
     refresh_max_age = 60 * 60 * 24 * 30
 
-    response.set_cookie("sb-access-token", session.access_token, max_age=access_max_age, **settings)
-    response.set_cookie("sb-refresh-token", session.refresh_token, max_age=refresh_max_age, **settings)
+    response.set_cookie("sb_access_token", session.access_token, max_age=access_max_age, **settings)
+    response.set_cookie("sb_refresh_token", session.refresh_token, max_age=refresh_max_age, **settings)
 
 
 def clear_auth_cookies(response):
     settings = get_cookie_settings()
-    response.delete_cookie("sb-access-token", **{k: v for k, v in settings.items() if k != "httponly"})
-    response.delete_cookie("sb-refresh-token", **{k: v for k, v in settings.items() if k != "httponly"})
+    response.delete_cookie("sb_access_token", **{k: v for k, v in settings.items() if k != "httponly"})
+    response.delete_cookie("sb_refresh_token", **{k: v for k, v in settings.items() if k != "httponly"})
 
 
 @router.get("/login", response_class=HTMLResponse)
