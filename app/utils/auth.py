@@ -133,6 +133,24 @@ def get_current_profile(request: Request) -> ProfileResponse:
 
     try:
         response = supabase.table("profiles").select("*").eq("id", user_id).execute()
+        
+        # If profile doesn't exist, create it
+        if not response.data:
+            # Get user info from auth
+            auth_response = supabase.auth.get_user()
+            if auth_response.user:
+                user_data = auth_response.user
+                # Create profile
+                profile_data = {
+                    "id": user_id,
+                    "username": user_data.email,
+                    "full_name": user_data.user_metadata.get("full_name", ""),
+                    "role": "staff",
+                    "is_active": True
+                }
+                supabase.table("profiles").insert(profile_data).execute()
+                response = supabase.table("profiles").select("*").eq("id", user_id).execute()
+        
         if not response.data or not response.data[0].get("is_active"):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
@@ -143,11 +161,11 @@ def get_current_profile(request: Request) -> ProfileResponse:
         return ProfileResponse(
             id=str(profile_data.get("id")),
             auth_user_id=str(profile_data.get("id")),  # Use id as auth_user_id
-            email=profile_data.get("email"),
+            email=profile_data.get("username"),  # username is email
             full_name=profile_data.get("full_name"),
             role=UserRole(profile_data.get("role", "staff")),
             is_active=profile_data.get("is_active", True),
-            photo_url=profile_data.get("photo_url")
+            photo_url=None  # No photo_url in schema
         )
 
     except Exception as e:
