@@ -1,57 +1,51 @@
 name: 🔥 Cleanup Cache & Docker Images
 
 on:
-  workflow_dispatch:
+  workflow_dispatch:  # Manual trigger dari GitHub UI
 
 jobs:
   cleanup:
     runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}  # Token personal GitHub
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+      DOCKERHUB_PROJECT: ${{ secrets.DOCKERHUB_PROJECT }}
 
     steps:
-      - name: Checkout (required for repo context)
+      - name: 🧾 Checkout repository (diperlukan oleh GitHub CLI)
         uses: actions/checkout@v4
 
-      - name: Install GitHub CLI
+      - name: 🔧 Install GitHub CLI
         run: sudo apt-get install -y gh
 
-      - name: Install gh-actions-cache extension
+      - name: 🔌 Install gh-actions-cache extension
         run: gh extension install actions/gh-actions-cache
 
-      - name: Authenticate GitHub CLI
-        env:
-          GH_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
-        run: echo "${GH_TOKEN}" | gh auth login --with-token
+      - name: 🔐 Authenticate GitHub CLI
+        run: echo "$GH_TOKEN" | gh auth login --with-token
 
-      - name: List and Delete All GitHub Actions Cache
-        env:
-          GH_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+      - name: 🧹 Delete all GitHub Actions caches
         run: |
-          echo "🧹 Deleting all GitHub Actions cache..."
+          echo "Menghapus semua cache GitHub Actions..."
           gh actions-cache list -R ${{ github.repository }} | cut -f 1 | while read -r cache_key; do
-            echo "Deleting cache: $cache_key"
+            echo "🗑️ Menghapus cache: $cache_key"
             gh actions-cache delete "$cache_key" -R ${{ github.repository }} --confirm
           done
 
-      - name: Log in to Docker Hub
-        env:
-          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
-          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
-        run: echo "${DOCKERHUB_TOKEN}" | docker login -u "${DOCKERHUB_USERNAME}" --password-stdin
+      - name: 🔐 Login to Docker Hub
+        run: echo "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
 
-      - name: Clean Docker Hub Tags (except latest)
-        env:
-          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
-          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
-          DOCKERHUB_PROJECT: ${{ secrets.DOCKERHUB_PROJECT }}
+      - name: 🧹 Delete all Docker Hub tags except 'latest'
         run: |
-          echo "🧹 Cleaning up old Docker Hub tags (except 'latest')..."
+          echo "Mengambil tag Docker Hub selain 'latest'..."
           REPO="${DOCKERHUB_USERNAME}/${DOCKERHUB_PROJECT}"
           TAGS=$(curl -s -u "${DOCKERHUB_USERNAME}:${DOCKERHUB_TOKEN}" \
             "https://hub.docker.com/v2/repositories/${REPO}/tags?page_size=100" | jq -r '.results[].name')
 
           for tag in $TAGS; do
             if [ "$tag" != "latest" ]; then
-              echo "Deleting tag: $tag"
+              echo "🗑️ Menghapus tag: $tag"
               curl -s -X DELETE -u "${DOCKERHUB_USERNAME}:${DOCKERHUB_TOKEN}" \
                 "https://hub.docker.com/v2/repositories/${REPO}/tags/${tag}/"
             fi
