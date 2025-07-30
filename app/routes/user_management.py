@@ -237,3 +237,40 @@ async def verify_email(
         redirect_response = RedirectResponse(url="/user_management", status_code=status.HTTP_303_SEE_OTHER)
         set_flash(redirect_response, "Failed to verify email", "error")
         return redirect_response
+
+@router.post("/change_role/{user_id}")
+async def change_role(
+    user_id: str,
+    request: Request,
+    new_role: str = Form(...),
+    current_profile = Depends(get_admin_user)
+):
+    """Change user role (admin only)."""
+    try:
+        # Update user role
+        response = supabase.table("profiles").update({
+            "role": new_role.lower()
+        }).eq("id", user_id).execute()
+        
+        if response.data:
+            user_email = response.data[0].get("username", "Unknown")
+            
+            # Log role change
+            supabase.table("user_management_logs").insert({
+                "admin_id": current_profile.id,
+                "target_user_id": user_id,
+                "action": "CHANGE_ROLE",
+                "details": f"Changed role to {new_role} for {user_email}"
+            }).execute()
+            
+            redirect_response = RedirectResponse(url="/user_management", status_code=status.HTTP_303_SEE_OTHER)
+            set_flash(redirect_response, f"Role changed to {new_role} for {user_email}", "success")
+            return redirect_response
+        else:
+            raise HTTPException(status_code=404, detail="User not found")
+            
+    except Exception as e:
+        logging.error(f"Failed to change role: {e}")
+        redirect_response = RedirectResponse(url="/user_management", status_code=status.HTTP_303_SEE_OTHER)
+        set_flash(redirect_response, "Failed to change role", "error")
+        return redirect_response
