@@ -7,7 +7,7 @@ on:
     branches: [ main ]
 
 env:
-  DOCKER_REPO: ${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.DOCKERHUB_PROJECT }}
+  DOCKER_REPO:   DOCKER_REPO: ${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.DOCKERHUB_PROJECT }}
 
 jobs:
   build-and-clear:
@@ -86,27 +86,8 @@ jobs:
     if: github.ref == 'refs/heads/main'
     
     steps:
-      - name: Auto-deploy to Render
+      - name: Deploy notification
         run: |
-          echo "🚀 Auto-deploying to Render after image push..."
-          
-          RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
-            "https://api.render.com/v1/services/${{ secrets.RENDER_SERVICE_ID }}/deploys" \
-            -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" \
-            -H "Content-Type: application/json" \
-            -d '{}')
-          
-          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
-          BODY=$(echo "$RESPONSE" | head -n -1)
-          
-          echo "HTTP Status: $HTTP_CODE"
-          echo "Response: $BODY"
-          
-          if [ "$HTTP_CODE" -eq 201 ] || [ "$HTTP_CODE" -eq 200 ]; then
-            echo "✅ Auto-deployment triggered successfully"
-            DEPLOY_ID=$(echo "$BODY" | jq -r '.id // "unknown"')
-            echo "Deploy ID: $DEPLOY_ID"
-          else
-            echo "❌ Auto-deployment failed"
-            exit 1
-          fi
+          echo "✅ Docker image pushed to Docker Hub"
+          echo "🚀 Render will auto-deploy from hafidzduddin/ambp:latest"
+          echo "📋 Check deployment status at: https://dashboard.render.com"
