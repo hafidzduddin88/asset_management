@@ -25,14 +25,14 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Delete ALL Docker images
+      - name: Delete ALL Docker images and manifests
         run: |
           # Get Docker Hub token
           TOKEN=$(curl -s -H "Content-Type: application/json" \
                   -X POST -d '{"username": "${{ secrets.DOCKERHUB_USERNAME }}", "password": "${{ secrets.DOCKERHUB_TOKEN }}"}' \
                   https://hub.docker.com/v2/users/login/ | jq -r .token)
           
-          # Get ALL tags with pagination
+          # Delete ALL tags first
           PAGE=1
           while true; do
             RESPONSE=$(curl -s "https://hub.docker.com/v2/repositories/${{ env.DOCKER_REPO }}/tags/?page_size=100&page=$PAGE")
@@ -43,24 +43,44 @@ jobs:
               break
             fi
             
-            # Delete tags from this page
             for tag in $TAGS; do
               echo "Deleting tag: $tag"
               curl -X DELETE -H "Authorization: JWT $TOKEN" \
                    "https://hub.docker.com/v2/repositories/${{ env.DOCKER_REPO }}/tags/$tag/" || true
-              sleep 1  # Rate limiting
+              sleep 1
             done
             
             PAGE=$((PAGE + 1))
-            
-            # Safety check - max 10 pages
-            if [ $PAGE -gt 10 ]; then
-              echo "Reached max pages, stopping"
-              break
-            fi
+            if [ $PAGE -gt 10 ]; then break; fi
           done
           
-          echo "All images deleted. Fresh build will create latest tag."
+          # Delete untagged manifests by digest
+          echo "Deleting untagged manifests..."
+          PAGE=1
+          while true; do
+            RESPONSE=$(curl -s -H "Authorization: JWT $TOKEN" \
+                       "https://hub.docker.com/v2/repositories/${{ env.DOCKER_REPO }}/tags/?page_size=100&page=$PAGE")
+            
+            # Get digests of remaining images
+            DIGESTS=$(echo "$RESPONSE" | jq -r '.results[]?.digest // empty' | grep -v "null" | head -20)
+            
+            if [ -z "$DIGESTS" ]; then
+              echo "No more manifests found on page $PAGE"
+              break
+            fi
+            
+            for digest in $DIGESTS; do
+              echo "Deleting manifest: $digest"
+              curl -X DELETE -H "Authorization: JWT $TOKEN" \
+                   "https://hub.docker.com/v2/repositories/${{ env.DOCKER_REPO }}/manifests/$digest" || true
+              sleep 2
+            done
+            
+            PAGE=$((PAGE + 1))
+            if [ $PAGE -gt 5 ]; then break; fi
+          done
+          
+          echo "All images and manifests deleted."
 
       - name: Clear Docker cache
         run: |
