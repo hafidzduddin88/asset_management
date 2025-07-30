@@ -4,7 +4,7 @@ from app.middleware.session_auth import SessionAuthMiddleware
 from app.routes import (
     login, health, offline, home, assets, asset_management,
     damage, profile, repair, approvals, disposal, user_management,
-    logs, relocation
+    logs, relocation, reset_password, auth_callback
 )
 import logging
 
@@ -35,6 +35,8 @@ app.include_router(disposal.router)
 app.include_router(user_management.router)
 app.include_router(logs.router)
 app.include_router(relocation.router)
+app.include_router(reset_password.router)
+app.include_router(auth_callback.router)
 
 # Health check
 @app.get("/health")

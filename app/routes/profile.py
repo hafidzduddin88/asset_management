@@ -45,17 +45,27 @@ async def edit_profile_page(
 @router.post("/profile/edit")
 async def update_profile(
     request: Request,
+    username: str = Form(...),
     full_name: str = Form(...),
-    email: str = Form(...),
     photo: UploadFile = File(None),
-    db: Session = Depends(get_db),
     current_profile = Depends(get_current_profile)
 ):
     """Update user profile."""
-    # Update basic info
-    current_profile.full_name = full_name
-    current_profile.email = email
-    current_profile.updated_at = datetime.now(timezone.utc)
+    # Update profile via Supabase
+    from supabase import create_client
+    from app.config import load_config
+    
+    config = load_config()
+    admin_supabase = create_client(config.SUPABASE_URL, config.SUPABASE_SERVICE_KEY)
+    
+    # Update profile data
+    update_data = {
+        "username": username,
+        "full_name": full_name,
+        "updated_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    admin_supabase.table("profiles").update(update_data).eq("id", current_profile.id).execute()
     
     # Handle photo upload if provided
     if photo and photo.filename:
@@ -74,7 +84,7 @@ async def update_profile(
                     f"profile_{current_profile.email}"
                 )
                 if photo_url:
-                    current_profile.photo_url = photo_url
+                    update_data["photo_url"] = photo_url
         except Exception as e:
             return templates.TemplateResponse(
                 "profile/edit.html",
@@ -86,8 +96,9 @@ async def update_profile(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
     
-    # Save changes
-    db.commit()
+    # Update photo if processed
+    if photo and photo.filename and "photo_url" in update_data:
+        admin_supabase.table("profiles").update({"photo_url": update_data["photo_url"]}).eq("id", current_profile.id).execute()
     
     # Redirect to profile page
     response = RedirectResponse(url="/profile", status_code=status.HTTP_303_SEE_OTHER)
