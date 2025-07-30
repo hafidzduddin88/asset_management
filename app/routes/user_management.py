@@ -48,7 +48,6 @@ async def user_list(
 @router.get("/create", response_class=HTMLResponse)
 async def create_user_form(
     request: Request,
-    db: Session = Depends(get_db),
     current_profile = Depends(get_admin_user)
 ):
     """Create user form (admin only)."""
@@ -121,20 +120,29 @@ async def create_user(
 async def reset_password(
     user_id: str,
     request: Request,
-    db: Session = Depends(get_db),
     current_profile = Depends(get_admin_user)
 ):
     """Reset user password to default (admin only)."""
-    user = db.query(Profile).filter(Profile.id == user_id).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    
-    # Password reset handled by Supabase
-    default_password = f"{user.email.split('@')[0]}123"
-    
-    response = RedirectResponse(url="/user_management", status_code=status.HTTP_303_SEE_OTHER)
-    set_flash(response, f"Password reset instructions sent to {user.email}", "success")
-    return response
+    try:
+        # Get user from profiles
+        user_response = supabase.table("profiles").select("username").eq("id", user_id).execute()
+        if not user_response.data:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        user_email = user_response.data[0]["username"]
+        
+        # Send password reset email via Supabase
+        supabase.auth.reset_password_email(user_email)
+        
+        response = RedirectResponse(url="/user_management", status_code=status.HTTP_303_SEE_OTHER)
+        set_flash(response, f"Password reset email sent to {user_email}", "success")
+        return response
+        
+    except Exception as e:
+        logging.error(f"Failed to reset password: {e}")
+        response = RedirectResponse(url="/user_management", status_code=status.HTTP_303_SEE_OTHER)
+        set_flash(response, "Failed to send reset email", "error")
+        return response
 
 @router.post("/toggle_status/{user_id}")
 async def toggle_user_status(
