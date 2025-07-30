@@ -43,7 +43,7 @@ def clear_auth_cookies(response):
 
 @router.get("/login", response_class=HTMLResponse)
 async def login_page(request: Request, next: str = "/"):
-    if request.state.user:
+    if hasattr(request.state, 'user') and request.state.user:
         return RedirectResponse(url=next, status_code=303)
 
     return templates.TemplateResponse("login_logout.html", {"request": request, "next": next})
@@ -88,7 +88,7 @@ async def login_form(
 
 @router.get("/signup", response_class=HTMLResponse)
 async def signup_page(request: Request):
-    if request.state.user:
+    if hasattr(request.state, 'user') and request.state.user:
         return RedirectResponse(url="/", status_code=303)
     return templates.TemplateResponse("signup.html", {"request": request})
 
@@ -132,7 +132,9 @@ async def signup_form(
 
 @router.get("/logout")
 async def logout(request: Request):
-    user_email = request.state.user.get("email") if request.state.user else "unknown"
+    user_email = "unknown"
+    if hasattr(request.state, 'user') and request.state.user:
+        user_email = request.state.user.get("email", "unknown")
 
     try:
         supabase.auth.sign_out()

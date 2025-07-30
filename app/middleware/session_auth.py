@@ -22,6 +22,8 @@ class SessionAuthMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
         # Skip auth for public paths
         if request.url.path in self.SKIP_PATHS:
+            # Set empty user state for skipped paths
+            request.state.user = None
             return await call_next(request)
             
         # Skip auth for static files
