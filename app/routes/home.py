@@ -157,7 +157,7 @@ async def home(request: Request, current_profile = Depends(get_current_profile))
         if latest_assets:
             logging.info(f"Asset keys: {list(latest_assets[0].keys())}")
             logging.info(f"Asset display name: {latest_assets[0].get('display_name', 'Not found')}")
-            logging.info(f"Original asset name fields: {[latest_assets[0].get(f, 'None') for f in name_fields]}")
+
 
         context = {
             "request": request,
