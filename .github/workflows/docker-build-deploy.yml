@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       image-digest: ${{ steps.build.outputs.digest }}
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -35,47 +35,45 @@ jobs:
           context: .
           push: true
           tags: ${{ env.DOCKER_REPO }}:latest
-          cache-from: type=gha
+          cache-from: |
+            type=registry,ref=${{ env.DOCKER_REPO }}:latest
+            type=gha
           cache-to: type=gha,mode=max
 
-      - name: Delete old Docker images and manifests
+      - name: Delete old Docker tags (keep only latest)
         run: |
-          # Get Docker Hub token
+          echo "🧹 Cleaning up old Docker Hub tags..."
           TOKEN=$(curl -s -H "Content-Type: application/json" \
                   -X POST -d '{"username": "${{ secrets.DOCKERHUB_USERNAME }}", "password": "${{ secrets.DOCKERHUB_TOKEN }}"}' \
                   https://hub.docker.com/v2/users/login/ | jq -r .token)
-          
-          # Get current image digest to preserve
-          CURRENT_DIGEST="${{ steps.build.outputs.digest }}"
-          echo "Preserving current image: $CURRENT_DIGEST"
-          
-          # Delete old tags (keep latest)
+
+          REPO=${{ env.DOCKER_REPO }}
           PAGE=1
           while true; do
-            RESPONSE=$(curl -s "https://hub.docker.com/v2/repositories/${{ env.DOCKER_REPO }}/tags/?page_size=100&page=$PAGE")
+            RESPONSE=$(curl -s "https://hub.docker.com/v2/repositories/$REPO/tags/?page_size=100&page=$PAGE")
             TAGS=$(echo "$RESPONSE" | jq -r '.results[] | select(.name != "latest") | .name')
-            
+
             if [ -z "$TAGS" ]; then
-              echo "No more old tags found on page $PAGE"
+              echo "✅ No old tags found on page $PAGE"
               break
             fi
-            
+
             for tag in $TAGS; do
-              echo "Deleting old tag: $tag"
-              curl -X DELETE -H "Authorization: JWT $TOKEN" \
-                   "https://hub.docker.com/v2/repositories/${{ env.DOCKER_REPO }}/tags/$tag/" || true
+              echo "❌ Deleting tag: $tag"
+              curl -s -X DELETE -H "Authorization: JWT $TOKEN" \
+                "https://hub.docker.com/v2/repositories/$REPO/tags/$tag/" || true
               sleep 1
             done
-            
+
             PAGE=$((PAGE + 1))
             if [ $PAGE -gt 5 ]; then break; fi
           done
-          
-          echo "Old images cleanup completed."
 
-      - name: Clear old GitHub Actions cache
+          echo "✅ Docker tag cleanup completed."
+
+      - name: Clear old GitHub Actions cache (keep last 5)
         run: |
-          # Delete old cache entries (keep last 5)
+          echo "🧹 Cleaning up old GitHub Actions cache..."
           gh cache list --limit 100 | tail -n +6 | cut -f1 | xargs -I {} gh cache delete {} || true
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -84,7 +82,7 @@ jobs:
     needs: build-and-clear
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
-    
+
     steps:
       - name: Trigger redeploy on Render
         run: |
