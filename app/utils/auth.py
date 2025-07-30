@@ -132,7 +132,9 @@ def get_current_profile(request: Request) -> ProfileResponse:
         )
 
     try:
-        response = supabase.table("profiles").select("*").eq("id", user_id).execute()
+        # Use service key to bypass RLS for profile reading
+        admin_supabase = create_client(config.SUPABASE_URL, config.SUPABASE_SERVICE_KEY)
+        response = admin_supabase.table("profiles").select("*").eq("id", user_id).execute()
         
         # Profile must exist - no auto-creation
         if not response.data:
