@@ -40,9 +40,34 @@ jobs:
         cache-from: type=gha
         cache-to: type=gha,mode=max
 
-    - name: Clear old Docker images
+    - name: Deploy to Render
+      if: github.ref == 'refs/heads/main'
       run: |
-        # Simple cleanup without gh CLI
-        echo "Docker build completed successfully"
-        echo "Image pushed: ${{ env.DOCKERHUB_REPO }}:latest"
-        echo "Image pushed: ${{ env.DOCKERHUB_REPO }}:${{ steps.vars.outputs.sha_short }}"
+        echo "Triggering Render deployment..."
+        RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
+          "https://api.render.com/v1/services/${{ secrets.RENDER_SERVICE_ID }}/deploys" \
+          -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" \
+          -H "Content-Type: application/json" \
+          -d '{}')
+        
+        HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+        BODY=$(echo "$RESPONSE" | head -n -1)
+        
+        echo "HTTP Status: $HTTP_CODE"
+        echo "Response: $BODY"
+        
+        if [ "$HTTP_CODE" -eq 200 ] || [ "$HTTP_CODE" -eq 201 ]; then
+          echo "✅ Deployment triggered successfully"
+        else
+          echo "❌ Deployment failed with status $HTTP_CODE"
+          exit 1
+        fi
+
+    - name: Build summary
+      run: |
+        echo "🚀 Build completed successfully"
+        echo "📦 Image pushed: ${{ env.DOCKERHUB_REPO }}:latest"
+        echo "🏷️ Image pushed: ${{ env.DOCKERHUB_REPO }}:${{ steps.vars.outputs.sha_short }}"
+        if [ "${{ github.ref }}" == "refs/heads/main" ]; then
+          echo "🌐 Render deployment triggered"
+        fi
