@@ -7,20 +7,28 @@ router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
 
 
-@router.get("/")
+@router.get("/damage")
 async def damaged_assets_page(request: Request, current_profile = Depends(get_current_profile)):
     """Damaged assets page with search and log functionality"""
-    from app.utils.sheets import get_all_assets, get_dropdown_options
+    try:
+        from app.utils.sheets import get_all_assets, get_dropdown_options
 
-    all_assets = get_all_assets()
-    dropdown_options = get_dropdown_options()
+        all_assets = get_all_assets() or []
+        dropdown_options = get_dropdown_options() or {}
 
-    return templates.TemplateResponse("damaged_assets.html", {
-        "request": request,
-        "user": current_profile,
-        "assets_data": all_assets,
-        "dropdown_options": dropdown_options
-    })
+        return templates.TemplateResponse("damaged_assets.html", {
+            "request": request,
+            "user": current_profile,
+            "assets_data": all_assets,
+            "dropdown_options": dropdown_options
+        })
+    except Exception as e:
+        logging.error(f"Error loading damage page: {e}")
+        return templates.TemplateResponse("error.html", {
+            "request": request,
+            "user": current_profile,
+            "message": "Failed to load asset issue page. Please try again."
+        })
 
 
 @router.post("/lost")
