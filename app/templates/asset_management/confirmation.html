@@ -1,0 +1,96 @@
+{% extends "layouts/modern_layout.html" %}
+
+{% block title %}Registration Confirmation - Asset Management{% endblock %}
+
+{% block content %}
+<div class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-md w-full space-y-8">
+        <div class="text-center">
+            <!-- Success Icon -->
+            <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 mb-6">
+                <svg class="h-8 w-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+            </div>
+            
+            <!-- Title -->
+            <h2 class="text-2xl font-bold text-gray-900 mb-4">
+                Registration Received
+            </h2>
+            
+            <!-- Asset Name -->
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                <h3 class="text-lg font-semibold text-blue-900 mb-2">Asset Registered:</h3>
+                <p class="text-blue-800 font-medium">{{ asset_name }}</p>
+            </div>
+            
+            <!-- Approval Message -->
+            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+                <div class="flex items-center">
+                    <svg class="h-5 w-5 text-yellow-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <p class="text-yellow-800 font-medium">{{ message }}</p>
+                </div>
+            </div>
+            
+            <!-- Next Steps -->
+            <div class="text-left bg-gray-50 rounded-lg p-4 mb-6">
+                <h4 class="font-semibold text-gray-900 mb-2">Next Steps:</h4>
+                <ul class="text-sm text-gray-600 space-y-1">
+                    <li class="flex items-center">
+                        <span class="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
+                        Your request has been submitted successfully
+                    </li>
+                    <li class="flex items-center">
+                        <span class="w-2 h-2 bg-yellow-500 rounded-full mr-2"></span>
+                        Waiting for {{ approver }} approval
+                    </li>
+                    <li class="flex items-center">
+                        <span class="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
+                        You will be notified once approved
+                    </li>
+                </ul>
+            </div>
+            
+            <!-- Action Buttons -->
+            <div class="space-y-3">
+                <a href="/dashboard" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors">
+                    Go to Dashboard
+                </a>
+                
+                <a href="/asset_management/add" class="w-full flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors">
+                    Register Another Asset
+                </a>
+            </div>
+            
+            <!-- Additional Info -->
+            <div class="mt-6 text-xs text-gray-500">
+                <p>Request submitted by: {{ user.full_name or user.username }}</p>
+                <p>Date: {{ moment().format('YYYY-MM-DD HH:mm:ss') }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Auto redirect to dashboard after 10 seconds
+setTimeout(function() {
+    const countdown = document.createElement('div');
+    countdown.className = 'fixed bottom-4 right-4 bg-blue-600 text-white px-4 py-2 rounded shadow-lg text-sm';
+    countdown.innerHTML = 'Redirecting to dashboard in <span id="countdown">10</span> seconds...';
+    document.body.appendChild(countdown);
+    
+    let timeLeft = 10;
+    const timer = setInterval(function() {
+        timeLeft--;
+        document.getElementById('countdown').textContent = timeLeft;
+        
+        if (timeLeft <= 0) {
+            clearInterval(timer);
+            window.location.href = '/dashboard';
+        }
+    }, 1000);
+}, 5000); // Start countdown after 5 seconds
+</script>
+{% endblock %}

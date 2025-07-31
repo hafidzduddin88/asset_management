@@ -26,11 +26,11 @@ async def approvals_page(
     
     # Filter approvals based on user role
     if current_profile.role == 'admin':
-        # Admin sees all approvals except disposal and edit_asset
-        approvals_data = [a for a in all_approvals if a.get('Type') not in ['disposal', 'edit_asset']]
+        # Admin sees manager/staff requests (add_asset, damage_report, etc.)
+        approvals_data = [a for a in all_approvals if a.get('Type') not in ['admin_add_asset', 'disposal', 'edit_asset']]
     elif current_profile.role == 'manager':
-        # Manager sees disposal and edit_asset approvals
-        approvals_data = [a for a in all_approvals if a.get('Type') in ['disposal', 'edit_asset']]
+        # Manager sees admin requests (admin_add_asset) and disposal/edit_asset
+        approvals_data = [a for a in all_approvals if a.get('Type') in ['admin_add_asset', 'disposal', 'edit_asset']]
     else:
         approvals_data = []
     
@@ -102,14 +102,40 @@ async def approve_request(
             except Exception as e:
                 return JSONResponse({"status": "error", "message": f"Error processing edit: {str(e)}"})
         
-        # Update approval status
-        approval_update = {
-            'Status': 'Approved',
-            'Approved_By': current_profile.full_name or current_profile.email,
-            'Approved_Date': __import__('datetime').datetime.now().strftime('%Y-%m-%d')
-        }
+        elif approval.get('Type') == 'admin_add_asset':
+            # Process admin asset addition approval
+            import json
+            try:
+                request_data_str = approval.get('Request_Data', '')
+                if request_data_str:
+                    asset_data = json.loads(request_data_str)
+                    from app.utils.sheets import add_asset
+                    success = add_asset(asset_data)
+                    if not success:
+                        return JSONResponse({"status": "error", "message": "Failed to add asset"})
+            except Exception as e:
+                return JSONResponse({"status": "error", "message": f"Error processing asset addition: {str(e)}"})
         
-        success = update_approval_status(approval_id, approval_update)
+        elif approval.get('Type') == 'add_asset':
+            # Process manager/staff asset addition approval
+            import json
+            try:
+                request_data_str = approval.get('Request_Data', '')
+                if request_data_str:
+                    asset_data = json.loads(request_data_str)
+                    from app.utils.sheets import add_asset
+                    success = add_asset(asset_data)
+                    if not success:
+                        return JSONResponse({"status": "error", "message": "Failed to add asset"})
+            except Exception as e:
+                return JSONResponse({"status": "error", "message": f"Error processing asset addition: {str(e)}"})
+        
+        # Update approval status in Google Sheets
+        success = update_approval_status(
+            approval_id, 
+            'Approved',
+            current_profile.full_name or current_profile.email
+        )
         
         if success:
             return JSONResponse({"status": "success", "message": "Request approved successfully"})
@@ -131,13 +157,11 @@ async def reject_request(
         raise HTTPException(status_code=403, detail="Access denied")
     
     # Update approval status
-    approval_update = {
-        'Status': 'Rejected',
-        'Approved_By': current_profile.full_name or current_profile.email,
-        'Approved_Date': __import__('datetime').datetime.now().strftime('%Y-%m-%d')
-    }
-    
-    success = update_approval_status(approval_id, approval_update)
+    success = update_approval_status(
+        approval_id,
+        'Rejected', 
+        current_profile.full_name or current_profile.email
+    )
     
     if success:
         return JSONResponse({"status": "success", "message": "Request rejected"})

@@ -272,11 +272,26 @@ async def add_asset(
     approval_success = add_approval_request(approval_data)
     
     if approval_success:
-        approval_msg = "manager approval" if current_profile.role == UserRole.ADMIN else "admin approval"
+        if current_profile.role == UserRole.ADMIN:
+            approver = "Manager"
+            approval_msg = "manager approval"
+        else:
+            approver = "Admin"
+            approval_msg = "admin approval"
+        
         logging.info(f"Asset approval request submitted for {approval_msg}: {asset_data.get('Item Name')}")
-        response = RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
-        set_flash(response, f"Asset request submitted for {approval_msg}", "success")
-        return response
+        
+        # Show confirmation page instead of redirect
+        return templates.TemplateResponse(
+            "asset_management/confirmation.html",
+            {
+                "request": request,
+                "user": current_profile,
+                "asset_name": item_name,
+                "approver": approver,
+                "message": f"Asset registration has been received and is waiting for approval from {approver}"
+            }
+        )
     else:
         logging.error(f"Failed to submit approval request for: {asset_data.get('Item Name')}")
         return templates.TemplateResponse(
