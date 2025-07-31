@@ -58,17 +58,27 @@ jobs:
                   -X POST -d '{"username": "${{ secrets.DOCKERHUB_USERNAME }}", "password": "${{ secrets.DOCKERHUB_TOKEN }}"}' \
                   https://hub.docker.com/v2/users/login/ | jq -r .token)
           
-          # Get tags (keep latest and last 3 SHA tags)
+          if [ "$TOKEN" = "null" ] || [ -z "$TOKEN" ]; then
+            echo "Failed to get Docker Hub token"
+            exit 1
+          fi
+          
+          # Get tags (keep latest and last 2 SHA tags)
           TAGS=$(curl -s "https://hub.docker.com/v2/repositories/$REPO/tags?page_size=100" | \
                  jq -r '.results[] | select(.name != "latest") | .name' | \
-                 tail -n +4)
+                 tail -n +3)
           
-          # Delete old tags
+          # Delete old tags with proper error handling
           for tag in $TAGS; do
             if [ ! -z "$tag" ]; then
               echo "Deleting Docker tag: $tag"
-              curl -X DELETE -H "Authorization: JWT $TOKEN" \
-                   "https://hub.docker.com/v2/repositories/$REPO/tags/$tag/" || true
+              RESPONSE=$(curl -s -X DELETE -H "Authorization: JWT $TOKEN" \
+                         "https://hub.docker.com/v2/repositories/$REPO/tags/$tag/")
+              if echo "$RESPONSE" | grep -q "forbidden"; then
+                echo "Permission denied for tag: $tag"
+              else
+                echo "Deleted: $tag"
+              fi
               sleep 1
             fi
           done
