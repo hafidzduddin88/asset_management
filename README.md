@@ -47,8 +47,8 @@ Created by: Asset Management & Business Process Department
 
 1. **Clone the repository:**
 ```bash
-git clone https://github.com/hafidzduddin88/asset_management-1.git
-cd asset_management-1
+git clone https://github.com/hafidzduddin88/asset_management.git
+cd asset_management
 ```
 
 2. **Set up environment:**
@@ -99,7 +99,7 @@ The application is automatically deployed to Render.com via GitHub Actions when 
 ## Project Structure
 
 ```
-asset_management-1/
+asset_management/
 ├── app/
 │   ├── database/                 # Database models and connections
 │   ├── middleware/               # Authentication middleware
@@ -217,4 +217,4 @@ MIT License - See LICENSE file for details
 
 **Live Demo**: [https://ambp.onrender.com](https://ambp.onrender.com)
 
-**Repository**: [https://github.com/hafidzduddin88/asset_management-1](https://github.com/hafidzduddin88/asset_management-1)
+**Repository**: [https://github.com/hafidzduddin88/asset_management](https://github.com/hafidzduddin88/asset_management)
