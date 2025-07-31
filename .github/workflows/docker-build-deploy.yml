@@ -46,9 +46,12 @@ jobs:
           org.opencontainers.image.description=Asset Management System
           org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
         cache-from: |
-          type=gha
+          type=gha,scope=latest
+          type=gha,scope=${{ steps.vars.outputs.sha_short }}
           type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
-        cache-to: type=gha,mode=max
+        cache-to: |
+          type=gha,mode=max,scope=latest
+          type=gha,mode=max,scope=${{ steps.vars.outputs.sha_short }}
         platforms: linux/amd64
 
     - name: Deploy to Render
@@ -110,8 +113,8 @@ jobs:
                       -H "X-GitHub-Api-Version: 2022-11-28" \
                       "https://api.github.com/repos/${{ github.repository }}/actions/caches")
         
-        # Keep the most recent cache (just created) and delete older ones
-        echo "$CACHES" | jq -r '.actions_caches | sort_by(.created_at) | reverse | .[1:] | .[].id' | while read cache_id; do
+        # Delete old caches but keep 'latest' scope
+        echo "$CACHES" | jq -r '.actions_caches | map(select(.key | contains("latest") | not)) | sort_by(.created_at) | reverse | .[2:] | .[].id' | while read cache_id; do
           if [ ! -z "$cache_id" ]; then
             echo "Deleting cache: $cache_id"
             curl -X DELETE \
