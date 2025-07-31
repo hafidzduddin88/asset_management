@@ -1,0 +1,26 @@
+name: Build and Push Docker Image to GHCR
+
+on:
+  push:
+    branches: [main]  # Ganti sesuai cabang utama kamu
+
+jobs:
+  push-to-ghcr:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v4
+
+    - name: Log in to GHCR
+      run: echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+    - name: Build Docker image
+      run: docker build -t ghcr.io/hafidzduddin88/asset_management:latest .
+
+    - name: Push to GHCR
+      run: docker push ghcr.io/hafidzduddin88/asset_management:latest

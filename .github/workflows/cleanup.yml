@@ -41,46 +41,8 @@ jobs:
           
           echo "Cache cleanup completed"
 
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - name: Delete old Docker Hub tags
-        env:
-          REPO: ${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.DOCKERHUB_PROJECT }}
+      - name: GHCR cleanup info
         run: |
-          echo "Fetching tags from $REPO..."
-          
-          # Get Docker Hub token
-          TOKEN=$(curl -s -H "Content-Type: application/json" \
-                  -X POST -d '{"username": "${{ secrets.DOCKERHUB_USERNAME }}", "password": "${{ secrets.DOCKERHUB_TOKEN }}"}' \
-                  https://hub.docker.com/v2/users/login/ | jq -r .token)
-          
-          if [ "$TOKEN" = "null" ] || [ -z "$TOKEN" ]; then
-            echo "Failed to get Docker Hub token"
-            exit 1
-          fi
-          
-          # Get tags (keep latest and last 2 SHA tags)
-          TAGS=$(curl -s "https://hub.docker.com/v2/repositories/$REPO/tags?page_size=100" | \
-                 jq -r '.results[] | select(.name != "latest") | .name' | \
-                 tail -n +3)
-          
-          # Delete old tags with proper error handling
-          for tag in $TAGS; do
-            if [ ! -z "$tag" ]; then
-              echo "Deleting Docker tag: $tag"
-              RESPONSE=$(curl -s -X DELETE -H "Authorization: JWT $TOKEN" \
-                         "https://hub.docker.com/v2/repositories/$REPO/tags/$tag/")
-              if echo "$RESPONSE" | grep -q "forbidden"; then
-                echo "Permission denied for tag: $tag"
-              else
-                echo "Deleted: $tag"
-              fi
-              sleep 1
-            fi
-          done
-          
-          echo "Docker cleanup completed"
+          echo "📋 GHCR images auto-expire after 30 days if untagged"
+          echo "🗑️ Manual cleanup: https://github.com/${{ github.repository }}/pkgs/container/${{ github.event.repository.name }}"
+          echo "✨ GHCR provides better integration with GitHub"
