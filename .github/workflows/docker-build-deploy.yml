@@ -64,7 +64,7 @@ jobs:
         echo "HTTP Status: $HTTP_CODE"
         echo "Response: $BODY"
         
-        if [ "$HTTP_CODE" -eq 200 ] || [ "$HTTP_CODE" -eq 201 ]; then
+        if [ "$HTTP_CODE" -eq 200 ] || [ "$HTTP_CODE" -eq 201 ] || [ "$HTTP_CODE" -eq 202 ]; then
           echo "✅ Deployment triggered successfully"
         else
           echo "❌ Deployment failed with status $HTTP_CODE"
