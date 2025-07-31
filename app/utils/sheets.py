@@ -652,7 +652,7 @@ def add_asset(asset_data):
         
         # Append the new row
         sheet.append_row(row_data)
-        logging.info(f"Added new asset with ID {next_id}")
+        logging.info(f"Successfully added new asset with ID {next_id}: {asset_data.get('Item Name', 'Unknown')}")
         
         # Invalidate cache to refresh data
         invalidate_cache()

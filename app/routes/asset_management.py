@@ -235,25 +235,16 @@ async def add_asset(
         except Exception as e:
             print(f"Error processing photo: {str(e)}")
     
+    # All roles now require approval
+    from app.utils.sheets import add_approval_request
+    
+    # Determine approval type based on user role
     if current_profile.role == UserRole.ADMIN:
-        success = sheets_add_asset(asset_data)
-        
-        if success:
-            response = RedirectResponse(url="/assets/", status_code=status.HTTP_303_SEE_OTHER)
-            set_flash(response, "Asset added successfully", "success")
-            return response
-        else:
-            return templates.TemplateResponse(
-                "asset_management/add.html",
-                {
-                    "request": request,
-                    "user": current_profile,
-                    "dropdown_options": dropdown_options,
-                    "error": "Error adding asset to Google Sheets",
-                    "form_data": asset_data
-                },
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
+        approval_type = "admin_add_asset"  # Admin needs manager approval
+        logging.info(f"Admin {current_profile.email} submitting asset for manager approval: {asset_data.get('Item Name')}")
+    else:
+        approval_type = "add_asset"  # Manager/Staff need admin approval
+        logging.info(f"{current_profile.role.value} {current_profile.email} submitting asset for admin approval: {asset_data.get('Item Name')}")
     
     from app.utils.sheets import add_approval_request
     
@@ -267,13 +258,26 @@ async def add_asset(
         'request_data': json.dumps(asset_data, ensure_ascii=False)
     }
     
+    approval_data = {
+        'type': approval_type,
+        'asset_id': 'NEW',
+        'asset_name': item_name,
+        'submitted_by': current_profile.full_name or current_profile.email,
+        'submitted_date': datetime.now().strftime('%Y-%m-%d'),
+        'description': f"Add new asset: {item_name}",
+        'request_data': json.dumps(asset_data, ensure_ascii=False)
+    }
+    
     approval_success = add_approval_request(approval_data)
     
     if approval_success:
+        approval_msg = "manager approval" if current_profile.role == UserRole.ADMIN else "admin approval"
+        logging.info(f"Asset approval request submitted for {approval_msg}: {asset_data.get('Item Name')}")
         response = RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
-        set_flash(response, "Asset request submitted for approval", "success")
+        set_flash(response, f"Asset request submitted for {approval_msg}", "success")
         return response
     else:
+        logging.error(f"Failed to submit approval request for: {asset_data.get('Item Name')}")
         return templates.TemplateResponse(
             "asset_management/add.html",
             {
