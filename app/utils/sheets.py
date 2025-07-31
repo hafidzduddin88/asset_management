@@ -755,7 +755,8 @@ def add_approval_request(approval_data):
             approval_data.get('location', ''),
             '',  # Approved_By
             '',  # Approved_Date
-            ''   # Notes
+            '',  # Notes
+            approval_data.get('request_data', '')  # Request_Data
         ]
         
         sheet.append_row(row_data)
