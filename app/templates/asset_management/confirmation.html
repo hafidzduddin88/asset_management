@@ -67,13 +67,16 @@
             <!-- Additional Info -->
             <div class="mt-6 text-xs text-gray-500">
                 <p>Request submitted by: {{ user.full_name or user.username }}</p>
-                <p>Date: {{ moment().format('YYYY-MM-DD HH:mm:ss') }}</p>
+                <p>Date: <span id="currentDateTime"></span></p>
             </div>
         </div>
     </div>
 </div>
 
 <script>
+// Set current date and time
+document.getElementById('currentDateTime').textContent = new Date().toLocaleString();
+
 // Auto redirect to dashboard after 10 seconds
 setTimeout(function() {
     const countdown = document.createElement('div');
