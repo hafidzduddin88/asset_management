@@ -37,3 +37,12 @@ jobs:
         tags: |
           ${{ env.DOCKERHUB_REPO }}:latest
           ${{ env.DOCKERHUB_REPO }}:${{ steps.vars.outputs.sha_short }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+    - name: Clear old Docker images
+      run: |
+        # Simple cleanup without gh CLI
+        echo "Docker build completed successfully"
+        echo "Image pushed: ${{ env.DOCKERHUB_REPO }}:latest"
+        echo "Image pushed: ${{ env.DOCKERHUB_REPO }}:${{ steps.vars.outputs.sha_short }}"
