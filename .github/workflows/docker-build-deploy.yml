@@ -12,6 +12,9 @@ env:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
 
     steps:
     - name: Checkout repository
@@ -39,6 +42,9 @@ jobs:
         tags: |
           ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
           ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.vars.outputs.sha_short }}
+        labels: |
+          org.opencontainers.image.description=Asset Management System
+          org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
         cache-from: type=gha
         cache-to: type=gha,mode=max
 
