@@ -14,6 +14,7 @@ from app.utils.sheets import get_dropdown_options, add_asset as sheets_add_asset
 from app.utils.flash import set_flash
 from app.utils.auth import get_current_profile, get_admin_user
 from app.config import load_config
+import logging
 
 config = load_config()
 router = APIRouter(prefix="/asset_management", tags=["asset_management"])
