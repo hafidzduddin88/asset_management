@@ -9,7 +9,7 @@ import json
 from app.database.database import get_db
 from app.database.models import Profile
 from app.utils.auth import get_current_profile
-from app.utils.sheets import get_all_assets, get_dropdown_options, add_approval_request
+from app.utils.database_manager import get_all_assets, get_dropdown_options, add_approval_request
 from app.utils.flash import set_flash
 
 router = APIRouter(prefix="/relocation", tags=["relocation"])

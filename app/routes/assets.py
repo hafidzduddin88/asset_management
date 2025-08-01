@@ -10,7 +10,7 @@ templates = Jinja2Templates(directory="app/templates")
 @router.get("/assets")
 async def assets_page(request: Request, current_profile=Depends(get_current_profile)):
     """Assets listing page with filtering and pagination"""
-    from app.utils.sheets import get_all_assets
+    from app.utils.database_manager import get_all_assets
     
     # Ambil data asset dari Google Sheets
     all_assets = get_all_assets()

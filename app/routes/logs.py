@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from app.database.database import get_db
 from app.database.models import Profile
 from app.utils.auth import get_current_profile
-from app.utils.sheets import get_all_approvals
+from app.utils.database_manager import get_all_approvals
 
 router = APIRouter(prefix="/logs", tags=["logs"])
 templates = Jinja2Templates(directory="app/templates")

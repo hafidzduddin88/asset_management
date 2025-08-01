@@ -4,7 +4,7 @@ from fastapi import APIRouter, Request, Depends
 from fastapi.responses import RedirectResponse
 from starlette.templating import Jinja2Templates
 from app.utils.auth import get_current_profile
-from app.utils.sheets import get_summary_data, get_chart_data, get_all_assets
+from app.utils.database_manager import get_summary_data, get_chart_data, get_all_assets
 
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
