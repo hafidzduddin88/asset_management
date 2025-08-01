@@ -9,28 +9,15 @@ class SupabaseClient:
         self.client: Client = create_client(url, key)
     
     def create_table_if_not_exists(self, table_name: str, columns: Dict[str, str]) -> bool:
-        """Create table with RLS policy if not exists"""
+        """Check if table exists - Supabase tables must be created manually"""
         try:
-            # Check if table exists first
-            existing = self.client.table('information_schema.tables').select('table_name').eq('table_name', table_name).execute()
-            if existing.data:
-                return True
-            
-            # Create table using direct SQL (simplified approach)
-            columns_sql = ", ".join([f"{col} TEXT" for col in columns.keys()])
-            
-            # Use postgrest to create table (alternative approach)
-            # Since we can't execute raw SQL, we'll create a simple table structure
-            # and let the insert operation handle the data
-            
-            # For now, just return True and let the insert handle table creation
-            # This is a limitation of Supabase's security model
-            print(f"Table {table_name} will be created on first insert")
+            # Try a simple select to check if table exists
+            result = self.client.table(table_name).select('*').limit(1).execute()
+            print(f"Table {table_name} exists and is accessible")
             return True
-            
         except Exception as e:
-            print(f"Error checking table: {e}")
-            return True  # Continue anyway
+            print(f"Table {table_name} does not exist or is not accessible: {e}")
+            return False
     
     def insert_data(self, table_name: str, data: List[Dict[str, Any]], user_email: str) -> bool:
         """Insert data to table"""

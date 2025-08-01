@@ -45,10 +45,10 @@ async def import_excel(
             else:
                 columns[col.lower().replace(' ', '_')] = 'TEXT'
         
-        # Create table if not exists
-        success = supabase_client.create_table_if_not_exists(table_name, columns)
-        if not success:
-            raise HTTPException(status_code=500, detail="Failed to create table")
+        # Check if table exists
+        table_exists = supabase_client.create_table_if_not_exists(table_name, columns)
+        if not table_exists:
+            return RedirectResponse(url=f"/import?error=Table '{table_name}' does not exist. Please create it manually in Supabase dashboard first.", status_code=303)
         
         # Clean column names in data
         clean_data = []
@@ -91,10 +91,10 @@ async def import_from_sheets(
         for key in data[0].keys():
             columns[key.lower().replace(' ', '_')] = 'TEXT'
         
-        # Create table
-        success = supabase_client.create_table_if_not_exists(table_name, columns)
-        if not success:
-            raise HTTPException(status_code=500, detail="Failed to create table")
+        # Check if table exists
+        table_exists = supabase_client.create_table_if_not_exists(table_name, columns)
+        if not table_exists:
+            return RedirectResponse(url=f"/import?error=Table '{table_name}' does not exist. Please create it manually in Supabase dashboard first.", status_code=303)
         
         # Clean data
         clean_data = []
