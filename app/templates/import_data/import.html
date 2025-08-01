@@ -49,27 +49,30 @@
             <!-- Import from Google Sheets -->
             <div>
                 <h2 class="text-xl font-semibold text-gray-700 mb-4">📋 Import from Google Sheets</h2>
-                <form action="/import/sheets" method="post" class="space-y-4">
+                <form id="sheetsForm" action="/import/sheets" method="post" class="space-y-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Sheet Name</label>
-                        <select name="sheet_name" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <select name="sheet_name" id="sheetSelect" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                             <option value="">Select Sheet</option>
-                            <option value="Assets">Assets</option>
-                            <option value="Users">Users</option>
-                            <option value="Locations">Locations</option>
-                            <option value="Categories">Categories</option>
-                            <option value="Approvals">Approvals</option>
+                            <option value="Assets" data-table="assets">Assets → assets</option>
+                            <option value="Users" data-table="profiles">Users → profiles</option>
+                            <option value="Ref_Location" data-table="locations">Ref_Location → locations</option>
+                            <option value="Ref_Categories" data-table="categories">Ref_Categories → categories</option>
+                            <option value="Approvals" data-table="approvals">Approvals → approvals</option>
+                            <option value="Damage_Log" data-table="damage_logs">Damage_Log → damage_logs</option>
+                            <option value="Repair_Log" data-table="repair_logs">Repair_Log → repair_logs</option>
+                            <option value="Disposal_Log" data-table="disposal_logs">Disposal_Log → disposal_logs</option>
                         </select>
                     </div>
                     
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Table Name</label>
-                        <input type="text" name="table_name" required placeholder="e.g., assets, users, locations"
-                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        <p class="text-xs text-gray-500 mt-1">Table must exist in Supabase dashboard first</p>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Supabase Table Name</label>
+                        <input type="text" name="table_name" id="tableName" required readonly
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <p class="text-xs text-gray-500 mt-1">Table will be created automatically if it doesn't exist</p>
                     </div>
                     
-                    <button type="submit" class="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700 transition-colors">
+                    <button type="button" onclick="confirmImport()" class="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700 transition-colors">
                         📥 Import from Sheets
                     </button>
                 </form>
@@ -102,4 +105,55 @@
         </div>
     </div>
 </div>
+
+<!-- Confirmation Modal -->
+<div id="confirmModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-white rounded-lg p-6 max-w-md w-full">
+            <h3 class="text-lg font-semibold text-gray-800 mb-4">🔄 Confirm Import</h3>
+            <p class="text-gray-600 mb-6">Are you sure you want to import data from <span id="selectedSheet" class="font-semibold"></span> to <span id="selectedTable" class="font-semibold"></span> table?</p>
+            <div class="flex space-x-3">
+                <button onclick="cancelImport()" class="flex-1 px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
+                    Cancel
+                </button>
+                <button onclick="proceedImport()" class="flex-1 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">
+                    Import
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Auto-fill table name based on sheet selection
+document.getElementById('sheetSelect').addEventListener('change', function() {
+    const selectedOption = this.options[this.selectedIndex];
+    const tableName = selectedOption.getAttribute('data-table') || '';
+    document.getElementById('tableName').value = tableName;
+});
+
+// Confirmation functions
+function confirmImport() {
+    const sheetSelect = document.getElementById('sheetSelect');
+    const tableName = document.getElementById('tableName').value;
+    
+    if (!sheetSelect.value || !tableName) {
+        alert('Please select a sheet first');
+        return;
+    }
+    
+    document.getElementById('selectedSheet').textContent = sheetSelect.value;
+    document.getElementById('selectedTable').textContent = tableName;
+    document.getElementById('confirmModal').classList.remove('hidden');
+}
+
+function cancelImport() {
+    document.getElementById('confirmModal').classList.add('hidden');
+}
+
+function proceedImport() {
+    document.getElementById('confirmModal').classList.add('hidden');
+    document.getElementById('sheetsForm').submit();
+}
+</script>
 {% endblock %}

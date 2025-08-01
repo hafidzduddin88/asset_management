@@ -91,12 +91,7 @@ async def import_from_sheets(
         for key in data[0].keys():
             columns[key.lower().replace(' ', '_')] = 'TEXT'
         
-        # Check if table exists
-        table_exists = supabase_client.create_table_if_not_exists(table_name, columns)
-        if not table_exists:
-            return RedirectResponse(url=f"/import?error=Table '{table_name}' does not exist. Please create it manually in Supabase dashboard first.", status_code=303)
-        
-        # Clean data
+        # Clean data first
         clean_data = []
         for row in data:
             clean_row = {}
@@ -104,6 +99,11 @@ async def import_from_sheets(
                 clean_key = key.lower().replace(' ', '_')
                 clean_row[clean_key] = str(value) if value else None
             clean_data.append(clean_row)
+        
+        # Create table from sheets data
+        table_created = supabase_client.create_table_from_sheets(table_name, clean_data)
+        if not table_created:
+            return RedirectResponse(url=f"/import?error=Failed to prepare table '{table_name}' for import.", status_code=303)
         
         # Insert data
         success = supabase_client.insert_data(table_name, clean_data, current_profile.username)
