@@ -4,7 +4,7 @@ from fastapi.templating import Jinja2Templates
 import pandas as pd
 import io
 from typing import Dict, Any
-from app.database.dependencies import get_current_user
+from app.utils.auth import get_admin_user
 from app.utils.supabase_client import supabase_client
 from app.utils.sheets import get_all_sheets_data
 
@@ -12,13 +12,10 @@ router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
 
 @router.get("/import", response_class=HTMLResponse)
-async def import_page(request: Request, current_user: Dict[str, Any] = Depends(get_current_user)):
-    if current_user["role"] not in ["admin"]:
-        raise HTTPException(status_code=403, detail="Access denied")
-    
+async def import_page(request: Request, current_profile = Depends(get_admin_user)):
     return templates.TemplateResponse("import_data/import.html", {
         "request": request,
-        "current_user": current_user
+        "user": current_profile
     })
 
 @router.post("/import/excel")
@@ -26,11 +23,8 @@ async def import_excel(
     request: Request,
     file: UploadFile = File(...),
     table_name: str = Form(...),
-    current_user: Dict[str, Any] = Depends(get_current_user)
+    current_profile = Depends(get_admin_user)
 ):
-    if current_user["role"] not in ["admin"]:
-        raise HTTPException(status_code=403, detail="Access denied")
-    
     try:
         # Read Excel file
         contents = await file.read()
@@ -66,7 +60,7 @@ async def import_excel(
             clean_data.append(clean_row)
         
         # Insert data
-        success = supabase_client.insert_data(table_name, clean_data, current_user["email"])
+        success = supabase_client.insert_data(table_name, clean_data, current_profile.username)
         if not success:
             raise HTTPException(status_code=500, detail="Failed to insert data")
         
@@ -80,11 +74,8 @@ async def import_from_sheets(
     request: Request,
     sheet_name: str = Form(...),
     table_name: str = Form(...),
-    current_user: Dict[str, Any] = Depends(get_current_user)
+    current_profile = Depends(get_admin_user)
 ):
-    if current_user["role"] not in ["admin"]:
-        raise HTTPException(status_code=403, detail="Access denied")
-    
     try:
         # Get data from Google Sheets
         sheets_data = get_all_sheets_data()
@@ -115,7 +106,7 @@ async def import_from_sheets(
             clean_data.append(clean_row)
         
         # Insert data
-        success = supabase_client.insert_data(table_name, clean_data, current_user["email"])
+        success = supabase_client.insert_data(table_name, clean_data, current_profile.username)
         if not success:
             raise HTTPException(status_code=500, detail="Failed to insert data")
         
