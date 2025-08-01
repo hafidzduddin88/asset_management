@@ -1,56 +1,56 @@
 # Web Framework
-fastapi==0.116.1 # Update to the latest version
-starlette>=0.40.0,<0.48.0 # Compatible with FastAPI 0.116.1
-pydantic>=2.11.7,<3
-pydantic-core>=2.23.4,<3
-email-validator>=2.0.0
+fastapi==0.116.1    # FastAPI is a modern, fast (high-performance), web framework for building APIs with Python 3.7+ based on standard Python type hints.
+starlette>=0.40.0,<0.48.0   # Starlette is a lightweight ASGI framework for building testable web services and apps.
+pydantic>=2.11.7,<3 # Pydantic is a data validation and settings management library for Python.
+pydantic-core>=2.23.4,<3    # Pydantic-core is a minimal, dependency-free version of Pydantic.
+email-validator>=2.0.0  # email-validator is a Python library for validating email addresses.
 
 # HTTP Client
-uvicorn==0.29.0 # Updated for FastAPI 0.116.1 compatibility
-httpx>=0.27.1   # Updated for FastAPI 0.116.1 compatibility
-httpcore>=1.0.6 # Required by httpx and uvicorn
-h11==0.16.0 # Required by httpx and uvicorn
+uvicorn==0.29.0 # Uvicorn is a lightning-fast ASGI server implementation, using `httptools` and `uvloop`.
+httpx>=0.27.1   # httpx is an async HTTP client for Python, built on top of httpcore.
+httpcore>=1.0.6 # httpcore is an HTTP client and server core library for Python.
+h11==0.16.0     # h11 is an HTTP/1.1 implementation in Python 3.
 
 # Template Engine
-jinja2==3.1.6
-python-multipart==0.0.20
-aiofiles==24.1.0
+jinja2==3.1.6   # Jinja2 is a fast and extensible template engine for Python.
+python-multipart==0.0.20    # python-multipart is a Python library for handling multipart form data.
+aiofiles==24.1.0    # aiofiles is a Python library for asynchronous file I/O.
 
 # Database
-sqlalchemy==2.0.30  # Updated for FastAPI 0.116.1 compatibility
-databases==0.9.0  # Updated for SQLAlchemy 2.0 compatibility
-psycopg2-binary==2.9.9 # PostgreSQL driver
+sqlalchemy==2.0.30  # SQLAlchemy is the Python SQL toolkit and Object-Relational Mapping (ORM) library.
+databases==0.9.0    # Database handling
+psycopg2-binary==2.9.9  # PostgreSQL adapter for Python
 
 # Authentication
-python-jose[cryptography]==3.5.0 # Updated for FastAPI 0.116.1 compatibility	
-passlib[argon2]==1.7.4
-argon2-cffi==23.1.0 # Required for passlib with argon2
+python-jose[cryptography]==3.5.0    # Python-Jose is a library for handling JSON Web Tokens (JWT).
+passlib[argon2]==1.7.4  # Passlib is a password hashing library for Python.
+argon2-cffi==23.1.0 # Argon2 is a password-hashing function that is currently considered the most secure and efficient.
 
 # Google API
-gspread==6.2.1
-google-auth==2.40.3
+gspread==6.2.1  # Google Sheets API wrapper
+google-auth==2.40.3 # Google authentication library
 
 # Export
-openpyxl==3.1.5 # Required for Excel export functionality
-xlsxwriter==3.2.5   # For Excel export functionality
-fpdf2==2.8.3    # For PDF export functionality
-numpy==2.3.2    # Required for Excel export functionality        
-pandas==2.3.1 # For data manipulation and export functionality
+openpyxl==3.1.5 # Excel file format reader and writer
+xlsxwriter==3.2.5   # Excel file format writer
+fpdf2==2.8.3    # PDF file format writer
+numpy==2.3.2    # Numerical Python library
+pandas==2.3.1   # Data analysis and manipulation library
 
 # Image Processing
-Pillow==10.3.0
+Pillow==10.3.0  # Pillow is a fork of PIL (Python Imaging Library) and adds many user-friendly features like an editing GUI.
 
 # HTTP Requests
-requests==2.32.4
+requests==2.32.4    # Requests is a simple, yet elegant HTTP library for Python.
 
 # Date handling
-python-dateutil==2.9.0.post0
+python-dateutil==2.9.0.post0    # Powerful extensions to the standard Python datetime module.
 
 # Build tools
-setuptools>=69  # Security fix for CVE-2022-40897
+setuptools>=69  # setuptools is a package development and distribution tool.
 
 # supabase
-supabase==2.17.0
+supabase==2.17.0    # Supabase is an open-source Firebase alternative that provides a backend as a service.
 
 # Excel reading (for import functionality)
-xlrd==2.0.1
+xlrd==2.0.1 # xlrd is a library for reading data and formatting information from Excel files.
