@@ -994,3 +994,23 @@ def add_disposal_log(disposal_data):
     except Exception as e:
         logging.error(f"Error adding disposal log: {str(e)}")
         return False
+
+def get_all_sheets_data():
+    """Get data from all sheets for import functionality"""
+    try:
+        sheets_data = {}
+        for sheet_key, sheet_name in SHEETS.items():
+            sheet = get_sheet(sheet_name)
+            if sheet:
+                try:
+                    records = sheet.get_all_records()
+                    sheets_data[sheet_name] = records
+                except Exception as e:
+                    logging.error(f"Error getting data from {sheet_name}: {str(e)}")
+                    sheets_data[sheet_name] = []
+            else:
+                sheets_data[sheet_name] = []
+        return sheets_data
+    except Exception as e:
+        logging.error(f"Error getting all sheets data: {str(e)}")
+        return {}
