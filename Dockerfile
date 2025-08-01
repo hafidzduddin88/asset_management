@@ -51,5 +51,4 @@ HEALTHCHECK --interval=60s --timeout=5s --start-period=10s --retries=2 \
 # Use dumb-init for proper signal handling and optimized uvicorn settings
 ENTRYPOINT ["dumb-init", "--"]
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", \
-     "--workers", "1", "--worker-class", "uvicorn.workers.UvicornWorker", \
-     "--timeout-keep-alive", "30", "--no-access-log"]
+     "--workers", "1", "--timeout-keep-alive", "30", "--no-access-log"]
