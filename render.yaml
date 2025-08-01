@@ -1,22 +1,27 @@
 services:
-  # Web service
   - type: web
     name: ambp
     env: docker
-    image: hafidzduddin/ambp:latest
+    image: ghcr.io/hafidzduddin88/ambp:latest
     autoDeploy: true
     healthCheckPath: /health
-    startCommand: "uvicorn app.main:app --host 0.0.0.0 --port $PORT --workers 1"
+    startCommand: "uvicorn app.main:app --host 0.0.0.0 --port $PORT --workers 1 --timeout-keep-alive 30"
+    plan: free
     scaling:
-      minInstances: 1
+      minInstances: 0  # Allow scaling to 0 for free tier
       maxInstances: 1
-      targetMemoryPercent: 80
-      targetCPUPercent: 80
+      targetMemoryPercent: 70
+      targetCPUPercent: 70
+    dockerCommand: "uvicorn app.main:app --host 0.0.0.0 --port $PORT --workers 1 --timeout-keep-alive 30 --access-log"
     envVars:
+      - key: PORT
+        value: 8000
       - key: DATABASE_URL
         sync: false
       - key: SECRET_KEY
-        sync: false  # Use Supabase Legacy JWT Secret
+        sync: false
+      - key: SUPABASE_JWT_SECRET
+        sync: false
       - key: GOOGLE_SHEET_ID
         sync: false
       - key: GOOGLE_CREDS_JSON
