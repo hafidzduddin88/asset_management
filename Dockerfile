@@ -19,8 +19,8 @@ WORKDIR /home/app
 COPY requirements.txt .
 
 # Install Python dependencies (cached if requirements.txt unchanged)
-RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt
+RUN pip install --upgrade pip && \
+    pip install -r requirements.txt
 
 # Copy application code (only rebuilds if code changes)
 COPY --chown=app:app . .
