@@ -37,7 +37,18 @@ def get_all_assets():
 def _get_all_assets():
     try:
         supabase = get_supabase()
-        response = supabase.table(TABLES['ASSETS']).select('*').execute()
+        response = supabase.table(TABLES['ASSETS']).select('''
+            asset_id, asset_name, manufacture, model, serial_number, asset_tag,
+            room_name, notes, item_condition, purchase_date, purchase_cost,
+            warranty, supplier, journal, depreciation_value, residual_percent,
+            residual_value, useful_life, book_value, status, year, photo_url,
+            ref_categories(category_name),
+            ref_asset_types(type_name),
+            ref_companies(company_name),
+            ref_business_units(unit_name),
+            ref_locations(location_name, room_name),
+            ref_owners(owner_name)
+        ''').execute()
         return response.data
     except Exception as e:
         logging.error(f"Error getting assets from database: {str(e)}")
@@ -46,7 +57,18 @@ def _get_all_assets():
 def get_asset_by_id(asset_id):
     try:
         supabase = get_supabase()
-        response = supabase.table(TABLES['ASSETS']).select('*').eq('id', asset_id).execute()
+        response = supabase.table(TABLES['ASSETS']).select('''
+            asset_id, asset_name, manufacture, model, serial_number, asset_tag,
+            room_name, notes, item_condition, purchase_date, purchase_cost,
+            warranty, supplier, journal, depreciation_value, residual_percent,
+            residual_value, useful_life, book_value, status, year, photo_url,
+            ref_categories(category_name),
+            ref_asset_types(type_name),
+            ref_companies(company_name),
+            ref_business_units(unit_name),
+            ref_locations(location_name, room_name),
+            ref_owners(owner_name)
+        ''').eq('asset_id', asset_id).execute()
         return response.data[0] if response.data else None
     except Exception as e:
         logging.error(f"Error getting asset {asset_id}: {str(e)}")
@@ -77,10 +99,10 @@ def _get_dropdown_options():
         locations = get_reference_data(TABLES['REF_LOCATION'])
         business_units = get_reference_data(TABLES['REF_BISNIS_UNIT'])
 
-        category_names = [c.get('category_name', '') for c in categories if 'category_name' in c]
-        company_names = [c.get('company_name', '') for c in companies if 'company_name' in c]
-        owner_names = [o.get('owner_name', '') for o in owners if 'owner_name' in o]
-        business_unit_names = [b.get('unit_name', '') for b in business_units if 'unit_name' in b]
+        category_names = [c.get('category_name', '') for c in categories]
+        company_names = [c.get('company_name', '') for c in companies]
+        owner_names = [o.get('owner_name', '') for o in owners]
+        business_unit_names = [b.get('unit_name', '') for b in business_units]
         location_dict = {}
         for loc in locations:
             location_name = loc.get('location_name')
@@ -121,7 +143,7 @@ def add_asset(asset_data):
 def update_asset(asset_id, update_data):
     try:
         supabase = get_supabase()
-        response = supabase.table(TABLES['ASSETS']).update(update_data).eq('id', asset_id).execute()
+        response = supabase.table(TABLES['ASSETS']).update(update_data).eq('asset_id', asset_id).execute()
         invalidate_cache()
         return True
     except Exception as e:
@@ -155,7 +177,7 @@ def update_approval_status(approval_id, status, approved_by, notes=''):
             'approved_date': datetime.now().isoformat(),
             'notes': notes
         }
-        response = supabase.table(TABLES['APPROVALS']).update(update_data).eq('id', approval_id).execute()
+        response = supabase.table(TABLES['APPROVALS']).update(update_data).eq('approval_id', approval_id).execute()
         return True
     except Exception as e:
         logging.error(f"Error updating approval status: {str(e)}")
@@ -216,13 +238,13 @@ def get_chart_data():
     # Category counts
     category_counts = {}
     for asset in assets:
-        cat = asset.get("category", "Unknown")
+        cat = asset.get("ref_categories", {}).get("category_name", "Unknown") if asset.get("ref_categories") else "Unknown"
         category_counts[cat] = category_counts.get(cat, 0) + 1
 
     # Location counts
     location_counts = {}
     for asset in assets:
-        loc = asset.get("location", "Unknown")
+        loc = asset.get("ref_locations", {}).get("location_name", "Unknown") if asset.get("ref_locations") else "Unknown"
         location_counts[loc] = location_counts.get(loc, 0) + 1
 
     # Monthly chart
