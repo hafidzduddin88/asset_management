@@ -4,7 +4,7 @@ Database Manager - Replace Google Sheets with Supabase operations
 import logging
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
-from app.utils.supabase_client import get_supabase_client
+from app.utils.supabase_client import supabase_client
 from app.utils.cache import cache
 from typing import List, Dict, Any, Optional
 
@@ -29,7 +29,7 @@ CACHE_TTL = {
 }
 
 def get_supabase():
-    return get_supabase_client()
+    return supabase_client.client
 
 def get_all_assets():
     return cache.get_or_set('all_assets', _get_all_assets, CACHE_TTL['assets'])
