@@ -68,8 +68,8 @@
                             <select name="type" id="type" required
                                 class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md">
                                 <option value="">Select Type</option>
-                                <template x-for="type in filteredTypes" :key="type.Type">
-                                    <option :value="type.Type" x-text="type.Type"></option>
+                                <template x-for="type in filteredTypes" :key="type.type_name">
+                                    <option :value="type.type_name" x-text="type.type_name"></option>
                                 </template>
                             </select>
                         </div>
@@ -322,7 +322,7 @@
             updateTypes() {
                 const category = document.getElementById('category').value;
                 this.filteredTypes = category 
-                    ? this.types.filter(type => type.Category === category)
+                    ? this.types.filter(type => type.category_name === category)
                     : [];
             },
             
