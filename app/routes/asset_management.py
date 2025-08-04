@@ -10,7 +10,7 @@ import io
 from app.database.database import get_db
 from app.database.models import Profile, UserRole
 from app.utils.photo import resize_and_convert_image, upload_to_drive
-from app.utils.database_manager import get_dropdown_options, add_asset as db_add_asset
+from app.utils.database_manager import get_dropdown_options, add_asset as db_add_asset, get_all_assets, get_asset_by_id, add_approval_request, update_asset
 from app.utils.flash import set_flash
 from app.utils.auth import get_current_profile, get_admin_user
 from app.config import load_config
@@ -49,14 +49,14 @@ async def asset_list(
     if current_profile.role not in [UserRole.ADMIN, UserRole.MANAGER]:
         raise HTTPException(status_code=403, detail="Access denied")
     
-    from app.utils.sheets import get_all_assets
     assets = get_all_assets()
     
-    locations = list(set(asset.get('Location', '') for asset in assets if asset.get('Location')))
+    locations = list(set(asset.get('ref_locations', {}).get('location_name', '') for asset in assets if asset.get('ref_locations')))
     location_rooms = {}
     for asset in assets:
-        location = asset.get('Location', '')
-        room = asset.get('Room', '')
+        location_data = asset.get('ref_locations', {})
+        location = location_data.get('location_name', '') if isinstance(location_data, dict) else ''
+        room = location_data.get('room_name', '') if isinstance(location_data, dict) else ''
         if location and room:
             if location not in location_rooms:
                 location_rooms[location] = set()
@@ -88,7 +88,6 @@ async def edit_asset_form(
     if current_profile.role not in [UserRole.ADMIN, UserRole.MANAGER]:
         raise HTTPException(status_code=403, detail="Access denied")
 
-    from app.utils.sheets import get_asset_by_id
     asset = get_asset_by_id(asset_id)
     if not asset:
         raise HTTPException(status_code=404, detail="Asset not found")
@@ -123,30 +122,27 @@ async def update_asset(
     if current_profile.role not in [UserRole.ADMIN, UserRole.MANAGER]:
         raise HTTPException(status_code=403, detail="Access denied")
     
-    from app.utils.sheets import update_asset as sheets_update_asset, calculate_asset_financials, get_asset_by_id
     asset = get_asset_by_id(asset_id)
 
     update_data = {
-        "Status": status,
-        "Company": company,
-        "Location": location,
-        "Room": room,
-        "Bisnis Unit": bisnis_unit or ""
+        "status": status,
+        "company_name": company,
+        "location_name": location,
+        "room_name": room,
+        "unit_name": bisnis_unit or ""
     }
     
     # Jika perlu hitung ulang nilai finansial, misalnya setelah perubahan harga
     # financials = calculate_asset_financials(purchase_cost, purchase_date, category)
     # update_data.update(financials)
     
-    from app.utils.sheets import add_approval_request
-    
     approval_data = {
         'type': 'edit_asset',
         'asset_id': asset_id,
-        'asset_name': asset.get('Item Name', ''),
-        'submitted_by': current_profile.full_name or current_profile.email,
+        'asset_name': asset.get('asset_name', ''),
+        'submitted_by': current_profile.full_name or current_profile.username,
         'submitted_date': datetime.now().strftime('%Y-%m-%d'),
-        'description': f"Edit asset: {asset.get('Item Name', '')} - Reason: {edit_reason}",
+        'description': f"Edit asset: {asset.get('asset_name', '')} - Reason: {edit_reason}",
         'edit_reason': edit_reason,
         'request_data': json.dumps(update_data, ensure_ascii=False)
     }
@@ -201,25 +197,25 @@ async def add_asset(
     dropdown_options = get_dropdown_options()
     
     asset_data = {
-        "Item Name": item_name,
-        "Category": category,
-        "Type": type,
-        "Manufacture": manufacture or "",
-        "Model": model or "",
-        "Serial Number": serial_number or "",
-        "Company": company,
-        "Bisnis Unit": bisnis_unit or "",
-        "Location": location,
-        "Room": room,
-        "Notes": notes or "",
-        "Item Condition": item_condition or "",
-        "Purchase Date": purchase_date,
-        "Purchase Cost": purchase_cost,
-        "Warranty": warranty or "",
-        "Supplier": supplier or "",
-        "Journal": journal or "",
-        "Owner": owner,
-        "Status": "Active"
+        "asset_name": item_name,
+        "category_name": category,
+        "type_name": type,
+        "manufacture": manufacture or "",
+        "model": model or "",
+        "serial_number": serial_number or "",
+        "company_name": company,
+        "unit_name": bisnis_unit or "",
+        "location_name": location,
+        "room_name": room,
+        "notes": notes or "",
+        "item_condition": item_condition or "",
+        "purchase_date": purchase_date,
+        "purchase_cost": purchase_cost,
+        "warranty": warranty or "",
+        "supplier": supplier or "",
+        "journal": journal or "",
+        "owner_name": owner,
+        "status": "Active"
     }
     
     photo_url = None
@@ -232,7 +228,7 @@ async def add_asset(
             if processed_image:
                 photo_url = upload_to_drive(processed_image, photo.filename, "new")
                 if photo_url:
-                    asset_data["Photo URL"] = photo_url
+                    asset_data["photo_url"] = photo_url
         except Exception as e:
             print(f"Error processing photo: {str(e)}")
     
@@ -242,28 +238,16 @@ async def add_asset(
     # Determine approval type based on user role
     if current_profile.role == UserRole.ADMIN:
         approval_type = "admin_add_asset"  # Admin needs manager approval
-        logging.info(f"Admin {current_profile.email} submitting asset for manager approval: {asset_data.get('Item Name')}")
+        logging.info(f"Admin {current_profile.username} submitting asset for manager approval: {asset_data.get('asset_name')}")
     else:
         approval_type = "add_asset"  # Manager/Staff need admin approval
-        logging.info(f"{current_profile.role.value} {current_profile.email} submitting asset for admin approval: {asset_data.get('Item Name')}")
-    
-    from app.utils.sheets import add_approval_request
-    
-    approval_data = {
-        'type': 'add_asset',
-        'asset_id': 'NEW',
-        'asset_name': item_name,
-        'submitted_by': current_profile.full_name or current_profile.email,
-        'submitted_date': datetime.now().strftime('%Y-%m-%d'),
-        'description': f"Add new asset: {item_name}",
-        'request_data': json.dumps(asset_data, ensure_ascii=False)
-    }
+        logging.info(f"{current_profile.role.value} {current_profile.username} submitting asset for admin approval: {asset_data.get('asset_name')}")
     
     approval_data = {
         'type': approval_type,
         'asset_id': 'NEW',
         'asset_name': item_name,
-        'submitted_by': current_profile.full_name or current_profile.email,
+        'submitted_by': current_profile.full_name or current_profile.username,
         'submitted_date': datetime.now().strftime('%Y-%m-%d'),
         'description': f"Add new asset: {item_name}",
         'request_data': json.dumps(asset_data, ensure_ascii=False)
@@ -279,7 +263,7 @@ async def add_asset(
             approver = "Admin"
             approval_msg = "admin approval"
         
-        logging.info(f"Asset approval request submitted for {approval_msg}: {asset_data.get('Item Name')}")
+        logging.info(f"Asset approval request submitted for {approval_msg}: {asset_data.get('asset_name')}")
         
         # Show confirmation page instead of redirect
         return templates.TemplateResponse(
@@ -293,7 +277,7 @@ async def add_asset(
             }
         )
     else:
-        logging.error(f"Failed to submit approval request for: {asset_data.get('Item Name')}")
+        logging.error(f"Failed to submit approval request for: {asset_data.get('asset_name')}")
         return templates.TemplateResponse(
             "asset_management/add.html",
             {
