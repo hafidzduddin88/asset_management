@@ -22,18 +22,18 @@ async def home(request: Request, current_profile = Depends(get_current_profile))
         all_assets = get_all_assets()
 
         # Filter out disposed assets for dashboard counts
-        active_assets = [asset for asset in all_assets if asset.get("Status", "") != "Disposed"]
-        disposed_assets = [asset for asset in all_assets if asset.get("Status", "") == "Disposed"]
+        active_assets = [asset for asset in all_assets if asset.get("status", "") != "Disposed"]
+        disposed_assets = [asset for asset in all_assets if asset.get("status", "") == "Disposed"]
         
         # Count assets by status and activity
         total_assets = len(active_assets)
         disposed_count = len(disposed_assets)
-        damaged_count = len([a for a in all_assets if a.get("Status", "") == "Under Repair"])
+        damaged_count = len([a for a in all_assets if a.get("status", "") == "Under Repair"])
         
         # Count assets by activity type
-        relocated_count = len([a for a in all_assets if a.get("Last Activity", "") == "Relocated"])
-        repaired_count = len([a for a in all_assets if a.get("Last Activity", "") == "Repaired"])
-        to_be_disposed_count = len([a for a in all_assets if a.get("Status", "") == "To Be Disposed"])
+        relocated_count = 0  # Will need to get from logs
+        repaired_count = 0   # Will need to get from logs
+        to_be_disposed_count = len([a for a in all_assets if a.get("status", "") == "To be Disposed"])
         
         # Helper function to safely convert values to float
         def safe_float(value):
@@ -45,8 +45,8 @@ async def home(request: Request, current_profile = Depends(get_current_profile))
                 return 0.0
         
         # Calculate financial values directly from assets
-        total_purchase_value = sum(safe_float(asset.get("Purchase Cost")) for asset in active_assets)
-        total_book_value = sum(safe_float(asset.get("Book Value")) for asset in active_assets)
+        total_purchase_value = sum(safe_float(asset.get("purchase_cost")) for asset in active_assets)
+        total_book_value = sum(safe_float(asset.get("book_value")) for asset in active_assets)
         # Calculate depreciation as purchase value minus book value
         total_depreciation_value = total_purchase_value - total_book_value
         category_counts = chart_data.get("category_counts", {})
@@ -93,10 +93,10 @@ async def home(request: Request, current_profile = Depends(get_current_profile))
             
             count = 0
             for asset in all_assets:
-                purchase_date = asset.get("Purchase Date", "")
+                purchase_date = asset.get("purchase_date", "")
                 if purchase_date:
                     try:
-                        date = datetime.strptime(purchase_date, "%Y-%m-%d")
+                        date = datetime.strptime(str(purchase_date), "%Y-%m-%d")
                         if date.year == year and quarter_start_month <= date.month <= quarter_end_month:
                             count += 1
                     except:
@@ -116,10 +116,10 @@ async def home(request: Request, current_profile = Depends(get_current_profile))
             # Count assets added in this year
             count = 0
             for asset in all_assets:
-                purchase_date = asset.get("Purchase Date", "")
+                purchase_date = asset.get("purchase_date", "")
                 if purchase_date:
                     try:
-                        date = datetime.strptime(purchase_date, "%Y-%m-%d")
+                        date = datetime.strptime(str(purchase_date), "%Y-%m-%d")
                         if date.year == year:
                             count += 1
                     except:
@@ -137,18 +137,18 @@ async def home(request: Request, current_profile = Depends(get_current_profile))
         # Format latest assets (excluding disposed assets)
         latest_assets = sorted(
             active_assets, 
-            key=lambda a: a.get("Purchase Date", ""), 
+            key=lambda a: a.get("purchase_date", ""), 
             reverse=True
         )[:10]
         
         # Process assets to ensure they have a display_name field
         for asset in latest_assets:
-            # Use the correct field name from Google Sheets
-            display_name = asset.get("Item Name")
+            # Use the correct field name from Supabase
+            display_name = asset.get("asset_name")
             
             # If no name found, use a default
             if not display_name:
-                display_name = f"Asset #{asset.get('ID', 'Unknown')}"
+                display_name = f"Asset #{asset.get('asset_id', 'Unknown')}"
                 
             # Add the display_name to the asset
             asset["display_name"] = display_name

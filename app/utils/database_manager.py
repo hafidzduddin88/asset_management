@@ -229,22 +229,35 @@ def get_summary_data():
         except Exception:
             continue
     return {
-        "total_purchase_value": total_purchase_value
+        "total_purchase_value": total_purchase_value,
+        "total_assets": len(assets)
     }
 
 def get_chart_data():
     assets = get_all_assets()
 
+    # Status counts
+    status_counts = {}
+    for asset in assets:
+        status = asset.get("status", "Unknown")
+        status_counts[status] = status_counts.get(status, 0) + 1
+
     # Category counts
     category_counts = {}
     for asset in assets:
-        cat = asset.get("ref_categories", {}).get("category_name", "Unknown") if asset.get("ref_categories") else "Unknown"
+        if asset.get("ref_categories"):
+            cat = asset["ref_categories"][0]["category_name"] if isinstance(asset["ref_categories"], list) else asset["ref_categories"].get("category_name", "Unknown")
+        else:
+            cat = "Unknown"
         category_counts[cat] = category_counts.get(cat, 0) + 1
 
     # Location counts
     location_counts = {}
     for asset in assets:
-        loc = asset.get("ref_locations", {}).get("location_name", "Unknown") if asset.get("ref_locations") else "Unknown"
+        if asset.get("ref_locations"):
+            loc = asset["ref_locations"][0]["location_name"] if isinstance(asset["ref_locations"], list) else asset["ref_locations"].get("location_name", "Unknown")
+        else:
+            loc = "Unknown"
         location_counts[loc] = location_counts.get(loc, 0) + 1
 
     # Monthly chart
@@ -257,14 +270,16 @@ def get_chart_data():
     for asset in assets:
         date_str = asset.get("purchase_date", "")
         try:
-            dt = datetime.strptime(date_str, "%Y-%m-%d")
-            key = dt.strftime("%b %Y")
-            if key in monthly_counts:
-                monthly_counts[key] += 1
+            if date_str:
+                dt = datetime.strptime(str(date_str), "%Y-%m-%d")
+                key = dt.strftime("%b %Y")
+                if key in monthly_counts:
+                    monthly_counts[key] += 1
         except Exception:
             continue
 
     return {
+        "status_counts": status_counts,
         "category_counts": category_counts,
         "location_chart_data": {
             "labels": list(location_counts.keys()),
