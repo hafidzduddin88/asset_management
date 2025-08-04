@@ -12,11 +12,11 @@ async def assets_page(request: Request, current_profile=Depends(get_current_prof
     """Assets listing page with filtering and pagination"""
     from app.utils.database_manager import get_all_assets
     
-    # Ambil data asset dari Google Sheets
+    # Get assets from Supabase
     all_assets = get_all_assets()
     
-    # Filter hanya aset aktif (bukan Disposed)
-    active_assets = [asset for asset in all_assets if asset.get("Status", "").lower() != "disposed"]
+    # Filter active assets (not disposed)
+    active_assets = [asset for asset in all_assets if asset.get("status", "").lower() != "disposed"]
     
     return templates.TemplateResponse("assets.html", {
         "request": request,

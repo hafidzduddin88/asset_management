@@ -125,20 +125,20 @@ let allAssets = [];
 
 // Initialize
 document.addEventListener('DOMContentLoaded', function() {
-    // Process asset data and ensure proper field mapping
+    // Process asset data with Supabase field names
     allAssets = assetsData.map(asset => {
         return {
-            id: asset.ID || asset.id,
-            name: asset['Item Name'] || asset['Asset Name'] || asset.Name || asset.name || 'Unnamed Asset',
-            location: asset.Location || asset.location || '',
-            room: asset.Room || asset.room || '',
-            category: asset.Category || asset.category || '',
-            status: asset.Status || asset.status || 'Active',
-            purchase_date: asset['Purchase Date'] || asset.purchase_date || '',
-            purchase_cost: parseFloat(asset['Purchase Cost'] || asset.purchase_cost || 0),
-            book_value: parseFloat(asset['Book Value'] || asset.book_value || 0)
+            id: asset.asset_id,
+            name: asset.asset_name || 'Unnamed Asset',
+            location: asset.ref_locations?.location_name || '',
+            room: asset.ref_locations?.room_name || asset.room_name || '',
+            category: asset.ref_categories?.category_name || '',
+            status: asset.status || 'Active',
+            purchase_date: asset.purchase_date || '',
+            purchase_cost: parseFloat(asset.purchase_cost || 0),
+            book_value: parseFloat(asset.book_value || 0)
         };
-    }).filter(asset => asset.status !== 'Disposed');
+    }).filter(asset => asset.status.toLowerCase() !== 'disposed');
     
     filteredAssets = [...allAssets];
     
