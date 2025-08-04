@@ -1,0 +1,195 @@
+{% extends "layouts/modern_layout.html" %}
+
+{% block title %}Import Data - Asset Management{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="max-w-4xl mx-auto">
+        <!-- Header -->
+        <div class="bg-white rounded-lg shadow-sm border p-6 mb-6">
+            <h1 class="text-2xl font-bold text-gray-900 mb-2">Import Data</h1>
+            <p class="text-gray-600">Migrate CSV data from Google Sheets to Supabase database</p>
+        </div>
+
+        <!-- Migration Status -->
+        <div id="migration-status" class="hidden mb-6">
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div class="flex items-center">
+                    <div class="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600 mr-3"></div>
+                    <span class="text-blue-800">Migration in progress...</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Migration Card -->
+        <div class="bg-white rounded-lg shadow-sm border p-6">
+            <div class="flex items-start space-x-4">
+                <div class="flex-shrink-0">
+                    <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"></path>
+                        </svg>
+                    </div>
+                </div>
+                
+                <div class="flex-1">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">CSV to Supabase Migration</h3>
+                    <p class="text-gray-600 mb-4">
+                        This will migrate all data from CSV files to Supabase database with proper foreign key relationships.
+                    </p>
+                    
+                    <!-- Data Overview -->
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                        <div class="bg-gray-50 rounded-lg p-3 text-center">
+                            <div class="text-2xl font-bold text-blue-600">397</div>
+                            <div class="text-sm text-gray-600">Assets</div>
+                        </div>
+                        <div class="bg-gray-50 rounded-lg p-3 text-center">
+                            <div class="text-2xl font-bold text-green-600">11</div>
+                            <div class="text-sm text-gray-600">Companies</div>
+                        </div>
+                        <div class="bg-gray-50 rounded-lg p-3 text-center">
+                            <div class="text-2xl font-bold text-purple-600">65+</div>
+                            <div class="text-sm text-gray-600">Locations</div>
+                        </div>
+                        <div class="bg-gray-50 rounded-lg p-3 text-center">
+                            <div class="text-2xl font-bold text-orange-600">10</div>
+                            <div class="text-sm text-gray-600">Approvals</div>
+                        </div>
+                    </div>
+
+                    <!-- Migration Steps -->
+                    <div class="mb-6">
+                        <h4 class="font-medium text-gray-900 mb-3">Migration Steps:</h4>
+                        <ol class="list-decimal list-inside space-y-1 text-sm text-gray-600">
+                            <li>Migrate reference tables (companies, categories, locations)</li>
+                            <li>Migrate business units and asset types with foreign keys</li>
+                            <li>Migrate assets with all relationships</li>
+                            <li>Migrate approvals and logs</li>
+                        </ol>
+                    </div>
+
+                    <!-- Warning -->
+                    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+                        <div class="flex">
+                            <svg class="w-5 h-5 text-yellow-400 mr-2 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                            </svg>
+                            <div>
+                                <p class="text-sm text-yellow-800">
+                                    <strong>Warning:</strong> This will clear existing data in Supabase and replace it with CSV data. Make sure you have backups if needed.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Action Button -->
+                    <button 
+                        id="migrate-btn"
+                        onclick="startMigration()"
+                        class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200"
+                    >
+                        Start Migration
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results -->
+        <div id="migration-results" class="hidden mt-6">
+            <div class="bg-white rounded-lg shadow-sm border p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Migration Results</h3>
+                <div id="results-content"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+async function startMigration() {
+    const btn = document.getElementById('migrate-btn');
+    const status = document.getElementById('migration-status');
+    const results = document.getElementById('migration-results');
+    const resultsContent = document.getElementById('results-content');
+    
+    // Show loading state
+    btn.disabled = true;
+    btn.textContent = 'Migrating...';
+    status.classList.remove('hidden');
+    results.classList.add('hidden');
+    
+    try {
+        const response = await fetch('/import/migrate', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        });
+        
+        const data = await response.json();
+        
+        // Hide loading
+        status.classList.add('hidden');
+        
+        if (data.status === 'success') {
+            // Show success results
+            resultsContent.innerHTML = `
+                <div class="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
+                    <div class="flex items-center">
+                        <svg class="w-5 h-5 text-green-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                        </svg>
+                        <span class="text-green-800 font-medium">${data.message}</span>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    ${Object.entries(data.details).map(([key, value]) => `
+                        <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                            <span class="font-medium text-gray-700">${key.replace('_', ' ').toUpperCase()}</span>
+                            <span class="text-green-600">✓ ${value}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        } else {
+            // Show error
+            resultsContent.innerHTML = `
+                <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                    <div class="flex items-center">
+                        <svg class="w-5 h-5 text-red-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
+                        </svg>
+                        <span class="text-red-800 font-medium">Migration Failed</span>
+                    </div>
+                    <p class="text-red-700 mt-2">${data.message}</p>
+                </div>
+            `;
+        }
+        
+        results.classList.remove('hidden');
+        
+    } catch (error) {
+        // Hide loading
+        status.classList.add('hidden');
+        
+        // Show error
+        resultsContent.innerHTML = `
+            <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                <div class="flex items-center">
+                    <svg class="w-5 h-5 text-red-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
+                    </svg>
+                    <span class="text-red-800 font-medium">Network Error</span>
+                </div>
+                <p class="text-red-700 mt-2">Failed to connect to server: ${error.message}</p>
+            </div>
+        `;
+        results.classList.remove('hidden');
+    }
+    
+    // Reset button
+    btn.disabled = false;
+    btn.textContent = 'Start Migration';
+}
+</script>
+{% endblock %}
