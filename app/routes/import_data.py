@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Request, Form
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
-from app.utils.migrate_csv_to_supabase import CSVToSupabaseMigrator
+from app.utils.migrate_sheets_to_supabase import SheetsToSupabaseMigrator
 import logging
 
 router = APIRouter()
@@ -16,7 +16,7 @@ async def import_page(request: Request):
 async def migrate_data():
     """Run CSV to Supabase migration"""
     try:
-        migrator = CSVToSupabaseMigrator()
+        migrator = SheetsToSupabaseMigrator()
         migrator.migrate_all()
         
         return JSONResponse({

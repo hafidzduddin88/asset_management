@@ -1,41 +1,48 @@
 """
-Migrate CSV data to Supabase with proper foreign key relationships
+Migrate data directly from Google Sheets to Supabase
 """
 import os
+import gspread
 import pandas as pd
+from google.oauth2.service_account import Credentials
 from supabase import create_client, Client
-from pathlib import Path
 import logging
+import json
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-class CSVToSupabaseMigrator:
+class SheetsToSupabaseMigrator:
     def __init__(self):
+        # Supabase client
         self.supabase: Client = create_client(
             os.getenv("SUPABASE_URL"),
             os.getenv("SUPABASE_SERVICE_KEY")
         )
-        # Try multiple possible CSV locations
-        possible_paths = [
-            Path(__file__).parent.parent.parent / "csv",
-            Path("/home/app/csv"),
-            Path("./csv"),
-            Path("csv")
-        ]
         
-        self.csv_dir = None
-        for path in possible_paths:
-            if path.exists() and (path / "Ref_Companies.csv").exists():
-                self.csv_dir = path
-                break
-        
-        if not self.csv_dir:
-            raise FileNotFoundError(f"CSV directory not found. Tried: {[str(p) for p in possible_paths]}")
+        # Google Sheets client
+        creds = Credentials.from_service_account_info(
+            json.loads(os.getenv("GOOGLE_CREDS_JSON")),
+            scopes=[
+                "https://www.googleapis.com/auth/spreadsheets",
+                "https://www.googleapis.com/auth/drive"
+            ]
+        )
+        self.sheets_client = gspread.authorize(creds)
+        self.spreadsheet = self.sheets_client.open_by_key(os.getenv("GOOGLE_SHEET_ID"))
         self.id_mappings = {}
     
+    def get_sheet_data(self, sheet_name):
+        """Get data from Google Sheet"""
+        try:
+            worksheet = self.spreadsheet.worksheet(sheet_name)
+            return pd.DataFrame(worksheet.get_all_records())
+        except Exception as e:
+            logger.error(f"Error getting sheet {sheet_name}: {e}")
+            return pd.DataFrame()
+    
     def migrate_all(self):
-        """Migrate all data with proper foreign key relationships"""
+        """Migrate all data from Google Sheets to Supabase"""
         try:
             # Reference data first
             self.migrate_companies()
@@ -58,11 +65,10 @@ class CSVToSupabaseMigrator:
             raise
     
     def migrate_companies(self):
-        """Migrate companies and store ID mappings"""
-        csv_file = self.csv_dir / "Ref_Companies.csv"
-        if not csv_file.exists():
-            raise FileNotFoundError(f"CSV file not found: {csv_file}")
-        df = pd.read_csv(csv_file)
+        """Migrate companies from Google Sheets"""
+        df = self.get_sheet_data("Ref_Companies")
+        if df.empty:
+            return
         
         self.supabase.table("ref_companies").delete().neq("company_id", 0).execute()
         
@@ -78,8 +84,10 @@ class CSVToSupabaseMigrator:
         logger.info(f"Migrated {len(df)} companies")
     
     def migrate_categories(self):
-        """Migrate categories and store ID mappings"""
-        df = pd.read_csv(self.csv_dir / "Ref_Categories.csv")
+        """Migrate categories from Google Sheets"""
+        df = self.get_sheet_data("Ref_Categories")
+        if df.empty:
+            return
         
         self.supabase.table("ref_categories").delete().neq("category_id", 0).execute()
         
@@ -97,8 +105,10 @@ class CSVToSupabaseMigrator:
         logger.info(f"Migrated {len(df)} categories")
     
     def migrate_owners(self):
-        """Migrate owners and store ID mappings"""
-        df = pd.read_csv(self.csv_dir / "Ref_Owners.csv")
+        """Migrate owners from Google Sheets"""
+        df = self.get_sheet_data("Ref_Owners")
+        if df.empty:
+            return
         
         self.supabase.table("ref_owners").delete().neq("owner_id", 0).execute()
         
@@ -114,8 +124,10 @@ class CSVToSupabaseMigrator:
         logger.info(f"Migrated {len(df)} owners")
     
     def migrate_locations(self):
-        """Migrate locations and store ID mappings"""
-        df = pd.read_csv(self.csv_dir / "Ref_Location.csv")
+        """Migrate locations from Google Sheets"""
+        df = self.get_sheet_data("Ref_Location")
+        if df.empty:
+            return
         
         self.supabase.table("ref_locations").delete().neq("location_id", 0).execute()
         
@@ -132,8 +144,10 @@ class CSVToSupabaseMigrator:
         logger.info(f"Migrated {len(df)} locations")
     
     def migrate_business_units(self):
-        """Migrate business units with company foreign keys"""
-        df = pd.read_csv(self.csv_dir / "Ref_Bisnis_Unit.csv")
+        """Migrate business units from Google Sheets"""
+        df = self.get_sheet_data("Ref_Bisnis_Unit")
+        if df.empty:
+            return
         
         self.supabase.table("ref_business_units").delete().neq("business_unit_id", 0).execute()
         
@@ -151,8 +165,10 @@ class CSVToSupabaseMigrator:
         logger.info(f"Migrated {len(df)} business units")
     
     def migrate_asset_types(self):
-        """Migrate asset types with category foreign keys"""
-        df = pd.read_csv(self.csv_dir / "Ref_Types.csv")
+        """Migrate asset types from Google Sheets"""
+        df = self.get_sheet_data("Ref_Types")
+        if df.empty:
+            return
         
         self.supabase.table("ref_asset_types").delete().neq("asset_type_id", 0).execute()
         
@@ -171,8 +187,10 @@ class CSVToSupabaseMigrator:
         logger.info(f"Migrated {len(df)} asset types")
     
     def migrate_assets(self):
-        """Migrate assets with all foreign key relationships"""
-        df = pd.read_csv(self.csv_dir / "Assets.csv")
+        """Migrate assets from Google Sheets"""
+        df = self.get_sheet_data("Assets")
+        if df.empty:
+            return
         
         self.supabase.table("assets").delete().neq("asset_id", 0).execute()
         
@@ -227,10 +245,9 @@ class CSVToSupabaseMigrator:
         logger.info(f"Migrated {len(df)} assets")
     
     def migrate_approvals(self):
-        """Migrate approvals data"""
-        df = pd.read_csv(self.csv_dir / "Approvals.csv")
-        
-        if len(df) == 0:
+        """Migrate approvals from Google Sheets"""
+        df = self.get_sheet_data("Approvals")
+        if df.empty:
             logger.info("No approvals data to migrate")
             return
         
@@ -254,10 +271,9 @@ class CSVToSupabaseMigrator:
         logger.info(f"Migrated {len(df)} approvals")
     
     def migrate_damage_log(self):
-        """Migrate damage log data"""
-        df = pd.read_csv(self.csv_dir / "Damage_Log.csv")
-        
-        if len(df) == 0:
+        """Migrate damage log from Google Sheets"""
+        df = self.get_sheet_data("Damage_Log")
+        if df.empty:
             logger.info("No damage log data to migrate")
             return
         
@@ -280,10 +296,9 @@ class CSVToSupabaseMigrator:
         logger.info(f"Migrated {len(df)} damage logs")
     
     def migrate_repair_log(self):
-        """Migrate repair log data"""
-        df = pd.read_csv(self.csv_dir / "Repair_Log.csv")
-        
-        if len(df) == 0:
+        """Migrate repair log from Google Sheets"""
+        df = self.get_sheet_data("Repair_Log")
+        if df.empty:
             logger.info("No repair log data to migrate")
             return
         
@@ -308,7 +323,7 @@ class CSVToSupabaseMigrator:
 
 def main():
     """Run migration"""
-    migrator = CSVToSupabaseMigrator()
+    migrator = SheetsToSupabaseMigrator()
     migrator.migrate_all()
     print("Migration completed successfully!")
 
