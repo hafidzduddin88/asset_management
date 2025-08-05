@@ -19,7 +19,7 @@ app.mount("/static", StaticFiles(directory="app/static"), name="static")
 from app.routes import (
     login, health, offline, home, assets, asset_management,
     damage, profile, repair, approvals, disposal, user_management,
-    logs, relocation, reset_password, auth_callback, import_data
+    logs, relocation
 )
 
 # Include all routers
@@ -37,9 +37,6 @@ app.include_router(disposal.router)
 app.include_router(user_management.router)
 app.include_router(logs.router)
 app.include_router(relocation.router)
-app.include_router(reset_password.router)
-app.include_router(auth_callback.router)
-app.include_router(import_data.router)
 
 
 logger.info("All routes loaded successfully")
