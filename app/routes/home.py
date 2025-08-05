@@ -51,75 +51,64 @@ async def home(request: Request, current_profile = Depends(get_current_profile))
         total_depreciation_value = total_purchase_value - total_book_value
         category_counts = chart_data.get("category_counts", {})
         
-        # Format location data
-        location_data = chart_data.get("location_chart_data", {})
-        location_counts = location_data.get("labels", [])
-        location_values = location_data.get("values", [])
-        location_counts_dict = dict(zip(location_counts, location_values))
-
-        # Format time-based chart data
-        monthly_data = chart_data.get("monthly_chart_data", {})
-        monthly_chart_labels = monthly_data.get("labels", [])
-        monthly_chart_values = monthly_data.get("values", [])
+        # Get chart data directly
+        location_counts_dict = chart_data.get("location_counts", {})
+        monthly_counts = chart_data.get("monthly_counts", {})
+        monthly_chart_labels = list(monthly_counts.keys())
+        monthly_chart_values = list(monthly_counts.values())
         
-        # Generate quarterly data (last 12 quarters - 3 years)
+        # Generate quarterly data
+        from datetime import datetime
+        current_date = datetime.now()
         quarterly_chart_labels = []
         quarterly_chart_values = []
         
-        # Get current year and quarter
-        from datetime import datetime
-        current_date = datetime.now()
-        current_year = current_date.year
-        current_quarter = (current_date.month - 1) // 3 + 1
-        
-        # Generate data for the last 12 quarters
-        for i in range(11, -1, -1):
-            year = current_year
-            quarter = current_quarter - i
-            
-            # Adjust year if quarter is negative or > 4
-            while quarter <= 0:
+        for i in range(3, -1, -1):
+            year = current_date.year
+            quarter = ((current_date.month - 1) // 3 + 1) - i
+            if quarter <= 0:
                 year -= 1
                 quarter += 4
-            while quarter > 4:
-                year += 1
-                quarter -= 4
-                
+            
             quarterly_chart_labels.append(f"Q{quarter} {year}")
             
-            # Count assets added in this quarter
-            quarter_start_month = (quarter - 1) * 3 + 1
-            quarter_end_month = quarter * 3
-            
+            # Count assets in this quarter
+            start_month = (quarter - 1) * 3 + 1
+            end_month = quarter * 3
             count = 0
+            
             for asset in all_assets:
-                purchase_date = asset.get("purchase_date", "")
+                purchase_date = asset.get("purchase_date")
                 if purchase_date:
                     try:
-                        date = datetime.strptime(str(purchase_date), "%Y-%m-%d")
-                        if date.year == year and quarter_start_month <= date.month <= quarter_end_month:
+                        if isinstance(purchase_date, str):
+                            date = datetime.strptime(purchase_date, "%Y-%m-%d")
+                        else:
+                            date = purchase_date
+                        if date.year == year and start_month <= date.month <= end_month:
                             count += 1
                     except:
                         pass
             
             quarterly_chart_values.append(count)
         
-        # Generate yearly data (last 5 years)
+        # Generate yearly data
         yearly_chart_labels = []
         yearly_chart_values = []
         
-        # Generate data for the last 5 years
         for i in range(4, -1, -1):
-            year = current_year - i
+            year = current_date.year - i
             yearly_chart_labels.append(str(year))
             
-            # Count assets added in this year
             count = 0
             for asset in all_assets:
-                purchase_date = asset.get("purchase_date", "")
+                purchase_date = asset.get("purchase_date")
                 if purchase_date:
                     try:
-                        date = datetime.strptime(str(purchase_date), "%Y-%m-%d")
+                        if isinstance(purchase_date, str):
+                            date = datetime.strptime(purchase_date, "%Y-%m-%d")
+                        else:
+                            date = purchase_date
                         if date.year == year:
                             count += 1
                     except:
@@ -127,11 +116,33 @@ async def home(request: Request, current_profile = Depends(get_current_profile))
             
             yearly_chart_values.append(count)
 
-        # Format age distribution - convert to list of tuples for proper serialization
-        age_distribution = chart_data.get("age_distribution", {})
+        # Calculate age distribution
+        age_distribution = {"0-1 years": 0, "1-3 years": 0, "3-5 years": 0, "5+ years": 0}
+        current_year = datetime.now().year
+        
+        for asset in all_assets:
+            purchase_date = asset.get("purchase_date")
+            if purchase_date:
+                try:
+                    if isinstance(purchase_date, str):
+                        date = datetime.strptime(purchase_date, "%Y-%m-%d")
+                    else:
+                        date = purchase_date
+                    age = current_year - date.year
+                    
+                    if age <= 1:
+                        age_distribution["0-1 years"] += 1
+                    elif age <= 3:
+                        age_distribution["1-3 years"] += 1
+                    elif age <= 5:
+                        age_distribution["3-5 years"] += 1
+                    else:
+                        age_distribution["5+ years"] += 1
+                except:
+                    pass
+        
         age_distribution_list = [
-            {"label": str(k), "value": int(v)} 
-            for k, v in age_distribution.items()
+            {"label": k, "value": v} for k, v in age_distribution.items()
         ]
 
         # Format latest assets (excluding disposed assets)
@@ -141,22 +152,11 @@ async def home(request: Request, current_profile = Depends(get_current_profile))
             reverse=True
         )[:10]
         
-        # Process assets to ensure they have a display_name field
+        # Process assets for display
         for asset in latest_assets:
-            # Use the correct field name from Supabase
-            display_name = asset.get("asset_name")
-            
-            # If no name found, use a default
-            if not display_name:
-                display_name = f"Asset #{asset.get('asset_id', 'Unknown')}"
-                
-            # Add the display_name to the asset
-            asset["display_name"] = display_name
-            
-        # Debug: Print the first asset's keys to see what fields are available
-        if latest_assets:
-            logging.info(f"Asset keys: {list(latest_assets[0].keys())}")
-            logging.info(f"Asset display name: {latest_assets[0].get('display_name', 'Not found')}")
+            asset["display_name"] = asset.get("asset_name", f"Asset #{asset.get('asset_id', 'Unknown')}")
+            asset["category_display"] = asset.get("ref_categories", {}).get("category_name", "Unknown") if isinstance(asset.get("ref_categories"), dict) else "Unknown"
+            asset["location_display"] = asset.get("ref_locations", {}).get("location_name", "Unknown") if isinstance(asset.get("ref_locations"), dict) else "Unknown"
 
 
         context = {

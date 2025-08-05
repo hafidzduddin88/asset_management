@@ -235,32 +235,34 @@ def get_summary_data():
 
 def get_chart_data():
     assets = get_all_assets()
-
+    
     # Status counts
-    status_counts = {}
+    status_counts = {"Active": 0, "Damaged": 0, "Disposed": 0, "Lost": 0}
     for asset in assets:
-        status = asset.get("status", "Unknown")
+        status = asset.get("status", "Active")
         status_counts[status] = status_counts.get(status, 0) + 1
 
     # Category counts
     category_counts = {}
     for asset in assets:
-        if asset.get("ref_categories"):
-            cat = asset["ref_categories"][0]["category_name"] if isinstance(asset["ref_categories"], list) else asset["ref_categories"].get("category_name", "Unknown")
+        cat_data = asset.get("ref_categories")
+        if cat_data:
+            cat_name = cat_data.get("category_name", "Unknown") if isinstance(cat_data, dict) else "Unknown"
         else:
-            cat = "Unknown"
-        category_counts[cat] = category_counts.get(cat, 0) + 1
+            cat_name = "Unknown"
+        category_counts[cat_name] = category_counts.get(cat_name, 0) + 1
 
     # Location counts
     location_counts = {}
     for asset in assets:
-        if asset.get("ref_locations"):
-            loc = asset["ref_locations"][0]["location_name"] if isinstance(asset["ref_locations"], list) else asset["ref_locations"].get("location_name", "Unknown")
+        loc_data = asset.get("ref_locations")
+        if loc_data:
+            loc_name = loc_data.get("location_name", "Unknown") if isinstance(loc_data, dict) else "Unknown"
         else:
-            loc = "Unknown"
-        location_counts[loc] = location_counts.get(loc, 0) + 1
+            loc_name = "Unknown"
+        location_counts[loc_name] = location_counts.get(loc_name, 0) + 1
 
-    # Monthly chart
+    # Monthly purchase chart (last 12 months)
     monthly_counts = {}
     now = datetime.now()
     for i in range(11, -1, -1):
@@ -268,27 +270,24 @@ def get_chart_data():
         monthly_counts[month] = 0
 
     for asset in assets:
-        date_str = asset.get("purchase_date", "")
-        try:
-            if date_str:
-                dt = datetime.strptime(str(date_str), "%Y-%m-%d")
-                key = dt.strftime("%b %Y")
-                if key in monthly_counts:
-                    monthly_counts[key] += 1
-        except Exception:
-            continue
+        purchase_date = asset.get("purchase_date")
+        if purchase_date:
+            try:
+                if isinstance(purchase_date, str):
+                    dt = datetime.strptime(purchase_date, "%Y-%m-%d")
+                else:
+                    dt = purchase_date
+                month_key = dt.strftime("%b %Y")
+                if month_key in monthly_counts:
+                    monthly_counts[month_key] += 1
+            except Exception:
+                continue
 
     return {
         "status_counts": status_counts,
         "category_counts": category_counts,
-        "location_chart_data": {
-            "labels": list(location_counts.keys()),
-            "values": list(location_counts.values())
-        },
-        "monthly_chart_data": {
-            "labels": list(monthly_counts.keys()),
-            "values": list(monthly_counts.values())
-        }
+        "location_counts": location_counts,
+        "monthly_counts": monthly_counts
     }
 
 def invalidate_cache():
