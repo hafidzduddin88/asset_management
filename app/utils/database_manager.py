@@ -93,10 +93,7 @@ def get_dropdown_options():
 def _get_dropdown_options():
     try:
         categories = get_reference_data(TABLES['REF_CATEGORIES'])
-        # Get types with category relationship
-        supabase = get_supabase()
-        types_response = supabase.table(TABLES['REF_TYPES']).select('type_name, category_name').execute()
-        types = types_response.data if types_response.data else []
+        types = get_reference_data(TABLES['REF_TYPES'])
         companies = get_reference_data(TABLES['REF_COMPANIES'])
         owners = get_reference_data(TABLES['REF_OWNERS'])
         locations = get_reference_data(TABLES['REF_LOCATION'])
