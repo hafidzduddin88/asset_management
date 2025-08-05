@@ -148,8 +148,8 @@ function switchFilter(filter) {
 function displayApprovals() {
     const filteredApprovals = approvalsData.filter(approval => {
         if (currentFilter === 'all') return true;
-        if (currentFilter === 'pending') return approval.Status === 'Pending';
-        return approval.Type === currentFilter;
+        if (currentFilter === 'pending') return approval.status === 'pending';
+        return approval.type === currentFilter;
     });
     
     const approvalsList = document.getElementById('approvalsList');
@@ -168,37 +168,37 @@ function displayApprovals() {
         <div class="approval-card bg-white rounded-lg shadow p-6">
             <div class="flex justify-between items-start mb-4">
                 <div>
-                    <h3 class="text-lg font-semibold text-gray-900">${approval.Asset_Name || 'Unknown Asset'}</h3>
-                    <p class="text-sm text-gray-500">${approval.Asset_ID || 'No ID'}</p>
+                    <h3 class="text-lg font-semibold text-gray-900">${approval.asset_name || 'Unknown Asset'}</h3>
+                    <p class="text-sm text-gray-500">${approval.asset_id || 'No ID'}</p>
                 </div>
-                <span class="px-3 py-1 text-xs font-medium rounded-full status-${approval.Status.toLowerCase()}">
-                    ${approval.Status}
+                <span class="px-3 py-1 text-xs font-medium rounded-full status-${approval.status.toLowerCase()}">
+                    ${approval.status}
                 </span>
             </div>
             
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                 <div>
                     <p class="text-sm font-medium text-gray-500">Type</p>
-                    <p class="text-sm text-gray-900">${getTypeLabel(approval.Type)}</p>
+                    <p class="text-sm text-gray-900">${getTypeLabel(approval.type)}</p>
                 </div>
                 <div>
                     <p class="text-sm font-medium text-gray-500">Submitted By</p>
-                    <p class="text-sm text-gray-900">${approval.Submitted_By || 'Unknown'}</p>
+                    <p class="text-sm text-gray-900">${approval.submitted_by || 'Unknown'}</p>
                 </div>
                 <div>
                     <p class="text-sm font-medium text-gray-500">Date</p>
-                    <p class="text-sm text-gray-900">${approval.Submitted_Date || 'Unknown'}</p>
+                    <p class="text-sm text-gray-900">${approval.submitted_date || 'Unknown'}</p>
                 </div>
             </div>
             
-            <p class="text-sm text-gray-600 mb-4">${approval.Description || 'No description'}</p>
+            <p class="text-sm text-gray-600 mb-4">${approval.description || 'No description'}</p>
             
-            ${approval.Status === 'Pending' ? `
+            ${approval.status === 'pending' ? `
                 <div class="flex space-x-2">
-                    <button onclick="approveRequest(${approval.ID})" class="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700">
+                    <button onclick="approveRequest(${approval.approval_id})" class="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700">
                         <i class="fas fa-check mr-1"></i>Approve
                     </button>
-                    <button onclick="rejectRequest(${approval.ID})" class="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700">
+                    <button onclick="rejectRequest(${approval.approval_id})" class="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700">
                         <i class="fas fa-times mr-1"></i>Reject
                     </button>
                 </div>
@@ -271,9 +271,9 @@ async function rejectRequest(approvalId) {
 }
 
 function updateStats() {
-    const pending = approvalsData.filter(a => a.Status === 'Pending').length;
-    const approved = approvalsData.filter(a => a.Status === 'Approved').length;
-    const rejected = approvalsData.filter(a => a.Status === 'Rejected').length;
+    const pending = approvalsData.filter(a => a.status === 'pending').length;
+    const approved = approvalsData.filter(a => a.status === 'approved').length;
+    const rejected = approvalsData.filter(a => a.status === 'rejected').length;
     const total = approvalsData.length;
     
     document.getElementById('pendingCount').textContent = pending;

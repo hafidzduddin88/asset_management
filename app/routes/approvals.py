@@ -25,12 +25,10 @@ async def approvals_page(
     all_approvals = get_all_approvals()
     
     # Filter approvals based on user role
-    if current_profile.role == 'admin':
-        # Admin sees manager/staff requests (add_asset, damage_report, etc.)
-        approvals_data = [a for a in all_approvals if a.get('Type') not in ['admin_add_asset', 'disposal', 'edit_asset']]
-    elif current_profile.role == 'manager':
-        # Manager sees admin requests (admin_add_asset) and disposal/edit_asset
-        approvals_data = [a for a in all_approvals if a.get('Type') in ['admin_add_asset', 'disposal', 'edit_asset']]
+    if current_profile.role.value == 'admin':
+        approvals_data = [a for a in all_approvals if a.get('type') not in ['admin_add_asset', 'disposal', 'edit_asset']]
+    elif current_profile.role.value == 'manager':
+        approvals_data = [a for a in all_approvals if a.get('type') in ['admin_add_asset', 'disposal', 'edit_asset']]
     else:
         approvals_data = []
     
@@ -56,74 +54,74 @@ async def approve_request(
     
     # Get approval details
     all_approvals = get_all_approvals()
-    approval = next((a for a in all_approvals if str(a.get('ID')) == str(approval_id)), None)
+    approval = next((a for a in all_approvals if str(a.get('approval_id')) == str(approval_id)), None)
     
     if not approval:
         return JSONResponse({"status": "error", "message": "Approval not found"})
     
     # Process approval based on type
     try:
-        if approval.get('Type') == 'damage_report':
+        if approval.get('type') == 'damage_report':
             # Update asset status to "Under Repair"
             from app.utils.sheets import update_asset
             success = update_asset(approval.get('Asset_ID'), {'Status': 'Under Repair'})
             if not success:
                 return JSONResponse({"status": "error", "message": "Failed to update asset status"})
         
-        elif approval.get('Type') == 'relocation':
+        elif approval.get('type') == 'relocation':
             # Process relocation approval
             import json
             try:
-                request_data_str = approval.get('Request_Data', '')
+                request_data_str = approval.get('notes', '')
                 if request_data_str:
                     relocation_data = json.loads(request_data_str)
                     update_data = {
-                        'Location': relocation_data.get('new_location'),
-                        'Room': relocation_data.get('new_room')
+                        'location_name': relocation_data.get('new_location'),
+                        'room_name': relocation_data.get('new_room')
                     }
-                    from app.utils.sheets import update_asset
-                    success = update_asset(approval.get('Asset_ID'), update_data)
+                    from app.utils.database_manager import update_asset
+                    success = update_asset(approval.get('asset_id'), update_data)
                     if not success:
                         return JSONResponse({"status": "error", "message": "Failed to relocate asset"})
             except Exception as e:
                 return JSONResponse({"status": "error", "message": f"Error processing relocation: {str(e)}"})
             
-        elif approval.get('Type') == 'edit_asset':
+        elif approval.get('type') == 'edit_asset':
             # Process edit asset approval
             import json
             try:
-                request_data_str = approval.get('Request_Data', '')
+                request_data_str = approval.get('notes', '')
                 if request_data_str:
                     edit_data = json.loads(request_data_str)
-                    from app.utils.sheets import update_asset
-                    success = update_asset(approval.get('Asset_ID'), edit_data)
+                    from app.utils.database_manager import update_asset
+                    success = update_asset(approval.get('asset_id'), edit_data)
                     if not success:
                         return JSONResponse({"status": "error", "message": "Failed to update asset"})
             except Exception as e:
                 return JSONResponse({"status": "error", "message": f"Error processing edit: {str(e)}"})
         
-        elif approval.get('Type') == 'admin_add_asset':
+        elif approval.get('type') == 'admin_add_asset':
             # Process admin asset addition approval
             import json
             try:
-                request_data_str = approval.get('Request_Data', '')
+                request_data_str = approval.get('notes', '')
                 if request_data_str:
                     asset_data = json.loads(request_data_str)
-                    from app.utils.sheets import add_asset
+                    from app.utils.database_manager import add_asset
                     success = add_asset(asset_data)
                     if not success:
                         return JSONResponse({"status": "error", "message": "Failed to add asset"})
             except Exception as e:
                 return JSONResponse({"status": "error", "message": f"Error processing asset addition: {str(e)}"})
         
-        elif approval.get('Type') == 'add_asset':
+        elif approval.get('type') == 'add_asset':
             # Process manager/staff asset addition approval
             import json
             try:
-                request_data_str = approval.get('Request_Data', '')
+                request_data_str = approval.get('notes', '')
                 if request_data_str:
                     asset_data = json.loads(request_data_str)
-                    from app.utils.sheets import add_asset
+                    from app.utils.database_manager import add_asset
                     success = add_asset(asset_data)
                     if not success:
                         return JSONResponse({"status": "error", "message": "Failed to add asset"})
@@ -133,8 +131,8 @@ async def approve_request(
         # Update approval status in Google Sheets
         success = update_approval_status(
             approval_id, 
-            'Approved',
-            current_profile.full_name or current_profile.email
+            'approved',
+            current_profile.id
         )
         
         if success:
@@ -159,8 +157,8 @@ async def reject_request(
     # Update approval status
     success = update_approval_status(
         approval_id,
-        'Rejected', 
-        current_profile.full_name or current_profile.email
+        'rejected', 
+        current_profile.id
     )
     
     if success:

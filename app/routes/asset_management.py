@@ -138,11 +138,10 @@ async def update_asset(
         'type': 'edit_asset',
         'asset_id': asset_id,
         'asset_name': asset.get('asset_name', ''),
-        'submitted_by': current_profile.full_name or current_profile.username,
-        'submitted_date': datetime.now().strftime('%Y-%m-%d'),
+        'submitted_by': current_profile.id,
+        'status': 'pending',
         'description': f"Edit asset: {asset.get('asset_name', '')} - Reason: {edit_reason}",
-        'edit_reason': edit_reason,
-        'request_data': json.dumps(update_data, ensure_ascii=False)
+        'notes': json.dumps(update_data)
     }
     
     approval_success = add_approval_request(approval_data)
@@ -225,15 +224,12 @@ async def add_asset(
             logging.error(f"Error uploading photo: {str(e)}")
     
     approval_data = {
-        "approval_id": str(uuid.uuid4()),
         "type": "add_asset",
-        "asset_id": asset_data["asset_id"],
         "asset_name": asset_name,
-        "submitted_by": current_profile.username,
-        "submitted_date": datetime.now().isoformat(),
+        "submitted_by": current_profile.id,
         "status": "pending",
         "description": f"Add new asset: {asset_name}",
-        "request_data": json.dumps(asset_data)
+        "notes": json.dumps(asset_data)
     }
     
     if add_approval_request(approval_data):
