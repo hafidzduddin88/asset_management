@@ -277,35 +277,21 @@
             filteredRooms: [],
             
             initializeForm() {
-                // Initialize types dropdown based on selected category
+                console.log('Types data:', this.types);
                 this.updateTypes();
-                
-                // Initialize rooms dropdown based on selected location
                 this.updateRooms();
-                
-                // Set initial values if form data exists
-                {% if form_data %}
-                    // Set type if form data exists
-                    if ("{{ form_data.type }}") {
-                        setTimeout(() => {
-                            document.getElementById('type').value = "{{ form_data.type }}";
-                        }, 100);
-                    }
-                    
-                    // Set room if form data exists
-                    if ("{{ form_data.room }}") {
-                        setTimeout(() => {
-                            document.getElementById('room').value = "{{ form_data.room }}";
-                        }, 100);
-                    }
-                {% endif %}
             },
             
             updateTypes() {
                 const category = document.getElementById('category_name').value;
+                console.log('Selected category:', category);
+                console.log('Available types:', this.types);
+                
                 this.filteredTypes = category 
                     ? this.types.filter(type => type.category_name === category)
                     : [];
+                    
+                console.log('Filtered types:', this.filteredTypes);
             },
             
             updateRooms() {
