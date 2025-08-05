@@ -141,7 +141,48 @@ def get_reference_value(table_name, lookup_column, lookup_value, return_column):
 def add_asset(asset_data):
     try:
         supabase = get_supabase()
-        response = supabase.table(TABLES['ASSETS']).insert(asset_data).execute()
+        
+        # Convert name fields to IDs for foreign keys
+        processed_data = {}
+        
+        # Get foreign key IDs
+        if asset_data.get('category_name'):
+            cat_response = supabase.table('ref_categories').select('category_id').eq('category_name', asset_data['category_name']).execute()
+            if cat_response.data:
+                processed_data['category_id'] = cat_response.data[0]['category_id']
+        
+        if asset_data.get('type_name'):
+            type_response = supabase.table('ref_asset_types').select('asset_type_id').eq('type_name', asset_data['type_name']).execute()
+            if type_response.data:
+                processed_data['asset_type_id'] = type_response.data[0]['asset_type_id']
+        
+        if asset_data.get('company_name'):
+            comp_response = supabase.table('ref_companies').select('company_id').eq('company_name', asset_data['company_name']).execute()
+            if comp_response.data:
+                processed_data['company_id'] = comp_response.data[0]['company_id']
+        
+        if asset_data.get('business_unit_name'):
+            unit_response = supabase.table('ref_business_units').select('business_unit_id').eq('business_unit_name', asset_data['business_unit_name']).execute()
+            if unit_response.data:
+                processed_data['business_unit_id'] = unit_response.data[0]['business_unit_id']
+        
+        if asset_data.get('location_name') and asset_data.get('room_name'):
+            loc_response = supabase.table('ref_locations').select('location_id').eq('location_name', asset_data['location_name']).eq('room_name', asset_data['room_name']).execute()
+            if loc_response.data:
+                processed_data['location_id'] = loc_response.data[0]['location_id']
+        
+        if asset_data.get('owner_name'):
+            owner_response = supabase.table('ref_owners').select('owner_id').eq('owner_name', asset_data['owner_name']).execute()
+            if owner_response.data:
+                processed_data['owner_id'] = owner_response.data[0]['owner_id']
+        
+        # Copy other fields (only fields that exist in assets table)
+        valid_fields = ['asset_name', 'manufacture', 'model', 'serial_number', 'room_name', 'notes', 'item_condition', 'purchase_date', 'purchase_cost', 'warranty', 'supplier', 'journal', 'status', 'photo_url']
+        for field in valid_fields:
+            if field in asset_data:
+                processed_data[field] = asset_data[field]
+        
+        response = supabase.table(TABLES['ASSETS']).insert(processed_data).execute()
         invalidate_cache()
         return True
     except Exception as e:
