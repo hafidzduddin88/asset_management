@@ -140,8 +140,27 @@ async def home(request: Request, current_profile = Depends(get_current_profile))
 
     except Exception as e:
         logging.error("Dashboard error: %s", e, exc_info=True)
-        return templates.TemplateResponse("error.html", {
+        return templates.TemplateResponse("dashboard.html", {
             "request": request,
             "user": current_profile,
-            "message": "Terjadi kesalahan saat memuat dashboard.",
+            "total_assets": 0,
+            "total_purchase_value": 0,
+            "total_book_value": 0,
+            "total_depreciation_value": 0,
+            "disposed_count": 0,
+            "damaged_count": 0,
+            "relocated_count": 0,
+            "repaired_count": 0,
+            "to_be_disposed_count": 0,
+            "category_counts": {},
+            "location_counts": {},
+            "monthly_chart_labels": [],
+            "monthly_chart_values": [],
+            "quarterly_chart_labels": [],
+            "quarterly_chart_values": [],
+            "yearly_chart_labels": [],
+            "yearly_chart_values": [],
+            "age_distribution": [],
+            "latest_assets": [],
+            "error": "Error loading dashboard data"
         })
