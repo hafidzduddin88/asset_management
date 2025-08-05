@@ -35,27 +35,24 @@
         <form method="POST" enctype="multipart/form-data" class="mt-6 space-y-6 bg-white shadow sm:rounded-lg p-6">
             <div x-data="assetForm()" x-init="initializeForm()">
                 <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
-                    <!-- Item Name -->
+                    <!-- Asset Name -->
                     <div class="sm:col-span-3">
-                        <label for="item_name" class="block text-sm font-medium text-gray-700 required-field">Item Name</label>
+                        <label for="asset_name" class="block text-sm font-medium text-gray-700 required-field">Asset Name</label>
                         <div class="mt-1">
-                            <input type="text" name="item_name" id="item_name" required
-                                class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md"
-                                value="{{ form_data.item_name if form_data else '' }}">
+                            <input type="text" name="asset_name" id="asset_name" required
+                                class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md">
                         </div>
                     </div>
                     
                     <!-- Category -->
                     <div class="sm:col-span-3">
-                        <label for="category" class="block text-sm font-medium text-gray-700 required-field">Category</label>
+                        <label for="category_name" class="block text-sm font-medium text-gray-700 required-field">Category</label>
                         <div class="mt-1">
-                            <select name="category" id="category" required x-on:change="updateTypes()"
+                            <select name="category_name" id="category_name" required x-on:change="updateTypes()"
                                 class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md">
                                 <option value="">Select Category</option>
                                 {% for category in dropdown_options.categories %}
-                                <option value="{{ category }}" {% if form_data and form_data.category == category %}selected{% endif %}>
-                                    {{ category }}
-                                </option>
+                                <option value="{{ category }}">{{ category }}</option>
                                 {% endfor %}
                             </select>
                         </div>
@@ -63,9 +60,9 @@
                     
                     <!-- Type -->
                     <div class="sm:col-span-3">
-                        <label for="type" class="block text-sm font-medium text-gray-700 required-field">Type</label>
+                        <label for="type_name" class="block text-sm font-medium text-gray-700 required-field">Type</label>
                         <div class="mt-1">
-                            <select name="type" id="type" required
+                            <select name="type_name" id="type_name" required
                                 class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md">
                                 <option value="">Select Type</option>
                                 <template x-for="type in filteredTypes" :key="type.type_name">
@@ -80,8 +77,7 @@
                         <label for="manufacture" class="block text-sm font-medium text-gray-700">Manufacture</label>
                         <div class="mt-1">
                             <input type="text" name="manufacture" id="manufacture"
-                                class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md"
-                                value="{{ form_data.manufacture if form_data else '' }}">
+                                class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md">
                         </div>
                     </div>
                     
@@ -90,8 +86,7 @@
                         <label for="model" class="block text-sm font-medium text-gray-700">Model</label>
                         <div class="mt-1">
                             <input type="text" name="model" id="model"
-                                class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md"
-                                value="{{ form_data.model if form_data else '' }}">
+                                class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md">
                         </div>
                     </div>
                     
@@ -100,38 +95,33 @@
                         <label for="serial_number" class="block text-sm font-medium text-gray-700">Serial Number</label>
                         <div class="mt-1">
                             <input type="text" name="serial_number" id="serial_number"
-                                class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md"
-                                value="{{ form_data.serial_number if form_data else '' }}">
+                                class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md">
                         </div>
                     </div>
                     
                     <!-- Company -->
                     <div class="sm:col-span-3">
-                        <label for="company" class="block text-sm font-medium text-gray-700 required-field">Company</label>
+                        <label for="company_name" class="block text-sm font-medium text-gray-700 required-field">Company</label>
                         <div class="mt-1">
-                            <select name="company" id="company" required
+                            <select name="company_name" id="company_name" required
                                 class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md">
                                 <option value="">Select Company</option>
                                 {% for company in dropdown_options.companies %}
-                                <option value="{{ company }}" {% if form_data and form_data.company == company %}selected{% endif %}>
-                                    {{ company }}
-                                </option>
+                                <option value="{{ company }}">{{ company }}</option>
                                 {% endfor %}
                             </select>
                         </div>
                     </div>
                     
-                    <!-- Bisnis Unit -->
+                    <!-- Business Unit -->
                     <div class="sm:col-span-3">
-                        <label for="bisnis_unit" class="block text-sm font-medium text-gray-700">Bisnis Unit</label>
+                        <label for="unit_name" class="block text-sm font-medium text-gray-700">Business Unit</label>
                         <div class="mt-1">
-                            <select name="bisnis_unit" id="bisnis_unit"
+                            <select name="unit_name" id="unit_name"
                                 class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md">
-                                <option value="">Select Bisnis Unit</option>
+                                <option value="">Select Business Unit</option>
                                 {% for unit in dropdown_options.business_units %}
-                                <option value="{{ unit }}" {% if form_data and form_data.bisnis_unit == unit %}selected{% endif %}>
-                                    {{ unit }}
-                                </option>
+                                <option value="{{ unit }}">{{ unit }}</option>
                                 {% endfor %}
                             </select>
                         </div>
@@ -139,15 +129,13 @@
                     
                     <!-- Location -->
                     <div class="sm:col-span-3">
-                        <label for="location" class="block text-sm font-medium text-gray-700 required-field">Location</label>
+                        <label for="location_name" class="block text-sm font-medium text-gray-700 required-field">Location</label>
                         <div class="mt-1">
-                            <select name="location" id="location" required x-on:change="updateRooms()"
+                            <select name="location_name" id="location_name" required x-on:change="updateRooms()"
                                 class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md">
                                 <option value="">Select Location</option>
                                 {% for location in dropdown_options.locations.keys() %}
-                                <option value="{{ location }}" {% if form_data and form_data.location == location %}selected{% endif %}>
-                                    {{ location }}
-                                </option>
+                                <option value="{{ location }}">{{ location }}</option>
                                 {% endfor %}
                             </select>
                         </div>
@@ -155,9 +143,9 @@
                     
                     <!-- Room -->
                     <div class="sm:col-span-3">
-                        <label for="room" class="block text-sm font-medium text-gray-700 required-field">Room</label>
+                        <label for="room_name" class="block text-sm font-medium text-gray-700 required-field">Room</label>
                         <div class="mt-1">
-                            <select name="room" id="room" required
+                            <select name="room_name" id="room_name" required
                                 class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md">
                                 <option value="">Select Room</option>
                                 <template x-for="room in filteredRooms" :key="room">
@@ -172,7 +160,7 @@
                         <label for="notes" class="block text-sm font-medium text-gray-700">Notes</label>
                         <div class="mt-1">
                             <textarea name="notes" id="notes" rows="3"
-                                class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md">{{ form_data.notes if form_data else '' }}</textarea>
+                                class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md"></textarea>
                         </div>
                     </div>
                     
@@ -183,10 +171,10 @@
                             <select name="item_condition" id="item_condition"
                                 class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md">
                                 <option value="">Select Condition</option>
-                                <option value="New" {% if form_data and form_data.item_condition == 'New' %}selected{% endif %}>New</option>
-                                <option value="Good" {% if form_data and form_data.item_condition == 'Good' %}selected{% endif %}>Good</option>
-                                <option value="Fair" {% if form_data and form_data.item_condition == 'Fair' %}selected{% endif %}>Fair</option>
-                                <option value="Poor" {% if form_data and form_data.item_condition == 'Poor' %}selected{% endif %}>Poor</option>
+                                <option value="New">New</option>
+                                <option value="Good">Good</option>
+                                <option value="Fair">Fair</option>
+                                <option value="Poor">Poor</option>
                             </select>
                         </div>
                     </div>
@@ -196,8 +184,7 @@
                         <label for="purchase_date" class="block text-sm font-medium text-gray-700 required-field">Purchase Date</label>
                         <div class="mt-1">
                             <input type="date" name="purchase_date" id="purchase_date" required
-                                class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md"
-                                value="{{ form_data.purchase_date if form_data else '' }}">
+                                class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md">
                         </div>
                     </div>
                     
@@ -206,8 +193,7 @@
                         <label for="purchase_cost" class="block text-sm font-medium text-gray-700 required-field">Purchase Cost</label>
                         <div class="mt-1">
                             <input type="number" name="purchase_cost" id="purchase_cost" required step="0.01"
-                                class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md"
-                                value="{{ form_data.purchase_cost if form_data else '' }}">
+                                class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md">
                         </div>
                     </div>
                     
@@ -218,8 +204,8 @@
                             <select name="warranty" id="warranty"
                                 class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md">
                                 <option value="">Select Warranty</option>
-                                <option value="Yes" {% if form_data and form_data.warranty == 'Yes' %}selected{% endif %}>Yes</option>
-                                <option value="No" {% if form_data and form_data.warranty == 'No' %}selected{% endif %}>No</option>
+                                <option value="Yes">Yes</option>
+                                <option value="No">No</option>
                             </select>
                         </div>
                     </div>
@@ -229,8 +215,7 @@
                         <label for="supplier" class="block text-sm font-medium text-gray-700">Supplier</label>
                         <div class="mt-1">
                             <input type="text" name="supplier" id="supplier"
-                                class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md"
-                                value="{{ form_data.supplier if form_data else '' }}">
+                                class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md">
                         </div>
                     </div>
                     
@@ -239,35 +224,32 @@
                         <label for="journal" class="block text-sm font-medium text-gray-700">Journal</label>
                         <div class="mt-1">
                             <input type="text" name="journal" id="journal"
-                                class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md"
-                                value="{{ form_data.journal if form_data else '' }}">
+                                class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md">
                         </div>
                     </div>
                     
                     <!-- Owner -->
                     <div class="sm:col-span-3">
-                        <label for="owner" class="block text-sm font-medium text-gray-700 required-field">Owner</label>
+                        <label for="owner_name" class="block text-sm font-medium text-gray-700 required-field">Owner</label>
                         <div class="mt-1">
-                            <select name="owner" id="owner" required
+                            <select name="owner_name" id="owner_name" required
                                 class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md">
                                 <option value="">Select Owner</option>
                                 {% for owner in dropdown_options.owners %}
-                                <option value="{{ owner }}" {% if form_data and form_data.owner == owner %}selected{% endif %}>
-                                    {{ owner }}
-                                </option>
+                                <option value="{{ owner }}">{{ owner }}</option>
                                 {% endfor %}
                             </select>
                         </div>
                     </div>
                     
-                    <!-- Photo -->
+                    <!-- Photo Upload -->
                     <div class="sm:col-span-6">
-                        <label for="photo" class="block text-sm font-medium text-gray-700">Photo</label>
+                        <label for="photo" class="block text-sm font-medium text-gray-700">Asset Photo</label>
                         <div class="mt-1">
                             <input type="file" name="photo" id="photo" accept="image/*"
-                                class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300">
+                                class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md">
                         </div>
-                        <p class="mt-2 text-sm text-gray-500">Upload a photo of the asset (optional).</p>
+                        <p class="mt-2 text-sm text-gray-500">Upload a photo of the asset (optional). Will be stored in Google Drive with preview link.</p>
                     </div>
                 </div>
                 
@@ -320,14 +302,14 @@
             },
             
             updateTypes() {
-                const category = document.getElementById('category').value;
+                const category = document.getElementById('category_name').value;
                 this.filteredTypes = category 
                     ? this.types.filter(type => type.category_name === category)
                     : [];
             },
             
             updateRooms() {
-                const location = document.getElementById('location').value;
+                const location = document.getElementById('location_name').value;
                 this.filteredRooms = location && this.locations[location] 
                     ? this.locations[location] 
                     : [];

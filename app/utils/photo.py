@@ -45,8 +45,18 @@ def resize_and_convert_image(image_file, max_size=MAX_IMAGE_SIZE, quality=WEBP_Q
         return None
 
 def upload_to_drive(image_data, filename, asset_id):
-    """Upload image to Google Drive Shared Drive using resumable upload"""
+    """Upload image to Google Drive and return preview link"""
     try:
+        # Process image if it's raw bytes
+        if isinstance(image_data, bytes):
+            image_file = io.BytesIO(image_data)
+            processed_image = resize_and_convert_image(image_file)
+        else:
+            processed_image = resize_and_convert_image(image_data)
+            
+        if not processed_image:
+            return None
+            
         access_token = get_access_token()
         if not access_token:
             return None
@@ -54,16 +64,16 @@ def upload_to_drive(image_data, filename, asset_id):
         folder_id = os.getenv("DRIVE_FOLDER_ID")
         shared_drive_id = os.getenv("DRIVE_SHARED_ID")
         if not folder_id or not shared_drive_id:
-            logging.error("Missing DRIVE_FOLDER_ID or DRIVE_SHARED_ID in environment")
+            logging.error("Missing DRIVE_FOLDER_ID or DRIVE_SHARED_ID")
             return None
-
+        
         # Step 1: Initiate upload session
-        upload_url = _initiate_upload(access_token, filename, asset_id, image_data, folder_id, shared_drive_id)
+        upload_url = _initiate_upload(access_token, filename, asset_id, processed_image, folder_id, shared_drive_id)
         if not upload_url:
             return None
 
         # Step 2: Upload file data
-        file_id = _upload_file_data(upload_url, image_data)
+        file_id = _upload_file_data(upload_url, processed_image)
         if not file_id:
             return None
 

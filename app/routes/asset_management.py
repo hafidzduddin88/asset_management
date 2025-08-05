@@ -1,22 +1,19 @@
-# app/routes/asset_management.py
 from fastapi import APIRouter, Depends, Request, Form, File, UploadFile, HTTPException, status
+from app.utils.photo import upload_to_drive
+import io
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 import json
 from datetime import datetime
-import io
+import uuid
 
 from app.database.database import get_db
 from app.database.models import Profile, UserRole
-from app.utils.photo import resize_and_convert_image, upload_to_drive
-from app.utils.database_manager import get_dropdown_options, add_asset as db_add_asset, get_all_assets, get_asset_by_id, add_approval_request, update_asset
-from app.utils.flash import set_flash
-from app.utils.auth import get_current_profile, get_admin_user
-from app.config import load_config
+from app.utils.database_manager import get_dropdown_options, add_approval_request
+from app.utils.auth import get_current_profile
 import logging
 
-config = load_config()
 router = APIRouter(prefix="/asset_management", tags=["asset_management"])
 templates = Jinja2Templates(directory="app/templates")
 
@@ -171,121 +168,91 @@ async def update_asset(
 @router.post("/add")
 async def add_asset(
     request: Request,
-    item_name: str = Form(...),
-    category: str = Form(...),
-    type: str = Form(...),
-    manufacture: str = Form(None),
-    model: str = Form(None),
-    serial_number: str = Form(None),
-    company: str = Form(...),
-    bisnis_unit: str = Form(None),
-    location: str = Form(...),
-    room: str = Form(...),
-    notes: str = Form(None),
-    item_condition: str = Form(None),
+    asset_name: str = Form(...),
+    category_name: str = Form(...),
+    type_name: str = Form(...),
+    manufacture: str = Form(""),
+    model: str = Form(""),
+    serial_number: str = Form(""),
+    company_name: str = Form(...),
+    unit_name: str = Form(""),
+    location_name: str = Form(...),
+    room_name: str = Form(...),
+    notes: str = Form(""),
+    item_condition: str = Form(""),
     purchase_date: str = Form(...),
-    purchase_cost: str = Form(...),
-    warranty: str = Form(None),
-    supplier: str = Form(None),
-    journal: str = Form(None),
-    owner: str = Form(...),
+    purchase_cost: float = Form(...),
+    warranty: str = Form(""),
+    supplier: str = Form(""),
+    journal: str = Form(""),
+    owner_name: str = Form(...),
     photo: UploadFile = File(None),
-    db: Session = Depends(get_db),
     current_profile = Depends(get_current_profile)
 ):
     """Process add asset form."""
-    dropdown_options = get_dropdown_options()
-    
     asset_data = {
-        "asset_name": item_name,
-        "category_name": category,
-        "type_name": type,
-        "manufacture": manufacture or "",
-        "model": model or "",
-        "serial_number": serial_number or "",
-        "company_name": company,
-        "unit_name": bisnis_unit or "",
-        "location_name": location,
-        "room_name": room,
-        "notes": notes or "",
-        "item_condition": item_condition or "",
+        "asset_id": str(uuid.uuid4()),
+        "asset_name": asset_name,
+        "category_name": category_name,
+        "type_name": type_name,
+        "manufacture": manufacture,
+        "model": model,
+        "serial_number": serial_number,
+        "company_name": company_name,
+        "unit_name": unit_name,
+        "location_name": location_name,
+        "room_name": room_name,
+        "notes": notes,
+        "item_condition": item_condition,
         "purchase_date": purchase_date,
         "purchase_cost": purchase_cost,
-        "warranty": warranty or "",
-        "supplier": supplier or "",
-        "journal": journal or "",
-        "owner_name": owner,
-        "status": "Active"
+        "warranty": warranty,
+        "supplier": supplier,
+        "journal": journal,
+        "owner_name": owner_name,
+        "status": "Pending"
     }
     
-    photo_url = None
+    # Handle photo upload
     if photo and photo.filename:
         try:
             contents = await photo.read()
-            image_file = io.BytesIO(contents)
-            processed_image = resize_and_convert_image(image_file)
-            
-            if processed_image:
-                photo_url = upload_to_drive(processed_image, photo.filename, "new")
-                if photo_url:
-                    asset_data["photo_url"] = photo_url
+            photo_url = upload_to_drive(contents, photo.filename, asset_data["asset_id"])
+            if photo_url:
+                asset_data["photo_url"] = photo_url
         except Exception as e:
-            print(f"Error processing photo: {str(e)}")
-    
-    # All roles now require approval
-    from app.utils.sheets import add_approval_request
-    
-    # Determine approval type based on user role
-    if current_profile.role == UserRole.ADMIN:
-        approval_type = "admin_add_asset"  # Admin needs manager approval
-        logging.info(f"Admin {current_profile.username} submitting asset for manager approval: {asset_data.get('asset_name')}")
-    else:
-        approval_type = "add_asset"  # Manager/Staff need admin approval
-        logging.info(f"{current_profile.role.value} {current_profile.username} submitting asset for admin approval: {asset_data.get('asset_name')}")
+            logging.error(f"Error uploading photo: {str(e)}")
     
     approval_data = {
-        'type': approval_type,
-        'asset_id': 'NEW',
-        'asset_name': item_name,
-        'submitted_by': current_profile.full_name or current_profile.username,
-        'submitted_date': datetime.now().strftime('%Y-%m-%d'),
-        'description': f"Add new asset: {item_name}",
-        'request_data': json.dumps(asset_data, ensure_ascii=False)
+        "approval_id": str(uuid.uuid4()),
+        "type": "add_asset",
+        "asset_id": asset_data["asset_id"],
+        "asset_name": asset_name,
+        "submitted_by": current_profile.username,
+        "submitted_date": datetime.now().isoformat(),
+        "status": "pending",
+        "description": f"Add new asset: {asset_name}",
+        "request_data": json.dumps(asset_data)
     }
     
-    approval_success = add_approval_request(approval_data)
-    
-    if approval_success:
-        if current_profile.role == UserRole.ADMIN:
-            approver = "Manager"
-            approval_msg = "manager approval"
-        else:
-            approver = "Admin"
-            approval_msg = "admin approval"
-        
-        logging.info(f"Asset approval request submitted for {approval_msg}: {asset_data.get('asset_name')}")
-        
-        # Show confirmation page instead of redirect
+    if add_approval_request(approval_data):
         return templates.TemplateResponse(
             "asset_management/confirmation.html",
             {
                 "request": request,
                 "user": current_profile,
-                "asset_name": item_name,
-                "approver": approver,
-                "message": f"Asset registration has been received and is waiting for approval from {approver}"
+                "asset_name": asset_name,
+                "message": "Asset registration submitted for approval"
             }
         )
     else:
-        logging.error(f"Failed to submit approval request for: {asset_data.get('asset_name')}")
+        dropdown_options = get_dropdown_options()
         return templates.TemplateResponse(
             "asset_management/add.html",
             {
                 "request": request,
                 "user": current_profile,
                 "dropdown_options": dropdown_options,
-                "error": "Error submitting approval request",
-                "form_data": asset_data
-            },
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+                "error": "Failed to submit asset registration"
+            }
         )
