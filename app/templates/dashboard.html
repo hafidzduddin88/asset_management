@@ -291,18 +291,55 @@
 {% block scripts %}
 <script>
     // PWA functionality is handled by modern_layout.html
-    // Activity charts data (simplified for demo)
-    const activityLabels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    // Handle activity chart period buttons
+    document.querySelectorAll('.damaged-period-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            document.querySelectorAll('.damaged-period-btn').forEach(btn => {
+                btn.classList.remove('active', 'bg-primary-100', 'text-primary-700');
+                btn.classList.add('bg-gray-100', 'text-gray-600');
+            });
+            this.classList.add('active', 'bg-primary-100', 'text-primary-700');
+            this.classList.remove('bg-gray-100', 'text-gray-600');
+            
+            const period = this.getAttribute('data-period');
+            window.damagedChart.data.labels = activityData[period].labels;
+            window.damagedChart.data.datasets[0].data = activityData[period].damaged;
+            window.damagedChart.update();
+        });
+    });
+    
+    document.querySelectorAll('.repaired-period-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            document.querySelectorAll('.repaired-period-btn').forEach(btn => {
+                btn.classList.remove('active', 'bg-primary-100', 'text-primary-700');
+                btn.classList.add('bg-gray-100', 'text-gray-600');
+            });
+            this.classList.add('active', 'bg-primary-100', 'text-primary-700');
+            this.classList.remove('bg-gray-100', 'text-gray-600');
+            
+            const period = this.getAttribute('data-period');
+            window.repairedChart.data.labels = activityData[period].labels;
+            window.repairedChart.data.datasets[0].data = activityData[period].repaired;
+            window.repairedChart.update();
+        });
+    });
+    
+    // Activity chart data for different periods
+    const activityData = {
+        month: { labels: {{ monthly_chart_labels | tojson }}, damaged: [2, 1, 3, 0, 1, 2, 1, 0, 1, 2, 0, 1], repaired: [1, 2, 1, 3, 0, 1, 2, 1, 0, 1, 2, 0] },
+        quarter: { labels: {{ quarterly_chart_labels | tojson }}, damaged: [6, 3, 3, 3], repaired: [6, 4, 3, 3] },
+        year: { labels: {{ yearly_chart_labels | tojson }}, damaged: [12, 15, 8, 10, 14], repaired: [16, 12, 14, 8, 12] }
+    };
     
     // Damaged Assets Chart
     const ctxDamaged = document.getElementById('damagedChart').getContext('2d');
     window.damagedChart = new Chart(ctxDamaged, {
         type: 'bar',
         data: {
-            labels: activityLabels,
+            labels: activityData.month.labels,
             datasets: [{
                 label: 'Damaged Assets',
-                data: [2, 1, 3, 0, 1, 2, 1, 0, 1, 2, 0, 1],
+                data: activityData.month.damaged,
                 backgroundColor: 'rgba(239, 68, 68, 0.6)',
                 borderColor: 'rgba(239, 68, 68, 1)',
                 borderWidth: 1
@@ -311,19 +348,8 @@
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        precision: 0
-                    }
-                }
-            },
-            plugins: {
-                legend: {
-                    display: false
-                }
-            }
+            scales: { y: { beginAtZero: true, ticks: { precision: 0 } } },
+            plugins: { legend: { display: false } }
         }
     });
     
@@ -332,10 +358,10 @@
     window.repairedChart = new Chart(ctxRepaired, {
         type: 'bar',
         data: {
-            labels: activityLabels,
+            labels: activityData.month.labels,
             datasets: [{
                 label: 'Repaired Assets',
-                data: [1, 2, 1, 3, 0, 1, 2, 1, 0, 1, 2, 0],
+                data: activityData.month.repaired,
                 backgroundColor: 'rgba(16, 185, 129, 0.6)',
                 borderColor: 'rgba(16, 185, 129, 1)',
                 borderWidth: 1
@@ -344,19 +370,8 @@
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        precision: 0
-                    }
-                }
-            },
-            plugins: {
-                legend: {
-                    display: false
-                }
-            }
+            scales: { y: { beginAtZero: true, ticks: { precision: 0 } } },
+            plugins: { legend: { display: false } }
         }
     });
     
@@ -551,61 +566,36 @@
     });
     
     // Handle chart period buttons
+    function updateChart(period, chartInstance, chartTitle) {
+        chartInstance.data.labels = chartData[period].labels;
+        chartInstance.data.datasets[0].data = chartData[period].values;
+        
+        if (period === 'year') {
+            chartInstance.config.type = 'bar';
+            chartInstance.data.datasets[0].backgroundColor = 'rgba(59, 130, 246, 0.6)';
+            chartInstance.data.datasets[0].fill = false;
+        } else {
+            chartInstance.config.type = 'line';
+            chartInstance.data.datasets[0].backgroundColor = 'rgba(59, 130, 246, 0.2)';
+            chartInstance.data.datasets[0].fill = true;
+        }
+        
+        chartInstance.update();
+        if (chartTitle) chartTitle.textContent = chartData[period].title;
+    }
+    
     document.querySelectorAll('.chart-period-btn').forEach(button => {
         button.addEventListener('click', function() {
-            // Remove active class from all buttons
             document.querySelectorAll('.chart-period-btn').forEach(btn => {
-                btn.classList.remove('active');
-                btn.classList.remove('bg-primary-100');
-                btn.classList.remove('text-primary-700');
-                btn.classList.add('bg-gray-100');
-                btn.classList.add('text-gray-600');
+                btn.classList.remove('active', 'bg-primary-100', 'text-primary-700');
+                btn.classList.add('bg-gray-100', 'text-gray-600');
             });
             
-            // Add active class to clicked button
-            this.classList.add('active');
-            this.classList.remove('bg-gray-100');
-            this.classList.remove('text-gray-600');
-            this.classList.add('bg-primary-100');
-            this.classList.add('text-primary-700');
+            this.classList.add('active', 'bg-primary-100', 'text-primary-700');
+            this.classList.remove('bg-gray-100', 'text-gray-600');
             
-            // Get the selected period
             const period = this.getAttribute('data-period');
-            currentPeriod = period;
-            
-            // Update chart title
-            const chartTitle = document.querySelector('.chart-title');
-            if (chartTitle) {
-                chartTitle.textContent = chartData[period].title;
-            }
-            
-            // Update chart data
-            window.monthlyChart.data.labels = chartData[period].labels;
-            window.monthlyChart.data.datasets[0].data = chartData[period].values;
-            
-            // Update chart options based on period
-            if (period === 'year') {
-                window.monthlyChart.config.type = 'bar';
-                window.monthlyChart.data.datasets[0].backgroundColor = 'rgba(59, 130, 246, 0.6)';
-                window.monthlyChart.data.datasets[0].borderColor = 'rgba(59, 130, 246, 1)';
-            } else {
-                window.monthlyChart.config.type = 'line';
-                window.monthlyChart.data.datasets[0].backgroundColor = 'rgba(59, 130, 246, 0.2)';
-                window.monthlyChart.data.datasets[0].borderColor = 'rgba(59, 130, 246, 1)';
-            }
-            
-            // Update the chart
-            window.monthlyChart.update();
-            
-            // Show toast notification
-            const toast = document.createElement('div');
-            toast.className = 'fixed bottom-4 right-4 bg-primary-600 text-white px-4 py-2 rounded shadow-lg';
-            toast.innerHTML = `<div class="flex items-center"><i class="fas fa-info-circle mr-2"></i> ${chartData[period].title}</div>`;
-            document.body.appendChild(toast);
-            
-            setTimeout(() => {
-                toast.remove();
-            }, 3000);
+            updateChart(period, window.monthlyChart, document.querySelector('.chart-title'));
         });
     });
     
