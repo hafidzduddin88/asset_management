@@ -132,11 +132,13 @@ def _get_dropdown_options():
         }
 
 def get_reference_value(table_name, lookup_column, lookup_value, return_column):
-    data = get_reference_data(table_name)
-    for row in data:
-        if row.get(lookup_column) == lookup_value:
-            return row.get(return_column)
-    return None
+    try:
+        supabase = get_supabase()
+        response = supabase.table(table_name).select(return_column).eq(lookup_column, lookup_value).execute()
+        return response.data[0][return_column] if response.data else None
+    except Exception as e:
+        logging.error(f"Error getting reference value: {str(e)}")
+        return None
 
 def add_asset(asset_data):
     try:
@@ -175,6 +177,36 @@ def add_asset(asset_data):
             owner_response = supabase.table('ref_owners').select('owner_id').eq('owner_name', asset_data['owner_name']).execute()
             if owner_response.data:
                 processed_data['owner_id'] = owner_response.data[0]['owner_id']
+        
+        # Generate asset_tag using existing format
+        def generate_asset_tag(company_name, category_name, type_name, owner_name, purchase_date):
+            try:
+                # Get codes from reference tables
+                code_company = get_reference_value('ref_companies', 'company_name', company_name, 'company_code')
+                code_category = get_reference_value('ref_categories', 'category_name', category_name, 'category_code')
+                code_type = get_reference_value('ref_asset_types', 'type_name', type_name, 'type_code')
+                code_owner = get_reference_value('ref_owners', 'owner_name', owner_name, 'owner_code')
+                
+                year = datetime.strptime(purchase_date, "%Y-%m-%d").year if isinstance(purchase_date, str) else purchase_date.year
+                year_2digit = str(year)[-2:]
+                
+                if all([code_company, code_category, code_type, code_owner]):
+                    # Get sequence number for this combination
+                    pattern = f"{code_company}-{code_category}.{code_type}.{code_owner}{year_2digit}.%"
+                    existing = supabase.table(TABLES['ASSETS']).select('asset_tag').like('asset_tag', pattern).execute()
+                    seq_num = str(len(existing.data) + 1).zfill(3)
+                    return f"{code_company}-{code_category}.{code_type}.{code_owner}{year_2digit}.{seq_num}"
+            except Exception as e:
+                logging.error(f"Error generating asset tag: {str(e)}")
+            return None
+        
+        processed_data['asset_tag'] = generate_asset_tag(
+            asset_data.get('company_name'),
+            asset_data.get('category_name'), 
+            asset_data.get('type_name'),
+            asset_data.get('owner_name'),
+            asset_data.get('purchase_date')
+        )
         
         # Copy other fields (only fields that exist in assets table)
         valid_fields = ['asset_name', 'manufacture', 'model', 'serial_number', 'room_name', 'notes', 'item_condition', 'purchase_date', 'purchase_cost', 'warranty', 'supplier', 'journal', 'status', 'photo_url']
