@@ -54,67 +54,19 @@ async def home(request: Request, current_profile = Depends(get_current_profile))
         # Get chart data directly
         location_counts_dict = chart_data.get("location_counts", {})
         monthly_counts = chart_data.get("monthly_counts", {})
+        quarterly_counts = chart_data.get("quarterly_counts", {})
+        yearly_counts = chart_data.get("yearly_counts", {})
+        
         monthly_chart_labels = list(monthly_counts.keys())
         monthly_chart_values = list(monthly_counts.values())
+        quarterly_chart_labels = list(quarterly_counts.keys())
+        quarterly_chart_values = list(quarterly_counts.values())
+        yearly_chart_labels = list(yearly_counts.keys())
+        yearly_chart_values = list(yearly_counts.values())
         
-        # Generate quarterly data
-        from datetime import datetime
-        current_date = datetime.now()
-        quarterly_chart_labels = []
-        quarterly_chart_values = []
+
         
-        for i in range(3, -1, -1):
-            year = current_date.year
-            quarter = ((current_date.month - 1) // 3 + 1) - i
-            if quarter <= 0:
-                year -= 1
-                quarter += 4
-            
-            quarterly_chart_labels.append(f"Q{quarter} {year}")
-            
-            # Count assets in this quarter
-            start_month = (quarter - 1) * 3 + 1
-            end_month = quarter * 3
-            count = 0
-            
-            for asset in all_assets:
-                purchase_date = asset.get("purchase_date")
-                if purchase_date:
-                    try:
-                        if isinstance(purchase_date, str):
-                            date = datetime.strptime(purchase_date, "%Y-%m-%d")
-                        else:
-                            date = purchase_date
-                        if date.year == year and start_month <= date.month <= end_month:
-                            count += 1
-                    except:
-                        pass
-            
-            quarterly_chart_values.append(count)
-        
-        # Generate yearly data
-        yearly_chart_labels = []
-        yearly_chart_values = []
-        
-        for i in range(4, -1, -1):
-            year = current_date.year - i
-            yearly_chart_labels.append(str(year))
-            
-            count = 0
-            for asset in all_assets:
-                purchase_date = asset.get("purchase_date")
-                if purchase_date:
-                    try:
-                        if isinstance(purchase_date, str):
-                            date = datetime.strptime(purchase_date, "%Y-%m-%d")
-                        else:
-                            date = purchase_date
-                        if date.year == year:
-                            count += 1
-                    except:
-                        pass
-            
-            yearly_chart_values.append(count)
+
 
         # Calculate age distribution
         age_distribution = {"0-1 years": 0, "1-3 years": 0, "3-5 years": 0, "5+ years": 0}

@@ -208,6 +208,39 @@ def add_asset(asset_data):
             asset_data.get('purchase_date')
         )
         
+        # Calculate financial values
+        def calculate_asset_financials(purchase_cost, purchase_date, category_name):
+            try:
+                residual_percent = float(get_reference_value('ref_categories', 'category_name', category_name, 'residual_percent') or 0)
+                useful_life = int(get_reference_value('ref_categories', 'category_name', category_name, 'useful_life') or 0)
+                purchase_year = datetime.strptime(purchase_date, "%Y-%m-%d").year if isinstance(purchase_date, str) else purchase_date.year
+                current_year = datetime.now().year
+                years_used = current_year - purchase_year
+                purchase_cost = float(purchase_cost)
+                residual_value = purchase_cost * (residual_percent / 100)
+                depreciation = ((purchase_cost - residual_value) / useful_life) * years_used if years_used < useful_life else (purchase_cost - residual_value)
+                book_value = purchase_cost - depreciation
+                return {
+                    'residual_percent': residual_percent,
+                    'residual_value': round(residual_value, 2),
+                    'useful_life': useful_life,
+                    'depreciation_value': round(depreciation, 2),
+                    'book_value': round(book_value, 2),
+                    'year': purchase_year
+                }
+            except Exception as e:
+                logging.error(f"Error calculating financials: {str(e)}")
+                return {}
+        
+        # Add financial calculations
+        if asset_data.get('purchase_cost') and asset_data.get('purchase_date') and asset_data.get('category_name'):
+            financials = calculate_asset_financials(
+                asset_data.get('purchase_cost'),
+                asset_data.get('purchase_date'),
+                asset_data.get('category_name')
+            )
+            processed_data.update(financials)
+        
         # Copy other fields (only fields that exist in assets table)
         valid_fields = ['asset_name', 'manufacture', 'model', 'serial_number', 'room_name', 'notes', 'item_condition', 'purchase_date', 'purchase_cost', 'warranty', 'supplier', 'journal', 'status', 'photo_url']
         for field in valid_fields:
@@ -316,6 +349,7 @@ def get_summary_data():
 
 def get_chart_data():
     assets = get_all_assets()
+    now = datetime.now()
     
     # Status counts
     status_counts = {"Active": 0, "Damaged": 0, "Disposed": 0, "Lost": 0}
@@ -343,13 +377,29 @@ def get_chart_data():
             loc_name = "Unknown"
         location_counts[loc_name] = location_counts.get(loc_name, 0) + 1
 
-    # Monthly purchase chart (last 12 months)
+    # Monthly chart (last 12 months)
     monthly_counts = {}
-    now = datetime.now()
     for i in range(11, -1, -1):
         month = (now.replace(day=1) - relativedelta(months=i)).strftime("%b %Y")
         monthly_counts[month] = 0
 
+    # Quarterly chart (last 4 quarters)
+    quarterly_counts = {}
+    for i in range(3, -1, -1):
+        year = now.year
+        quarter = ((now.month - 1) // 3 + 1) - i
+        if quarter <= 0:
+            year -= 1
+            quarter += 4
+        quarterly_counts[f"Q{quarter} {year}"] = 0
+
+    # Yearly chart (last 5 years)
+    yearly_counts = {}
+    for i in range(4, -1, -1):
+        year = now.year - i
+        yearly_counts[str(year)] = 0
+
+    # Count assets by purchase_date
     for asset in assets:
         purchase_date = asset.get("purchase_date")
         if purchase_date:
@@ -358,9 +408,23 @@ def get_chart_data():
                     dt = datetime.strptime(purchase_date, "%Y-%m-%d")
                 else:
                     dt = purchase_date
+                
+                # Monthly count
                 month_key = dt.strftime("%b %Y")
                 if month_key in monthly_counts:
                     monthly_counts[month_key] += 1
+                
+                # Quarterly count
+                quarter = (dt.month - 1) // 3 + 1
+                quarter_key = f"Q{quarter} {dt.year}"
+                if quarter_key in quarterly_counts:
+                    quarterly_counts[quarter_key] += 1
+                
+                # Yearly count
+                year_key = str(dt.year)
+                if year_key in yearly_counts:
+                    yearly_counts[year_key] += 1
+                    
             except Exception:
                 continue
 
@@ -368,7 +432,9 @@ def get_chart_data():
         "status_counts": status_counts,
         "category_counts": category_counts,
         "location_counts": location_counts,
-        "monthly_counts": monthly_counts
+        "monthly_counts": monthly_counts,
+        "quarterly_counts": quarterly_counts,
+        "yearly_counts": yearly_counts
     }
 
 def invalidate_cache():
