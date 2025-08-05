@@ -155,8 +155,9 @@ async def home(request: Request, current_profile = Depends(get_current_profile))
         # Process assets for display
         for asset in latest_assets:
             asset["display_name"] = asset.get("asset_name", f"Asset #{asset.get('asset_id', 'Unknown')}")
-            asset["category_display"] = asset.get("ref_categories", {}).get("category_name", "Unknown") if isinstance(asset.get("ref_categories"), dict) else "Unknown"
-            asset["location_display"] = asset.get("ref_locations", {}).get("location_name", "Unknown") if isinstance(asset.get("ref_locations"), dict) else "Unknown"
+            asset["category_display"] = asset.get("ref_categories", {}).get("category_name", "Unknown") if asset.get("ref_categories") else "Unknown"
+            asset["location_display"] = asset.get("ref_locations", {}).get("location_name", "Unknown") if asset.get("ref_locations") else "Unknown"
+            asset["business_unit_display"] = asset.get("ref_business_units", {}).get("business_unit_name", "Unknown") if asset.get("ref_business_units") else "Unknown"
 
 
         context = {

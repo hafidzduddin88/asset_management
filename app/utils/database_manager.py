@@ -45,7 +45,7 @@ def _get_all_assets():
             ref_categories(category_name),
             ref_asset_types(type_name),
             ref_companies(company_name),
-            ref_business_units(unit_name),
+            ref_business_units(business_unit_name),
             ref_locations(location_name, room_name),
             ref_owners(owner_name)
         ''').execute()
@@ -93,7 +93,15 @@ def get_dropdown_options():
 def _get_dropdown_options():
     try:
         categories = get_reference_data(TABLES['REF_CATEGORIES'])
-        types = get_reference_data(TABLES['REF_TYPES'])
+        # Get types with category relationship
+        supabase = get_supabase()
+        types_response = supabase.table(TABLES['REF_TYPES']).select('type_name, ref_categories(category_name)').execute()
+        types = []
+        for t in types_response.data:
+            types.append({
+                'type_name': t['type_name'],
+                'category_name': t['ref_categories']['category_name'] if t.get('ref_categories') else None
+            })
         companies = get_reference_data(TABLES['REF_COMPANIES'])
         owners = get_reference_data(TABLES['REF_OWNERS'])
         locations = get_reference_data(TABLES['REF_LOCATION'])
@@ -102,7 +110,7 @@ def _get_dropdown_options():
         category_names = [c.get('category_name', '') for c in categories]
         company_names = [c.get('company_name', '') for c in companies]
         owner_names = [o.get('owner_name', '') for o in owners]
-        business_unit_names = [b.get('unit_name', '') for b in business_units]
+        business_unit_names = [b.get('business_unit_name', '') for b in business_units]
         location_dict = {}
         for loc in locations:
             location_name = loc.get('location_name')
