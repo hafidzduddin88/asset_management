@@ -62,16 +62,23 @@ async def approvals_page(
     else:
         approvals_data = []
     
+    # Separate pending and completed approvals
+    pending_approvals = [a for a in approvals_data if a.get('status') == 'pending']
+    completed_approvals = [a for a in approvals_data if a.get('status') in ['approved', 'rejected']]
+    
     return templates.TemplateResponse(
         "approvals/list.html",
         {
             "request": request,
             "user": current_profile,
-            "approvals_data": approvals_data
+            "pending_approvals": pending_approvals,
+            "completed_approvals": completed_approvals,
+            "pending_count": len(pending_approvals),
+            "completed_count": len(completed_approvals)
         }
     )
 
-@router.post("/approve/{approval_id}")
+@router.post("/{approval_id}/approved")
 async def approve_request(
     approval_id: str,
     request: Request,
@@ -190,7 +197,7 @@ async def approve_request(
     except Exception as e:
         return JSONResponse({"status": "error", "message": f"Error processing approval: {str(e)}"})
 
-@router.post("/reject/{approval_id}")
+@router.post("/{approval_id}/rejected")
 async def reject_request(
     approval_id: str,
     request: Request,
