@@ -492,6 +492,10 @@ def get_chart_data():
                 else:
                     dt = purchase_date
                 
+                # Debug log for first few assets
+                if len(yearly_counts) < 5:
+                    logging.info(f"Processing asset purchase_date: {purchase_date} -> parsed year: {dt.year}")
+                
                 month_key = dt.strftime("%b %Y")
                 if month_key in monthly_counts:
                     monthly_counts[month_key] += 1
