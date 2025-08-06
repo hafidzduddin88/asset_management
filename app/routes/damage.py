@@ -25,7 +25,7 @@ async def damaged_assets_page(request: Request, current_profile = Depends(get_cu
         })
     except Exception as e:
         logging.error(f"Error loading damage page: {e}")
-        return templates.TemplateResponse("damaged_assets.html", {
+        return templates.TemplateResponse("damage/index.html", {
             "request": request,
             "user": current_profile,
             "assets_data": [],

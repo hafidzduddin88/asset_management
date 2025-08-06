@@ -352,31 +352,40 @@ def get_chart_data():
     now = datetime.now()
     supabase = get_supabase()
     
+    # Debug: log total assets and sample data
+    print(f"DEBUG: Total assets retrieved: {len(assets)}")
+    if assets:
+        print(f"DEBUG: First asset sample: {assets[0]}")
+        print(f"DEBUG: Purchase dates in first 5 assets: {[a.get('purchase_date') for a in assets[:5]]}")
+    logging.info(f"Total assets for chart: {len(assets)}")
+    
     # Status counts
     status_counts = {"Active": 0, "Damaged": 0, "Disposed": 0, "Lost": 0}
     for asset in assets:
         status = asset.get("status", "Active")
         status_counts[status] = status_counts.get(status, 0) + 1
 
-    # Category counts
+    # Category counts (exclude disposed assets)
     category_counts = {}
     for asset in assets:
-        cat_data = asset.get("ref_categories")
-        if cat_data:
-            cat_name = cat_data.get("category_name", "Unknown") if isinstance(cat_data, dict) else "Unknown"
-        else:
-            cat_name = "Unknown"
-        category_counts[cat_name] = category_counts.get(cat_name, 0) + 1
+        if asset.get("status") != "Disposed":
+            cat_data = asset.get("ref_categories")
+            if cat_data:
+                cat_name = cat_data.get("category_name", "Unknown") if isinstance(cat_data, dict) else "Unknown"
+            else:
+                cat_name = "Unknown"
+            category_counts[cat_name] = category_counts.get(cat_name, 0) + 1
 
-    # Location counts
+    # Location counts (exclude disposed assets)
     location_counts = {}
     for asset in assets:
-        loc_data = asset.get("ref_locations")
-        if loc_data:
-            loc_name = loc_data.get("location_name", "Unknown") if isinstance(loc_data, dict) else "Unknown"
-        else:
-            loc_name = "Unknown"
-        location_counts[loc_name] = location_counts.get(loc_name, 0) + 1
+        if asset.get("status") != "Disposed":
+            loc_data = asset.get("ref_locations")
+            if loc_data:
+                loc_name = loc_data.get("location_name", "Unknown") if isinstance(loc_data, dict) else "Unknown"
+            else:
+                loc_name = "Unknown"
+            location_counts[loc_name] = location_counts.get(loc_name, 0) + 1
 
     # Initialize time period structures
     monthly_counts = {}
@@ -492,9 +501,9 @@ def get_chart_data():
                 else:
                     dt = purchase_date
                 
-                # Debug log for first few assets
-                if len(yearly_counts) < 5:
-                    logging.info(f"Processing asset purchase_date: {purchase_date} -> parsed year: {dt.year}")
+                # Debug: log all purchase dates and years
+                logging.info(f"Asset {asset.get('asset_id', 'unknown')}: purchase_date={purchase_date} -> year={dt.year}")
+                print(f"DEBUG: Asset {asset.get('asset_id', 'unknown')}: purchase_date={purchase_date} -> year={dt.year}")
                 
                 month_key = dt.strftime("%b %Y")
                 if month_key in monthly_counts:
@@ -514,18 +523,27 @@ def get_chart_data():
                 logging.error(f"Error parsing date {purchase_date}: {str(e)}")
                 continue
     
+    # Debug: log yearly counts before processing
+    print(f"DEBUG: Raw yearly_counts: {yearly_counts}")
+    logging.info(f"Raw yearly counts: {yearly_counts}")
+    
     # Sort yearly data
     if yearly_counts:
         sorted_years = sorted([int(year) for year in yearly_counts.keys()])
         min_year = min(sorted_years)
         max_year = max(max(sorted_years), now.year)
         
+        print(f"DEBUG: Year range: {min_year} to {max_year}")
+        
         filtered_yearly = {}
         for year in range(min_year, max_year + 1):
             filtered_yearly[str(year)] = yearly_counts.get(str(year), 0)
         yearly_counts = filtered_yearly
+        
+        print(f"DEBUG: Final yearly_counts: {yearly_counts}")
     else:
         yearly_counts = {str(now.year): 0}
+        print(f"DEBUG: No yearly data, using current year: {yearly_counts}")
 
     return {
         "status_counts": status_counts,
