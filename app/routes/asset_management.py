@@ -223,12 +223,19 @@ async def add_asset(
         except Exception as e:
             logging.error(f"Error uploading photo: {str(e)}")
     
+    # Get location_id
+    from app.utils.database_manager import get_supabase
+    supabase = get_supabase()
+    loc_response = supabase.table('ref_locations').select('location_id').eq('location_name', location_name).eq('room_name', room_name).execute()
+    location_id = loc_response.data[0]['location_id'] if loc_response.data else None
+    
     approval_data = {
         "type": "add_asset",
         "asset_name": asset_name,
         "submitted_by": current_profile.id,
         "status": "pending",
         "description": f"Add new asset: {asset_name}",
+        "location_id": location_id,
         "notes": json.dumps(asset_data)
     }
     

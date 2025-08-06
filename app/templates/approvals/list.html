@@ -193,10 +193,12 @@ function displayApprovals() {
             
             <div class="bg-gray-50 p-3 rounded mb-4">
                 <p class="text-sm text-gray-600 mb-2"><strong>Description:</strong> ${approval.description || 'No description'}</p>
-                <div class="grid grid-cols-2 gap-4 text-xs text-gray-500">
+                <div class="grid grid-cols-2 gap-4 text-xs text-gray-500 mb-2">
                     <div><strong>Asset ID:</strong> ${approval.asset_id || 'N/A'}</div>
                     <div><strong>Submitted:</strong> ${new Date(approval.submitted_date).toLocaleDateString() || 'N/A'}</div>
                 </div>
+                ${approval.type === 'relocation' ? getRelocationDetails(approval.notes) : ''}
+                ${approval.type === 'add_asset' ? getAssetLocationDetails(approval.notes) : ''}
             </div>
             
             ${approval.status === 'pending' ? `
@@ -224,6 +226,46 @@ function getTypeLabel(type) {
         'relocation': 'Asset Relocation'
     };
     return labels[type] || type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
+}
+
+function getRelocationDetails(notesJson) {
+    try {
+        const notes = JSON.parse(notesJson || '{}');
+        return `
+            <div class="border-t pt-2 mt-2">
+                <div class="text-xs text-gray-600 mb-1"><strong>Relocation Details:</strong></div>
+                <div class="grid grid-cols-2 gap-2 text-xs">
+                    <div><strong>From Location:</strong> ${notes.current_location || 'N/A'}</div>
+                    <div><strong>From Room:</strong> ${notes.current_room || 'N/A'}</div>
+                    <div><strong>To Location:</strong> ${notes.new_location || 'N/A'}</div>
+                    <div><strong>To Room:</strong> ${notes.new_room || 'N/A'}</div>
+                    <div class="col-span-2"><strong>Reason:</strong> ${notes.reason || 'N/A'}</div>
+                </div>
+            </div>
+        `;
+    } catch (e) {
+        return '';
+    }
+}
+
+function getAssetLocationDetails(notesJson) {
+    try {
+        const notes = JSON.parse(notesJson || '{}');
+        return `
+            <div class="border-t pt-2 mt-2">
+                <div class="text-xs text-gray-600 mb-1"><strong>Asset Placement:</strong></div>
+                <div class="grid grid-cols-2 gap-2 text-xs">
+                    <div><strong>Location:</strong> ${notes.location_name || 'N/A'}</div>
+                    <div><strong>Room:</strong> ${notes.room_name || 'N/A'}</div>
+                    <div><strong>Category:</strong> ${notes.category_name || 'N/A'}</div>
+                    <div><strong>Type:</strong> ${notes.type_name || 'N/A'}</div>
+                    <div class="col-span-2"><strong>Purchase Cost:</strong> Rp ${notes.purchase_cost ? parseInt(notes.purchase_cost).toLocaleString() : 'N/A'}</div>
+                </div>
+            </div>
+        `;
+    } catch (e) {
+        return '';
+    }
 }
 
 async function approveRequest(approvalId) {

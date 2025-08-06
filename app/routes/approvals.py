@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.database.database import get_db
 from app.utils.auth import get_current_profile
-from app.utils.database_manager import get_all_approvals, update_approval_status, get_supabase
+from app.utils.database_manager import get_all_approvals, update_approval_status, get_supabase, update_asset
 
 router = APIRouter(prefix="/approvals", tags=["approvals"])
 templates = Jinja2Templates(directory="app/templates")
@@ -24,9 +24,10 @@ async def approvals_page(
     # Get all approvals with user details
     all_approvals = get_all_approvals()
     
-    # Get user details for submitted_by UUIDs
+    # Get user details and location details for approvals
     supabase = get_supabase()
     for approval in all_approvals:
+        # Get user name
         if approval.get('submitted_by'):
             try:
                 user_response = supabase.table('profiles').select('username, full_name').eq('id', approval['submitted_by']).execute()
@@ -37,6 +38,37 @@ async def approvals_page(
                     approval['submitted_by_name'] = 'Unknown User'
             except:
                 approval['submitted_by_name'] = 'Unknown User'
+        
+        # Get location details
+        if approval.get('type') == 'relocation':
+            # For relocation, show TO location
+            if approval.get('to_location_id'):
+                try:
+                    loc_response = supabase.table('ref_locations').select('location_name, room_name').eq('location_id', approval['to_location_id']).execute()
+                    if loc_response.data:
+                        location = loc_response.data[0]
+                        approval['location_name'] = location.get('location_name', '')
+                        approval['room_name'] = location.get('room_name', '')
+                    else:
+                        approval['location_name'] = 'Unknown Location'
+                        approval['room_name'] = 'Unknown Room'
+                except:
+                    approval['location_name'] = 'Unknown Location'
+                    approval['room_name'] = 'Unknown Room'
+        elif approval.get('location_id'):
+            # For other types, use location_id
+            try:
+                loc_response = supabase.table('ref_locations').select('location_name, room_name').eq('location_id', approval['location_id']).execute()
+                if loc_response.data:
+                    location = loc_response.data[0]
+                    approval['location_name'] = location.get('location_name', '')
+                    approval['room_name'] = location.get('room_name', '')
+                else:
+                    approval['location_name'] = 'Unknown Location'
+                    approval['room_name'] = 'Unknown Room'
+            except:
+                approval['location_name'] = 'Unknown Location'
+                approval['room_name'] = 'Unknown Room'
     
     # Filter approvals based on user role
     if current_profile.role.value == 'admin':
@@ -89,14 +121,31 @@ async def approve_request(
                 request_data_str = approval.get('notes', '')
                 if request_data_str:
                     relocation_data = json.loads(request_data_str)
-                    update_data = {
-                        'location_name': relocation_data.get('new_location'),
-                        'room_name': relocation_data.get('new_room')
-                    }
-                    from app.utils.database_manager import update_asset
-                    success = update_asset(approval.get('asset_id'), update_data)
-                    if not success:
-                        return JSONResponse({"status": "error", "message": "Failed to relocate asset"})
+                    new_location = relocation_data.get('new_location')
+                    new_room = relocation_data.get('new_room')
+                    
+                    # Get new location_id
+                    supabase = get_supabase()
+                    loc_response = supabase.table('ref_locations').select('location_id').eq('location_name', new_location).eq('room_name', new_room).execute()
+                    
+                    if loc_response.data:
+                        new_location_id = loc_response.data[0]['location_id']
+                        
+                        # Determine new status based on location
+                        new_status = 'In Storage' if new_location == 'HO - Ciputat' and new_room == '1022 - Gudang Support TOG' else 'Active'
+                        
+                        update_data = {
+                            'location_id': new_location_id,
+                            'room_name': new_room,
+                            'status': new_status
+                        }
+                        
+                        from app.utils.database_manager import update_asset
+                        success = update_asset(approval.get('asset_id'), update_data)
+                        if not success:
+                            return JSONResponse({"status": "error", "message": "Failed to relocate asset"})
+                    else:
+                        return JSONResponse({"status": "error", "message": "Location not found"})
             except Exception as e:
                 return JSONResponse({"status": "error", "message": f"Error processing relocation: {str(e)}"})
             
