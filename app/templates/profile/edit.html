@@ -60,8 +60,13 @@
                     <div>
                         <label for="business_unit" class="block text-sm font-medium text-gray-700">Department</label>
                         <div class="mt-1">
-                            <input type="text" name="business_unit" id="business_unit" value="{{ user.business_unit or '' }}" required
+                            <select name="business_unit" id="business_unit"
                                 class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                                <option value="">Select Department</option>
+                                {% for unit in business_units %}
+                                <option value="{{ unit }}" {% if user.business_unit_name == unit %}selected{% endif %}>{{ unit }}</option>
+                                {% endfor %}
+                            </select>
                         </div>
                     </div>
                     

@@ -10,6 +10,7 @@ from app.database.models import Profile
 from app.utils.auth import get_current_profile
 from app.utils.photo import resize_and_convert_image, upload_to_drive
 from app.utils.flash import set_flash
+from app.utils.database_manager import get_dropdown_options
 
 router = APIRouter(tags=["profile"])
 templates = Jinja2Templates(directory="app/templates")
@@ -34,11 +35,13 @@ async def edit_profile_page(
     current_profile = Depends(get_current_profile)
 ):
     """Edit user profile page."""
+    dropdown_options = get_dropdown_options()
     return templates.TemplateResponse(
         "profile/edit.html",
         {
             "request": request,
-            "user": current_profile
+            "user": current_profile,
+            "business_units": dropdown_options.get('business_units', [])
         }
     )
 

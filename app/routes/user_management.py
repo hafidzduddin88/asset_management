@@ -7,6 +7,7 @@ from app.config import load_config
 from app.database.models import UserRole
 from app.utils.auth import get_current_profile, get_admin_user
 from app.utils.flash import set_flash
+from app.utils.database_manager import get_dropdown_options
 import logging
 
 router = APIRouter(prefix="/user_management", tags=["user_management"])
@@ -51,11 +52,13 @@ async def create_user_form(
     current_profile = Depends(get_admin_user)
 ):
     """Create user form (admin only)."""
+    dropdown_options = get_dropdown_options()
     return templates.TemplateResponse(
         "user_management/create.html",
         {
             "request": request,
-            "user": current_profile
+            "user": current_profile,
+            "business_units": dropdown_options.get('business_units', [])
         }
     )
 
@@ -65,6 +68,7 @@ async def create_user(
     email: str = Form(...),
     full_name: str = Form(...),
     role: str = Form(...),
+    business_unit_name: str = Form(None),
     current_profile = Depends(get_admin_user)
 ):
     """Create new user (admin only)."""
@@ -100,7 +104,8 @@ async def create_user(
                     "full_name": full_name,
                     "role": role.lower(),
                     "is_active": True,
-                    "email_verified": True
+                    "email_verified": True,
+                    "business_unit_name": business_unit_name
                 }
                 supabase.table("profiles").insert(profile_data).execute()
             
