@@ -134,7 +134,8 @@ async def home(request: Request, current_profile = Depends(get_current_profile))
             "yearly_chart_labels": yearly_chart_labels,
             "yearly_chart_values": yearly_chart_values,
             "age_distribution": age_distribution_list,
-            "latest_assets": latest_assets
+            "latest_assets": latest_assets,
+            "activity_data": chart_data.get("activity_data", {})
         }
 
         return templates.TemplateResponse("dashboard.html", context)
@@ -163,5 +164,6 @@ async def home(request: Request, current_profile = Depends(get_current_profile))
             "yearly_chart_values": [],
             "age_distribution": [],
             "latest_assets": [],
+            "activity_data": {},
             "error": "Error loading dashboard data"
         })

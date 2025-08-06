@@ -405,10 +405,10 @@
     window.relocatedChart = new Chart(ctxRelocated, {
         type: 'line',
         data: {
-            labels: {{ monthly_chart_labels | tojson }},
+            labels: chartActivityData.month.labels,
             datasets: [{
                 label: 'Relocated Assets',
-                data: Array({{ monthly_chart_labels | length }}).fill(0),
+                data: chartActivityData.month.relocated,
                 backgroundColor: 'rgba(59, 130, 246, 0.2)',
                 borderColor: 'rgba(59, 130, 246, 1)',
                 borderWidth: 2,
@@ -429,10 +429,10 @@
     window.toBeDisposedChart = new Chart(ctxToBeDisposed, {
         type: 'line',
         data: {
-            labels: {{ monthly_chart_labels | tojson }},
+            labels: chartActivityData.month.labels,
             datasets: [{
                 label: 'To Be Disposed',
-                data: Array({{ monthly_chart_labels | length }}).fill(0),
+                data: chartActivityData.month.to_be_disposed,
                 backgroundColor: 'rgba(245, 158, 11, 0.2)',
                 borderColor: 'rgba(245, 158, 11, 1)',
                 borderWidth: 2,
@@ -453,10 +453,10 @@
     window.disposedChart = new Chart(ctxDisposed, {
         type: 'bar',
         data: {
-            labels: {{ monthly_chart_labels | tojson }},
+            labels: chartActivityData.month.labels,
             datasets: [{
                 label: 'Disposed Assets',
-                data: Array({{ monthly_chart_labels | length }}).fill(0),
+                data: chartActivityData.month.disposed,
                 backgroundColor: 'rgba(107, 114, 128, 0.6)',
                 borderColor: 'rgba(107, 114, 128, 1)',
                 borderWidth: 1
