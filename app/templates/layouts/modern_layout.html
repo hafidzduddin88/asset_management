@@ -77,22 +77,20 @@
                         <a href="/asset_management/add" class="{% if '/asset_management/add' in request.url.path %}border-primary-500 text-gray-900{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
                             Asset Registration
                         </a>
+                        <a href="/relocation" class="{% if '/relocation' in request.url.path %}border-primary-500 text-gray-900{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                            Relocation
+                        </a>
                         <a href="/damage" class="{% if '/damage' in request.url.path %}border-primary-500 text-gray-900{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
                             Asset Issue
+                        </a>
+                        <a href="/logs" class="{% if '/logs' in request.url.path %}border-primary-500 text-gray-900{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                            Logs
                         </a>
                         {% if user and (user.role.value == 'admin' or user.role.value == 'manager') %}
                         <a href="/approvals" class="{% if '/approvals' in request.url.path %}border-primary-500 text-gray-900{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
                             Approvals
                         </a>
                         {% endif %}
-                        
-                        <a href="/logs" class="{% if '/logs' in request.url.path %}border-primary-500 text-gray-900{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
-                            Logs
-                        </a>
-                        
-                        <a href="/relocation" class="{% if '/relocation' in request.url.path %}border-primary-500 text-gray-900{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
-                            Relocation
-                        </a>
 
                         {% if user and user.role.value == 'admin' %}
                         <div class="relative" x-data="{ open: false }">
@@ -185,14 +183,12 @@
                             <a href="/" class="{% if request.url.path == '/' or request.url.path == '/dashboard' %}bg-primary-50 border-primary-500 text-primary-700{% else %}border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800{% endif %} block pl-3 pr-4 py-2 border-l-4 text-base font-medium">Dashboard</a>
                             <a href="/assets" class="{% if '/assets' in request.url.path %}bg-primary-50 border-primary-500 text-primary-700{% else %}border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800{% endif %} block pl-3 pr-4 py-2 border-l-4 text-base font-medium">Database Assets</a>
                             <a href="/asset_management/add" class="{% if '/asset_management/add' in request.url.path %}bg-primary-50 border-primary-500 text-primary-700{% else %}border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800{% endif %} block pl-3 pr-4 py-2 border-l-4 text-base font-medium">Asset Registration</a>
+                            <a href="/relocation" class="{% if '/relocation' in request.url.path %}bg-primary-50 border-primary-500 text-primary-700{% else %}border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800{% endif %} block pl-3 pr-4 py-2 border-l-4 text-base font-medium">Relocation</a>
                             <a href="/damage" class="{% if '/damage' in request.url.path %}bg-primary-50 border-primary-500 text-primary-700{% else %}border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800{% endif %} block pl-3 pr-4 py-2 border-l-4 text-base font-medium">Asset Issue</a>
+                            <a href="/logs" class="{% if '/logs' in request.url.path %}bg-primary-50 border-primary-500 text-primary-700{% else %}border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800{% endif %} block pl-3 pr-4 py-2 border-l-4 text-base font-medium">Logs</a>
                             {% if user and (user.role.value == 'admin' or user.role.value == 'manager') %}
                             <a href="/approvals" class="{% if '/approvals' in request.url.path %}bg-primary-50 border-primary-500 text-primary-700{% else %}border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800{% endif %} block pl-3 pr-4 py-2 border-l-4 text-base font-medium">Approvals</a>
                             {% endif %}
-                            
-                            <a href="/logs" class="{% if '/logs' in request.url.path %}bg-primary-50 border-primary-500 text-primary-700{% else %}border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800{% endif %} block pl-3 pr-4 py-2 border-l-4 text-base font-medium">Logs</a>
-                            
-                            <a href="/relocation" class="{% if '/relocation' in request.url.path %}bg-primary-50 border-primary-500 text-primary-700{% else %}border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800{% endif %} block pl-3 pr-4 py-2 border-l-4 text-base font-medium">Relocation</a>
 
                             {% if user and user.role.value == 'admin' %}
                             <div class="border-l-4 border-transparent">

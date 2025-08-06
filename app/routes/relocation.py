@@ -9,7 +9,7 @@ import json
 from app.database.database import get_db
 from app.database.models import Profile
 from app.utils.auth import get_current_profile
-from app.utils.database_manager import get_all_assets, get_dropdown_options, add_approval_request
+from app.utils.database_manager import get_all_assets, get_dropdown_options, add_approval_request, get_asset_by_id
 from app.utils.flash import set_flash
 
 router = APIRouter(prefix="/relocation", tags=["relocation"])
@@ -48,7 +48,7 @@ async def relocate_asset(
     current_profile = Depends(get_current_profile)
 ):
     """Submit asset relocation request."""
-    from app.utils.sheets import get_asset_by_id
+    # Get asset data from database
     
     # Get asset data
     asset = get_asset_by_id(asset_id)
@@ -59,8 +59,8 @@ async def relocate_asset(
     relocation_data = {
         'new_location': new_location,
         'new_room': new_room,
-        'current_location': asset.get('Location', ''),
-        'current_room': asset.get('Room', ''),
+        'current_location': asset.get('ref_locations', {}).get('location_name', '') if asset.get('ref_locations') else '',
+        'current_room': asset.get('ref_locations', {}).get('room_name', '') if asset.get('ref_locations') else asset.get('room_name', ''),
         'reason': reason,
         'notes': notes or ''
     }
@@ -68,18 +68,18 @@ async def relocate_asset(
     approval_data = {
         'type': 'relocation',
         'asset_id': asset_id,
-        'asset_name': asset.get('Item Name', ''),
-        'submitted_by': current_profile.full_name or current_profile.email,
-        'submitted_date': datetime.now().strftime('%Y-%m-%d'),
-        'description': f"Relocate from {asset.get('Location', '')} - {asset.get('Room', '')} to {new_location} - {new_room}",
-        'request_data': json.dumps(relocation_data, ensure_ascii=False)
+        'asset_name': asset.get('asset_name', ''),
+        'submitted_by': current_profile.id,
+        'status': 'pending',
+        'description': f"Relocate from {asset.get('ref_locations', {}).get('location_name', '') if asset.get('ref_locations') else ''} - {asset.get('ref_locations', {}).get('room_name', '') if asset.get('ref_locations') else asset.get('room_name', '')} to {new_location} - {new_room}",
+        'notes': json.dumps(relocation_data)
     }
     
     approval_success = add_approval_request(approval_data)
     
     if approval_success:
         response = RedirectResponse(url="/relocation", status_code=status.HTTP_303_SEE_OTHER)
-        set_flash(response, f"Relocation request for {asset.get('Item Name', '')} submitted for approval", "success")
+        set_flash(response, f"Relocation request for {asset.get('asset_name', '')} submitted for approval", "success")
         return response
     else:
         response = RedirectResponse(url="/relocation", status_code=status.HTTP_303_SEE_OTHER)
