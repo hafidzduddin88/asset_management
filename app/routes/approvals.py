@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.database.database import get_db
 from app.utils.auth import get_current_profile
-from app.utils.database_manager import get_all_approvals, update_approval_status
+from app.utils.database_manager import get_all_approvals, update_approval_status, get_supabase
 
 router = APIRouter(prefix="/approvals", tags=["approvals"])
 templates = Jinja2Templates(directory="app/templates")
@@ -21,8 +21,22 @@ async def approvals_page(
     if current_profile.role not in ['admin', 'manager']:
         raise HTTPException(status_code=403, detail="Access denied")
     
-    # Get all approvals from Google Sheets
+    # Get all approvals with user details
     all_approvals = get_all_approvals()
+    
+    # Get user details for submitted_by UUIDs
+    supabase = get_supabase()
+    for approval in all_approvals:
+        if approval.get('submitted_by'):
+            try:
+                user_response = supabase.table('profiles').select('username, full_name').eq('id', approval['submitted_by']).execute()
+                if user_response.data:
+                    user = user_response.data[0]
+                    approval['submitted_by_name'] = user.get('full_name') or user.get('username') or 'Unknown User'
+                else:
+                    approval['submitted_by_name'] = 'Unknown User'
+            except:
+                approval['submitted_by_name'] = 'Unknown User'
     
     # Filter approvals based on user role
     if current_profile.role.value == 'admin':

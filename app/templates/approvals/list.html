@@ -183,7 +183,7 @@ function displayApprovals() {
                 </div>
                 <div>
                     <p class="text-sm font-medium text-gray-500">Submitted By</p>
-                    <p class="text-sm text-gray-900">${approval.submitted_by || 'Unknown'}</p>
+                    <p class="text-sm text-gray-900">${approval.submitted_by_name || 'Unknown'}</p>
                 </div>
                 <div>
                     <p class="text-sm font-medium text-gray-500">Date</p>
@@ -191,7 +191,13 @@ function displayApprovals() {
                 </div>
             </div>
             
-            <p class="text-sm text-gray-600 mb-4">${approval.description || 'No description'}</p>
+            <div class="bg-gray-50 p-3 rounded mb-4">
+                <p class="text-sm text-gray-600 mb-2"><strong>Description:</strong> ${approval.description || 'No description'}</p>
+                <div class="grid grid-cols-2 gap-4 text-xs text-gray-500">
+                    <div><strong>Asset ID:</strong> ${approval.asset_id || 'N/A'}</div>
+                    <div><strong>Submitted:</strong> ${new Date(approval.submitted_date).toLocaleDateString() || 'N/A'}</div>
+                </div>
+            </div>
             
             ${approval.status === 'pending' ? `
                 <div class="flex space-x-2">
@@ -209,12 +215,15 @@ function displayApprovals() {
 
 function getTypeLabel(type) {
     const labels = {
+        'add_asset': 'Add Asset',
+        'edit_asset': 'Edit Asset',
         'damage_report': 'Damage Report',
         'repair_action': 'Repair Action',
         'lost_report': 'Lost Report',
-        'disposal_request': 'Disposal Request'
+        'disposal_request': 'Disposal Request',
+        'relocation': 'Asset Relocation'
     };
-    return labels[type] || type;
+    return labels[type] || type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
 }
 
 async function approveRequest(approvalId) {
