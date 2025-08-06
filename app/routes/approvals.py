@@ -39,26 +39,10 @@ async def approvals_page(
             except:
                 approval['submitted_by_name'] = 'Unknown User'
         
-        # Get location details
-        if approval.get('type') == 'relocation':
-            # For relocation, show TO location
-            if approval.get('to_location_id'):
-                try:
-                    loc_response = supabase.table('ref_locations').select('location_name, room_name').eq('location_id', approval['to_location_id']).execute()
-                    if loc_response.data:
-                        location = loc_response.data[0]
-                        approval['location_name'] = location.get('location_name', '')
-                        approval['room_name'] = location.get('room_name', '')
-                    else:
-                        approval['location_name'] = 'Unknown Location'
-                        approval['room_name'] = 'Unknown Room'
-                except:
-                    approval['location_name'] = 'Unknown Location'
-                    approval['room_name'] = 'Unknown Room'
-        elif approval.get('location_id'):
-            # For other types, use location_id
+        # Get location details - always show TO location
+        if approval.get('to_location_id'):
             try:
-                loc_response = supabase.table('ref_locations').select('location_name, room_name').eq('location_id', approval['location_id']).execute()
+                loc_response = supabase.table('ref_locations').select('location_name, room_name').eq('location_id', approval['to_location_id']).execute()
                 if loc_response.data:
                     location = loc_response.data[0]
                     approval['location_name'] = location.get('location_name', '')
