@@ -393,11 +393,8 @@ def get_chart_data():
             quarter += 4
         quarterly_counts[f"Q{quarter} {year}"] = 0
 
-    # Yearly chart (last 5 years)
+    # Yearly chart - will be populated with actual data
     yearly_counts = {}
-    for i in range(4, -1, -1):
-        year = now.year - i
-        yearly_counts[str(year)] = 0
 
     # Count assets by purchase_date
     for asset in assets:
@@ -420,13 +417,27 @@ def get_chart_data():
                 if quarter_key in quarterly_counts:
                     quarterly_counts[quarter_key] += 1
                 
-                # Yearly count
+                # Yearly count - add all years found in data
                 year_key = str(dt.year)
-                if year_key in yearly_counts:
-                    yearly_counts[year_key] += 1
+                if year_key not in yearly_counts:
+                    yearly_counts[year_key] = 0
+                yearly_counts[year_key] += 1
                     
-            except Exception:
+            except Exception as e:
+                logging.error(f"Error parsing date {purchase_date}: {str(e)}")
                 continue
+    
+    # Sort yearly data by year and keep only relevant years
+    sorted_years = sorted([int(year) for year in yearly_counts.keys()])
+    if sorted_years:
+        # Keep from earliest year to current year, but limit to reasonable range
+        min_year = max(sorted_years[0], now.year - 10)  # Max 10 years back
+        max_year = now.year
+        
+        filtered_yearly = {}
+        for year in range(min_year, max_year + 1):
+            filtered_yearly[str(year)] = yearly_counts.get(str(year), 0)
+        yearly_counts = filtered_yearly
 
     return {
         "status_counts": status_counts,
