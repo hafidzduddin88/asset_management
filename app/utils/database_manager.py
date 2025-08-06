@@ -402,7 +402,11 @@ def get_chart_data():
         if purchase_date:
             try:
                 if isinstance(purchase_date, str):
-                    dt = datetime.strptime(purchase_date, "%Y-%m-%d")
+                    # Handle both date formats from Supabase
+                    if 'T' in purchase_date:
+                        dt = datetime.fromisoformat(purchase_date.replace('Z', '+00:00'))
+                    else:
+                        dt = datetime.strptime(purchase_date, "%Y-%m-%d")
                 else:
                     dt = purchase_date
                 
