@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from app.database.database import get_db
 from app.database.models import Profile
 from app.utils.auth import get_current_profile
-from app.utils.database_manager import get_all_approvals
+from app.utils.database_manager import get_all_approvals, get_supabase
 
 router = APIRouter(prefix="/logs", tags=["logs"])
 templates = Jinja2Templates(directory="app/templates")
@@ -21,18 +21,31 @@ async def logs_page(
     """View approval logs based on user role."""
     all_approvals = get_all_approvals()
     
+    # Get user details for submitted_by UUIDs
+    supabase = get_supabase()
+    for approval in all_approvals:
+        if approval.get('submitted_by'):
+            try:
+                user_response = supabase.table('profiles').select('username, full_name').eq('id', approval['submitted_by']).execute()
+                if user_response.data:
+                    user = user_response.data[0]
+                    approval['submitted_by_name'] = user.get('full_name') or user.get('username') or 'Unknown User'
+                else:
+                    approval['submitted_by_name'] = 'Unknown User'
+            except:
+                approval['submitted_by_name'] = 'Unknown User'
+    
     # Filter based on user role
     if current_profile.role.value == 'staff':
         # Staff can only see their own requests
-        user_identifier = current_profile.full_name or current_profile.email
-        approvals = [a for a in all_approvals if a.get('Submitted_By') == user_identifier]
+        approvals = [a for a in all_approvals if a.get('submitted_by') == current_profile.id]
     else:
         # Manager and admin can see all approvals
         approvals = all_approvals
     
     # Separate pending and completed
-    pending_approvals = [a for a in approvals if a.get('Status') == 'Pending']
-    completed_approvals = [a for a in approvals if a.get('Status') in ['Approved', 'Rejected']]
+    pending_approvals = [a for a in approvals if a.get('status') == 'pending']
+    completed_approvals = [a for a in approvals if a.get('status') in ['approved', 'rejected']]
     
     return templates.TemplateResponse(
         "logs/index.html",
