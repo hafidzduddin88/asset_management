@@ -17,7 +17,7 @@ async def damaged_assets_page(request: Request, current_profile = Depends(get_cu
         all_assets = get_all_assets() or []
         dropdown_options = get_dropdown_options() or {}
 
-        return templates.TemplateResponse("damaged_assets.html", {
+        return templates.TemplateResponse("damage/index.html", {
             "request": request,
             "user": current_profile,
             "assets_data": all_assets,
