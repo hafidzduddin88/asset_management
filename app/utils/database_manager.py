@@ -192,10 +192,10 @@ def add_asset(asset_data):
                 
                 if all([code_company, code_category, code_type, code_owner]):
                     # Get sequence number for this combination
-                    pattern = f"{code_company}-{code_category}.{code_type}.{code_owner}{year_2digit}.%"
+                    pattern = f"{code_company}-{code_category}{code_type}.{code_owner}{year_2digit}.%"
                     existing = supabase.table(TABLES['ASSETS']).select('asset_tag').like('asset_tag', pattern).execute()
                     seq_num = str(len(existing.data) + 1).zfill(3)
-                    return f"{code_company}-{code_category}.{code_type}.{code_owner}{year_2digit}.{seq_num}"
+                    return f"{code_company}-{code_category}{code_type}.{code_owner}{year_2digit}.{seq_num}"
             except Exception as e:
                 logging.error(f"Error generating asset tag: {str(e)}")
             return None
