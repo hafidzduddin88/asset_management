@@ -1,5 +1,6 @@
 # /app/app/routes/home.py
 import logging
+from datetime import datetime
 from fastapi import APIRouter, Request, Depends
 from fastapi.responses import RedirectResponse
 from starlette.templating import Jinja2Templates
