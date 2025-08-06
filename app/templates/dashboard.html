@@ -306,8 +306,8 @@
             this.classList.remove('bg-gray-100', 'text-gray-600');
             
             const period = this.getAttribute('data-period');
-            window.damagedChart.data.labels = activityData[period].labels;
-            window.damagedChart.data.datasets[0].data = activityData[period].damaged;
+            window.damagedChart.data.labels = chartActivityData[period].labels;
+            window.damagedChart.data.datasets[0].data = chartActivityData[period].damaged;
             window.damagedChart.update();
         });
     });
@@ -322,17 +322,38 @@
             this.classList.remove('bg-gray-100', 'text-gray-600');
             
             const period = this.getAttribute('data-period');
-            window.repairedChart.data.labels = activityData[period].labels;
-            window.repairedChart.data.datasets[0].data = activityData[period].repaired;
+            window.repairedChart.data.labels = chartActivityData[period].labels;
+            window.repairedChart.data.datasets[0].data = chartActivityData[period].repaired;
             window.repairedChart.update();
         });
     });
     
-    // Activity chart data for different periods
-    const activityData = {
-        month: { labels: {{ monthly_chart_labels | tojson }}, damaged: [2, 1, 3, 0, 1, 2, 1, 0, 1, 2, 0, 1], repaired: [1, 2, 1, 3, 0, 1, 2, 1, 0, 1, 2, 0] },
-        quarter: { labels: {{ quarterly_chart_labels | tojson }}, damaged: [6, 3, 3, 3], repaired: [6, 4, 3, 3] },
-        year: { labels: {{ yearly_chart_labels | tojson }}, damaged: [12, 15, 8, 10, 14], repaired: [16, 12, 14, 8, 12] }
+    // Activity chart data from backend
+    const activityData = {{ activity_data | tojson }};
+    
+    // Convert to chart format
+    const chartActivityData = {
+        month: { 
+            labels: {{ monthly_chart_labels | tojson }}, 
+            damaged: Object.values(activityData.damaged.monthly),
+            repaired: Object.values(activityData.repaired.monthly),
+            relocated: Object.values(activityData.relocated.monthly),
+            disposed: Object.values(activityData.disposed.monthly)
+        },
+        quarter: { 
+            labels: {{ quarterly_chart_labels | tojson }}, 
+            damaged: Object.values(activityData.damaged.quarterly),
+            repaired: Object.values(activityData.repaired.quarterly),
+            relocated: Object.values(activityData.relocated.quarterly),
+            disposed: Object.values(activityData.disposed.quarterly)
+        },
+        year: { 
+            labels: Object.keys(activityData.damaged.yearly).sort(), 
+            damaged: Object.keys(activityData.damaged.yearly).sort().map(year => activityData.damaged.yearly[year] || 0),
+            repaired: Object.keys(activityData.repaired.yearly).sort().map(year => activityData.repaired.yearly[year] || 0),
+            relocated: Object.keys(activityData.relocated.yearly).sort().map(year => activityData.relocated.yearly[year] || 0),
+            disposed: Object.keys(activityData.disposed.yearly).sort().map(year => activityData.disposed.yearly[year] || 0)
+        }
     };
     
     // Damaged Assets Chart
@@ -340,10 +361,10 @@
     window.damagedChart = new Chart(ctxDamaged, {
         type: 'bar',
         data: {
-            labels: activityData.month.labels,
+            labels: chartActivityData.month.labels,
             datasets: [{
                 label: 'Damaged Assets',
-                data: activityData.month.damaged,
+                data: chartActivityData.month.damaged,
                 backgroundColor: 'rgba(239, 68, 68, 0.6)',
                 borderColor: 'rgba(239, 68, 68, 1)',
                 borderWidth: 1
@@ -362,10 +383,10 @@
     window.repairedChart = new Chart(ctxRepaired, {
         type: 'bar',
         data: {
-            labels: activityData.month.labels,
+            labels: chartActivityData.month.labels,
             datasets: [{
                 label: 'Repaired Assets',
-                data: activityData.month.repaired,
+                data: chartActivityData.month.repaired,
                 backgroundColor: 'rgba(16, 185, 129, 0.6)',
                 borderColor: 'rgba(16, 185, 129, 1)',
                 borderWidth: 1
@@ -474,12 +495,12 @@
         quarter: {
             labels: {{ quarterly_chart_labels | tojson }},
             values: {{ quarterly_chart_values | tojson }},
-            title: 'Quarterly Asset Additions (Last 3 Years)'
+            title: 'Quarterly Asset Additions'
         },
         year: {
             labels: {{ yearly_chart_labels | tojson }},
             values: {{ yearly_chart_values | tojson }},
-            title: 'Yearly Asset Additions (Last 5 Years)'
+            title: 'Yearly Asset Additions'
         }
     };
     

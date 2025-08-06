@@ -350,6 +350,7 @@ def get_summary_data():
 def get_chart_data():
     assets = get_all_assets()
     now = datetime.now()
+    supabase = get_supabase()
     
     # Status counts
     status_counts = {"Active": 0, "Damaged": 0, "Disposed": 0, "Lost": 0}
@@ -377,32 +378,113 @@ def get_chart_data():
             loc_name = "Unknown"
         location_counts[loc_name] = location_counts.get(loc_name, 0) + 1
 
-    # Monthly chart (last 12 months)
+    # Initialize time period structures
     monthly_counts = {}
+    quarterly_counts = {}
+    yearly_counts = {}
+    
+    # Activity data from logs
+    activity_data = {
+        'damaged': {'monthly': {}, 'quarterly': {}, 'yearly': {}},
+        'repaired': {'monthly': {}, 'quarterly': {}, 'yearly': {}},
+        'relocated': {'monthly': {}, 'quarterly': {}, 'yearly': {}},
+        'to_be_disposed': {'monthly': {}, 'quarterly': {}, 'yearly': {}},
+        'disposed': {'monthly': {}, 'quarterly': {}, 'yearly': {}}
+    }
+    
+    # Initialize periods
     for i in range(11, -1, -1):
         month = (now.replace(day=1) - relativedelta(months=i)).strftime("%b %Y")
         monthly_counts[month] = 0
-
-    # Quarterly chart (last 4 quarters)
-    quarterly_counts = {}
+        for activity in activity_data.values():
+            activity['monthly'][month] = 0
+    
     for i in range(3, -1, -1):
         year = now.year
         quarter = ((now.month - 1) // 3 + 1) - i
         if quarter <= 0:
             year -= 1
             quarter += 4
-        quarterly_counts[f"Q{quarter} {year}"] = 0
+        quarter_key = f"Q{quarter} {year}"
+        quarterly_counts[quarter_key] = 0
+        for activity in activity_data.values():
+            activity['quarterly'][quarter_key] = 0
 
-    # Yearly chart - will be populated with actual data
-    yearly_counts = {}
+    # Get data from log tables
+    try:
+        # Damage logs
+        damage_logs = supabase.table(TABLES['DAMAGE_LOG']).select('*').execute().data or []
+        for log in damage_logs:
+            date_str = log.get('report_date') or log.get('created_at')
+            if date_str:
+                dt = datetime.fromisoformat(date_str.replace('Z', '+00:00')) if 'T' in date_str else datetime.strptime(date_str, '%Y-%m-%d')
+                month_key = dt.strftime("%b %Y")
+                quarter_key = f"Q{(dt.month - 1) // 3 + 1} {dt.year}"
+                year_key = str(dt.year)
+                
+                if month_key in activity_data['damaged']['monthly']:
+                    activity_data['damaged']['monthly'][month_key] += 1
+                if quarter_key in activity_data['damaged']['quarterly']:
+                    activity_data['damaged']['quarterly'][quarter_key] += 1
+                activity_data['damaged']['yearly'][year_key] = activity_data['damaged']['yearly'].get(year_key, 0) + 1
+        
+        # Repair logs
+        repair_logs = supabase.table(TABLES['REPAIR_LOG']).select('*').execute().data or []
+        for log in repair_logs:
+            date_str = log.get('repair_date') or log.get('created_at')
+            if date_str:
+                dt = datetime.fromisoformat(date_str.replace('Z', '+00:00')) if 'T' in date_str else datetime.strptime(date_str, '%Y-%m-%d')
+                month_key = dt.strftime("%b %Y")
+                quarter_key = f"Q{(dt.month - 1) // 3 + 1} {dt.year}"
+                year_key = str(dt.year)
+                
+                if month_key in activity_data['repaired']['monthly']:
+                    activity_data['repaired']['monthly'][month_key] += 1
+                if quarter_key in activity_data['repaired']['quarterly']:
+                    activity_data['repaired']['quarterly'][quarter_key] += 1
+                activity_data['repaired']['yearly'][year_key] = activity_data['repaired']['yearly'].get(year_key, 0) + 1
+        
+        # Relocation from approvals (approved relocations)
+        relocation_approvals = supabase.table(TABLES['APPROVALS']).select('*').eq('type', 'relocation').eq('status', 'approved').execute().data or []
+        for approval in relocation_approvals:
+            date_str = approval.get('approved_date')
+            if date_str:
+                dt = datetime.fromisoformat(date_str.replace('Z', '+00:00')) if 'T' in date_str else datetime.strptime(date_str, '%Y-%m-%d')
+                month_key = dt.strftime("%b %Y")
+                quarter_key = f"Q{(dt.month - 1) // 3 + 1} {dt.year}"
+                year_key = str(dt.year)
+                
+                if month_key in activity_data['relocated']['monthly']:
+                    activity_data['relocated']['monthly'][month_key] += 1
+                if quarter_key in activity_data['relocated']['quarterly']:
+                    activity_data['relocated']['quarterly'][quarter_key] += 1
+                activity_data['relocated']['yearly'][year_key] = activity_data['relocated']['yearly'].get(year_key, 0) + 1
+        
+        # Disposal logs
+        disposal_logs = supabase.table(TABLES['DISPOSAL_LOG']).select('*').execute().data or []
+        for log in disposal_logs:
+            date_str = log.get('disposal_date') or log.get('created_at')
+            if date_str:
+                dt = datetime.fromisoformat(date_str.replace('Z', '+00:00')) if 'T' in date_str else datetime.strptime(date_str, '%Y-%m-%d')
+                month_key = dt.strftime("%b %Y")
+                quarter_key = f"Q{(dt.month - 1) // 3 + 1} {dt.year}"
+                year_key = str(dt.year)
+                
+                if month_key in activity_data['disposed']['monthly']:
+                    activity_data['disposed']['monthly'][month_key] += 1
+                if quarter_key in activity_data['disposed']['quarterly']:
+                    activity_data['disposed']['quarterly'][quarter_key] += 1
+                activity_data['disposed']['yearly'][year_key] = activity_data['disposed']['yearly'].get(year_key, 0) + 1
+        
+    except Exception as e:
+        logging.error(f"Error getting activity data from logs: {str(e)}")
 
-    # Count assets by purchase_date
+    # Count assets by purchase_date for asset additions
     for asset in assets:
         purchase_date = asset.get("purchase_date")
         if purchase_date:
             try:
                 if isinstance(purchase_date, str):
-                    # Handle both date formats from Supabase
                     if 'T' in purchase_date:
                         dt = datetime.fromisoformat(purchase_date.replace('Z', '+00:00'))
                     else:
@@ -410,18 +492,15 @@ def get_chart_data():
                 else:
                     dt = purchase_date
                 
-                # Monthly count
                 month_key = dt.strftime("%b %Y")
                 if month_key in monthly_counts:
                     monthly_counts[month_key] += 1
                 
-                # Quarterly count
                 quarter = (dt.month - 1) // 3 + 1
                 quarter_key = f"Q{quarter} {dt.year}"
                 if quarter_key in quarterly_counts:
                     quarterly_counts[quarter_key] += 1
                 
-                # Yearly count - add all years found in data
                 year_key = str(dt.year)
                 if year_key not in yearly_counts:
                     yearly_counts[year_key] = 0
@@ -431,17 +510,18 @@ def get_chart_data():
                 logging.error(f"Error parsing date {purchase_date}: {str(e)}")
                 continue
     
-    # Sort yearly data by year and keep only relevant years
-    sorted_years = sorted([int(year) for year in yearly_counts.keys()])
-    if sorted_years:
-        # Keep from earliest year to current year, but limit to reasonable range
-        min_year = max(sorted_years[0], now.year - 10)  # Max 10 years back
-        max_year = now.year
+    # Sort yearly data
+    if yearly_counts:
+        sorted_years = sorted([int(year) for year in yearly_counts.keys()])
+        min_year = min(sorted_years)
+        max_year = max(max(sorted_years), now.year)
         
         filtered_yearly = {}
         for year in range(min_year, max_year + 1):
             filtered_yearly[str(year)] = yearly_counts.get(str(year), 0)
         yearly_counts = filtered_yearly
+    else:
+        yearly_counts = {str(now.year): 0}
 
     return {
         "status_counts": status_counts,
@@ -449,7 +529,8 @@ def get_chart_data():
         "location_counts": location_counts,
         "monthly_counts": monthly_counts,
         "quarterly_counts": quarterly_counts,
-        "yearly_counts": yearly_counts
+        "yearly_counts": yearly_counts,
+        "activity_data": activity_data
     }
 
 def invalidate_cache():
