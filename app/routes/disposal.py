@@ -54,7 +54,7 @@ async def dispose_asset(
     current_profile = Depends(get_admin_user)
 ):
     """Dispose an asset (admin only)."""
-    from app.utils.sheets import get_asset_by_id
+    from app.utils.database_manager import get_asset_by_id
     
     # Get asset data
     asset = get_asset_by_id(asset_id)
@@ -65,7 +65,7 @@ async def dispose_asset(
         raise HTTPException(status_code=400, detail="Asset must be marked 'To Be Disposed' first")
     
     # Create disposal approval request
-    from app.utils.sheets import add_approval_request
+    from app.utils.database_manager import add_approval_request
     
     approval_data = {
         'type': 'disposal',

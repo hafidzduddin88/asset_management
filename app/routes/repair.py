@@ -9,7 +9,7 @@ templates = Jinja2Templates(directory="app/templates")
 @router.post("/action")
 async def submit_repair_action(request: Request, current_profile = Depends(get_current_profile)):
     """Submit repair action - creates approval request for store, direct action for allocate"""
-    from app.utils.sheets import add_repair_log, update_asset, add_approval_request
+    from app.utils.database_manager import add_repair_log, update_asset, add_approval_request
     from datetime import datetime
     
     try:

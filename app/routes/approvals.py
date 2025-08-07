@@ -100,7 +100,7 @@ async def approve_request(
     try:
         if approval.get('type') == 'damage_report':
             # Update asset status to "Under Repair"
-            from app.utils.sheets import update_asset
+            from app.utils.database_manager import update_asset
             success = update_asset(approval.get('Asset_ID'), {'Status': 'Under Repair'})
             if not success:
                 return JSONResponse({"status": "error", "message": "Failed to update asset status"})
