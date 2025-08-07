@@ -1,5 +1,6 @@
 # Web Framework
 fastapi==0.116.1    # FastAPI is a modern, fast (high-performance), web framework for building APIs with Python 3.7+ based on standard Python type hints.
+starlette>=0.40.0,<0.48.0   # Starlette is needed for BaseHTTPMiddleware
 uvicorn==0.29.0 # Uvicorn is a lightning-fast ASGI server implementation, using `httptools` and `uvloop`.
 jinja2==3.1.6   # Jinja2 is a fast and extensible template engine for Python.
 python-multipart==0.0.20    # python-multipart is a Python library for handling multipart form data.

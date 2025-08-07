@@ -1,6 +1,6 @@
 from fastapi import Request
 from fastapi.responses import RedirectResponse
-from fastapi.middleware.base import BaseHTTPMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware
 from app.utils.auth import decode_supabase_jwt, refresh_supabase_token
 from app.config import load_config
 import logging
