@@ -58,11 +58,11 @@
                     </div>
                     
                     <div>
-                        <label for="business_unit_name" class="block text-sm font-medium text-gray-700">Department</label>
+                        <label for="business_unit_name" class="block text-sm font-medium text-gray-700">Business Unit</label>
                         <div class="mt-1">
                             <select name="business_unit_name" id="business_unit_name"
                                 class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md">
-                                <option value="">Select Department</option>
+                                <option value="">Select Business Unit</option>
                                 {% for unit in business_units %}
                                 <option value="{{ unit }}" {% if user.business_unit_name == unit %}selected{% endif %}>{{ unit }}</option>
                                 {% endfor %}

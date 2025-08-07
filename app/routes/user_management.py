@@ -83,7 +83,7 @@ async def create_user(
 ):
     """Create new user (admin only)."""
     try:
-        logging.info(f"Creating user - Email: {email}, Full Name: {full_name}, Role: {role}, Department: {business_unit_name}")
+        logging.info(f"Creating user - Email: {email}, Full Name: {full_name}, Role: {role}, Business Unit: {business_unit_name}")
         # Check if user exists
         existing = supabase.table("profiles").select("username").eq("username", email).execute()
         if existing.data:
@@ -308,7 +308,7 @@ async def change_department(
     business_unit_name: str = Form(...),
     current_profile = Depends(get_admin_user)
 ):
-    """Change user department (admin only)."""
+    """Change user business unit (admin only)."""
     try:
         # Get business_unit_id from name
         business_unit_id = None
@@ -317,7 +317,7 @@ async def change_department(
             if bu_response.data:
                 business_unit_id = bu_response.data[0]['business_unit_id']
         
-        # Update user department
+        # Update user business unit
         response = supabase.table("profiles").update({
             "business_unit_id": business_unit_id,
             "business_unit_name": business_unit_name
@@ -326,22 +326,22 @@ async def change_department(
         if response.data:
             user_email = response.data[0].get("username", "Unknown")
             
-            # Log department change
+            # Log business unit change
             supabase.table("user_management_logs").insert({
                 "admin_id": current_profile.id,
                 "target_user_id": user_id,
                 "action": "CHANGE_DEPARTMENT",
-                "details": f"Changed department to {business_unit_name} for {user_email}"
+                "details": f"Changed business unit to {business_unit_name} for {user_email}"
             }).execute()
             
             redirect_response = RedirectResponse(url="/user_management", status_code=status.HTTP_303_SEE_OTHER)
-            set_flash(redirect_response, f"Department changed to {business_unit_name} for {user_email}", "success")
+            set_flash(redirect_response, f"Business unit changed to {business_unit_name} for {user_email}", "success")
             return redirect_response
         else:
             raise HTTPException(status_code=404, detail="User not found")
             
     except Exception as e:
-        logging.error(f"Failed to change department: {e}")
+        logging.error(f"Failed to change business unit: {e}")
         redirect_response = RedirectResponse(url="/user_management", status_code=status.HTTP_303_SEE_OTHER)
-        set_flash(redirect_response, "Failed to change department", "error")
+        set_flash(redirect_response, "Failed to change business unit", "error")
         return redirect_response
