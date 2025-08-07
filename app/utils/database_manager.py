@@ -40,10 +40,6 @@ def get_assets_paginated(page=1, per_page=20, status_filter=None):
         supabase = get_supabase()
         logging.info(f"Getting assets page {page}, per_page {per_page}, status_filter {status_filter}")
         
-        # Simple query first to test connection
-        simple_response = supabase.table(TABLES['ASSETS']).select('asset_id, asset_name, status', count='exact').limit(1).execute()
-        logging.info(f"Simple query result: {len(simple_response.data)} assets found, total count: {simple_response.count}")
-        
         # Query with foreign key relationships
         query = supabase.table(TABLES['ASSETS']).select('''
             asset_id, asset_name, manufacture, model, serial_number, asset_tag,
@@ -51,11 +47,12 @@ def get_assets_paginated(page=1, per_page=20, status_filter=None):
             warranty, supplier, journal, depreciation_value, residual_percent,
             residual_value, useful_life, book_value, status, year, photo_url,
             category_id, asset_type_id, company_id, business_unit_id, location_id, owner_id,
-            ref_categories(category_name),
+            ref_categories(category_name, category_code),
+            ref_asset_types(type_name, type_code),
             ref_locations(location_name, room_name),
             ref_business_units(business_unit_name),
-            ref_companies(company_name),
-            ref_owners(owner_name)
+            ref_companies(company_name, company_code),
+            ref_owners(owner_name, owner_code)
         ''', count='exact')
         
         if status_filter and status_filter == 'active':
@@ -88,11 +85,12 @@ def _get_all_assets():
             warranty, supplier, journal, depreciation_value, residual_percent,
             residual_value, useful_life, book_value, status, year, photo_url,
             category_id, asset_type_id, company_id, business_unit_id, location_id, owner_id,
-            ref_categories(category_name),
+            ref_categories(category_name, category_code),
+            ref_asset_types(type_name, type_code),
             ref_locations(location_name, room_name),
             ref_business_units(business_unit_name),
-            ref_companies(company_name),
-            ref_owners(owner_name)
+            ref_companies(company_name, company_code),
+            ref_owners(owner_name, owner_code)
         ''').execute()
         return response.data
     except Exception as e:
@@ -108,11 +106,12 @@ def get_asset_by_id(asset_id):
             warranty, supplier, journal, depreciation_value, residual_percent,
             residual_value, useful_life, book_value, status, year, photo_url,
             category_id, asset_type_id, company_id, business_unit_id, location_id, owner_id,
-            ref_categories(category_name),
+            ref_categories(category_name, category_code),
+            ref_asset_types(type_name, type_code),
             ref_locations(location_name, room_name),
             ref_business_units(business_unit_name),
-            ref_companies(company_name),
-            ref_owners(owner_name)
+            ref_companies(company_name, company_code),
+            ref_owners(owner_name, owner_code)
         ''').eq('asset_id', asset_id).execute()
         return response.data[0] if response.data else None
     except Exception as e:

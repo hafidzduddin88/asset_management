@@ -18,26 +18,18 @@ async def debug_assets(request: Request, current_profile=Depends(get_current_pro
 @router.get("/assets")
 async def assets_page(
     request: Request, 
-    current_profile=Depends(get_current_profile),
-    page: int = Query(1, ge=1),
-    per_page: int = Query(20, ge=10, le=100),
-    status: str = Query('active')
+    current_profile=Depends(get_current_profile)
 ):
-    """Assets listing page with filtering and pagination"""
-    from app.utils.database_manager import get_assets_paginated
+    """Assets listing page with filtering"""
+    from app.utils.database_manager import get_all_assets, get_dropdown_options
     
-    # Get paginated assets from Supabase
-    assets_result = get_assets_paginated(page=page, per_page=per_page, status_filter=status)
+    # Get all assets and dropdown options for filtering
+    all_assets = get_all_assets()
+    dropdown_options = get_dropdown_options()
     
     return templates.TemplateResponse("assets.html", {
         "request": request,
         "user": current_profile,
-        "assets_data": assets_result['data'],
-        "pagination": {
-            "current_page": assets_result['page'],
-            "per_page": assets_result['per_page'],
-            "total_pages": assets_result['total_pages'],
-            "total_count": assets_result['count']
-        },
-        "current_status": status
+        "assets": all_assets,
+        "dropdown_options": dropdown_options
     })
