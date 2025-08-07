@@ -50,8 +50,8 @@
 ### Backend
 ![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=flat-square&logo=fastapi&logoColor=white)
 ![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?style=flat-square&logo=supabase&logoColor=white)
-![Google Sheets](https://img.shields.io/badge/Google_Sheets-34A853?style=flat-square&logo=google-sheets&logoColor=white)
 ![JWT](https://img.shields.io/badge/JWT-000000?style=flat-square&logo=json-web-tokens&logoColor=white)
+![Python](https://img.shields.io/badge/Python-3776AB?style=flat-square&logo=python&logoColor=white)
 
 ### Frontend
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=flat-square&logo=tailwind-css&logoColor=white)
@@ -104,6 +104,9 @@ docker run -p 8000:8000 --env-file .env ghcr.io/hafidzduddin88/ambp:latest
 # Or build locally
 docker build -t ambp .
 docker run -p 8000:8000 --env-file .env ambp
+
+# Optimized for production
+docker run -p 8000:8000 --env-file .env -e PYTHONUNBUFFERED=1 -e PYTHONDONTWRITEBYTECODE=1 ghcr.io/hafidzduddin88/ambp:latest
 ```
 
 </details>
@@ -134,21 +137,6 @@ docker run -p 8000:8000 --env-file .env ambp
 <th>Required</th>
 </tr>
 <tr>
-<td><code>SECRET_KEY</code></td>
-<td>JWT secret key for authentication</td>
-<td>✅</td>
-</tr>
-<tr>
-<td><code>GOOGLE_CREDS_JSON</code></td>
-<td>Google Service Account credentials</td>
-<td>✅</td>
-</tr>
-<tr>
-<td><code>GOOGLE_SHEET_ID</code></td>
-<td>Google Sheets ID for data storage</td>
-<td>✅</td>
-</tr>
-<tr>
 <td><code>SUPABASE_URL</code></td>
 <td>Supabase project URL</td>
 <td>✅</td>
@@ -162,6 +150,21 @@ docker run -p 8000:8000 --env-file .env ambp
 <td><code>SUPABASE_SERVICE_KEY</code></td>
 <td>Supabase service role key</td>
 <td>✅</td>
+</tr>
+<tr>
+<td><code>GOOGLE_CREDS_JSON</code></td>
+<td>Google Service Account credentials (for Drive)</td>
+<td>✅</td>
+</tr>
+<tr>
+<td><code>DRIVE_FOLDER_ID</code></td>
+<td>Google Drive folder ID for asset photos</td>
+<td>❌</td>
+</tr>
+<tr>
+<td><code>DRIVE_SHARED_ID</code></td>
+<td>Google Drive shared drive ID</td>
+<td>❌</td>
 </tr>
 <tr>
 <td><code>PORT</code></td>
@@ -263,32 +266,54 @@ asset_management/
 
 <table>
 <tr>
-<td width="33%" align="center">
+<td width="50%" align="center">
 
-### 📊 Google Sheets
-- Asset data storage
-- Real-time sync
-- Reference data
+### 🗄️ Supabase
+- Primary database
+- User authentication
+- Real-time features
+- Row-level security
+- Asset & reference data
 
 </td>
-<td width="33%" align="center">
+<td width="50%" align="center">
 
 ### 📁 Google Drive
 - Photo storage
 - Organized folders
 - Public previews
-
-</td>
-<td width="33%" align="center">
-
-### 🗄️ Supabase
-- User authentication
-- Real-time features
-- Row-level security
+- Asset images
 
 </td>
 </tr>
 </table>
+
+---
+
+## ⚡ Performance Optimizations
+
+<div align="center">
+
+### 🚀 Deployment Speed
+- **Minimal Dependencies**: Reduced from 25+ to 8 essential packages
+- **Optimized Requirements**: Removed unused SQLAlchemy, PIL, pandas, numpy
+- **Single Worker**: Faster startup with `--workers 1`
+- **Disabled Logs**: `--access-log false` for production
+- **Build Cache**: Skip builds when no changes detected
+
+### 🗄️ Database Migration
+- **Google Sheets → Supabase**: Complete migration for better performance
+- **Direct Queries**: Simplified database queries without complex joins
+- **Caching**: Smart caching for reference data
+- **Connection Pooling**: Optimized Supabase client
+
+### 📦 Docker Optimization
+- **Multi-stage Build**: Smaller final image
+- **Production Config**: `render.yaml` with optimized settings
+- **Exclusions**: `.slugignore` to skip unnecessary files
+- **Region**: Singapore deployment for better latency
+
+</div>
 
 ---
 
