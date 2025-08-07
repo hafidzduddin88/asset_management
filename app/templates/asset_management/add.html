@@ -283,9 +283,14 @@
             
             updateTypes() {
                 const category = document.getElementById('category_name').value;
+                console.log('Selected category:', category);
+                console.log('Available types:', this.types);
                 this.filteredTypes = category && this.types
                     ? this.types.filter(type => type.category_name === category)
                     : [];
+                console.log('Filtered types:', this.filteredTypes);
+                // Reset type selection when category changes
+                document.getElementById('type_name').value = '';
             },
             
             updateRooms() {

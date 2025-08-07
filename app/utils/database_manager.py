@@ -95,7 +95,7 @@ def _get_dropdown_options():
         categories = get_reference_data(TABLES['REF_CATEGORIES'])
         # Get types with category relationship
         supabase = get_supabase()
-        types_response = supabase.table(TABLES['REF_TYPES']).select('type_name, ref_categories(category_name)').execute()
+        types_response = supabase.table(TABLES['REF_TYPES']).select('type_name, ref_categories!inner(category_name)').execute()
         types = []
         for t in types_response.data:
             types.append({
