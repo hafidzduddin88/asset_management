@@ -127,7 +127,7 @@ async def update_asset(
         "company_name": company,
         "location_name": location,
         "room_name": room,
-        "unit_name": bisnis_unit or ""
+        "business_unit_name": bisnis_unit or ""
     }
     
     # Jika perlu hitung ulang nilai finansial, misalnya setelah perubahan harga
