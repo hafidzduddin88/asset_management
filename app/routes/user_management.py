@@ -73,6 +73,7 @@ async def create_user(
 ):
     """Create new user (admin only)."""
     try:
+        logging.info(f"Creating user - Email: {email}, Full Name: {full_name}, Role: {role}, Department: {business_unit_name}")
         # Check if user exists
         existing = supabase.table("profiles").select("username").eq("username", email).execute()
         if existing.data:
@@ -97,6 +98,13 @@ async def create_user(
             existing_profile = supabase.table("profiles").select("id").eq("id", auth_response.user.id).execute()
             
             if not existing_profile.data:
+                # Get business_unit_id from name
+                business_unit_id = None
+                if business_unit_name:
+                    bu_response = supabase.table("ref_business_units").select("business_unit_id").eq("business_unit_name", business_unit_name).execute()
+                    if bu_response.data:
+                        business_unit_id = bu_response.data[0]['business_unit_id']
+                
                 # Create profile only if doesn't exist
                 profile_data = {
                     "id": auth_response.user.id,
@@ -105,8 +113,10 @@ async def create_user(
                     "role": role.lower(),
                     "is_active": True,
                     "email_verified": True,
+                    "business_unit_id": business_unit_id,
                     "business_unit_name": business_unit_name
                 }
+                logging.info(f"Profile data to insert: {profile_data}")
                 supabase.table("profiles").insert(profile_data).execute()
             
             # Log user creation
@@ -278,4 +288,49 @@ async def change_role(
         logging.error(f"Failed to change role: {e}")
         redirect_response = RedirectResponse(url="/user_management", status_code=status.HTTP_303_SEE_OTHER)
         set_flash(redirect_response, "Failed to change role", "error")
+        return redirect_response
+
+@router.post("/change_department/{user_id}")
+async def change_department(
+    user_id: str,
+    request: Request,
+    business_unit_name: str = Form(...),
+    current_profile = Depends(get_admin_user)
+):
+    """Change user department (admin only)."""
+    try:
+        # Get business_unit_id from name
+        business_unit_id = None
+        if business_unit_name:
+            bu_response = supabase.table("ref_business_units").select("business_unit_id").eq("business_unit_name", business_unit_name).execute()
+            if bu_response.data:
+                business_unit_id = bu_response.data[0]['business_unit_id']
+        
+        # Update user department
+        response = supabase.table("profiles").update({
+            "business_unit_id": business_unit_id,
+            "business_unit_name": business_unit_name
+        }).eq("id", user_id).execute()
+        
+        if response.data:
+            user_email = response.data[0].get("username", "Unknown")
+            
+            # Log department change
+            supabase.table("user_management_logs").insert({
+                "admin_id": current_profile.id,
+                "target_user_id": user_id,
+                "action": "CHANGE_DEPARTMENT",
+                "details": f"Changed department to {business_unit_name} for {user_email}"
+            }).execute()
+            
+            redirect_response = RedirectResponse(url="/user_management", status_code=status.HTTP_303_SEE_OTHER)
+            set_flash(redirect_response, f"Department changed to {business_unit_name} for {user_email}", "success")
+            return redirect_response
+        else:
+            raise HTTPException(status_code=404, detail="User not found")
+            
+    except Exception as e:
+        logging.error(f"Failed to change department: {e}")
+        redirect_response = RedirectResponse(url="/user_management", status_code=status.HTTP_303_SEE_OTHER)
+        set_flash(redirect_response, "Failed to change department", "error")
         return redirect_response

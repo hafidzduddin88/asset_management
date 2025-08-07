@@ -37,7 +37,7 @@
                             <div class="flex-1 min-w-0">
                                 <div class="text-sm font-medium text-gray-900 truncate">{{ user_item.full_name or user_item.username }}</div>
                                 <div class="text-sm text-gray-500 truncate">{{ user_item.username }}</div>
-                                <div class="text-xs text-gray-400">{{ user_item.business_unit or 'No department' }}</div>
+                                <div class="text-xs text-gray-400">{{ user_item.business_unit_name or 'No department' }}</div>
                                 <div class="mt-1 flex flex-wrap gap-1">
                                     <span class="px-2 py-1 text-xs font-semibold rounded-full {% if user_item.is_active %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
                                         {% if user_item.is_active %}Active{% else %}Inactive{% endif %}
@@ -86,6 +86,23 @@
                                 </div>
                             </form>
                             
+                            <!-- Change Department -->
+                            <form method="POST" action="/user_management/change_department/{{ user_item.id }}" class="col-span-2"
+                                  onsubmit="return confirm('Are you sure you want to change department for {{ user_item.username }}?')">
+                                <div class="flex space-x-2">
+                                    <select name="business_unit_name" class="flex-1 text-xs border-gray-300 rounded">
+                                        <option value="">No Department</option>
+                                        <option value="Asset Management & Business Process" {% if user_item.business_unit_name == 'Asset Management & Business Process' %}selected{% endif %}>Asset Management & Business Process</option>
+                                        <option value="Human Resources" {% if user_item.business_unit_name == 'Human Resources' %}selected{% endif %}>Human Resources</option>
+                                        <option value="Finance" {% if user_item.business_unit_name == 'Finance' %}selected{% endif %}>Finance</option>
+                                        <option value="IT" {% if user_item.business_unit_name == 'IT' %}selected{% endif %}>IT</option>
+                                    </select>
+                                    <button type="submit" class="px-3 py-2 border border-orange-300 text-xs font-medium rounded text-orange-700 bg-orange-50 hover:bg-orange-100">
+                                        Change Dept
+                                    </button>
+                                </div>
+                            </form>
+                            
                             <!-- Verify Email -->
                             {% if not user_item.email_verified %}
                             <form method="POST" action="/user_management/verify_email/{{ user_item.id }}" class="col-span-2"
@@ -114,7 +131,7 @@
                                 <div class="ml-4">
                                     <div class="text-sm font-medium text-gray-900">{{ user_item.full_name or user_item.username }}</div>
                                     <div class="text-sm text-gray-500">{{ user_item.username }}</div>
-                                    <div class="text-xs text-gray-400">{{ user_item.business_unit or 'No department' }}</div>
+                                    <div class="text-xs text-gray-400">{{ user_item.business_unit_name or 'No department' }}</div>
                                 </div>
                             </div>
                             <div class="flex items-center space-x-2">
@@ -163,6 +180,21 @@
                                 </select>
                                 <button type="submit" class="inline-flex items-center px-3 py-1 border border-purple-300 text-xs font-medium rounded text-purple-700 bg-purple-50 hover:bg-purple-100">
                                     Change Role
+                                </button>
+                            </form>
+                            
+                            <!-- Change Department -->
+                            <form method="POST" action="/user_management/change_department/{{ user_item.id }}" class="inline flex items-center space-x-2"
+                                  onsubmit="return confirm('Are you sure you want to change department for {{ user_item.username }}?')">
+                                <select name="business_unit_name" class="text-xs border-gray-300 rounded">
+                                    <option value="">No Department</option>
+                                    <option value="Asset Management & Business Process" {% if user_item.business_unit_name == 'Asset Management & Business Process' %}selected{% endif %}>Asset Management & Business Process</option>
+                                    <option value="Human Resources" {% if user_item.business_unit_name == 'Human Resources' %}selected{% endif %}>Human Resources</option>
+                                    <option value="Finance" {% if user_item.business_unit_name == 'Finance' %}selected{% endif %}>Finance</option>
+                                    <option value="IT" {% if user_item.business_unit_name == 'IT' %}selected{% endif %}>IT</option>
+                                </select>
+                                <button type="submit" class="inline-flex items-center px-3 py-1 border border-orange-300 text-xs font-medium rounded text-orange-700 bg-orange-50 hover:bg-orange-100">
+                                    Change Dept
                                 </button>
                             </form>
                             
