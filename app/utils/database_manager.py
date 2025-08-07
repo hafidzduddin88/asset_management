@@ -44,13 +44,18 @@ def get_assets_paginated(page=1, per_page=20, status_filter=None):
         simple_response = supabase.table(TABLES['ASSETS']).select('asset_id, asset_name, status', count='exact').limit(1).execute()
         logging.info(f"Simple query result: {len(simple_response.data)} assets found, total count: {simple_response.count}")
         
-        # Simplified query without foreign key relationships
+        # Query with foreign key relationships
         query = supabase.table(TABLES['ASSETS']).select('''
             asset_id, asset_name, manufacture, model, serial_number, asset_tag,
             room_name, notes, item_condition, purchase_date, purchase_cost,
             warranty, supplier, journal, depreciation_value, residual_percent,
             residual_value, useful_life, book_value, status, year, photo_url,
-            category_id, asset_type_id, company_id, business_unit_id, location_id, owner_id
+            category_id, asset_type_id, company_id, business_unit_id, location_id, owner_id,
+            ref_categories(category_name),
+            ref_locations(location_name, room_name),
+            ref_business_units(business_unit_name),
+            ref_companies(company_name),
+            ref_owners(owner_name)
         ''', count='exact')
         
         if status_filter and status_filter == 'active':
@@ -82,7 +87,12 @@ def _get_all_assets():
             room_name, notes, item_condition, purchase_date, purchase_cost,
             warranty, supplier, journal, depreciation_value, residual_percent,
             residual_value, useful_life, book_value, status, year, photo_url,
-            category_id, asset_type_id, company_id, business_unit_id, location_id, owner_id
+            category_id, asset_type_id, company_id, business_unit_id, location_id, owner_id,
+            ref_categories(category_name),
+            ref_locations(location_name, room_name),
+            ref_business_units(business_unit_name),
+            ref_companies(company_name),
+            ref_owners(owner_name)
         ''').execute()
         return response.data
     except Exception as e:
@@ -97,7 +107,12 @@ def get_asset_by_id(asset_id):
             room_name, notes, item_condition, purchase_date, purchase_cost,
             warranty, supplier, journal, depreciation_value, residual_percent,
             residual_value, useful_life, book_value, status, year, photo_url,
-            category_id, asset_type_id, company_id, business_unit_id, location_id, owner_id
+            category_id, asset_type_id, company_id, business_unit_id, location_id, owner_id,
+            ref_categories(category_name),
+            ref_locations(location_name, room_name),
+            ref_business_units(business_unit_name),
+            ref_companies(company_name),
+            ref_owners(owner_name)
         ''').eq('asset_id', asset_id).execute()
         return response.data[0] if response.data else None
     except Exception as e:
@@ -396,9 +411,9 @@ def get_chart_data():
         if asset.get("status") != "Disposed":
             cat_data = asset.get("ref_categories")
             if cat_data:
-                cat_name = cat_data.get("category_name", "Unknown") if isinstance(cat_data, dict) else "Unknown"
+                cat_name = cat_data.get("category_name", "Not specified") if isinstance(cat_data, dict) else "Not specified"
             else:
-                cat_name = "Unknown"
+                cat_name = "Not specified"
             category_counts[cat_name] = category_counts.get(cat_name, 0) + 1
 
     # Location counts (exclude disposed assets)
@@ -407,9 +422,9 @@ def get_chart_data():
         if asset.get("status") != "Disposed":
             loc_data = asset.get("ref_locations")
             if loc_data:
-                loc_name = loc_data.get("location_name", "Unknown") if isinstance(loc_data, dict) else "Unknown"
+                loc_name = loc_data.get("location_name", "Not specified") if isinstance(loc_data, dict) else "Not specified"
             else:
-                loc_name = "Unknown"
+                loc_name = "Not specified"
             location_counts[loc_name] = location_counts.get(loc_name, 0) + 1
 
     # Initialize time period structures

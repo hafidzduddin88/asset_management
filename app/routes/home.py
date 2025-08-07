@@ -108,9 +108,32 @@ async def home(request: Request, current_profile = Depends(get_current_profile))
         # Process assets for display
         for asset in latest_assets:
             asset["display_name"] = asset.get("asset_name", f"Asset #{asset.get('asset_id', 'Unknown')}")
-            asset["category_display"] = asset.get("ref_categories", {}).get("category_name", "Unknown") if asset.get("ref_categories") else "Unknown"
-            asset["location_display"] = asset.get("ref_locations", {}).get("location_name", "Unknown") if asset.get("ref_locations") else "Unknown"
-            asset["business_unit_display"] = asset.get("ref_business_units", {}).get("business_unit_name", "Unknown") if asset.get("ref_business_units") else "Unknown"
+            asset["category_display"] = asset.get("ref_categories", {}).get("category_name", "Not specified") if asset.get("ref_categories") else "Not specified"
+            asset["location_display"] = asset.get("ref_locations", {}).get("location_name", "Not specified") if asset.get("ref_locations") else "Not specified"
+            asset["business_unit_display"] = asset.get("ref_business_units", {}).get("business_unit_name", "Not specified") if asset.get("ref_business_units") else "Not specified"
+            asset["company_display"] = asset.get("ref_companies", {}).get("company_name", "Not specified") if asset.get("ref_companies") else "Not specified"
+            asset["owner_display"] = asset.get("ref_owners", {}).get("owner_name", "Not specified") if asset.get("ref_owners") else "Not specified"
+            # Format purchase date
+            if asset.get("purchase_date"):
+                try:
+                    if isinstance(asset["purchase_date"], str):
+                        date_obj = datetime.strptime(asset["purchase_date"], "%Y-%m-%d")
+                        asset["purchase_date_display"] = date_obj.strftime("%B %d, %Y")
+                    else:
+                        asset["purchase_date_display"] = asset["purchase_date"].strftime("%B %d, %Y")
+                except:
+                    asset["purchase_date_display"] = "Not specified"
+            else:
+                asset["purchase_date_display"] = "Not specified"
+            # Format purchase cost
+            if asset.get("purchase_cost"):
+                try:
+                    cost = float(asset["purchase_cost"])
+                    asset["purchase_cost_display"] = f"${cost:,.2f}"
+                except:
+                    asset["purchase_cost_display"] = "Not specified"
+            else:
+                asset["purchase_cost_display"] = "Not specified"
 
 
         context = {
