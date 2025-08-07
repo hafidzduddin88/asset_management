@@ -49,7 +49,7 @@ async def edit_profile_page(
 async def update_profile(
     request: Request,
     full_name: str = Form(...),
-    business_unit: str = Form(...),
+    business_unit_name: str = Form(...),
     role: str = Form(None),
     photo: UploadFile = File(None),
     current_profile = Depends(get_current_profile)
@@ -62,10 +62,18 @@ async def update_profile(
     config = load_config()
     admin_supabase = create_client(config.SUPABASE_URL, config.SUPABASE_SERVICE_KEY)
     
+    # Get business_unit_id from name
+    business_unit_id = None
+    if business_unit_name:
+        bu_response = admin_supabase.table("ref_business_units").select("business_unit_id").eq("business_unit_name", business_unit_name).execute()
+        if bu_response.data:
+            business_unit_id = bu_response.data[0]['business_unit_id']
+    
     # Update profile data
     update_data = {
         "full_name": full_name,
-        "business_unit": business_unit,
+        "business_unit_id": business_unit_id,
+        "business_unit_name": business_unit_name,
         "updated_at": datetime.now(timezone.utc).isoformat()
     }
     
