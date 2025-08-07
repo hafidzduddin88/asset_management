@@ -23,8 +23,17 @@ async def user_list(
 ):
     """List all users (admin only)."""
     try:
-        response = supabase.table("profiles").select("*").execute()
+        response = supabase.table("profiles").select("""
+            id, username, full_name, role, is_active, created_at, updated_at,
+            photo_url, business_unit_id, last_login_at, email_verified, business_unit_name,
+            ref_business_units(business_unit_name)
+        """).execute()
         users = response.data or []
+        
+        # Ensure business_unit_name is populated from relationship if missing
+        for user in users:
+            if not user.get('business_unit_name') and user.get('ref_business_units'):
+                user['business_unit_name'] = user['ref_business_units']['business_unit_name']
         
         return templates.TemplateResponse(
             "user_management/list.html",
