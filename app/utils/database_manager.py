@@ -51,7 +51,9 @@ def get_assets_paginated(page=1, per_page=20, status_filter=None):
             ref_owners(owner_name)
         ''', count='exact')
         
-        if status_filter and status_filter != 'all':
+        if status_filter and status_filter == 'active':
+            query = query.neq('status', 'Disposed')
+        elif status_filter and status_filter != 'all':
             query = query.eq('status', status_filter)
         
         offset = (page - 1) * per_page

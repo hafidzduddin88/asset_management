@@ -210,7 +210,7 @@ async def add_asset(
         "supplier": supplier,
         "journal": journal,
         "owner_name": owner_name,
-        "status": "Active" if location_name != "HO - Ciputat" or room_name != "1022 - Gudang Support TOG" else "In Storage"
+        "status": "In Storage" if location_name == "HO - Ciputat" and room_name == "1022 - Gudang Support TOG" else "Active"
     }
     
     # Handle photo upload

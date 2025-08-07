@@ -54,12 +54,16 @@ async def submit_repair_action(request: Request, current_profile = Depends(get_c
             # Add to repair log
             log_success = add_repair_log(repair_data)
             
-            # Update asset from Under Repair to Active
+            # Update asset status based on location
+            location = data.get('location', '')
+            room = data.get('room', '')
+            new_status = 'In Storage' if location == 'HO - Ciputat' and room == '1022 - Gudang Support TOG' else 'Active'
+            
             update_data = {
-                'Status': 'Active',
-                'Bisnis Unit': data.get('business_unit', ''),
-                'Location': data.get('location', ''),
-                'Room': data.get('room', '')
+                'status': new_status,
+                'business_unit_name': data.get('business_unit', ''),
+                'location_name': location,
+                'room_name': room
             }
             
             asset_success = update_asset(data.get('asset_id'), update_data)
