@@ -7,7 +7,7 @@ from typing import Optional, List
 import requests
 import logging
 
-from app.database.models import Profile, UserRole
+from app.database.models import UserRole
 from app.schemas.profile import ProfileResponse
 from app.config import load_config
 

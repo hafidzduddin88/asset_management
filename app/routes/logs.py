@@ -5,7 +5,7 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
 from app.database.database import get_db
-from app.database.models import Profile
+
 from app.utils.auth import get_current_profile
 from app.utils.database_manager import get_all_approvals, get_supabase
 
