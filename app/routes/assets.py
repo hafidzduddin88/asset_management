@@ -7,6 +7,14 @@ router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
 
 
+@router.get("/assets/debug")
+async def debug_assets(request: Request, current_profile=Depends(get_current_profile)):
+    """Debug endpoint to test database connection"""
+    from app.utils.database_manager import test_database_connection
+    
+    debug_info = test_database_connection()
+    return {"debug_info": debug_info}
+
 @router.get("/assets")
 async def assets_page(
     request: Request, 

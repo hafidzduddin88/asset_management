@@ -38,17 +38,19 @@ def get_assets_paginated(page=1, per_page=20, status_filter=None):
     """Get assets with pagination"""
     try:
         supabase = get_supabase()
+        logging.info(f"Getting assets page {page}, per_page {per_page}, status_filter {status_filter}")
+        
+        # Simple query first to test connection
+        simple_response = supabase.table(TABLES['ASSETS']).select('asset_id, asset_name, status', count='exact').limit(1).execute()
+        logging.info(f"Simple query result: {len(simple_response.data)} assets found, total count: {simple_response.count}")
+        
+        # Simplified query without foreign key relationships
         query = supabase.table(TABLES['ASSETS']).select('''
             asset_id, asset_name, manufacture, model, serial_number, asset_tag,
             room_name, notes, item_condition, purchase_date, purchase_cost,
             warranty, supplier, journal, depreciation_value, residual_percent,
             residual_value, useful_life, book_value, status, year, photo_url,
-            ref_categories(category_name),
-            ref_asset_types(type_name),
-            ref_companies(company_name),
-            ref_business_units(business_unit_name),
-            ref_locations(location_name, room_name),
-            ref_owners(owner_name)
+            category_id, asset_type_id, company_id, business_unit_id, location_id, owner_id
         ''', count='exact')
         
         if status_filter and status_filter == 'active':
@@ -59,6 +61,8 @@ def get_assets_paginated(page=1, per_page=20, status_filter=None):
         offset = (page - 1) * per_page
         response = query.range(offset, offset + per_page - 1).execute()
         
+        logging.info(f"Full query result: {len(response.data)} assets returned, total count: {response.count}")
+        
         return {
             'data': response.data,
             'count': response.count,
@@ -67,7 +71,7 @@ def get_assets_paginated(page=1, per_page=20, status_filter=None):
             'total_pages': (response.count + per_page - 1) // per_page if response.count else 0
         }
     except Exception as e:
-        logging.error(f"Error getting paginated assets: {type(e).__name__}")
+        logging.error(f"Error getting paginated assets: {str(e)}")
         return {'data': [], 'count': 0, 'page': 1, 'per_page': per_page, 'total_pages': 0}
 
 def _get_all_assets():
@@ -78,12 +82,7 @@ def _get_all_assets():
             room_name, notes, item_condition, purchase_date, purchase_cost,
             warranty, supplier, journal, depreciation_value, residual_percent,
             residual_value, useful_life, book_value, status, year, photo_url,
-            ref_categories(category_name),
-            ref_asset_types(type_name),
-            ref_companies(company_name),
-            ref_business_units(business_unit_name),
-            ref_locations(location_name, room_name),
-            ref_owners(owner_name)
+            category_id, asset_type_id, company_id, business_unit_id, location_id, owner_id
         ''').execute()
         return response.data
     except Exception as e:
@@ -98,12 +97,7 @@ def get_asset_by_id(asset_id):
             room_name, notes, item_condition, purchase_date, purchase_cost,
             warranty, supplier, journal, depreciation_value, residual_percent,
             residual_value, useful_life, book_value, status, year, photo_url,
-            ref_categories(category_name),
-            ref_asset_types(type_name),
-            ref_companies(company_name),
-            ref_business_units(business_unit_name),
-            ref_locations(location_name, room_name),
-            ref_owners(owner_name)
+            category_id, asset_type_id, company_id, business_unit_id, location_id, owner_id
         ''').eq('asset_id', asset_id).execute()
         return response.data[0] if response.data else None
     except Exception as e:
@@ -574,6 +568,32 @@ def get_chart_data():
         "yearly_counts": yearly_counts,
         "activity_data": activity_data
     }
+
+def test_database_connection():
+    """Test database connection and return basic info"""
+    try:
+        supabase = get_supabase()
+        
+        # Test basic connection
+        response = supabase.table(TABLES['ASSETS']).select('asset_id', count='exact').limit(1).execute()
+        asset_count = response.count
+        
+        # Test reference tables
+        categories = supabase.table(TABLES['REF_CATEGORIES']).select('category_name', count='exact').limit(1).execute()
+        category_count = categories.count
+        
+        return {
+            'connection': 'OK',
+            'asset_count': asset_count,
+            'category_count': category_count,
+            'tables': list(TABLES.values())
+        }
+    except Exception as e:
+        return {
+            'connection': 'ERROR',
+            'error': str(e),
+            'tables': list(TABLES.values())
+        }
 
 def invalidate_cache():
     cache.invalidate_all()
