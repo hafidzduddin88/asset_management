@@ -37,12 +37,23 @@ jobs:
     - name: Check for changes
       id: changes
       run: |
-        if git diff --quiet HEAD~1 HEAD -- Dockerfile requirements.txt app/; then
+        if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+          echo "Manual trigger - forcing build"
+        elif git diff --quiet HEAD~1 HEAD -- Dockerfile requirements.txt app/; then
           echo "changed=false" >> "$GITHUB_OUTPUT"
+          echo "No relevant changes detected - skipping build"
         else
           echo "changed=true" >> "$GITHUB_OUTPUT"
+          echo "Changes detected in Dockerfile, requirements.txt, or app/"
         fi
 
+    - name: Skip build notification
+      if: steps.changes.outputs.changed == 'false'
+      run: |
+        echo "⏭️ Skipping build - no changes in Dockerfile, requirements.txt, or app/ directory"
+        echo "💾 Using existing cached image"
+    
     - name: Clear Docker cache on corruption
       if: steps.changes.outputs.changed == 'true'
       run: |
