@@ -101,92 +101,92 @@
 
 
     <!-- Summary Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mb-8">
-        <div class="bg-white shadow-xl rounded-lg border border-gray-200 overflow-hidden">
-            <div class="bg-gradient-to-r from-primary-50 to-blue-50 px-6 py-4 border-b border-gray-200">
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 mb-6">
+        <div class="bg-white shadow-lg rounded-lg border border-gray-200 overflow-hidden">
+            <div class="bg-gradient-to-r from-primary-50 to-blue-50 px-4 py-3 border-b border-gray-200">
                 <div class="flex items-center justify-between">
-                    <h2 class="text-lg font-semibold text-gray-900">
+                    <h2 class="text-base font-semibold text-gray-900">
                         <i class="fas fa-database mr-2 text-primary-600"></i>
                         Total Assets
                     </h2>
-                    <div class="bg-primary-100 p-2 rounded-full">
-                        <i class="fas fa-boxes text-primary-600 text-lg"></i>
+                    <div class="bg-primary-100 p-1.5 rounded-full">
+                        <i class="fas fa-boxes text-primary-600 text-sm"></i>
                     </div>
                 </div>
             </div>
-            <div class="p-6">
-                <p class="text-3xl font-bold text-primary-600 mb-4">{{ total_assets }}</p>
-                <div class="space-y-3">
-                    <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                        <p class="text-sm font-medium text-gray-600">
-                            <i class="fas fa-dollar-sign mr-2 text-green-600"></i>
-                            Purchase Value:
+            <div class="p-4">
+                <p class="text-2xl font-bold text-primary-600 mb-3">{{ total_assets }}</p>
+                <div class="space-y-2">
+                    <div class="flex justify-between items-center p-2 bg-gray-50 rounded">
+                        <p class="text-xs font-medium text-gray-600">
+                            <i class="fas fa-dollar-sign mr-1 text-green-600"></i>
+                            Purchase:
                         </p>
-                        <p class="text-sm font-bold text-green-600">Rp {{ "{:,.0f}".format(total_purchase_value) }}</p>
+                        <p class="text-xs font-bold text-green-600">Rp {{ "{:,.0f}".format(total_purchase_value) }}</p>
                     </div>
-                    <div class="flex justify-between items-center p-3 bg-blue-50 rounded-lg">
-                        <p class="text-sm font-medium text-gray-600">
-                            <i class="fas fa-chart-line mr-2 text-blue-600"></i>
+                    <div class="flex justify-between items-center p-2 bg-blue-50 rounded">
+                        <p class="text-xs font-medium text-gray-600">
+                            <i class="fas fa-chart-line mr-1 text-blue-600"></i>
                             Book Value:
                         </p>
-                        <p class="text-sm font-bold text-blue-600">Rp {{ "{:,.0f}".format(total_book_value) }}</p>
+                        <p class="text-xs font-bold text-blue-600">Rp {{ "{:,.0f}".format(total_book_value) }}</p>
                     </div>
-                    <div class="flex justify-between items-center p-3 bg-orange-50 rounded-lg">
-                        <p class="text-sm font-medium text-gray-600">
-                            <i class="fas fa-chart-line-down mr-2 text-orange-600"></i>
+                    <div class="flex justify-between items-center p-2 bg-orange-50 rounded">
+                        <p class="text-xs font-medium text-gray-600">
+                            <i class="fas fa-chart-line-down mr-1 text-orange-600"></i>
                             Depreciation:
                         </p>
-                        <p class="text-sm font-bold text-orange-600">Rp {{ "{:,.0f}".format(total_depreciation_value) }}</p>
+                        <p class="text-xs font-bold text-orange-600">Rp {{ "{:,.0f}".format(total_depreciation_value) }}</p>
                     </div>
-                    <div class="flex justify-between items-center pt-3 mt-3 border-t border-gray-200">
-                        <p class="text-sm font-medium text-gray-500">
-                            <i class="fas fa-trash-alt mr-2"></i>
-                            Disposed Assets:
+                    <div class="flex justify-between items-center pt-2 mt-2 border-t border-gray-200">
+                        <p class="text-xs font-medium text-gray-500">
+                            <i class="fas fa-trash-alt mr-1"></i>
+                            Disposed:
                         </p>
-                        <p class="text-sm font-bold text-gray-500">{{ disposed_count }}</p>
+                        <p class="text-xs font-bold text-gray-500">{{ disposed_count }}</p>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="bg-white shadow-xl rounded-lg border border-gray-200 overflow-hidden">
-            <div class="bg-gradient-to-r from-green-50 to-emerald-50 px-6 py-4 border-b border-gray-200">
-                <h2 class="text-lg font-semibold text-gray-900">
+        <div class="bg-white shadow-lg rounded-lg border border-gray-200 overflow-hidden">
+            <div class="bg-gradient-to-r from-green-50 to-emerald-50 px-4 py-3 border-b border-gray-200">
+                <h2 class="text-base font-semibold text-gray-900">
                     <i class="fas fa-tags mr-2 text-green-600"></i>
-                    Assets by Category
+                    By Category
                 </h2>
             </div>
-            <div class="p-6">
-                <ul class="space-y-2">
+            <div class="p-4">
+                <ul class="space-y-1.5">
                     {% for category, count in category_counts.items() %}
-                        <li class="flex justify-between items-center p-2 hover:bg-gray-50 rounded-lg transition-colors">
-                            <span class="text-gray-700 font-medium">
-                                <i class="fas fa-tag mr-2 text-green-500"></i>
+                        <li class="flex justify-between items-center p-1.5 hover:bg-gray-50 rounded transition-colors">
+                            <span class="text-gray-700 font-medium text-sm truncate">
+                                <i class="fas fa-tag mr-1 text-green-500 text-xs"></i>
                                 {{ category }}
                             </span>
-                            <span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-sm font-bold">{{ count }}</span>
+                            <span class="bg-green-100 text-green-800 px-1.5 py-0.5 rounded-full text-xs font-bold">{{ count }}</span>
                         </li>
                     {% endfor %}
                 </ul>
             </div>
         </div>
 
-        <div class="bg-white shadow-xl rounded-lg border border-gray-200 overflow-hidden">
-            <div class="bg-gradient-to-r from-purple-50 to-indigo-50 px-6 py-4 border-b border-gray-200">
-                <h2 class="text-lg font-semibold text-gray-900">
+        <div class="bg-white shadow-lg rounded-lg border border-gray-200 overflow-hidden">
+            <div class="bg-gradient-to-r from-purple-50 to-indigo-50 px-4 py-3 border-b border-gray-200">
+                <h2 class="text-base font-semibold text-gray-900">
                     <i class="fas fa-map-marker-alt mr-2 text-purple-600"></i>
-                    Assets by Location
+                    By Location
                 </h2>
             </div>
-            <div class="p-6">
-                <ul class="space-y-2">
+            <div class="p-4">
+                <ul class="space-y-1.5">
                     {% for location, count in location_counts.items() %}
-                        <li class="flex justify-between items-center p-2 hover:bg-gray-50 rounded-lg transition-colors">
-                            <span class="text-gray-700 font-medium">
-                                <i class="fas fa-building mr-2 text-purple-500"></i>
+                        <li class="flex justify-between items-center p-1.5 hover:bg-gray-50 rounded transition-colors">
+                            <span class="text-gray-700 font-medium text-sm truncate">
+                                <i class="fas fa-building mr-1 text-purple-500 text-xs"></i>
                                 {{ location }}
                             </span>
-                            <span class="bg-purple-100 text-purple-800 px-2 py-1 rounded-full text-sm font-bold">{{ count }}</span>
+                            <span class="bg-purple-100 text-purple-800 px-1.5 py-0.5 rounded-full text-xs font-bold">{{ count }}</span>
                         </li>
                     {% endfor %}
                 </ul>
@@ -232,6 +232,11 @@
         <div class="bg-white rounded-lg shadow p-4 sm:p-6">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-base sm:text-lg font-medium text-gray-900">Relocated Assets</h3>
+                <div class="flex space-x-1">
+                    <button class="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded text-gray-600 relocated-period-btn active" data-period="month">M</button>
+                    <button class="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded text-gray-600 relocated-period-btn" data-period="quarter">Q</button>
+                    <button class="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded text-gray-600 relocated-period-btn" data-period="year">Y</button>
+                </div>
             </div>
             <div class="chart-container">
                 <canvas id="relocatedChart"></canvas>
@@ -242,6 +247,11 @@
         <div class="bg-white rounded-lg shadow p-4 sm:p-6">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-base sm:text-lg font-medium text-gray-900">To Be Disposed</h3>
+                <div class="flex space-x-1">
+                    <button class="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded text-gray-600 to-dispose-period-btn active" data-period="month">M</button>
+                    <button class="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded text-gray-600 to-dispose-period-btn" data-period="quarter">Q</button>
+                    <button class="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded text-gray-600 to-dispose-period-btn" data-period="year">Y</button>
+                </div>
             </div>
             <div class="chart-container">
                 <canvas id="toBeDisposedChart"></canvas>
@@ -252,6 +262,11 @@
         <div class="bg-white rounded-lg shadow p-4 sm:p-6">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-base sm:text-lg font-medium text-gray-900">Disposed Assets</h3>
+                <div class="flex space-x-1">
+                    <button class="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded text-gray-600 disposed-period-btn active" data-period="month">M</button>
+                    <button class="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded text-gray-600 disposed-period-btn" data-period="quarter">Q</button>
+                    <button class="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded text-gray-600 disposed-period-btn" data-period="year">Y</button>
+                </div>
             </div>
             <div class="chart-container">
                 <canvas id="disposedChart"></canvas>
@@ -313,15 +328,15 @@
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
                     {% for asset in latest_assets %}
-                        <tr class="table-row-link hover:bg-gray-50 cursor-pointer" onclick="window.location='/assets/{{ asset.get("ID", "") }}'">
+                        <tr class="table-row-link hover:bg-gray-50 cursor-pointer">
                             <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
                                 {{ asset.get("display_name", "Unnamed Asset") }}
                             </td>
-                            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{{ asset.get("Category", "") }}</td>
-                            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{{ asset.get("Location", "") }}</td>
-                            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{{ asset.get("Purchase Date", "") }}</td>
+                            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{{ asset.get("category_display", "") }}</td>
+                            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{{ asset.get("location_display", "") }}</td>
+                            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{{ asset.get("purchase_date_display", "") }}</td>
                             <td class="px-4 py-3 whitespace-nowrap">
-                                {% set status = asset.get("Status", "") %}
+                                {% set status = asset.get("status", "") %}
                                 {% if status == "Active" %}
                                     <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Active</span>
                                 {% elif status == "Under Repair" %}
@@ -380,6 +395,54 @@
             window.repairedChart.data.labels = chartActivityData[period].labels;
             window.repairedChart.data.datasets[0].data = chartActivityData[period].repaired;
             window.repairedChart.update();
+        });
+    });
+    
+    document.querySelectorAll('.relocated-period-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            document.querySelectorAll('.relocated-period-btn').forEach(btn => {
+                btn.classList.remove('active', 'bg-primary-100', 'text-primary-700');
+                btn.classList.add('bg-gray-100', 'text-gray-600');
+            });
+            this.classList.add('active', 'bg-primary-100', 'text-primary-700');
+            this.classList.remove('bg-gray-100', 'text-gray-600');
+            
+            const period = this.getAttribute('data-period');
+            window.relocatedChart.data.labels = chartActivityData[period].labels;
+            window.relocatedChart.data.datasets[0].data = chartActivityData[period].relocated;
+            window.relocatedChart.update();
+        });
+    });
+    
+    document.querySelectorAll('.to-dispose-period-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            document.querySelectorAll('.to-dispose-period-btn').forEach(btn => {
+                btn.classList.remove('active', 'bg-primary-100', 'text-primary-700');
+                btn.classList.add('bg-gray-100', 'text-gray-600');
+            });
+            this.classList.add('active', 'bg-primary-100', 'text-primary-700');
+            this.classList.remove('bg-gray-100', 'text-gray-600');
+            
+            const period = this.getAttribute('data-period');
+            window.toBeDisposedChart.data.labels = chartActivityData[period].labels;
+            window.toBeDisposedChart.data.datasets[0].data = chartActivityData[period].to_be_disposed || [];
+            window.toBeDisposedChart.update();
+        });
+    });
+    
+    document.querySelectorAll('.disposed-period-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            document.querySelectorAll('.disposed-period-btn').forEach(btn => {
+                btn.classList.remove('active', 'bg-primary-100', 'text-primary-700');
+                btn.classList.add('bg-gray-100', 'text-gray-600');
+            });
+            this.classList.add('active', 'bg-primary-100', 'text-primary-700');
+            this.classList.remove('bg-gray-100', 'text-gray-600');
+            
+            const period = this.getAttribute('data-period');
+            window.disposedChart.data.labels = chartActivityData[period].labels;
+            window.disposedChart.data.datasets[0].data = chartActivityData[period].disposed;
+            window.disposedChart.update();
         });
     });
     
