@@ -143,6 +143,7 @@
 
 {% endblock %}
 
+{% block scripts %}
 <script>
 const assetsData = {{ assets | tojson }};
 const dropdownOptions = {{ dropdown_options | tojson }};
