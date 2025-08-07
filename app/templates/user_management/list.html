@@ -122,10 +122,9 @@
                                 <div class="flex space-x-2">
                                     <select name="business_unit_name" class="flex-1 text-xs border-gray-300 rounded">
                                         <option value="">No Business Unit</option>
-                                        <option value="Asset Management & Business Process" {% if user_item.business_unit_name == 'Asset Management & Business Process' %}selected{% endif %}>Asset Management & Business Process</option>
-                                        <option value="Human Resources" {% if user_item.business_unit_name == 'Human Resources' %}selected{% endif %}>Human Resources</option>
-                                        <option value="Finance" {% if user_item.business_unit_name == 'Finance' %}selected{% endif %}>Finance</option>
-                                        <option value="IT" {% if user_item.business_unit_name == 'IT' %}selected{% endif %}>IT</option>
+                                        {% for bu in business_units %}
+                                        <option value="{{ bu }}" {% if user_item.business_unit_name == bu %}selected{% endif %}>{{ bu }}</option>
+                                        {% endfor %}
                                     </select>
                                     <button type="submit" class="px-3 py-2 border border-orange-300 text-xs font-medium rounded text-orange-700 bg-orange-50 hover:bg-orange-100">
                                         Change Unit
@@ -218,10 +217,9 @@
                                   onsubmit="return confirm('Are you sure you want to change business unit for {{ user_item.username }}?')">
                                 <select name="business_unit_name" class="text-xs border-gray-300 rounded">
                                     <option value="">No Business Unit</option>
-                                    <option value="Asset Management & Business Process" {% if user_item.business_unit_name == 'Asset Management & Business Process' %}selected{% endif %}>Asset Management & Business Process</option>
-                                    <option value="Human Resources" {% if user_item.business_unit_name == 'Human Resources' %}selected{% endif %}>Human Resources</option>
-                                    <option value="Finance" {% if user_item.business_unit_name == 'Finance' %}selected{% endif %}>Finance</option>
-                                    <option value="IT" {% if user_item.business_unit_name == 'IT' %}selected{% endif %}>IT</option>
+                                    {% for bu in business_units %}
+                                    <option value="{{ bu }}" {% if user_item.business_unit_name == bu %}selected{% endif %}>{{ bu }}</option>
+                                    {% endfor %}
                                 </select>
                                 <button type="submit" class="inline-flex items-center px-3 py-1 border border-orange-300 text-xs font-medium rounded text-orange-700 bg-orange-50 hover:bg-orange-100">
                                     Change Unit

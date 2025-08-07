@@ -36,12 +36,16 @@ async def user_list(
             if not user.get('business_unit_name') and user.get('ref_business_units'):
                 user['business_unit_name'] = user['ref_business_units']['business_unit_name']
         
+        # Get business units for dropdown
+        dropdown_options = get_dropdown_options()
+        
         return templates.TemplateResponse(
             "user_management/list.html",
             {
                 "request": request,
                 "user": current_profile,
-                "users": users
+                "users": users,
+                "business_units": dropdown_options.get('business_units', [])
             }
         )
     except Exception as e:
@@ -52,6 +56,7 @@ async def user_list(
                 "request": request,
                 "user": current_profile,
                 "users": [],
+                "business_units": [],
                 "error": "Failed to load users"
             }
         )
