@@ -1,5 +1,5 @@
 """
-Database Manager - Replace Google Sheets with Supabase operations
+Database Manager - Supabase operations for asset management
 """
 import logging
 from datetime import datetime, timezone

@@ -2,11 +2,8 @@
 from fastapi import APIRouter, Depends, Request, Form, HTTPException, status
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
-from sqlalchemy.orm import Session
 from datetime import datetime
 import json
-
-from app.database.database import get_db
 
 from app.utils.auth import get_current_profile
 from app.utils.database_manager import get_all_assets, get_dropdown_options, add_approval_request, get_asset_by_id
@@ -18,7 +15,6 @@ templates = Jinja2Templates(directory="app/templates")
 @router.get("/", response_class=HTMLResponse)
 async def relocation_page(
     request: Request,
-    db: Session = Depends(get_db),
     current_profile = Depends(get_current_profile)
 ):
     """Asset relocation page."""
@@ -44,7 +40,6 @@ async def relocate_asset(
     new_room: str = Form(...),
     reason: str = Form(...),
     notes: str = Form(None),
-    db: Session = Depends(get_db),
     current_profile = Depends(get_current_profile)
 ):
     """Submit asset relocation request."""

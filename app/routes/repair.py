@@ -69,9 +69,9 @@ async def submit_repair_action(request: Request, current_profile = Depends(get_c
             asset_success = update_asset(data.get('asset_id'), update_data)
             
             if log_success and asset_success:
-                return {"status": "success", "message": "Asset allocated successfully and synced to Google Sheets"}
+                return {"status": "success", "message": "Asset allocated successfully and synced to database"}
             else:
-                return {"status": "error", "message": "Failed to sync with Google Sheets"}
+                return {"status": "error", "message": "Failed to sync with database"}
             
     except Exception as e:
         return {"status": "error", "message": str(e)}

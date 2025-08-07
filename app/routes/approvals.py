@@ -202,7 +202,7 @@ async def approve_request(
             except Exception as e:
                 return JSONResponse({"status": "error", "message": f"Error processing asset addition: {str(e)}"})
         
-        # Update approval status in Google Sheets
+        # Update approval status in database
         success = update_approval_status(
             approval_id, 
             'approved',

@@ -2,9 +2,7 @@
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
-from sqlalchemy.orm import Session
 
-from app.database.database import get_db
 
 from app.utils.auth import get_current_profile
 from app.utils.database_manager import get_all_approvals, get_supabase
@@ -15,7 +13,6 @@ templates = Jinja2Templates(directory="app/templates")
 @router.get("/", response_class=HTMLResponse)
 async def logs_page(
     request: Request,
-    db: Session = Depends(get_db),
     current_profile = Depends(get_current_profile)
 ):
     """View approval logs based on user role."""

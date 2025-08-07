@@ -2,10 +2,7 @@
 from fastapi import APIRouter, Depends, Request, Form, HTTPException, status
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
-from sqlalchemy.orm import Session
 from datetime import datetime
-
-from app.database.database import get_db
 
 from app.utils.auth import get_admin_user
 from app.utils.database_manager import get_all_assets, update_asset
@@ -17,7 +14,6 @@ templates = Jinja2Templates(directory="app/templates")
 @router.get("/", response_class=HTMLResponse)
 async def disposal_page(
     request: Request,
-    db: Session = Depends(get_db),
     current_profile = Depends(get_admin_user)
 ):
     """Disposal assets page (admin only)."""
@@ -50,7 +46,6 @@ async def dispose_asset(
     disposal_method: str = Form(...),
     description: str = Form(None),
     notes: str = Form(None),
-    db: Session = Depends(get_db),
     current_profile = Depends(get_admin_user)
 ):
     """Dispose an asset (admin only)."""

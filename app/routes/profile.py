@@ -2,10 +2,7 @@
 from fastapi import APIRouter, Depends, Request, Form, UploadFile, File, HTTPException, status
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
-from sqlalchemy.orm import Session
 from datetime import datetime, timezone
-
-from app.database.database import get_db
 
 from app.utils.auth import get_current_profile
 from app.utils.photo import resize_and_convert_image, upload_to_drive
