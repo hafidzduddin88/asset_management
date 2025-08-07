@@ -4,7 +4,7 @@ import os
 import json
 import logging
 import requests
-from PIL import Image
+
 from google.oauth2.service_account import Credentials
 from google.auth.transport.requests import Request
 
@@ -28,21 +28,9 @@ def get_access_token():
         return None
 
 def resize_and_convert_image(image_file, max_size=MAX_IMAGE_SIZE, quality=WEBP_QUALITY):
-    """Resize image and convert to WebP"""
-    try:
-        image = Image.open(image_file)
-        if image.mode in ('RGBA', 'LA', 'P'):
-            image = image.convert('RGB')
-
-        image.thumbnail(max_size, Image.Resampling.LANCZOS)
-
-        output = io.BytesIO()
-        image.save(output, format='WEBP', quality=quality, optimize=True)
-        output.seek(0)
-        return output
-    except Exception as e:
-        logging.error(f"Image processing error: {type(e).__name__}")
-        return None
+    """Image processing disabled - PIL not available"""
+    logging.warning("Image processing disabled - PIL not in requirements")
+    return image_file
 
 def upload_to_drive(image_data, filename, asset_id):
     """Upload image to Google Drive and return preview link"""

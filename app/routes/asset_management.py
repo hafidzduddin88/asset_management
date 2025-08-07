@@ -3,13 +3,11 @@ from app.utils.photo import upload_to_drive
 import io
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
-from sqlalchemy.orm import Session
 import json
 from datetime import datetime
 import uuid
 
-from app.database.database import get_db
-from app.database.models import Profile, UserRole
+from app.database.models import UserRole
 from app.utils.database_manager import get_dropdown_options, add_approval_request, get_all_assets, get_asset_by_id
 from app.utils.flash import set_flash
 from app.utils.auth import get_current_profile
@@ -22,7 +20,6 @@ templates = Jinja2Templates(directory="app/templates")
 @router.get("/add", response_class=HTMLResponse)
 async def add_asset_form(
     request: Request,
-    db: Session = Depends(get_db),
     current_profile = Depends(get_current_profile)
 ):
     """Form to add a new asset."""
@@ -40,7 +37,6 @@ async def add_asset_form(
 @router.get("/list", response_class=HTMLResponse)
 async def asset_list(
     request: Request,
-    db: Session = Depends(get_db),
     current_profile = Depends(get_current_profile)
 ):
     """List assets for editing (admin and manager only)."""
@@ -79,7 +75,6 @@ async def asset_list(
 async def edit_asset_form(
     asset_id: str,
     request: Request,
-    db: Session = Depends(get_db),
     current_profile = Depends(get_current_profile)
 ):
     """Form to edit an existing asset (admin/manager only)."""
@@ -113,7 +108,6 @@ async def update_asset(
     room: str = Form(...),
     bisnis_unit: str = Form(None),
     edit_reason: str = Form(...),
-    db: Session = Depends(get_db),
     current_profile = Depends(get_current_profile)
 ):
     """Update existing asset (admin and manager only)."""

@@ -3,7 +3,7 @@ import logging
 from datetime import datetime
 from fastapi import APIRouter, Request, Depends
 from fastapi.responses import RedirectResponse
-from starlette.templating import Jinja2Templates
+from fastapi.templating import Jinja2Templates
 from app.utils.auth import get_current_profile
 from app.utils.database_manager import get_summary_data, get_chart_data, get_all_assets
 

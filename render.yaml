@@ -1,39 +1,18 @@
 services:
   - type: web
     name: ambp
-    env: docker
-    image: ghcr.io/hafidzduddin88/ambp:latest
-    autoDeploy: true
-    healthCheckPath: /health
-    startCommand: "uvicorn app.main:app --host 0.0.0.0 --port $PORT --workers 1 --timeout-keep-alive 30"
-    plan: free
-    scaling:
-      minInstances: 0  # Allow scaling to 0 for free tier
-      maxInstances: 1
-      targetMemoryPercent: 70
-      targetCPUPercent: 70
-    dockerCommand: "uvicorn app.main:app --host 0.0.0.0 --port $PORT --workers 1 --timeout-keep-alive 30 --access-log"
+    env: python
+    buildCommand: pip install --no-cache-dir --disable-pip-version-check -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT --workers 1 --access-log false
     envVars:
-      - key: PORT
-        value: 8000
-      - key: DATABASE_URL
-        sync: false
-      - key: SECRET_KEY
-        sync: false
-      - key: SUPABASE_JWT_SECRET
-        sync: false
-      - key: GOOGLE_SHEET_ID
-        sync: false
-      - key: GOOGLE_CREDS_JSON
-        sync: false
-      - key: APP_URL
-        fromService:
-          name: ambp
-          type: web
-          property: url
-      - key: SUPABASE_URL
-        sync: false
-      - key: SUPABASE_ANON_KEY
-        sync: false
-      - key: SUPABASE_SERVICE_KEY
-        sync: false
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: PIP_NO_CACHE_DIR
+        value: 1
+      - key: PYTHONUNBUFFERED
+        value: 1
+      - key: PYTHONDONTWRITEBYTECODE
+        value: 1
+    healthCheckPath: /health
+    autoDeploy: false
+    region: singapore

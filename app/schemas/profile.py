@@ -1,7 +1,7 @@
-from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime
 from app.database.models import UserRole
+from pydantic import BaseModel
 
 class ProfileResponse(BaseModel):
     id: str

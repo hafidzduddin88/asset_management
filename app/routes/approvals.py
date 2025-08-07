@@ -2,9 +2,7 @@
 from fastapi import APIRouter, Depends, Request, HTTPException, status
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
-from sqlalchemy.orm import Session
 
-from app.database.database import get_db
 from app.utils.auth import get_current_profile
 from app.utils.database_manager import get_all_approvals, update_approval_status, get_supabase, update_asset
 
@@ -14,7 +12,6 @@ templates = Jinja2Templates(directory="app/templates")
 @router.get("/", response_class=HTMLResponse)
 async def approvals_page(
     request: Request,
-    db: Session = Depends(get_db),
     current_profile = Depends(get_current_profile)
 ):
     """Approvals page for admin and manager."""
@@ -106,7 +103,6 @@ async def approvals_page(
 async def approve_request(
     approval_id: str,
     request: Request,
-    db: Session = Depends(get_db),
     current_profile = Depends(get_current_profile)
 ):
     """Approve a request."""
@@ -225,7 +221,6 @@ async def approve_request(
 async def reject_request(
     approval_id: str,
     request: Request,
-    db: Session = Depends(get_db),
     current_profile = Depends(get_current_profile)
 ):
     """Reject a request."""
