@@ -34,6 +34,40 @@ def get_supabase():
 def get_all_assets():
     return cache.get_or_set('all_assets', _get_all_assets, CACHE_TTL['assets'])
 
+def get_assets_paginated(page=1, per_page=20, status_filter=None):
+    """Get assets with pagination"""
+    try:
+        supabase = get_supabase()
+        query = supabase.table(TABLES['ASSETS']).select('''
+            asset_id, asset_name, manufacture, model, serial_number, asset_tag,
+            room_name, notes, item_condition, purchase_date, purchase_cost,
+            warranty, supplier, journal, depreciation_value, residual_percent,
+            residual_value, useful_life, book_value, status, year, photo_url,
+            ref_categories(category_name),
+            ref_asset_types(type_name),
+            ref_companies(company_name),
+            ref_business_units(business_unit_name),
+            ref_locations(location_name, room_name),
+            ref_owners(owner_name)
+        ''', count='exact')
+        
+        if status_filter and status_filter != 'all':
+            query = query.eq('status', status_filter)
+        
+        offset = (page - 1) * per_page
+        response = query.range(offset, offset + per_page - 1).execute()
+        
+        return {
+            'data': response.data,
+            'count': response.count,
+            'page': page,
+            'per_page': per_page,
+            'total_pages': (response.count + per_page - 1) // per_page if response.count else 0
+        }
+    except Exception as e:
+        logging.error(f"Error getting paginated assets: {type(e).__name__}")
+        return {'data': [], 'count': 0, 'page': 1, 'per_page': per_page, 'total_pages': 0}
+
 def _get_all_assets():
     try:
         supabase = get_supabase()

@@ -45,10 +45,9 @@
                             <tr>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Asset</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Room</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Submitted By</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
                             </tr>
                         </thead>
                         <tbody class="bg-white divide-y divide-gray-200">
@@ -63,10 +62,12 @@
                                     <div class="text-sm font-medium text-gray-900">{{ approval.get('asset_name', '') }}</div>
                                     <div class="text-sm text-gray-500">ID: {{ approval.get('asset_id', '') }}</div>
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ approval.get('location_name', '') }}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ approval.get('room_name', '') }}</td>
+
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ approval.get('submitted_by_name', '') }}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ approval.get('submitted_date', '')[:10] if approval.get('submitted_date') else '' }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                    <button onclick="showRequestDetail('{{ approval.get('approval_id', '') }}')" class="text-blue-600 hover:text-blue-900">View Detail</button>
+                                </td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -104,6 +105,7 @@
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Approved By</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
                             </tr>
                         </thead>
                         <tbody class="bg-white divide-y divide-gray-200">
@@ -128,6 +130,9 @@
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ approval.get('approved_by', '') }}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ approval.get('approved_date', '')[:10] if approval.get('approved_date') else '' }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                    <button onclick="showRequestDetail('{{ approval.get('approval_id', '') }}')" class="text-blue-600 hover:text-blue-900">View Detail</button>
+                                </td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -143,26 +148,142 @@
     </div>
 </div>
 
+<!-- Detail Modal -->
+<div id="detailModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" style="display: none;">
+    <div class="relative top-10 mx-auto p-5 border w-11/12 md:w-2/3 lg:w-1/2 shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-medium text-gray-900">Request Details</h3>
+                <button onclick="closeDetailModal()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <div id="detailContent" class="space-y-4">
+                <!-- Details will be populated here -->
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
+const approvalsData = {{ (pending_approvals + completed_approvals) | tojson }};
+
 function showTab(tabName) {
-    // Hide all tab contents
     document.querySelectorAll('.tab-content').forEach(content => {
         content.classList.add('hidden');
     });
     
-    // Remove active class from all tabs
     document.querySelectorAll('.tab-button').forEach(button => {
         button.classList.remove('border-primary-500', 'text-primary-600');
         button.classList.add('border-transparent', 'text-gray-500');
     });
     
-    // Show selected tab content
     document.getElementById(tabName + '-content').classList.remove('hidden');
     
-    // Add active class to selected tab
     const activeTab = document.getElementById(tabName + '-tab');
     activeTab.classList.remove('border-transparent', 'text-gray-500');
     activeTab.classList.add('border-primary-500', 'text-primary-600');
+}
+
+function showRequestDetail(approvalId) {
+    const approval = approvalsData.find(a => a.approval_id == approvalId);
+    if (!approval) return;
+    
+    let notes = {};
+    try {
+        notes = JSON.parse(approval.notes || '{}');
+    } catch (e) {
+        notes = {};
+    }
+    
+    const detailContent = document.getElementById('detailContent');
+    detailContent.innerHTML = `
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+                <h4 class="font-semibold text-gray-900 mb-3">Request Information</h4>
+                <div class="space-y-3">
+                    <div>
+                        <label class="text-sm font-medium text-gray-500">Type</label>
+                        <p class="text-gray-900">${approval.type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}</p>
+                    </div>
+                    <div>
+                        <label class="text-sm font-medium text-gray-500">Asset Name</label>
+                        <p class="text-gray-900">${approval.asset_name || 'N/A'}</p>
+                    </div>
+                    <div>
+                        <label class="text-sm font-medium text-gray-500">Asset ID</label>
+                        <p class="text-gray-900">${approval.asset_id || 'N/A'}</p>
+                    </div>
+                    <div>
+                        <label class="text-sm font-medium text-gray-500">Description</label>
+                        <p class="text-gray-900">${approval.description || 'N/A'}</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div>
+                <h4 class="font-semibold text-gray-900 mb-3">Status & Details</h4>
+                <div class="space-y-3">
+                    <div>
+                        <label class="text-sm font-medium text-gray-500">Status</label>
+                        <span class="px-2 py-1 text-xs rounded-full ${
+                            approval.status === 'approved' ? 'bg-green-100 text-green-800' :
+                            approval.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                            'bg-yellow-100 text-yellow-800'
+                        }">${approval.status.charAt(0).toUpperCase() + approval.status.slice(1)}</span>
+                    </div>
+                    <div>
+                        <label class="text-sm font-medium text-gray-500">Submitted By</label>
+                        <div class="text-gray-900">
+                            <p class="font-medium">${approval.submitted_by_info?.full_name || 'Unknown'}</p>
+                            <p class="text-sm text-gray-500">@${approval.submitted_by_info?.username || 'unknown'}</p>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="text-sm font-medium text-gray-500">Submitted Date</label>
+                        <p class="text-gray-900">${approval.submitted_date ? approval.submitted_date.substring(0, 10) : 'N/A'}</p>
+                    </div>
+                    ${approval.approved_by_info ? `
+                    <div>
+                        <label class="text-sm font-medium text-gray-500">Approved By</label>
+                        <div class="text-gray-900">
+                            <p class="font-medium">${approval.approved_by_info.full_name}</p>
+                            <p class="text-sm text-gray-500">@${approval.approved_by_info.username}</p>
+                        </div>
+                    </div>
+                    ` : ''}
+                    ${approval.approved_date ? `
+                    <div>
+                        <label class="text-sm font-medium text-gray-500">Approved Date</label>
+                        <p class="text-gray-900">${approval.approved_date.substring(0, 10)}</p>
+                    </div>
+                    ` : ''}
+                </div>
+            </div>
+        </div>
+        
+        ${Object.keys(notes).length > 0 ? `
+        <div class="mt-6">
+            <h4 class="font-semibold text-gray-900 mb-3">Additional Details</h4>
+            <div class="bg-gray-50 rounded-lg p-4">
+                <pre class="text-sm text-gray-700 whitespace-pre-wrap">${JSON.stringify(notes, null, 2)}</pre>
+            </div>
+        </div>
+        ` : ''}
+    `;
+    
+    document.getElementById('detailModal').style.display = 'block';
+}
+
+function closeDetailModal() {
+    document.getElementById('detailModal').style.display = 'none';
+}
+
+window.onclick = function(event) {
+    const modal = document.getElementById('detailModal');
+    if (event.target === modal) {
+        closeDetailModal();
+    }
 }
 </script>
 {% endblock %}

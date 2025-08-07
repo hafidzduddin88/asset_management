@@ -89,11 +89,15 @@
                                         </div>
                                     </div>
                                     <div class="flex items-center space-x-2">
-                                        <button onclick="approveRequest('{{ approval.approval_id }}', 'approved')" 
+                                        <button onclick="showApprovalDetail('{{ approval.approval_id }}')" 
+                                            class="inline-flex items-center px-3 py-1.5 border border-gray-300 text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50">
+                                            <i class="fas fa-eye mr-1"></i>Detail
+                                        </button>
+                                        <button onclick="confirmApproval('{{ approval.approval_id }}', 'approved')" 
                                             class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded text-white bg-green-600 hover:bg-green-700">
                                             <i class="fas fa-check mr-1"></i>Approve
                                         </button>
-                                        <button onclick="approveRequest('{{ approval.approval_id }}', 'rejected')" 
+                                        <button onclick="confirmApproval('{{ approval.approval_id }}', 'rejected')" 
                                             class="inline-flex items-center px-3 py-1.5 border border-gray-300 text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50">
                                             <i class="fas fa-times mr-1"></i>Reject
                                         </button>
@@ -193,6 +197,12 @@
                                             </div>
                                         </div>
                                     </div>
+                                    <div class="flex items-center">
+                                        <button onclick="showApprovalDetail('{{ approval.approval_id }}')" 
+                                            class="inline-flex items-center px-3 py-1.5 border border-gray-300 text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50">
+                                            <i class="fas fa-eye mr-1"></i>Detail
+                                        </button>
+                                    </div>
                                 </div>
                                 {% if approval.description %}
                                 <div class="mt-3 text-sm text-gray-600 bg-gray-50 p-3 rounded">
@@ -217,62 +227,221 @@
     </div>
 </div>
 
+<!-- Approval Detail Modal -->
+<div id="approvalModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" style="display: none;">
+    <div class="relative top-10 mx-auto p-5 border w-11/12 md:w-2/3 lg:w-1/2 shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-medium text-gray-900">Request Details</h3>
+                <button onclick="closeApprovalModal()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <div id="approvalContent" class="space-y-4">
+                <!-- Details will be populated here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Confirmation Modal -->
+<div id="confirmModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" style="display: none;">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div class="mt-3 text-center">
+            <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-yellow-100">
+                <i class="fas fa-exclamation-triangle text-yellow-600 text-xl"></i>
+            </div>
+            <h3 class="text-lg font-medium text-gray-900 mt-4">Confirm Action</h3>
+            <div class="mt-2 px-7 py-3">
+                <p class="text-sm text-gray-500" id="confirmMessage">Are you sure you want to perform this action?</p>
+            </div>
+            <div class="items-center px-4 py-3">
+                <button id="confirmYes" class="px-4 py-2 bg-blue-500 text-white text-base font-medium rounded-md w-24 mr-2 hover:bg-blue-600">Yes</button>
+                <button onclick="closeConfirmModal()" class="px-4 py-2 bg-gray-300 text-gray-800 text-base font-medium rounded-md w-24 hover:bg-gray-400">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
-function getTypeLabel(type) {
-    const labels = {
-        'add_asset': 'Add Asset',
-        'edit_asset': 'Edit Asset',
-        'damage_report': 'Damage Report',
-        'repair_action': 'Repair Action',
-        'lost_report': 'Lost Report',
-        'disposal_request': 'Disposal Request',
-        'relocation': 'Asset Relocation'
-    };
-    return labels[type] || type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
-}
+const approvalsData = {{ (pending_approvals + completed_approvals) | tojson }};
+let currentApprovalId = null;
+let currentAction = null;
 
 function showTab(tabName) {
-    // Hide all tab contents
     document.querySelectorAll('.tab-content').forEach(content => {
         content.classList.add('hidden');
     });
     
-    // Remove active class from all tabs
     document.querySelectorAll('.tab-button').forEach(tab => {
         tab.classList.remove('active', 'border-blue-500', 'text-blue-600');
         tab.classList.add('border-transparent', 'text-gray-500');
     });
     
-    // Show selected tab content
     document.getElementById(tabName + '-content').classList.remove('hidden');
     
-    // Add active class to selected tab
     const activeTab = document.getElementById(tabName + '-tab');
     activeTab.classList.add('active', 'border-blue-500', 'text-blue-600');
     activeTab.classList.remove('border-transparent', 'text-gray-500');
 }
 
-function approveRequest(approvalId, status) {
+function showApprovalDetail(approvalId) {
+    const approval = approvalsData.find(a => a.approval_id == approvalId);
+    if (!approval) return;
+    
+    let notes = {};
+    try {
+        notes = JSON.parse(approval.notes || '{}');
+    } catch (e) {
+        notes = {};
+    }
+    
+    const approvalContent = document.getElementById('approvalContent');
+    approvalContent.innerHTML = `
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+                <h4 class="font-semibold text-gray-900 mb-3">Request Information</h4>
+                <div class="space-y-3">
+                    <div>
+                        <label class="text-sm font-medium text-gray-500">Type</label>
+                        <p class="text-gray-900">${approval.type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}</p>
+                    </div>
+                    <div>
+                        <label class="text-sm font-medium text-gray-500">Asset Name</label>
+                        <p class="text-gray-900">${approval.asset_name || 'N/A'}</p>
+                    </div>
+                    <div>
+                        <label class="text-sm font-medium text-gray-500">Asset ID</label>
+                        <p class="text-gray-900">${approval.asset_id || 'N/A'}</p>
+                    </div>
+                    <div>
+                        <label class="text-sm font-medium text-gray-500">Description</label>
+                        <p class="text-gray-900">${approval.description || 'N/A'}</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div>
+                <h4 class="font-semibold text-gray-900 mb-3">Status & Details</h4>
+                <div class="space-y-3">
+                    <div>
+                        <label class="text-sm font-medium text-gray-500">Status</label>
+                        <span class="px-2 py-1 text-xs rounded-full ${
+                            approval.status === 'approved' ? 'bg-green-100 text-green-800' :
+                            approval.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                            'bg-yellow-100 text-yellow-800'
+                        }">${approval.status.charAt(0).toUpperCase() + approval.status.slice(1)}</span>
+                    </div>
+                    <div>
+                        <label class="text-sm font-medium text-gray-500">Submitted By</label>
+                        <div class="text-gray-900">
+                            <p class="font-medium">${approval.submitted_by_info?.full_name || 'Unknown'}</p>
+                            <p class="text-sm text-gray-500">@${approval.submitted_by_info?.username || 'unknown'}</p>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="text-sm font-medium text-gray-500">Submitted Date</label>
+                        <p class="text-gray-900">${approval.submitted_date ? approval.submitted_date.substring(0, 10) : 'N/A'}</p>
+                    </div>
+                    ${approval.location_name ? `
+                    <div>
+                        <label class="text-sm font-medium text-gray-500">Location</label>
+                        <p class="text-gray-900">${approval.location_name} - ${approval.room_name || ''}</p>
+                    </div>
+                    ` : ''}
+                </div>
+            </div>
+        </div>
+        
+        ${Object.keys(notes).length > 0 ? `
+        <div class="mt-6">
+            <h4 class="font-semibold text-gray-900 mb-3">Request Details</h4>
+            <div class="bg-gray-50 rounded-lg p-4">
+                ${Object.entries(notes).map(([key, value]) => `
+                    <div class="mb-2">
+                        <span class="text-sm font-medium text-gray-600">${key.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}:</span>
+                        <span class="text-sm text-gray-900 ml-2">${typeof value === 'object' ? JSON.stringify(value) : value}</span>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+        ` : ''}
+        
+        ${approval.status === 'pending' ? `
+        <div class="mt-6 flex justify-end space-x-3">
+            <button onclick="confirmApproval('${approval.approval_id}', 'approved')" 
+                class="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-md hover:bg-green-700">
+                <i class="fas fa-check mr-1"></i>Approve
+            </button>
+            <button onclick="confirmApproval('${approval.approval_id}', 'rejected')" 
+                class="px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-md hover:bg-red-700">
+                <i class="fas fa-times mr-1"></i>Reject
+            </button>
+        </div>
+        ` : ''}
+    `;
+    
+    document.getElementById('approvalModal').style.display = 'block';
+}
+
+function confirmApproval(approvalId, status) {
+    const approval = approvalsData.find(a => a.approval_id == approvalId);
+    if (!approval) return;
+    
+    currentApprovalId = approvalId;
+    currentAction = status;
+    
     const action = status === 'approved' ? 'approve' : 'reject';
-    if (confirm(`Are you sure you want to ${action} this request?`)) {
-        fetch(`/approvals/${approvalId}/${status}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.status === 'success') {
-                location.reload();
-            } else {
-                alert('Error: ' + data.message);
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('An error occurred while processing the request');
-        });
+    const message = `Are you sure you want to ${action} the request for "${approval.asset_name || 'this asset'}"?`;
+    
+    document.getElementById('confirmMessage').textContent = message;
+    document.getElementById('confirmYes').onclick = () => executeApproval();
+    document.getElementById('confirmModal').style.display = 'block';
+}
+
+function executeApproval() {
+    if (!currentApprovalId || !currentAction) return;
+    
+    fetch(`/approvals/${currentApprovalId}/${currentAction}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            closeConfirmModal();
+            closeApprovalModal();
+            location.reload();
+        } else {
+            alert('Error: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while processing the request');
+    });
+}
+
+function closeApprovalModal() {
+    document.getElementById('approvalModal').style.display = 'none';
+}
+
+function closeConfirmModal() {
+    document.getElementById('confirmModal').style.display = 'none';
+    currentApprovalId = null;
+    currentAction = null;
+}
+
+window.onclick = function(event) {
+    const approvalModal = document.getElementById('approvalModal');
+    const confirmModal = document.getElementById('confirmModal');
+    if (event.target === approvalModal) {
+        closeApprovalModal();
+    }
+    if (event.target === confirmModal) {
+        closeConfirmModal();
     }
 }
 </script>

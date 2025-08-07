@@ -70,13 +70,24 @@
     </div>
 </div>
 
-<!-- Results Info -->
+<!-- Results Info and Per Page Selector -->
 <div class="flex justify-between items-center mb-4">
     <div id="resultsInfo" class="text-sm text-gray-600">
-        Showing <span id="currentCount">0</span> of <span id="totalCount">0</span> assets
+        Showing <span id="currentCount">{{ (pagination.current_page - 1) * pagination.per_page + 1 if assets_data else 0 }}</span>-<span id="endCount">{{ pagination.current_page * pagination.per_page if pagination.current_page * pagination.per_page < pagination.total_count else pagination.total_count }}</span> of <span id="totalCount">{{ pagination.total_count }}</span> assets
     </div>
-    <div class="text-sm text-gray-600">
-        Page <span id="currentPage">1</span> of <span id="totalPages">1</span>
+    <div class="flex items-center space-x-4">
+        <div class="flex items-center space-x-2">
+            <label class="text-sm text-gray-600">Show per page:</label>
+            <select id="perPageSelect" class="px-2 py-1 border border-gray-300 rounded text-sm" onchange="changePerPage(this.value)">
+                <option value="10" {{ 'selected' if pagination.per_page == 10 else '' }}>10</option>
+                <option value="20" {{ 'selected' if pagination.per_page == 20 else '' }}>20</option>
+                <option value="50" {{ 'selected' if pagination.per_page == 50 else '' }}>50</option>
+                <option value="100" {{ 'selected' if pagination.per_page == 100 else '' }}>100</option>
+            </select>
+        </div>
+        <div class="text-sm text-gray-600">
+            Page {{ pagination.current_page }} of {{ pagination.total_pages }}
+        </div>
     </div>
 </div>
 
@@ -113,13 +124,17 @@
 <script>
 // Get real asset data from server
 const assetsData = {{ assets_data | tojson }};
+const paginationData = {{ pagination | tojson }};
+const currentStatus = '{{ current_status }}';
 
 // Room reference data - build from actual asset data
 let roomsData = {};
 
-// Pagination settings
-const ITEMS_PER_PAGE = 20;
-let currentPage = 1;
+// Pagination settings from server
+let currentPage = paginationData.current_page;
+let perPage = paginationData.per_page;
+let totalPages = paginationData.total_pages;
+let totalCount = paginationData.total_count;
 let filteredAssets = [];
 let allAssets = [];
 
@@ -325,7 +340,6 @@ function displayAssets() {
 }
 
 function updatePagination() {
-    const totalPages = Math.ceil(filteredAssets.length / ITEMS_PER_PAGE);
     const pagination = document.getElementById('pagination');
     
     if (totalPages <= 1) {
@@ -343,7 +357,7 @@ function updatePagination() {
     // Page numbers
     for (let i = 1; i <= totalPages; i++) {
         if (i === currentPage) {
-            paginationHTML += `<button class="px-3 py-2 bg-primary-600 text-white rounded-md">${i}</button>`;
+            paginationHTML += `<button class="px-3 py-2 bg-blue-600 text-white rounded-md">${i}</button>`;
         } else if (i === 1 || i === totalPages || (i >= currentPage - 2 && i <= currentPage + 2)) {
             paginationHTML += `<button onclick="changePage(${i})" class="pagination-btn px-3 py-2 bg-white border border-gray-300 rounded-md hover:bg-gray-50">${i}</button>`;
         } else if (i === currentPage - 3 || i === currentPage + 3) {
@@ -357,10 +371,6 @@ function updatePagination() {
     }
     
     pagination.innerHTML = paginationHTML;
-    
-    // Update page info
-    document.getElementById('currentPage').textContent = currentPage;
-    document.getElementById('totalPages').textContent = totalPages;
 }
 
 function updateResultsInfo() {
@@ -372,9 +382,16 @@ function updateResultsInfo() {
 }
 
 function changePage(page) {
-    currentPage = page;
-    displayAssets();
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    const url = new URL(window.location);
+    url.searchParams.set('page', page);
+    window.location.href = url.toString();
+}
+
+function changePerPage(newPerPage) {
+    const url = new URL(window.location);
+    url.searchParams.set('per_page', newPerPage);
+    url.searchParams.set('page', 1); // Reset to first page
+    window.location.href = url.toString();
 }
 
 function viewAssetDetails(assetId) {

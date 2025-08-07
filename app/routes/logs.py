@@ -21,7 +21,7 @@ async def logs_page(
     """View approval logs based on user role."""
     all_approvals = get_all_approvals()
     
-    # Get user details for submitted_by UUIDs
+    # Get user details for submitted_by and approved_by UUIDs
     supabase = get_supabase()
     for approval in all_approvals:
         if approval.get('submitted_by'):
@@ -29,11 +29,34 @@ async def logs_page(
                 user_response = supabase.table('profiles').select('username, full_name').eq('id', approval['submitted_by']).execute()
                 if user_response.data:
                     user = user_response.data[0]
+                    approval['submitted_by_info'] = {
+                        'full_name': user.get('full_name') or 'Unknown',
+                        'username': user.get('username') or 'Unknown'
+                    }
                     approval['submitted_by_name'] = user.get('full_name') or user.get('username') or 'Unknown User'
                 else:
+                    approval['submitted_by_info'] = {'full_name': 'Unknown', 'username': 'Unknown'}
                     approval['submitted_by_name'] = 'Unknown User'
             except:
+                approval['submitted_by_info'] = {'full_name': 'Unknown', 'username': 'Unknown'}
                 approval['submitted_by_name'] = 'Unknown User'
+        
+        if approval.get('approved_by'):
+            try:
+                user_response = supabase.table('profiles').select('username, full_name').eq('id', approval['approved_by']).execute()
+                if user_response.data:
+                    user = user_response.data[0]
+                    approval['approved_by_info'] = {
+                        'full_name': user.get('full_name') or 'Unknown',
+                        'username': user.get('username') or 'Unknown'
+                    }
+                    approval['approved_by_name'] = user.get('full_name') or user.get('username') or 'Unknown User'
+                else:
+                    approval['approved_by_info'] = {'full_name': 'Unknown', 'username': 'Unknown'}
+                    approval['approved_by_name'] = 'Unknown User'
+            except:
+                approval['approved_by_info'] = {'full_name': 'Unknown', 'username': 'Unknown'}
+                approval['approved_by_name'] = 'Unknown User'
     
     # Filter based on user role
     if current_profile.role.value == 'staff':

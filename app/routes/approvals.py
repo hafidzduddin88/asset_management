@@ -27,17 +27,41 @@ async def approvals_page(
     # Get user details and location details for approvals
     supabase = get_supabase()
     for approval in all_approvals:
-        # Get user name
+        # Get submitted by user details
         if approval.get('submitted_by'):
             try:
                 user_response = supabase.table('profiles').select('username, full_name').eq('id', approval['submitted_by']).execute()
                 if user_response.data:
                     user = user_response.data[0]
+                    approval['submitted_by_info'] = {
+                        'full_name': user.get('full_name') or 'Unknown',
+                        'username': user.get('username') or 'Unknown'
+                    }
                     approval['submitted_by_name'] = user.get('full_name') or user.get('username') or 'Unknown User'
                 else:
+                    approval['submitted_by_info'] = {'full_name': 'Unknown', 'username': 'Unknown'}
                     approval['submitted_by_name'] = 'Unknown User'
             except:
+                approval['submitted_by_info'] = {'full_name': 'Unknown', 'username': 'Unknown'}
                 approval['submitted_by_name'] = 'Unknown User'
+        
+        # Get approved by user details
+        if approval.get('approved_by'):
+            try:
+                user_response = supabase.table('profiles').select('username, full_name').eq('id', approval['approved_by']).execute()
+                if user_response.data:
+                    user = user_response.data[0]
+                    approval['approved_by_info'] = {
+                        'full_name': user.get('full_name') or 'Unknown',
+                        'username': user.get('username') or 'Unknown'
+                    }
+                    approval['approved_by_name'] = user.get('full_name') or user.get('username') or 'Unknown User'
+                else:
+                    approval['approved_by_info'] = {'full_name': 'Unknown', 'username': 'Unknown'}
+                    approval['approved_by_name'] = 'Unknown User'
+            except:
+                approval['approved_by_info'] = {'full_name': 'Unknown', 'username': 'Unknown'}
+                approval['approved_by_name'] = 'Unknown User'
         
         # Get location details - always show TO location
         if approval.get('to_location_id'):
