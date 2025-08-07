@@ -178,6 +178,102 @@
     </div>
 </div>
 
+<!-- Lost Report Modal -->
+<div id="lostModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-medium text-gray-900">Report Lost Asset</h3>
+                <button onclick="closeLostModal()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <form id="lostForm">
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Asset</label>
+                    <p id="lostAssetName" class="text-sm text-gray-900 bg-gray-50 p-2 rounded"></p>
+                </div>
+                
+                <div class="mb-4">
+                    <label for="date_lost" class="block text-sm font-medium text-gray-700 mb-2">Date Lost *</label>
+                    <input type="date" name="date_lost" id="date_lost" required class="w-full border border-gray-300 rounded-md px-3 py-2">
+                </div>
+                
+                <div class="mb-4">
+                    <label for="lost_description" class="block text-sm font-medium text-gray-700 mb-2">Description *</label>
+                    <textarea name="lost_description" id="lost_description" required rows="3" class="w-full border border-gray-300 rounded-md px-3 py-2" placeholder="Describe when and how the asset was lost"></textarea>
+                </div>
+                
+                <div class="mb-4">
+                    <label for="lost_notes" class="block text-sm font-medium text-gray-700 mb-2">Notes</label>
+                    <textarea name="lost_notes" id="lost_notes" rows="2" class="w-full border border-gray-300 rounded-md px-3 py-2"></textarea>
+                </div>
+                
+                <div class="flex justify-end space-x-3">
+                    <button type="button" onclick="closeLostModal()" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400">
+                        Cancel
+                    </button>
+                    <button type="submit" class="px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700">
+                        Submit Report
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Disposal Request Modal -->
+<div id="disposalModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-medium text-gray-900">Request Disposal</h3>
+                <button onclick="closeDisposalModal()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <form id="disposalForm">
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Asset</label>
+                    <p id="disposalAssetName" class="text-sm text-gray-900 bg-gray-50 p-2 rounded"></p>
+                </div>
+                
+                <div class="mb-4">
+                    <label for="disposal_reason" class="block text-sm font-medium text-gray-700 mb-2">Reason *</label>
+                    <select name="disposal_reason" id="disposal_reason" required class="w-full border border-gray-300 rounded-md px-3 py-2">
+                        <option value="">Select Reason</option>
+                        <option value="End of Life">End of Life</option>
+                        <option value="Beyond Repair">Beyond Repair</option>
+                        <option value="Obsolete">Obsolete</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                
+                <div class="mb-4">
+                    <label for="disposal_description" class="block text-sm font-medium text-gray-700 mb-2">Description *</label>
+                    <textarea name="disposal_description" id="disposal_description" required rows="3" class="w-full border border-gray-300 rounded-md px-3 py-2" placeholder="Explain why this asset should be disposed"></textarea>
+                </div>
+                
+                <div class="mb-4">
+                    <label for="disposal_notes" class="block text-sm font-medium text-gray-700 mb-2">Notes</label>
+                    <textarea name="disposal_notes" id="disposal_notes" rows="2" class="w-full border border-gray-300 rounded-md px-3 py-2"></textarea>
+                </div>
+                
+                <div class="flex justify-end space-x-3">
+                    <button type="button" onclick="closeDisposalModal()" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400">
+                        Cancel
+                    </button>
+                    <button type="submit" class="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700">
+                        Submit Request
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <script>
 const assetsData = {{ assets_data | tojson }};
 
@@ -456,11 +552,97 @@ document.getElementById('damageForm').addEventListener('submit', async function(
 });
 
 function openLostModal(assetId, assetName) {
-    alert('Lost report functionality coming soon');
+    currentAssetId = assetId;
+    document.getElementById('lostAssetName').textContent = assetName;
+    document.getElementById('lostModal').classList.remove('hidden');
+}
+
+function closeLostModal() {
+    document.getElementById('lostModal').classList.add('hidden');
+    document.getElementById('lostForm').reset();
 }
 
 function openDisposalModal(assetId, assetName) {
-    alert('Disposal request functionality coming soon');
+    currentAssetId = assetId;
+    document.getElementById('disposalAssetName').textContent = assetName;
+    document.getElementById('disposalModal').classList.remove('hidden');
 }
+
+function closeDisposalModal() {
+    document.getElementById('disposalModal').classList.add('hidden');
+    document.getElementById('disposalForm').reset();
+}
+
+// Lost form submission
+document.getElementById('lostForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const data = {
+        asset_id: currentAssetId,
+        asset_name: document.getElementById('lostAssetName').textContent,
+        date_lost: formData.get('date_lost'),
+        description: formData.get('lost_description'),
+        notes: formData.get('lost_notes')
+    };
+    
+    try {
+        const response = await fetch('/damage/lost', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+        });
+        
+        const result = await response.json();
+        
+        if (result.status === 'success') {
+            alert('Lost report submitted successfully');
+            closeLostModal();
+            location.reload();
+        } else {
+            alert('Error: ' + result.message);
+        }
+    } catch (error) {
+        alert('Error submitting report: ' + error.message);
+    }
+});
+
+// Disposal form submission
+document.getElementById('disposalForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const data = {
+        asset_id: currentAssetId,
+        asset_name: document.getElementById('disposalAssetName').textContent,
+        disposal_reason: formData.get('disposal_reason'),
+        description: formData.get('disposal_description'),
+        notes: formData.get('disposal_notes')
+    };
+    
+    try {
+        const response = await fetch('/damage/disposal', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+        });
+        
+        const result = await response.json();
+        
+        if (result.status === 'success') {
+            alert('Disposal request submitted successfully');
+            closeDisposalModal();
+            location.reload();
+        } else {
+            alert('Error: ' + result.message);
+        }
+    } catch (error) {
+        alert('Error submitting request: ' + error.message);
+    }
+});
 </script>
 {% endblock %}

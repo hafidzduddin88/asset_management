@@ -65,7 +65,7 @@ def get_asset_by_id(asset_id):
             ref_categories(category_name),
             ref_asset_types(type_name),
             ref_companies(company_name),
-            ref_business_units(unit_name),
+            ref_business_units(business_unit_name),
             ref_locations(location_name, room_name),
             ref_owners(owner_name)
         ''').eq('asset_id', asset_id).execute()
