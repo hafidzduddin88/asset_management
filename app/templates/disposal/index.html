@@ -3,79 +3,126 @@
 {% block title %}Asset Disposal - Admin{% endblock %}
 
 {% block content %}
-<div class="py-6">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="mb-6">
-            <h1 class="text-2xl font-bold text-gray-900">Asset Disposal Management</h1>
-            <p class="text-gray-600">Dispose assets permanently (Admin Only)</p>
+<div class="min-h-screen bg-gradient-to-br from-red-50 via-white to-orange-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Professional Header -->
+        <div class="bg-gradient-to-r from-red-600 via-red-700 to-orange-600 rounded-2xl shadow-xl p-8 mb-8">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <div class="bg-white bg-opacity-20 p-3 rounded-xl">
+                        <i class="fas fa-trash-alt text-3xl text-white"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-3xl font-bold text-white">Asset Disposal Management</h1>
+                        <p class="text-red-100 mt-1">Permanently dispose assets (Admin Only)</p>
+                    </div>
+                </div>
+                <div class="hidden md:flex items-center space-x-6 text-white">
+                    <div class="text-center">
+                        <div class="text-2xl font-bold">{{ assets|length }}</div>
+                        <div class="text-sm text-red-100">Ready for Disposal</div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Assets Table -->
-        <div class="bg-white shadow overflow-hidden sm:rounded-md">
-            <div class="px-4 py-5 sm:px-6">
-                <h3 class="text-lg leading-6 font-medium text-gray-900">Assets Ready for Disposal</h3>
-                <p class="mt-1 max-w-2xl text-sm text-gray-500">Only assets marked 'To Be Disposed' can be disposed</p>
+        <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+            <div class="bg-gradient-to-r from-gray-50 to-gray-100 px-6 py-4 border-b border-gray-200">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-3">
+                        <div class="bg-red-100 p-2 rounded-lg">
+                            <i class="fas fa-exclamation-triangle text-red-600"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-900">Assets Ready for Disposal</h3>
+                            <p class="text-sm text-gray-600">Only assets marked 'To Be Disposed' can be disposed</p>
+                        </div>
+                    </div>
+                    <div class="bg-red-100 px-3 py-1 rounded-full">
+                        <span class="text-sm font-semibold text-red-800">{{ assets|length }} items</span>
+                    </div>
+                </div>
             </div>
             
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Asset</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
-                        {% for asset in assets %}
-                        <tr>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="text-sm font-medium text-gray-900">{{ asset.get('Item Name', 'Unknown') }}</div>
-                                <div class="text-sm text-gray-500">ID: {{ asset.get('ID', '') }}</div>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ asset.get('Category', '') }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ asset.get('Location', '') }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                {% set status = asset.get('Status', '') %}
-                                {% if status == 'Active' %}
-                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Active</span>
-                                {% elif status == 'Under Repair' %}
-                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">Under Repair</span>
-                                {% elif status == 'In Storage' %}
-                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">In Storage</span>
-                                {% elif status == 'To Be Disposed' %}
-                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">To Be Disposed</span>
-                                {% else %}
-                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">{{ status }}</span>
-                                {% endif %}
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                <button onclick="openDisposalModal('{{ asset.get('ID', '') }}', '{{ asset.get('Item Name', '') }}')" 
-                                    class="text-red-600 hover:text-red-900">
-                                    <i class="fas fa-trash mr-1"></i>Dispose
-                                </button>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+            {% if assets %}
+            <div class="divide-y divide-gray-100">
+                {% for asset in assets %}
+                <div class="p-6 hover:bg-gradient-to-r hover:from-red-50 hover:to-orange-50 transition-all duration-200">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-4">
+                            <div class="bg-gradient-to-br from-red-400 to-red-600 p-3 rounded-xl">
+                                <i class="fas fa-box text-white text-lg"></i>
+                            </div>
+                            <div class="flex-1">
+                                <div class="flex items-center space-x-3 mb-2">
+                                    <h4 class="text-lg font-semibold text-gray-900">{{ asset.get('Item Name', 'Unknown Asset') }}</h4>
+                                    {% set status = asset.get('Status', '') %}
+                                    {% if status == 'To Be Disposed' %}
+                                        <span class="px-3 py-1 bg-yellow-100 text-yellow-800 text-xs font-semibold rounded-full">
+                                            <i class="fas fa-exclamation-triangle mr-1"></i>{{ status }}
+                                        </span>
+                                    {% else %}
+                                        <span class="px-3 py-1 bg-gray-100 text-gray-800 text-xs font-semibold rounded-full">{{ status }}</span>
+                                    {% endif %}
+                                </div>
+                                <div class="flex items-center space-x-6 text-sm text-gray-600">
+                                    <div class="flex items-center space-x-1">
+                                        <i class="fas fa-hashtag text-gray-400"></i>
+                                        <span>{{ asset.get('ID', 'N/A') }}</span>
+                                    </div>
+                                    <div class="flex items-center space-x-1">
+                                        <i class="fas fa-tag text-gray-400"></i>
+                                        <span>{{ asset.get('Category', 'N/A') }}</span>
+                                    </div>
+                                    <div class="flex items-center space-x-1">
+                                        <i class="fas fa-map-marker-alt text-gray-400"></i>
+                                        <span>{{ asset.get('Location', 'N/A') }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <button onclick="openDisposalModal('{{ asset.get('ID', '') }}', '{{ asset.get('Item Name', '') }}')" 
+                                class="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 shadow-md hover:shadow-lg">
+                                <i class="fas fa-trash mr-2"></i>Dispose Asset
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
             </div>
+            {% else %}
+            <div class="text-center py-16">
+                <div class="bg-gray-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-check-circle text-3xl text-gray-400"></i>
+                </div>
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">No Assets for Disposal</h3>
+                <p class="text-gray-500">All assets are in good condition</p>
+            </div>
+            {% endif %}
         </div>
     </div>
 </div>
 
-<!-- Disposal Modal -->
-<div id="disposalModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
-    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-        <div class="mt-3">
-            <div class="flex items-center justify-between mb-4">
-                <h3 class="text-lg font-medium text-gray-900">Dispose Asset</h3>
-                <button onclick="closeDisposalModal()" class="text-gray-400 hover:text-gray-600">
-                    <i class="fas fa-times"></i>
-                </button>
+<!-- Professional Disposal Modal -->
+<div id="disposalModal" class="fixed inset-0 bg-black bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+    <div class="relative top-10 mx-auto p-6 w-11/12 md:w-1/2 lg:w-1/3 max-w-lg">
+        <div class="bg-white rounded-2xl shadow-2xl overflow-hidden">
+            <div class="bg-gradient-to-r from-red-600 to-red-700 px-6 py-4">
+                <div class="flex justify-between items-center">
+                    <div class="flex items-center space-x-3">
+                        <div class="bg-white bg-opacity-20 p-2 rounded-lg">
+                            <i class="fas fa-trash-alt text-white"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold text-white">Dispose Asset</h3>
+                    </div>
+                    <button onclick="closeDisposalModal()" class="text-white hover:text-gray-200 transition-colors duration-200">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
             </div>
+            <div class="p-6">
             
             <form id="disposalForm" method="POST">
                 <div class="mb-4">
@@ -118,15 +165,16 @@
                     <textarea name="notes" id="notes" rows="2" class="w-full border border-gray-300 rounded-md px-3 py-2"></textarea>
                 </div>
                 
-                <div class="flex justify-end space-x-3">
-                    <button type="button" onclick="closeDisposalModal()" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400">
+                <div class="flex justify-end space-x-3 pt-4">
+                    <button type="button" onclick="closeDisposalModal()" class="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-semibold transition-colors duration-200">
                         Cancel
                     </button>
-                    <button type="submit" onclick="return confirm('Are you sure you want to submit this disposal request for manager approval?')" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">
-                        Submit for Approval
+                    <button type="submit" onclick="return confirm('Are you sure you want to submit this disposal request for manager approval?')" class="px-6 py-2 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-lg font-semibold transition-all duration-200 shadow-md hover:shadow-lg">
+                        <i class="fas fa-paper-plane mr-2"></i>Submit for Approval
                     </button>
                 </div>
             </form>
+            </div>
         </div>
     </div>
 </div>

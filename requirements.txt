@@ -14,5 +14,15 @@ requests==2.32.4    # Requests is a simple, yet elegant HTTP library for Python.
 # Date handling
 python-dateutil==2.9.0.post0    # Powerful extensions to the standard Python datetime module.
 
+# Google API (for Drive photo upload)
+google-auth==2.40.3 # Google authentication library
+
+# Validation and schemas
+pydantic>=2.11.7,<3 # Pydantic for data validation (used in schemas)
+email-validator>=2.0.0  # Used in user schemas
+
+# Excel export
+openpyxl==3.1.5 # Excel file format writer
+
 # supabase
 supabase==2.17.0    # Supabase is an open-source Firebase alternative that provides a backend as a service.
