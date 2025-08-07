@@ -22,11 +22,11 @@ def create_profile_if_not_exists(user_id: str, user_email: str) -> bool:
                 "is_active": True
             }
             admin_supabase.table("profiles").insert(profile_data).execute()
-            logging.info(f"Profile created for user {user_email}")
+            logging.info("Profile created successfully")
             return True
         
         return False
         
     except Exception as e:
-        logging.error(f"Failed to create profile: {e}")
+        logging.error(f"Failed to create profile: {type(e).__name__}")
         return False

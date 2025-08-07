@@ -24,7 +24,7 @@ def get_access_token():
         credentials.refresh(Request())
         return credentials.token
     except Exception as e:
-        logging.error(f"Token error: {e}")
+        logging.error(f"Token error: {type(e).__name__}")
         return None
 
 def resize_and_convert_image(image_file, max_size=MAX_IMAGE_SIZE, quality=WEBP_QUALITY):
@@ -41,7 +41,7 @@ def resize_and_convert_image(image_file, max_size=MAX_IMAGE_SIZE, quality=WEBP_Q
         output.seek(0)
         return output
     except Exception as e:
-        logging.error(f"Image processing error: {e}")
+        logging.error(f"Image processing error: {type(e).__name__}")
         return None
 
 def upload_to_drive(image_data, filename, asset_id):
@@ -84,7 +84,7 @@ def upload_to_drive(image_data, filename, asset_id):
         return f"https://drive.google.com/thumbnail?id={file_id}&sz=w400-h300"
 
     except Exception as e:
-        logging.error(f"Upload error: {e}")
+        logging.error(f"Upload error: {type(e).__name__}")
         return None
 
 def _initiate_upload(access_token, filename, asset_id, image_data, folder_id, shared_drive_id):
@@ -149,7 +149,7 @@ def _set_public_permission(access_token, file_id):
             timeout=30
         )
     except Exception as e:
-        logging.error(f"Permission error: {e}")
+        logging.error(f"Permission error: {type(e).__name__}")
 
 def delete_from_drive(image_url):
     """Delete image from Google Drive"""
@@ -174,5 +174,5 @@ def delete_from_drive(image_url):
         return response.status_code == 204
 
     except Exception as e:
-        logging.error(f"Delete error: {e}")
+        logging.error(f"Delete error: {type(e).__name__}")
         return False

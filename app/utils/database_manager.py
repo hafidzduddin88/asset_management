@@ -2,7 +2,7 @@
 Database Manager - Replace Google Sheets with Supabase operations
 """
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from dateutil.relativedelta import relativedelta
 from app.utils.supabase_client import supabase_client
 from app.utils.cache import cache
@@ -51,7 +51,7 @@ def _get_all_assets():
         ''').execute()
         return response.data
     except Exception as e:
-        logging.error(f"Error getting assets from database: {str(e)}")
+        logging.error(f"Error getting assets from database: {type(e).__name__}")
         return []
 
 def get_asset_by_id(asset_id):
@@ -71,7 +71,7 @@ def get_asset_by_id(asset_id):
         ''').eq('asset_id', asset_id).execute()
         return response.data[0] if response.data else None
     except Exception as e:
-        logging.error(f"Error getting asset {asset_id}: {str(e)}")
+        logging.error(f"Error getting asset {asset_id}: {type(e).__name__}")
         return None
 
 def get_reference_data(table_name):
@@ -288,7 +288,7 @@ def update_approval_status(approval_id, status, approved_by, notes=''):
         update_data = {
             'status': status,
             'approved_by': approved_by,
-            'approved_date': datetime.now().isoformat(),
+            'approved_date': datetime.now(timezone.utc).isoformat(),
             'notes': notes
         }
         response = supabase.table(TABLES['APPROVALS']).update(update_data).eq('approval_id', approval_id).execute()

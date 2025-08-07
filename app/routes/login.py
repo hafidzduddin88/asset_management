@@ -74,11 +74,11 @@ async def login_form(
         redirect_response = RedirectResponse(url=next or "/", status_code=303)
         set_auth_cookies(redirect_response, session, remember_me)
 
-        logging.info(f"User {email} logged in")
+        logging.info("User logged in successfully")
         return redirect_response
 
     except Exception as e:
-        logging.error(f"Login failed for {email}: {str(e)}")
+        logging.error("Login failed: Authentication error")
         return templates.TemplateResponse(
             "login_logout.html",
             {
@@ -114,7 +114,7 @@ async def signup_form(
         if not result.user:
             raise Exception("Signup failed")
 
-        logging.info(f"User {email} registered")
+        logging.info("User registered successfully")
         return templates.TemplateResponse(
             "signup.html",
             {
@@ -123,7 +123,7 @@ async def signup_form(
             }
         )
     except Exception as e:
-        logging.error(f"Signup failed for {email}: {str(e)}")
+        logging.error("Signup failed: Registration error")
         return templates.TemplateResponse(
             "signup.html",
             {
@@ -142,7 +142,7 @@ async def logout(request: Request):
 
     try:
         supabase.auth.sign_out()
-        logging.info(f"User {user_email} logged out")
+        logging.info("User logged out successfully")
     except Exception as e:
         logging.warning(f"Logout error: {e}")
 

@@ -9,6 +9,7 @@ from app.utils.auth import get_current_profile, get_admin_user
 from app.utils.flash import set_flash
 from app.utils.database_manager import get_dropdown_options
 import logging
+import os
 
 router = APIRouter(prefix="/user_management", tags=["user_management"])
 templates = Jinja2Templates(directory="app/templates")
@@ -98,7 +99,7 @@ async def create_user(
         # Create user in Supabase Auth
         auth_response = supabase.auth.admin.create_user({
             "email": email,
-            "password": "54321",  # Default password
+            "password": os.getenv('DEFAULT_USER_PASSWORD', '54321'),  # Default password
             "email_confirm": True
         })
         
@@ -169,7 +170,8 @@ async def reset_password(
         user_email = user_response.data[0]["username"]
         
         # Reset password to default
-        supabase.auth.admin.update_user_by_id(user_id, {"password": "54321"})
+        default_password = os.getenv('DEFAULT_USER_PASSWORD', '54321')
+        supabase.auth.admin.update_user_by_id(user_id, {"password": default_password})
         
         # Log password reset
         supabase.table("user_management_logs").insert({
