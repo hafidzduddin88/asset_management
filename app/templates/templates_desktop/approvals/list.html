@@ -6,76 +6,76 @@
 <div class="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <!-- Header -->
-        <div class="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl shadow-xl p-8 mb-8">
+        <div class="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl shadow-lg p-4 mb-6">
             <div class="flex items-center justify-between">
-                <div class="flex items-center space-x-4">
-                    <div class="bg-white bg-opacity-20 p-3 rounded-xl">
-                        <i class="fas fa-clipboard-check text-3xl text-white"></i>
+                <div class="flex items-center space-x-3">
+                    <div class="bg-white bg-opacity-20 p-2 rounded-lg">
+                        <i class="fas fa-clipboard-check text-xl text-white"></i>
                     </div>
                     <div>
-                        <h1 class="text-3xl font-bold text-white">Approvals</h1>
-                        <p class="text-indigo-100">Review and manage requests</p>
+                        <h1 class="text-xl font-bold text-white">Approvals</h1>
+                        <p class="text-indigo-100 text-sm">Review and manage requests</p>
                     </div>
                 </div>
-                <div class="flex items-center space-x-6 text-white">
+                <div class="flex items-center space-x-4 text-white">
                     <div class="text-center">
-                        <div class="text-2xl font-bold">{{ pending_count }}</div>
-                        <div class="text-sm text-indigo-100">Pending</div>
+                        <div class="text-lg font-bold">{{ pending_count }}</div>
+                        <div class="text-xs text-indigo-100">Pending</div>
                     </div>
                     <div class="text-center">
-                        <div class="text-2xl font-bold">{{ completed_count }}</div>
-                        <div class="text-sm text-indigo-100">Completed</div>
+                        <div class="text-lg font-bold">{{ completed_count }}</div>
+                        <div class="text-xs text-indigo-100">Completed</div>
                     </div>
                 </div>
             </div>
         </div>
 
         <!-- Tabs -->
-        <div class="bg-white rounded-xl shadow-lg p-2 mb-8">
-            <nav class="flex space-x-2">
+        <div class="bg-white rounded-lg shadow p-1 mb-6">
+            <nav class="flex space-x-1">
                 <button onclick="showTab('pending')" id="pending-tab" 
-                    class="tab-button flex-1 flex items-center justify-center px-6 py-3 rounded-lg font-semibold transition-all bg-gradient-to-r from-indigo-600 to-purple-600 text-white">
+                    class="tab-button flex-1 flex items-center justify-center px-4 py-2 rounded-lg font-semibold transition-all bg-gradient-to-r from-indigo-600 to-purple-600 text-white">
                     <i class="fas fa-hourglass-half mr-2"></i>
-                    Pending Approvals
-                    <span class="ml-3 bg-white bg-opacity-20 px-3 py-1 rounded-full text-sm">{{ pending_count }}</span>
+                    Pending
+                    <span class="ml-2 bg-white bg-opacity-20 px-2 py-1 rounded-full text-xs">{{ pending_count }}</span>
                 </button>
                 <button onclick="showTab('complete')" id="complete-tab" 
-                    class="tab-button flex-1 flex items-center justify-center px-6 py-3 rounded-lg font-semibold transition-all text-gray-600 hover:bg-gray-50">
+                    class="tab-button flex-1 flex items-center justify-center px-4 py-2 rounded-lg font-semibold transition-all text-gray-600 hover:bg-gray-50">
                     <i class="fas fa-check-double mr-2"></i>
                     Completed
-                    <span class="ml-3 bg-gray-100 px-3 py-1 rounded-full text-sm">{{ completed_count }}</span>
+                    <span class="ml-2 bg-gray-100 px-2 py-1 rounded-full text-xs">{{ completed_count }}</span>
                 </button>
             </nav>
         </div>
 
         <!-- Pending Approvals -->
         <div id="pending-content" class="tab-content">
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 {% for approval in pending_approvals %}
-                <div class="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-all duration-200">
-                    <div class="flex items-start justify-between mb-4">
-                        <div class="flex items-start space-x-4">
+                <div class="bg-white rounded-lg shadow p-4 hover:shadow-lg transition-all duration-200">
+                    <div class="flex items-start justify-between mb-3">
+                        <div class="flex items-start space-x-3">
                             <div class="flex-shrink-0">
                                 {% if approval.type == 'add_asset' %}
-                                    <div class="w-12 h-12 bg-gradient-to-br from-green-400 to-green-600 rounded-xl flex items-center justify-center">
-                                        <i class="fas fa-plus text-white text-lg"></i>
+                                    <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                                        <i class="fas fa-plus text-green-600"></i>
                                     </div>
                                 {% elif approval.type == 'relocation' %}
-                                    <div class="w-12 h-12 bg-gradient-to-br from-blue-400 to-blue-600 rounded-xl flex items-center justify-center">
-                                        <i class="fas fa-arrows-alt text-white text-lg"></i>
+                                    <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                                        <i class="fas fa-arrows-alt text-blue-600"></i>
                                     </div>
                                 {% elif approval.type == 'damage_report' %}
-                                    <div class="w-12 h-12 bg-gradient-to-br from-red-400 to-red-600 rounded-xl flex items-center justify-center">
-                                        <i class="fas fa-exclamation-triangle text-white text-lg"></i>
+                                    <div class="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
+                                        <i class="fas fa-exclamation-triangle text-red-600"></i>
                                     </div>
                                 {% else %}
-                                    <div class="w-12 h-12 bg-gradient-to-br from-gray-400 to-gray-600 rounded-xl flex items-center justify-center">
-                                        <i class="fas fa-file text-white text-lg"></i>
+                                    <div class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+                                        <i class="fas fa-file text-gray-600"></i>
                                     </div>
                                 {% endif %}
                             </div>
                             <div class="flex-1">
-                                <h4 class="font-semibold text-gray-900 text-lg">
+                                <h4 class="font-semibold text-gray-900 text-sm">
                                     {% if approval.type == 'add_asset' %}
                                         Add Asset
                                     {% elif approval.type == 'edit_asset' %}
@@ -94,49 +94,45 @@
                                         {{ approval.type.replace('_', ' ').title() }}
                                     {% endif %}
                                 </h4>
-                                <p class="text-gray-900 font-medium">{{ approval.asset_name }}</p>
-                                <div class="text-sm text-gray-500 mt-2 space-y-1">
-                                    <div>👤 {{ approval.submitted_by_name }}</div>
+                                <p class="text-gray-900 font-medium text-sm">{{ approval.asset_name }}</p>
+                                <div class="text-xs text-gray-500 mt-1">
                                     <div>📅 {{ approval.submitted_date[:10] if approval.submitted_date else '' }}</div>
-                                    {% if approval.location_name %}
-                                    <div>📍 {{ approval.location_name }} - {{ approval.room_name }}</div>
-                                    {% endif %}
                                 </div>
                             </div>
                         </div>
-                        <span class="px-3 py-1 bg-yellow-100 text-yellow-800 text-sm font-semibold rounded-full">
+                        <span class="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs font-semibold rounded-full">
                             Pending
                         </span>
                     </div>
                     
                     {% if approval.description %}
-                    <div class="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg mb-4">
+                    <div class="text-xs text-gray-600 bg-gray-50 p-2 rounded mb-3">
                         {{ approval.description }}
                     </div>
                     {% endif %}
                     
-                    <div class="flex space-x-3">
+                    <div class="flex space-x-2">
                         <button onclick="showApprovalDetail('{{ approval.approval_id }}')" 
-                            class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold transition-colors">
-                            <i class="fas fa-eye mr-2"></i>View Details
+                            class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded text-xs font-semibold transition-colors">
+                            <i class="fas fa-eye mr-1"></i>View
                         </button>
                         <button onclick="confirmApproval('{{ approval.approval_id }}', 'approved')" 
-                            class="flex-1 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-semibold transition-colors">
-                            <i class="fas fa-check mr-2"></i>Approve
+                            class="flex-1 bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded text-xs font-semibold transition-colors">
+                            <i class="fas fa-check mr-1"></i>Approve
                         </button>
                         <button onclick="confirmApproval('{{ approval.approval_id }}', 'rejected')" 
-                            class="flex-1 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-semibold transition-colors">
-                            <i class="fas fa-times mr-2"></i>Reject
+                            class="flex-1 bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded text-xs font-semibold transition-colors">
+                            <i class="fas fa-times mr-1"></i>Reject
                         </button>
                     </div>
                 </div>
                 {% else %}
-                <div class="col-span-2 text-center py-16 text-gray-500">
-                    <div class="bg-gray-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <i class="fas fa-inbox text-3xl text-gray-400"></i>
+                <div class="col-span-2 text-center py-12 text-gray-500">
+                    <div class="bg-gray-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-inbox text-2xl text-gray-400"></i>
                     </div>
-                    <h3 class="text-lg font-semibold text-gray-900 mb-2">No Pending Approvals</h3>
-                    <p class="text-gray-500">All requests have been processed</p>
+                    <h3 class="font-semibold text-gray-900 mb-2">No Pending Approvals</h3>
+                    <p class="text-sm text-gray-500">All requests have been processed</p>
                 </div>
                 {% endfor %}
             </div>
@@ -147,31 +143,31 @@
             <div class="bg-white rounded-xl shadow-lg overflow-hidden">
                 <div class="divide-y divide-gray-100">
                     {% for approval in completed_approvals %}
-                    <div class="p-6 hover:bg-gray-50 transition-colors">
+                    <div class="p-4 hover:bg-gray-50 transition-colors">
                         <div class="flex items-center justify-between">
                             <div class="flex items-center space-x-4">
                                 <div class="flex-shrink-0">
                                     {% if approval.type == 'add_asset' %}
-                                        <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                                            <i class="fas fa-plus text-green-600"></i>
+                                        <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                                            <i class="fas fa-plus text-green-600 text-sm"></i>
                                         </div>
                                     {% elif approval.type == 'relocation' %}
-                                        <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                                            <i class="fas fa-arrows-alt text-blue-600"></i>
+                                        <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                                            <i class="fas fa-arrows-alt text-blue-600 text-sm"></i>
                                         </div>
                                     {% elif approval.type == 'damage_report' %}
-                                        <div class="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
-                                            <i class="fas fa-exclamation-triangle text-red-600"></i>
+                                        <div class="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
+                                            <i class="fas fa-exclamation-triangle text-red-600 text-sm"></i>
                                         </div>
                                     {% else %}
-                                        <div class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
-                                            <i class="fas fa-file text-gray-600"></i>
+                                        <div class="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
+                                            <i class="fas fa-file text-gray-600 text-sm"></i>
                                         </div>
                                     {% endif %}
                                 </div>
                                 <div class="flex-1">
                                     <div class="flex items-center">
-                                        <p class="font-medium text-gray-900">
+                                        <p class="text-sm font-medium text-gray-900">
                                             {% if approval.type == 'add_asset' %}
                                                 Add Asset
                                             {% elif approval.type == 'edit_asset' %}
@@ -201,28 +197,26 @@
                                         {% endif %}
                                     </div>
                                     <p class="text-sm text-gray-600">{{ approval.asset_name }}</p>
-                                    <div class="text-sm text-gray-500 mt-1">
-                                        <span>👤 {{ approval.submitted_by_name }}</span>
-                                        <span class="mx-2">•</span>
+                                    <div class="text-xs text-gray-500 mt-1">
                                         <span>📅 {{ approval.submitted_date[:10] if approval.submitted_date else '' }}</span>
                                     </div>
                                 </div>
                             </div>
                             <button onclick="showApprovalDetail('{{ approval.approval_id }}')" 
-                                class="px-4 py-2 border border-gray-300 font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50">
-                                <i class="fas fa-eye mr-2"></i>View Details
+                                class="px-3 py-2 border border-gray-300 text-sm rounded text-gray-700 bg-white hover:bg-gray-50">
+                                <i class="fas fa-eye mr-1"></i>View
                             </button>
                         </div>
                         {% if approval.description %}
-                        <div class="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg mt-4 ml-14">
+                        <div class="text-xs text-gray-600 bg-gray-50 p-2 rounded mt-3 ml-12">
                             {{ approval.description }}
                         </div>
                         {% endif %}
                     </div>
                     {% else %}
-                    <div class="text-center py-12 text-gray-400">
-                        <i class="fas fa-history text-4xl mb-4"></i>
-                        <p class="font-medium text-lg">No completed approvals</p>
+                    <div class="text-center py-8 text-gray-400">
+                        <i class="fas fa-history text-3xl mb-4"></i>
+                        <p class="font-medium">No completed approvals</p>
                         <p class="text-sm">Processed requests will appear here</p>
                     </div>
                     {% endfor %}

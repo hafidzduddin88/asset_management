@@ -79,9 +79,14 @@
                         </div>
                     </div>
                 </div>
-                <span class="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs font-semibold rounded-full">
-                    Pending
-                </span>
+                <div class="flex items-center space-x-2">
+                    <button onclick="viewDetail({{ loop.index0 }}, 'pending')" class="text-blue-600 hover:text-blue-800 p-1">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                    <span class="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs font-semibold rounded-full">
+                        Pending
+                    </span>
+                </div>
             </div>
             
             {% if approval.description %}
@@ -169,6 +174,9 @@
                         </div>
                     </div>
                 </div>
+                <button onclick="viewDetail({{ loop.index0 }}, 'complete')" class="text-blue-600 hover:text-blue-800 p-1">
+                    <i class="fas fa-eye"></i>
+                </button>
             </div>
             {% if approval.description %}
             <div class="text-xs text-gray-600 bg-gray-50 p-2 rounded mt-2">
@@ -187,6 +195,9 @@
 </div>
 
 <script>
+const pendingData = {{ pending_approvals | tojson }};
+const completeData = {{ completed_approvals | tojson }};
+
 function showTab(tabName) {
     document.querySelectorAll('.tab-content').forEach(content => {
         content.classList.add('hidden');
@@ -202,6 +213,89 @@ function showTab(tabName) {
     const activeTab = document.getElementById(tabName + '-tab');
     activeTab.classList.remove('text-gray-600', 'hover:bg-gray-50');
     activeTab.classList.add('bg-purple-600', 'text-white');
+}
+
+function viewDetail(index, type) {
+    const data = type === 'pending' ? pendingData[index] : completeData[index];
+    if (!data) return;
+    
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4';
+    modal.innerHTML = `
+        <div class="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div class="p-6">
+                <div class="flex justify-between items-start mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900">Request Details</h3>
+                    <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                
+                <div class="space-y-4">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="text-sm font-medium text-gray-500">Type</label>
+                            <p class="text-sm text-gray-900">${data.type?.replace('_', ' ')?.replace(/\b\w/g, l => l.toUpperCase()) || 'N/A'}</p>
+                        </div>
+                        <div>
+                            <label class="text-sm font-medium text-gray-500">Status</label>
+                            <p class="text-sm text-gray-900">${data.status || 'Pending'}</p>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="text-sm font-medium text-gray-500">Asset Name</label>
+                        <p class="text-sm text-gray-900">${data.asset_name || 'N/A'}</p>
+                    </div>
+                    
+                    <div>
+                        <label class="text-sm font-medium text-gray-500">Description</label>
+                        <p class="text-sm text-gray-900">${data.description || 'No description provided'}</p>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="text-sm font-medium text-gray-500">Submitted Date</label>
+                            <p class="text-sm text-gray-900">${data.submitted_date?.substring(0, 10) || 'N/A'}</p>
+                        </div>
+                        ${data.approved_date ? `
+                        <div>
+                            <label class="text-sm font-medium text-gray-500">Approved Date</label>
+                            <p class="text-sm text-gray-900">${data.approved_date.substring(0, 10)}</p>
+                        </div>
+                        ` : ''}
+                    </div>
+                    
+                    ${data.approved_by ? `
+                    <div>
+                        <label class="text-sm font-medium text-gray-500">Approved By</label>
+                        <p class="text-sm text-gray-900">${data.approved_by}</p>
+                    </div>
+                    ` : ''}
+                    
+                    ${data.rejection_reason ? `
+                    <div>
+                        <label class="text-sm font-medium text-gray-500">Rejection Reason</label>
+                        <p class="text-sm text-red-600">${data.rejection_reason}</p>
+                    </div>
+                    ` : ''}
+                </div>
+                
+                <div class="mt-6 flex justify-end">
+                    <button onclick="closeModal()" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    window.closeModal = function() {
+        document.body.removeChild(modal);
+        delete window.closeModal;
+    };
 }
 </script>
 {% endblock %}

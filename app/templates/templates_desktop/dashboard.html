@@ -226,10 +226,10 @@
         <div class="bg-white rounded-xl shadow-xl p-8">
             <div class="flex justify-between items-center mb-6">
                 <h3 class="text-xl font-semibold text-gray-900">Relocated Assets</h3>
-                <div class="flex space-x-1">
-                    <button class="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded text-gray-600 relocated-period-btn active" data-period="month">M</button>
-                    <button class="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded text-gray-600 relocated-period-btn" data-period="quarter">Q</button>
-                    <button class="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded text-gray-600 relocated-period-btn" data-period="year">Y</button>
+                <div class="flex space-x-2">
+                    <button class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded text-gray-600 relocated-period-btn active" data-period="month">Monthly</button>
+                    <button class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded text-gray-600 relocated-period-btn" data-period="quarter">Quarterly</button>
+                    <button class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded text-gray-600 relocated-period-btn" data-period="year">Yearly</button>
                 </div>
             </div>
             <div class="chart-container">
@@ -241,10 +241,10 @@
         <div class="bg-white rounded-xl shadow-xl p-8">
             <div class="flex justify-between items-center mb-6">
                 <h3 class="text-xl font-semibold text-gray-900">To Be Disposed</h3>
-                <div class="flex space-x-1">
-                    <button class="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded text-gray-600 to-dispose-period-btn active" data-period="month">M</button>
-                    <button class="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded text-gray-600 to-dispose-period-btn" data-period="quarter">Q</button>
-                    <button class="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded text-gray-600 to-dispose-period-btn" data-period="year">Y</button>
+                <div class="flex space-x-2">
+                    <button class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded text-gray-600 to-dispose-period-btn active" data-period="month">Monthly</button>
+                    <button class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded text-gray-600 to-dispose-period-btn" data-period="quarter">Quarterly</button>
+                    <button class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded text-gray-600 to-dispose-period-btn" data-period="year">Yearly</button>
                 </div>
             </div>
             <div class="chart-container">
@@ -256,10 +256,10 @@
         <div class="bg-white rounded-xl shadow-xl p-8">
             <div class="flex justify-between items-center mb-6">
                 <h3 class="text-xl font-semibold text-gray-900">Disposed Assets</h3>
-                <div class="flex space-x-1">
-                    <button class="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded text-gray-600 disposed-period-btn active" data-period="month">M</button>
-                    <button class="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded text-gray-600 disposed-period-btn" data-period="quarter">Q</button>
-                    <button class="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded text-gray-600 disposed-period-btn" data-period="year">Y</button>
+                <div class="flex space-x-2">
+                    <button class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded text-gray-600 disposed-period-btn active" data-period="month">Monthly</button>
+                    <button class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded text-gray-600 disposed-period-btn" data-period="quarter">Quarterly</button>
+                    <button class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded text-gray-600 disposed-period-btn" data-period="year">Yearly</button>
                 </div>
             </div>
             <div class="chart-container">
@@ -486,6 +486,31 @@
             window.mainChart.update();
         });
     });
+    
+    // Handle activity chart period changes
+    function setupActivityChartButtons(className, chart, dataKey) {
+        document.querySelectorAll('.' + className).forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.' + className).forEach(b => b.classList.remove('active', 'bg-primary-600', 'text-white'));
+                this.classList.add('active', 'bg-primary-600', 'text-white');
+                
+                const period = this.dataset.period;
+                const data = activityData[dataKey] || {};
+                const periodData = data[period] || {};
+                
+                chart.data.labels = Object.keys(periodData);
+                chart.data.datasets[0].data = Object.values(periodData);
+                chart.update();
+            });
+        });
+    }
+    
+    // Setup all activity chart buttons
+    setupActivityChartButtons('damaged-period-btn', damagedChart, 'damaged');
+    setupActivityChartButtons('repaired-period-btn', repairedChart, 'repaired');
+    setupActivityChartButtons('relocated-period-btn', relocatedChart, 'relocated');
+    setupActivityChartButtons('to-dispose-period-btn', toBeDisposedChart, 'to_be_disposed');
+    setupActivityChartButtons('disposed-period-btn', disposedChart, 'disposed');
     
     // Handle refresh button
     document.getElementById('refresh-button').addEventListener('click', function() {
