@@ -46,33 +46,30 @@ async def submit_lost_report(request: Request, current_profile = Depends(get_cur
     try:
         data = await request.json()
         supabase = get_supabase()
+        asset_ids = data.get('asset_ids', [])
         
-        # Add to lost_log table
-        lost_data = {
-            'asset_id': int(data.get('asset_id')),
-            'asset_name': data.get('asset_name'),
-            'date_lost': data.get('date_lost'),
-            'description': data.get('description'),
-            'reported_by': current_profile.id,
-            'status': 'pending'
-        }
-        supabase.table('lost_log').insert(lost_data).execute()
-
-        # Add approval request
-        approval_data = {
-            'type': 'lost_report',
-            'asset_id': int(data.get('asset_id')),
-            'asset_name': data.get('asset_name'),
-            'submitted_by': current_profile.id,
-            'status': 'pending',
-            'description': f"Lost report: {data.get('description')}"
-        }
-        approval_success = add_approval_request(approval_data)
-
-        if approval_success:
-            return {"status": "success", "message": "Lost report submitted for approval"}
+        success_count = 0
+        for asset_id in asset_ids:
+            try:
+                # Add to lost_log table
+                lost_data = {
+                    'asset_id': int(asset_id),
+                    'date_lost': data.get('date_lost'),
+                    'description': data.get('description'),
+                    'reported_by': current_profile.id,
+                    'status': 'pending'
+                }
+                supabase.table('lost_log').insert(lost_data).execute()
+                success_count += 1
+                
+            except Exception as e:
+                logging.error(f"Error processing lost report for asset {asset_id}: {e}")
+                continue
+        
+        if success_count > 0:
+            return {"status": "success", "message": f"Lost report submitted for {success_count} asset(s)"}
         else:
-            return {"status": "error", "message": "Failed to submit approval request"}
+            return {"status": "error", "message": "Failed to submit lost reports"}
 
     except Exception as e:
         logging.error(f"Error submitting lost report: {e}")
@@ -88,36 +85,83 @@ async def submit_disposal_request(request: Request, current_profile = Depends(ge
     try:
         data = await request.json()
         supabase = get_supabase()
+        asset_ids = data.get('asset_ids', [])
         
-        # Add to disposal_log table
-        disposal_data = {
-            'asset_id': int(data.get('asset_id')),
-            'asset_name': data.get('asset_name'),
-            'disposal_reason': data.get('disposal_reason', 'User request'),
-            'description': data.get('description'),
-            'requested_by': current_profile.id,
-            'status': 'pending'
-        }
-        supabase.table('disposal_log').insert(disposal_data).execute()
-
-        # Add approval request
-        approval_data = {
-            'type': 'disposal_request',
-            'asset_id': int(data.get('asset_id')),
-            'asset_name': data.get('asset_name'),
-            'submitted_by': current_profile.id,
-            'status': 'pending',
-            'description': f"Disposal request: {data.get('description')}"
-        }
-        approval_success = add_approval_request(approval_data)
-
-        if approval_success:
-            return {"status": "success", "message": "Disposal request submitted for approval"}
+        success_count = 0
+        for asset_id in asset_ids:
+            try:
+                # Add to disposal_log table
+                disposal_data = {
+                    'asset_id': int(asset_id),
+                    'disposal_reason': data.get('disposal_reason', 'User request'),
+                    'description': data.get('description'),
+                    'requested_by': current_profile.id,
+                    'status': 'pending'
+                }
+                supabase.table('disposal_log').insert(disposal_data).execute()
+                success_count += 1
+                
+            except Exception as e:
+                logging.error(f"Error processing disposal request for asset {asset_id}: {e}")
+                continue
+        
+        if success_count > 0:
+            return {"status": "success", "message": f"Disposal request submitted for {success_count} asset(s)"}
         else:
-            return {"status": "error", "message": "Failed to submit approval request"}
+            return {"status": "error", "message": "Failed to submit disposal requests"}
 
     except Exception as e:
         logging.error(f"Error submitting disposal request: {e}")
+        return {"status": "error", "message": str(e)}
+
+
+@router.post("/repair")
+async def submit_repair_report(request: Request, current_profile = Depends(get_current_profile)):
+    """Submit repair report - syncs to Supabase"""
+    from app.utils.database_manager import add_approval_request, get_supabase
+    from datetime import datetime
+
+    try:
+        data = await request.json()
+        supabase = get_supabase()
+        asset_ids = data.get('asset_ids', [])
+        
+        success_count = 0
+        for asset_id in asset_ids:
+            try:
+                # Add to repair_log table
+                repair_data = {
+                    'asset_id': int(asset_id),
+                    'repair_action': data.get('repair_action'),
+                    'action_type': 'repair',
+                    'description': data.get('description'),
+                    'performed_by': current_profile.id,
+                    'status': 'completed'
+                }
+                
+                # Add new location if specified
+                if data.get('new_location'):
+                    location_parts = data.get('new_location').split(' - ')
+                    if len(location_parts) == 2:
+                        location_name, room_name = location_parts
+                        loc_response = supabase.table('ref_locations').select('location_id').eq('location_name', location_name).eq('room_name', room_name).execute()
+                        if loc_response.data:
+                            repair_data['new_location_id'] = loc_response.data[0]['location_id']
+                
+                supabase.table('repair_log').insert(repair_data).execute()
+                success_count += 1
+                
+            except Exception as e:
+                logging.error(f"Error processing repair for asset {asset_id}: {e}")
+                continue
+        
+        if success_count > 0:
+            return {"status": "success", "message": f"Repair report submitted for {success_count} asset(s)"}
+        else:
+            return {"status": "error", "message": "Failed to submit repair reports"}
+
+    except Exception as e:
+        logging.error(f"Error submitting repair report: {e}")
         return {"status": "error", "message": str(e)}
 
 
@@ -130,35 +174,31 @@ async def submit_damage_report(request: Request, current_profile = Depends(get_c
     try:
         data = await request.json()
         supabase = get_supabase()
+        asset_ids = data.get('asset_ids', [])
         
-        # Add to damage_log table
-        damage_data = {
-            'asset_id': int(data.get('asset_id')),
-            'asset_name': data.get('asset_name'),
-            'damage_type': data.get('damage_type'),
-            'severity': data.get('severity'),
-            'description': data.get('damage_description'),
-            'reported_by': current_profile.id,
-            'status': 'pending'
-        }
-        supabase.table('damage_log').insert(damage_data).execute()
-
-        # Add approval request
-        approval_data = {
-            'type': 'damage_report',
-            'asset_id': int(data.get('asset_id')),
-            'asset_name': data.get('asset_name'),
-            'submitted_by': current_profile.id,
-            'status': 'pending',
-            'description': f"Damage report: {data.get('damage_description')}",
-            'notes': f"Type: {data.get('damage_type')}, Severity: {data.get('severity')}"
-        }
-        approval_success = add_approval_request(approval_data)
-
-        if approval_success:
-            return {"status": "success", "message": "Damage report submitted for approval"}
+        success_count = 0
+        for asset_id in asset_ids:
+            try:
+                # Add to damage_log table
+                damage_data = {
+                    'asset_id': int(asset_id),
+                    'damage_type': data.get('damage_type'),
+                    'severity': data.get('severity'),
+                    'description': data.get('damage_description'),
+                    'reported_by': current_profile.id,
+                    'status': 'pending'
+                }
+                supabase.table('damage_log').insert(damage_data).execute()
+                success_count += 1
+                
+            except Exception as e:
+                logging.error(f"Error processing damage report for asset {asset_id}: {e}")
+                continue
+        
+        if success_count > 0:
+            return {"status": "success", "message": f"Damage report submitted for {success_count} asset(s)"}
         else:
-            return {"status": "error", "message": "Failed to submit approval request"}
+            return {"status": "error", "message": "Failed to submit damage reports"}
 
     except Exception as e:
         logging.error(f"Error submitting damage report: {e}")
