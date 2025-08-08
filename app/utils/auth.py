@@ -4,10 +4,14 @@ from jose import jwt, jwk
 from jose.exceptions import JWTError
 from supabase import create_client, Client
 from typing import Optional, List
+from enum import Enum
 import requests
 import logging
 
-from app.database.models import UserRole
+class UserRole(str, Enum):
+    ADMIN = "admin"
+    MANAGER = "manager"
+    STAFF = "staff"
 from app.schemas.profile import ProfileResponse
 from app.config import load_config
 

@@ -1,6 +1,6 @@
 from typing import Optional
 from datetime import datetime
-from app.database.models import UserRole
+from app.utils.auth import UserRole
 from pydantic import BaseModel
 
 class ProfileResponse(BaseModel):

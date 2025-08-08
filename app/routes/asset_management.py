@@ -7,10 +7,9 @@ import json
 from datetime import datetime
 import uuid
 
-from app.database.models import UserRole
 from app.utils.database_manager import get_dropdown_options, add_approval_request, get_all_assets, get_asset_by_id
 from app.utils.flash import set_flash
-from app.utils.auth import get_current_profile
+from app.utils.auth import get_current_profile, UserRole
 from app.utils.device_detector import get_template
 import logging
 

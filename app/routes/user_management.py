@@ -4,8 +4,8 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from supabase import create_client
 from app.config import load_config
-from app.database.models import UserRole
-from app.utils.auth import get_current_profile, get_admin_user
+ 
+from app.utils.auth import get_current_profile, get_admin_user, UserRole
 from app.utils.flash import set_flash
 from app.utils.database_manager import get_dropdown_options
 from app.utils.device_detector import get_template
