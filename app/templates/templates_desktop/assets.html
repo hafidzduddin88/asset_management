@@ -120,22 +120,22 @@
 
         <!-- Assets Table -->
         <div class="bg-white shadow-xl overflow-hidden rounded-xl border border-gray-200">
-            <div class="px-6 py-4 bg-gradient-to-r from-gray-50 to-slate-50 border-b border-gray-200">
-                <h3 class="text-lg font-semibold text-gray-900">Asset Database</h3>
-                <p class="mt-1 text-sm text-gray-500">Complete list of all registered assets</p>
+            <div class="px-4 py-3 bg-gradient-to-r from-gray-50 to-slate-50 border-b border-gray-200">
+                <h3 class="text-base font-semibold text-gray-900">Asset Database</h3>
+                <p class="mt-1 text-xs text-gray-500">Complete list of all registered assets</p>
             </div>
             
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
                         <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Asset</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Book Value</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Purchase Date</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Asset</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Book Value</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                         </tr>
                     </thead>
                     <tbody id="assetsTableBody" class="bg-white divide-y divide-gray-200">
@@ -320,46 +320,44 @@ function displayAssets() {
     } else {
         tableBody.innerHTML = assetsToShow.map(asset => `
             <tr class="hover:bg-gray-50 transition-colors">
-                <td class="px-6 py-4 whitespace-nowrap">
+                <td class="px-4 py-3 whitespace-nowrap">
                     <div class="flex items-center">
-                        <div class="flex-shrink-0 h-10 w-10">
-                            <div class="h-10 w-10 rounded-full bg-primary-100 flex items-center justify-center">
-                                <i class="fas fa-box text-primary-600"></i>
+                        <div class="flex-shrink-0 h-8 w-8">
+                            <div class="h-8 w-8 rounded-full bg-primary-100 flex items-center justify-center">
+                                <i class="fas fa-box text-primary-600 text-sm"></i>
                             </div>
                         </div>
-                        <div class="ml-4">
+                        <div class="ml-3">
                             <div class="text-sm font-medium text-gray-900">${asset.name}</div>
-                            <div class="text-sm text-gray-500">ID: ${asset.id}</div>
+                            <div class="text-xs text-gray-500">ID: ${asset.id}</div>
                         </div>
                     </div>
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap">
+                <td class="px-4 py-3 whitespace-nowrap">
                     <div class="text-sm text-gray-900">${asset.category}</div>
-                    <div class="text-sm text-gray-500">${asset.manufacture} ${asset.model}</div>
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap">
+                <td class="px-4 py-3 whitespace-nowrap">
                     <div class="text-sm text-gray-900">${asset.location}</div>
-                    <div class="text-sm text-gray-500">${asset.room}</div>
+                    <div class="text-xs text-gray-500">${asset.room}</div>
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap">
+                <td class="px-4 py-3 whitespace-nowrap">
                     ${getStatusBadge(asset.status)}
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    <div class="font-medium">Rp ${asset.book_value.toLocaleString()}</div>
-                    <div class="text-xs text-gray-500">Book Value</div>
+                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
+                    Rp ${asset.book_value.toLocaleString()}
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                <td class="px-4 py-3 whitespace-nowrap text-xs text-gray-500">
                     ${asset.purchase_date || 'N/A'}
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <div class="flex space-x-1">
-                        <button onclick="viewAssetDetails(${asset.id})" class="text-blue-600 hover:text-blue-900 p-2 hover:bg-blue-50 rounded" title="View Details">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                        <button onclick="showActionModal(${asset.id})" class="text-gray-600 hover:text-gray-900 p-2 hover:bg-gray-50 rounded" title="More Actions">
-                            <i class="fas fa-ellipsis-v"></i>
-                        </button>
-                    </div>
+                <td class="px-4 py-3 whitespace-nowrap text-sm font-medium">
+                    <button onclick="viewAssetDetails(${asset.id})" class="text-blue-600 hover:text-blue-900 p-1 hover:bg-blue-50 rounded" title="View Details">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                    ${window.userRole === 'admin' ? `
+                    <button onclick="editAsset(${asset.id})" class="text-green-600 hover:text-green-900 p-1 hover:bg-green-50 rounded ml-1" title="Edit Asset">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    ` : ''}
                 </td>
             </tr>
         `).join('');
@@ -436,38 +434,11 @@ function viewAssetDetails(assetId) {
     alert(`Asset Details:\n\nName: ${asset.name}\nID: ${asset.id}\nTag: ${asset.asset_tag}\nCategory: ${asset.category}\nLocation: ${asset.location} - ${asset.room}\nStatus: ${asset.status}\nBook Value: Rp ${asset.book_value.toLocaleString()}`);
 }
 
-function showActionModal(assetId) {
-    const asset = allAssets.find(a => a.id === assetId);
-    if (!asset) return;
-    
-    const modal = document.createElement('div');
-    modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
-    modal.innerHTML = `
-        <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-            <h3 class="text-lg font-semibold mb-4">Actions for ${asset.name}</h3>
-            <div class="space-y-3">
-                <button onclick="viewAssetDetails(${assetId}); closeModal()" class="w-full text-left px-4 py-3 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors">
-                    <i class="fas fa-eye text-blue-600 mr-3"></i>View Details
-                </button>
-                <button onclick="window.location.href='/damage'; closeModal()" class="w-full text-left px-4 py-3 bg-red-50 hover:bg-red-100 rounded-lg transition-colors">
-                    <i class="fas fa-exclamation-triangle text-red-600 mr-3"></i>Report Issue
-                </button>
-                <button onclick="window.location.href='/relocation'; closeModal()" class="w-full text-left px-4 py-3 bg-green-50 hover:bg-green-100 rounded-lg transition-colors">
-                    <i class="fas fa-arrows-alt text-green-600 mr-3"></i>Request Move
-                </button>
-            </div>
-            <button onclick="closeModal()" class="w-full mt-4 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
-                Cancel
-            </button>
-        </div>
-    `;
-    
-    document.body.appendChild(modal);
-    
-    window.closeModal = function() {
-        document.body.removeChild(modal);
-        delete window.closeModal;
-    };
+// Set user role from backend
+window.userRole = '{{ current_user.role if current_user else "staff" }}';
+
+function editAsset(assetId) {
+    window.location.href = `/asset_management/edit/${assetId}`;
 }
 </script>
 {% endblock %}

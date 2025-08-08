@@ -36,6 +36,14 @@
             <select id="categoryFilter" class="px-3 py-3 border border-gray-300 rounded-lg text-gray-900">
                 <option value="">All Categories</option>
             </select>
+            <select id="locationFilter" class="px-3 py-3 border border-gray-300 rounded-lg text-gray-900">
+                <option value="">All Locations</option>
+            </select>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+            <select id="roomFilter" class="px-3 py-3 border border-gray-300 rounded-lg text-gray-900" disabled>
+                <option value="">All Rooms</option>
+            </select>
             <select id="statusFilter" class="px-3 py-3 border border-gray-300 rounded-lg text-gray-900">
                 <option value="">All Status</option>
                 <option value="Active">Active</option>
@@ -88,6 +96,7 @@ let ITEMS_PER_PAGE = 20;
 let currentPage = 1;
 let filteredAssets = [];
 let allAssets = [];
+let roomsData = {};
 
 // Initialize
 document.addEventListener('DOMContentLoaded', function() {
@@ -112,13 +121,31 @@ document.addEventListener('DOMContentLoaded', function() {
     
     filteredAssets = [...allAssets];
     
+    buildRoomsData();
     initializeFilters();
     displayAssets();
     setupEventListeners();
 });
 
+function buildRoomsData() {
+    roomsData = {};
+    allAssets.forEach(asset => {
+        if (asset.location && asset.room) {
+            if (!roomsData[asset.location]) {
+                roomsData[asset.location] = new Set();
+            }
+            roomsData[asset.location].add(asset.room);
+        }
+    });
+    
+    Object.keys(roomsData).forEach(location => {
+        roomsData[location] = Array.from(roomsData[location]).sort();
+    });
+}
+
 function initializeFilters() {
     const categoryFilter = document.getElementById('categoryFilter');
+    const locationFilter = document.getElementById('locationFilter');
     
     // Populate categories
     const categories = [...new Set(allAssets.map(asset => asset.category).filter(c => c))];
@@ -128,16 +155,45 @@ function initializeFilters() {
         option.textContent = category;
         categoryFilter.appendChild(option);
     });
+    
+    // Populate locations
+    const locations = [...new Set(allAssets.map(asset => asset.location).filter(l => l))];
+    locations.forEach(location => {
+        const option = document.createElement('option');
+        option.value = location;
+        option.textContent = location;
+        locationFilter.appendChild(option);
+    });
 }
 
 function setupEventListeners() {
     const categoryFilter = document.getElementById('categoryFilter');
+    const locationFilter = document.getElementById('locationFilter');
+    const roomFilter = document.getElementById('roomFilter');
     const statusFilter = document.getElementById('statusFilter');
     const searchInput = document.getElementById('searchInput');
     const clearFilters = document.getElementById('clearFilters');
     const itemsPerPage = document.getElementById('itemsPerPage');
     
+    locationFilter.addEventListener('change', function() {
+        const selectedLocation = this.value;
+        roomFilter.innerHTML = '<option value="">All Rooms</option>';
+        roomFilter.disabled = !selectedLocation;
+        
+        if (selectedLocation && roomsData[selectedLocation]) {
+            roomsData[selectedLocation].forEach(room => {
+                const option = document.createElement('option');
+                option.value = room;
+                option.textContent = room;
+                roomFilter.appendChild(option);
+            });
+            roomFilter.disabled = false;
+        }
+        applyFilters();
+    });
+    
     categoryFilter.addEventListener('change', applyFilters);
+    roomFilter.addEventListener('change', applyFilters);
     statusFilter.addEventListener('change', applyFilters);
     searchInput.addEventListener('input', applyFilters);
     
@@ -149,6 +205,9 @@ function setupEventListeners() {
     
     clearFilters.addEventListener('click', function() {
         categoryFilter.value = '';
+        locationFilter.value = '';
+        roomFilter.innerHTML = '<option value="">All Rooms</option>';
+        roomFilter.disabled = true;
         statusFilter.value = '';
         searchInput.value = '';
         applyFilters();
@@ -157,21 +216,25 @@ function setupEventListeners() {
 
 function applyFilters() {
     const categoryFilter = document.getElementById('categoryFilter').value;
+    const locationFilter = document.getElementById('locationFilter').value;
+    const roomFilter = document.getElementById('roomFilter').value;
     const statusFilter = document.getElementById('statusFilter').value;
     const searchTerm = document.getElementById('searchInput').value.toLowerCase();
     
     filteredAssets = allAssets.filter(asset => {
         const matchesCategory = !categoryFilter || asset.category === categoryFilter;
+        const matchesLocation = !locationFilter || asset.location === locationFilter;
+        const matchesRoom = !roomFilter || asset.room === roomFilter;
         const matchesStatus = !statusFilter || asset.status === statusFilter;
         const matchesSearch = !searchTerm || 
             asset.name.toLowerCase().includes(searchTerm) ||
             asset.category.toLowerCase().includes(searchTerm) ||
+            asset.location.toLowerCase().includes(searchTerm) ||
+            asset.room.toLowerCase().includes(searchTerm) ||
             asset.id.toString().includes(searchTerm) ||
-            asset.asset_tag.toLowerCase().includes(searchTerm) ||
-            asset.manufacture.toLowerCase().includes(searchTerm) ||
-            asset.model.toLowerCase().includes(searchTerm);
+            asset.asset_tag.toLowerCase().includes(searchTerm);
         
-        return matchesCategory && matchesStatus && matchesSearch;
+        return matchesCategory && matchesLocation && matchesRoom && matchesStatus && matchesSearch;
     });
     
     currentPage = 1;
@@ -209,26 +272,17 @@ function displayAssets() {
                     </div>
                     <div class="flex items-center">
                         <i class="fas fa-map-marker-alt w-5 text-gray-400"></i>
-                        <span>${asset.location}</span>
+                        <span>${asset.location} - ${asset.room}</span>
                     </div>
                     <div class="flex items-center">
                         <i class="fas fa-money-bill w-5 text-gray-400"></i>
                         <span>Rp ${asset.book_value.toLocaleString()}</span>
                     </div>
-                    ${asset.manufacture || asset.model ? `
-                    <div class="flex items-center">
-                        <i class="fas fa-industry w-5 text-gray-400"></i>
-                        <span>${asset.manufacture} ${asset.model}</span>
-                    </div>
-                    ` : ''}
                 </div>
-                <div class="mt-3 pt-3 border-t border-gray-100 flex justify-between items-center">
-                    <button onclick="event.stopPropagation(); quickActions(${asset.id})" class="text-primary-600 hover:text-primary-800 text-sm font-medium">
-                        <i class="fas fa-ellipsis-h mr-1"></i>Actions
+                <div class="mt-3 pt-3 border-t border-gray-100 flex justify-center">
+                    <button onclick="event.stopPropagation(); viewAssetDetails(${asset.id})" class="text-primary-600 hover:text-primary-800 text-sm font-medium">
+                        <i class="fas fa-eye mr-1"></i>View Details
                     </button>
-                    <span class="text-xs text-gray-400">
-                        ${asset.purchase_date ? new Date(asset.purchase_date).toLocaleDateString() : 'No date'}
-                    </span>
                 </div>
             </div>
         `).join('');
@@ -331,51 +385,6 @@ function viewAssetDetails(assetId) {
     alert(details);
 }
 
-function quickActions(assetId) {
-    const asset = allAssets.find(a => a.id === assetId);
-    if (!asset) return;
-    
-    // Create action modal
-    const modal = document.createElement('div');
-    modal.className = 'fixed inset-0 bg-gray-600 bg-opacity-50 z-50 flex items-center justify-center p-4';
-    modal.innerHTML = `
-        <div class="bg-white rounded-lg shadow-lg w-full max-w-sm">
-            <div class="p-4 border-b">
-                <h3 class="font-semibold text-gray-900">${asset.name}</h3>
-                <p class="text-sm text-gray-500">ID: ${asset.id}</p>
-            </div>
-            <div class="p-4 space-y-3">
-                <button onclick="viewAssetDetails(${assetId}); closeModal()" class="w-full flex items-center px-4 py-3 bg-blue-50 hover:bg-blue-100 rounded-lg text-left">
-                    <i class="fas fa-eye text-blue-600 mr-3"></i>
-                    <span class="text-blue-900 font-medium">View Details</span>
-                </button>
-                <button onclick="window.location.href='/damage'; closeModal()" class="w-full flex items-center px-4 py-3 bg-red-50 hover:bg-red-100 rounded-lg text-left">
-                    <i class="fas fa-exclamation-triangle text-red-600 mr-3"></i>
-                    <span class="text-red-900 font-medium">Report Issue</span>
-                </button>
-                <button onclick="window.location.href='/relocation'; closeModal()" class="w-full flex items-center px-4 py-3 bg-green-50 hover:bg-green-100 rounded-lg text-left">
-                    <i class="fas fa-arrows-alt text-green-600 mr-3"></i>
-                    <span class="text-green-900 font-medium">Request Move</span>
-                </button>
-            </div>
-            <div class="p-4 border-t">
-                <button onclick="closeModal()" class="w-full px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-700 font-medium">
-                    Cancel
-                </button>
-            </div>
-        </div>
-    `;
-    
-    document.body.appendChild(modal);
-    
-    window.closeModal = function() {
-        document.body.removeChild(modal);
-        delete window.closeModal;
-    };
-    
-    modal.addEventListener('click', function(e) {
-        if (e.target === modal) closeModal();
-    });
-}
+
 </script>
 {% endblock %}
