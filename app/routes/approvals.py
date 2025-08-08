@@ -123,7 +123,7 @@ async def approve_request(
         if approval.get('type') == 'damage_report':
             # Update asset status to "Under Repair"
             from app.utils.database_manager import update_asset
-            success = update_asset(approval.get('Asset_ID'), {'Status': 'Under Repair'})
+            success = update_asset(approval.get('asset_id'), {'status': 'Under Repair'})
             if not success:
                 return JSONResponse({"status": "error", "message": "Failed to update asset status"})
         
@@ -169,8 +169,39 @@ async def approve_request(
                 request_data_str = approval.get('notes', '')
                 if request_data_str:
                     edit_data = json.loads(request_data_str)
+                    # Convert field names to match database schema
+                    db_data = {}
+                    field_mapping = {
+                        'status': 'status',
+                        'company_name': 'company_id',
+                        'location_name': 'location_id', 
+                        'room_name': 'room_name',
+                        'business_unit_name': 'business_unit_id'
+                    }
+                    
+                    # Convert name fields to IDs
+                    supabase = get_supabase()
+                    if edit_data.get('company_name'):
+                        comp_response = supabase.table('ref_companies').select('company_id').eq('company_name', edit_data['company_name']).execute()
+                        if comp_response.data:
+                            db_data['company_id'] = comp_response.data[0]['company_id']
+                    
+                    if edit_data.get('location_name') and edit_data.get('room_name'):
+                        loc_response = supabase.table('ref_locations').select('location_id').eq('location_name', edit_data['location_name']).eq('room_name', edit_data['room_name']).execute()
+                        if loc_response.data:
+                            db_data['location_id'] = loc_response.data[0]['location_id']
+                            db_data['room_name'] = edit_data['room_name']
+                    
+                    if edit_data.get('business_unit_name'):
+                        unit_response = supabase.table('ref_business_units').select('business_unit_id').eq('business_unit_name', edit_data['business_unit_name']).execute()
+                        if unit_response.data:
+                            db_data['business_unit_id'] = unit_response.data[0]['business_unit_id']
+                    
+                    if edit_data.get('status'):
+                        db_data['status'] = edit_data['status']
+                    
                     from app.utils.database_manager import update_asset
-                    success = update_asset(approval.get('asset_id'), edit_data)
+                    success = update_asset(approval.get('asset_id'), db_data)
                     if not success:
                         return JSONResponse({"status": "error", "message": "Failed to update asset"})
             except Exception as e:

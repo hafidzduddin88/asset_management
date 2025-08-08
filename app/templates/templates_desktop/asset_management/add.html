@@ -36,7 +36,7 @@
 {% endif %}
 
 <form method="POST" enctype="multipart/form-data" class="max-w-4xl mx-auto bg-white shadow-xl rounded-2xl p-8">
-    <div x-data="assetForm()" x-init="initializeForm()" class="space-y-6">
+    <div class="space-y-6">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <!-- Asset Name -->
             <div class="md:col-span-2">
@@ -48,7 +48,7 @@
             <!-- Category -->
             <div>
                 <label for="category_name" class="block text-sm font-medium text-gray-700 required-field mb-2">Category</label>
-                <select name="category_name" id="category_name" required x-on:change="updateTypes()"
+                <select name="category_name" id="category_name" required
                     class="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500">
                     <option value="">Select Category</option>
                     {% for category in dropdown_options.categories %}
@@ -63,9 +63,6 @@
                 <select name="type_name" id="type_name" required
                     class="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500">
                     <option value="">Select Type</option>
-                    <template x-for="type in filteredTypes" :key="type.type_name">
-                        <option :value="type.type_name" x-text="type.type_name"></option>
-                    </template>
                 </select>
             </div>
         
@@ -117,7 +114,7 @@
         <!-- Location -->
         <div>
             <label for="location_name" class="block text-sm font-medium text-gray-700 required-field">Location</label>
-            <select name="location_name" id="location_name" required x-on:change="updateRooms()"
+            <select name="location_name" id="location_name" required
                 class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500">
                 <option value="">Select Location</option>
                 {% for location in dropdown_options.locations.keys() %}
@@ -132,9 +129,6 @@
             <select name="room_name" id="room_name" required
                 class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500">
                 <option value="">Select Room</option>
-                <template x-for="room in filteredRooms" :key="room">
-                    <option :value="room" x-text="room"></option>
-                </template>
             </select>
         </div>
         
@@ -235,33 +229,49 @@
 
 {% block scripts %}
 <script>
-    function assetForm() {
-        return {
-            types: {{ dropdown_options.types|tojson }},
-            locations: {{ dropdown_options.locations|tojson }},
-            filteredTypes: [],
-            filteredRooms: [],
-            
-            initializeForm() {
-                this.updateTypes();
-                this.updateRooms();
-            },
-            
-            updateTypes() {
-                const category = document.getElementById('category_name').value;
-                this.filteredTypes = category && this.types
-                    ? this.types.filter(type => type.category_name === category)
-                    : [];
-                document.getElementById('type_name').value = '';
-            },
-            
-            updateRooms() {
-                const location = document.getElementById('location_name').value;
-                this.filteredRooms = location && this.locations[location] 
-                    ? this.locations[location] 
-                    : [];
-            }
-        }
+const typesData = {{ dropdown_options.types|tojson }};
+const locationsData = {{ dropdown_options.locations|tojson }};
+
+function updateTypes() {
+    const categorySelect = document.getElementById('category_name');
+    const typeSelect = document.getElementById('type_name');
+    const selectedCategory = categorySelect.value;
+    
+    // Clear existing options except first
+    typeSelect.innerHTML = '<option value="">Select Type</option>';
+    
+    if (selectedCategory && typesData) {
+        const filteredTypes = typesData.filter(type => type.category_name === selectedCategory);
+        filteredTypes.forEach(type => {
+            const option = document.createElement('option');
+            option.value = type.type_name;
+            option.textContent = type.type_name;
+            typeSelect.appendChild(option);
+        });
     }
+}
+
+function updateRooms() {
+    const locationSelect = document.getElementById('location_name');
+    const roomSelect = document.getElementById('room_name');
+    const selectedLocation = locationSelect.value;
+    
+    // Clear existing options except first
+    roomSelect.innerHTML = '<option value="">Select Room</option>';
+    
+    if (selectedLocation && locationsData[selectedLocation]) {
+        locationsData[selectedLocation].forEach(room => {
+            const option = document.createElement('option');
+            option.value = room;
+            option.textContent = room;
+            roomSelect.appendChild(option);
+        });
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('category_name').addEventListener('change', updateTypes);
+    document.getElementById('location_name').addEventListener('change', updateRooms);
+});
 </script>
 {% endblock %}
