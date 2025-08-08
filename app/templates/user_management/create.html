@@ -3,36 +3,34 @@
 {% block title %}Create User - Admin{% endblock %}
 
 {% block content %}
-<div class="py-6">
+<div class="py-4">
     <div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h1 class="text-2xl font-bold text-gray-900 mb-6">Create New User</h1>
+        <h1 class="text-xl font-bold text-gray-900 mb-4">Create New User</h1>
         
         {% if error %}
-        <div class="mb-4 rounded-md bg-red-50 p-4">
-            <div class="text-sm text-red-800">{{ error }}</div>
+        <div class="mb-3 rounded bg-red-50 p-3">
+            <div class="text-xs text-red-800">{{ error }}</div>
         </div>
         {% endif %}
         
-        <form method="POST" class="bg-white shadow sm:rounded-lg p-6" onsubmit="return validateForm()">
-            <div class="grid grid-cols-1 gap-6">
-
-                
+        <form method="POST" class="bg-white shadow sm:rounded p-4" onsubmit="return validateForm()">
+            <div class="grid grid-cols-1 gap-4">
                 <div>
-                    <label for="email" class="block text-sm font-medium text-gray-700">Email *</label>
+                    <label for="email" class="block text-xs font-medium text-gray-700">Email *</label>
                     <input type="email" name="email" id="email" required
-                        class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
+                        class="mt-1 block w-full border border-gray-300 rounded px-2 py-1.5 text-sm">
                 </div>
                 
                 <div>
-                    <label for="full_name" class="block text-sm font-medium text-gray-700">Full Name *</label>
+                    <label for="full_name" class="block text-xs font-medium text-gray-700">Full Name *</label>
                     <input type="text" name="full_name" id="full_name" required
-                        class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
+                        class="mt-1 block w-full border border-gray-300 rounded px-2 py-1.5 text-sm">
                 </div>
                 
                 <div>
-                    <label for="role" class="block text-sm font-medium text-gray-700">Role *</label>
+                    <label for="role" class="block text-xs font-medium text-gray-700">Role *</label>
                     <select name="role" id="role" required
-                        class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
+                        class="mt-1 block w-full border border-gray-300 rounded px-2 py-1.5 text-sm">
                         <option value="">Select Role</option>
                         <option value="admin">Admin</option>
                         <option value="manager">Manager</option>
@@ -41,24 +39,22 @@
                 </div>
                 
                 <div>
-                    <label for="business_unit_name" class="block text-sm font-medium text-gray-700">Business Unit</label>
+                    <label for="business_unit_name" class="block text-xs font-medium text-gray-700">Business Unit</label>
                     <select name="business_unit_name" id="business_unit_name"
-                        class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
+                        class="mt-1 block w-full border border-gray-300 rounded px-2 py-1.5 text-sm">
                         <option value="">Select Business Unit</option>
                         {% for unit in business_units %}
                         <option value="{{ unit }}">{{ unit }}</option>
                         {% endfor %}
                     </select>
                 </div>
-                
-
             </div>
             
-            <div class="mt-6 flex justify-end space-x-3">
-                <a href="/user_management" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400">
+            <div class="mt-4 flex justify-end space-x-2">
+                <a href="/user_management" class="px-3 py-1.5 bg-gray-300 text-gray-700 rounded text-sm hover:bg-gray-400">
                     Cancel
                 </a>
-                <button type="submit" class="px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700">
+                <button type="submit" class="px-3 py-1.5 bg-primary-600 text-white rounded text-sm hover:bg-primary-700">
                     Create User
                 </button>
             </div>
