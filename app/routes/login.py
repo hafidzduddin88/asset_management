@@ -45,8 +45,15 @@ def clear_auth_cookies(response):
 async def login_page(request: Request, next: str = "/"):
     if hasattr(request.state, 'user') and request.state.user:
         return RedirectResponse(url=next, status_code=303)
+    
+    from app.utils.database_manager import get_dropdown_options
+    dropdown_options = get_dropdown_options()
 
-    return templates.TemplateResponse("login_logout.html", {"request": request, "next": next})
+    return templates.TemplateResponse("login_logout.html", {
+        "request": request, 
+        "next": next,
+        "business_units": dropdown_options.get('business_units', [])
+    })
 
 
 @router.post("/login")
@@ -102,17 +109,23 @@ async def signup_form(
     request: Request,
     email: str = Form(...),
     password: str = Form(...),
-    full_name: str = Form(...)
+    full_name: str = Form(...),
+    business_unit_name: str = Form(None)
 ):
     try:
         result = supabase.auth.sign_up({
             "email": email,
             "password": password,
-            "options": {"data": {"full_name": full_name}}
+            "options": {"data": {"full_name": full_name, "business_unit_name": business_unit_name}}
         })
 
         if not result.user:
             raise Exception("Signup failed")
+        
+        # Create profile with business unit data
+        from app.utils.profile_utils import create_profile_if_not_exists
+        user_metadata = result.user.user_metadata or {}
+        create_profile_if_not_exists(result.user.id, email, user_metadata)
 
         logging.info("User registered successfully")
         return templates.TemplateResponse(

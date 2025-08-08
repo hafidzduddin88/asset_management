@@ -73,6 +73,15 @@
                            placeholder="Email address">
                 </div>
                 <div>
+                    <select name="business_unit_name" required
+                            class="appearance-none rounded-none relative block w-full px-3 py-3 sm:py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 text-base sm:text-sm">
+                        <option value="">Select Business Unit</option>
+                        {% for bu in business_units %}
+                        <option value="{{ bu }}">{{ bu }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
                     <input type="password" name="password" required minlength="6"
                            class="appearance-none rounded-none relative block w-full px-3 py-3 sm:py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 text-base sm:text-sm"
                            placeholder="Password (min 6 characters)">
