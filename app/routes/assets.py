@@ -32,6 +32,7 @@ async def assets_page(
     return templates.TemplateResponse(template_path, {
         "request": request,
         "user": current_profile,
+        "current_user": current_profile,
         "assets": all_assets,
         "dropdown_options": dropdown_options
     })
