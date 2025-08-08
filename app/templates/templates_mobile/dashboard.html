@@ -98,6 +98,7 @@
         <select id="chartPeriod" class="text-xs px-2 py-1 border border-gray-300 rounded">
             <option value="month">Monthly</option>
             <option value="quarter">Quarterly</option>
+            <option value="year">Yearly</option>
         </select>
     </div>
     <div class="chart-container">
@@ -134,24 +135,24 @@
         <h3 class="font-semibold text-gray-900">Recent Assets</h3>
         <a href="/assets" class="text-blue-600 text-sm font-medium">View All</a>
     </div>
-    <div class="space-y-3">
+    <div class="space-y-2">
         {% for asset in latest_assets[:5] %}
         <div class="flex items-center py-2 border-b border-gray-100 last:border-b-0">
-            <div class="bg-blue-100 p-2 rounded-lg">
-                <i class="fas fa-box text-blue-600 text-sm"></i>
+            <div class="bg-blue-100 p-1.5 rounded-lg flex-shrink-0">
+                <i class="fas fa-box text-blue-600 text-xs"></i>
             </div>
-            <div class="ml-3 flex-1">
-                <div class="text-sm font-medium text-gray-900 truncate">{{ asset.get("display_name", "Unnamed Asset") }}</div>
-                <div class="text-xs text-gray-500">{{ asset.get("category_display", "") }}</div>
+            <div class="ml-2 flex-1 min-w-0">
+                <div class="text-xs font-medium text-gray-900 truncate">{{ asset.get("display_name", "Unnamed Asset") }}</div>
+                <div class="text-xs text-gray-500 truncate">{{ asset.get("category_display", "") }}</div>
             </div>
-            <div class="text-right">
+            <div class="flex-shrink-0 ml-2">
                 {% set status = asset.get("status", "") %}
                 {% if status == "Active" %}
-                    <span class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">Active</span>
+                    <span class="px-1.5 py-0.5 text-xs rounded-full bg-green-100 text-green-800 whitespace-nowrap">Active</span>
                 {% elif status == "Under Repair" %}
-                    <span class="px-2 py-1 text-xs rounded-full bg-red-100 text-red-800">Repair</span>
+                    <span class="px-1.5 py-0.5 text-xs rounded-full bg-red-100 text-red-800 whitespace-nowrap">Repair</span>
                 {% else %}
-                    <span class="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-800">{{ status }}</span>
+                    <span class="px-1.5 py-0.5 text-xs rounded-full bg-gray-100 text-gray-800 whitespace-nowrap">{{ status[:8] }}</span>
                 {% endif %}
             </div>
         </div>
@@ -186,6 +187,11 @@
             labels: {{ quarterly_chart_labels | tojson }},
             values: {{ quarterly_chart_values | tojson }},
             title: 'Quarterly Additions'
+        },
+        year: {
+            labels: {{ yearly_chart_labels | tojson }},
+            values: {{ yearly_chart_values | tojson }},
+            title: 'Yearly Additions'
         }
     };
     
