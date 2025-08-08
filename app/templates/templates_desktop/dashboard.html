@@ -237,20 +237,7 @@
             </div>
         </div>
         
-        <!-- To Be Disposed Chart -->
-        <div class="bg-white rounded-xl shadow-xl p-8">
-            <div class="flex justify-between items-center mb-6">
-                <h3 class="text-xl font-semibold text-gray-900">To Be Disposed</h3>
-                <div class="flex space-x-2">
-                    <button class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded text-gray-600 to-dispose-period-btn active" data-period="month">Monthly</button>
-                    <button class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded text-gray-600 to-dispose-period-btn" data-period="quarter">Quarterly</button>
-                    <button class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded text-gray-600 to-dispose-period-btn" data-period="year">Yearly</button>
-                </div>
-            </div>
-            <div class="chart-container">
-                <canvas id="toBeDisposedChart"></canvas>
-            </div>
-        </div>
+
         
         <!-- Disposed Assets Chart -->
         <div class="bg-white rounded-xl shadow-xl p-8">
@@ -469,7 +456,7 @@
     const damagedChart = initActivityChart('damagedChart', activityData.damaged || {}, 'rgba(239, 68, 68, 1)', 'Damaged');
     const repairedChart = initActivityChart('repairedChart', activityData.repaired || {}, 'rgba(16, 185, 129, 1)', 'Repaired');
     const relocatedChart = initActivityChart('relocatedChart', activityData.relocated || {}, 'rgba(59, 130, 246, 1)', 'Relocated');
-    const toBeDisposedChart = initActivityChart('toBeDisposedChart', activityData.to_be_disposed || {}, 'rgba(245, 158, 11, 1)', 'To Be Disposed');
+
     const disposedChart = initActivityChart('disposedChart', activityData.disposed || {}, 'rgba(107, 114, 128, 1)', 'Disposed');
     
     // Handle main chart period change
@@ -509,7 +496,7 @@
     setupActivityChartButtons('damaged-period-btn', damagedChart, 'damaged');
     setupActivityChartButtons('repaired-period-btn', repairedChart, 'repaired');
     setupActivityChartButtons('relocated-period-btn', relocatedChart, 'relocated');
-    setupActivityChartButtons('to-dispose-period-btn', toBeDisposedChart, 'to_be_disposed');
+
     setupActivityChartButtons('disposed-period-btn', disposedChart, 'disposed');
     
     // Handle refresh button

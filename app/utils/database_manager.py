@@ -15,6 +15,7 @@ TABLES = {
     'REPAIR_LOG': 'repair_log',
     'LOST_LOG': 'lost_log',
     'DISPOSAL_LOG': 'disposal_log',
+    'RELOCATION_LOG': 'relocation_log',
     'REF_CATEGORIES': 'ref_categories',
     'REF_TYPES': 'ref_asset_types',
     'REF_COMPANIES': 'ref_companies',
@@ -436,7 +437,6 @@ def get_chart_data():
         'damaged': {'monthly': {}, 'quarterly': {}, 'yearly': {}},
         'repaired': {'monthly': {}, 'quarterly': {}, 'yearly': {}},
         'relocated': {'monthly': {}, 'quarterly': {}, 'yearly': {}},
-        'to_be_disposed': {'monthly': {}, 'quarterly': {}, 'yearly': {}},
         'disposed': {'monthly': {}, 'quarterly': {}, 'yearly': {}}
     }
     
@@ -460,8 +460,11 @@ def get_chart_data():
 
     # Get data from log tables
     try:
+        # Process activity logs with same date filtering as asset additions
+        start_date_monthly = now - relativedelta(months=12)
+        
         # Damage logs
-        damage_logs = supabase.table(TABLES['DAMAGE_LOG']).select('*').execute().data or []
+        damage_logs = supabase.table(TABLES['DAMAGE_LOG']).select('*').gte('report_date', start_date_monthly.isoformat()).execute().data or []
         for log in damage_logs:
             date_str = log.get('report_date') or log.get('created_at')
             if date_str:
@@ -477,9 +480,9 @@ def get_chart_data():
                 activity_data['damaged']['yearly'][year_key] = activity_data['damaged']['yearly'].get(year_key, 0) + 1
         
         # Repair logs
-        repair_logs = supabase.table(TABLES['REPAIR_LOG']).select('*').execute().data or []
+        repair_logs = supabase.table(TABLES['REPAIR_LOG']).select('*').gte('action_date', start_date_monthly.isoformat()).execute().data or []
         for log in repair_logs:
-            date_str = log.get('repair_date') or log.get('created_at')
+            date_str = log.get('action_date') or log.get('created_at')
             if date_str:
                 dt = datetime.fromisoformat(date_str.replace('Z', '+00:00')) if 'T' in date_str else datetime.strptime(date_str, '%Y-%m-%d')
                 month_key = dt.strftime("%b %Y")
@@ -492,24 +495,27 @@ def get_chart_data():
                     activity_data['repaired']['quarterly'][quarter_key] += 1
                 activity_data['repaired']['yearly'][year_key] = activity_data['repaired']['yearly'].get(year_key, 0) + 1
         
-        # Relocation from approvals (approved relocations)
-        relocation_approvals = supabase.table(TABLES['APPROVALS']).select('*').eq('type', 'relocation').eq('status', 'approved').execute().data or []
-        for approval in relocation_approvals:
-            date_str = approval.get('approved_date')
-            if date_str:
-                dt = datetime.fromisoformat(date_str.replace('Z', '+00:00')) if 'T' in date_str else datetime.strptime(date_str, '%Y-%m-%d')
-                month_key = dt.strftime("%b %Y")
-                quarter_key = f"Q{(dt.month - 1) // 3 + 1} {dt.year}"
-                year_key = str(dt.year)
-                
-                if month_key in activity_data['relocated']['monthly']:
-                    activity_data['relocated']['monthly'][month_key] += 1
-                if quarter_key in activity_data['relocated']['quarterly']:
-                    activity_data['relocated']['quarterly'][quarter_key] += 1
-                activity_data['relocated']['yearly'][year_key] = activity_data['relocated']['yearly'].get(year_key, 0) + 1
+        # Relocation from relocation_log table
+        try:
+            relocation_logs = supabase.table(TABLES['RELOCATION_LOG']).select('*').eq('status', 'approved').gte('relocation_date', start_date_monthly.date()).execute().data or []
+            for log in relocation_logs:
+                date_str = log.get('relocation_date') or log.get('created_at')
+                if date_str:
+                    dt = datetime.fromisoformat(date_str.replace('Z', '+00:00')) if 'T' in date_str else datetime.strptime(date_str, '%Y-%m-%d')
+                    month_key = dt.strftime("%b %Y")
+                    quarter_key = f"Q{(dt.month - 1) // 3 + 1} {dt.year}"
+                    year_key = str(dt.year)
+                    
+                    if month_key in activity_data['relocated']['monthly']:
+                        activity_data['relocated']['monthly'][month_key] += 1
+                    if quarter_key in activity_data['relocated']['quarterly']:
+                        activity_data['relocated']['quarterly'][quarter_key] += 1
+                    activity_data['relocated']['yearly'][year_key] = activity_data['relocated']['yearly'].get(year_key, 0) + 1
+        except Exception:
+            pass
         
         # Disposal logs
-        disposal_logs = supabase.table(TABLES['DISPOSAL_LOG']).select('*').execute().data or []
+        disposal_logs = supabase.table(TABLES['DISPOSAL_LOG']).select('*').gte('disposal_date', start_date_monthly.isoformat()).execute().data or []
         for log in disposal_logs:
             date_str = log.get('disposal_date') or log.get('created_at')
             if date_str:
@@ -523,6 +529,8 @@ def get_chart_data():
                 if quarter_key in activity_data['disposed']['quarterly']:
                     activity_data['disposed']['quarterly'][quarter_key] += 1
                 activity_data['disposed']['yearly'][year_key] = activity_data['disposed']['yearly'].get(year_key, 0) + 1
+        
+
         
     except Exception as e:
         logging.error(f"Error getting activity data from logs: {str(e)}")
@@ -560,18 +568,32 @@ def get_chart_data():
                 logging.error(f"Error parsing date {purchase_date}: {str(e)}")
                 continue
     
-    # Sort yearly data
-    if yearly_counts:
-        sorted_years = sorted([int(year) for year in yearly_counts.keys()])
+    # Sort yearly data for both asset additions and activities
+    all_years = set(yearly_counts.keys())
+    for activity in activity_data.values():
+        all_years.update(activity['yearly'].keys())
+    
+    if all_years:
+        sorted_years = sorted([int(year) for year in all_years])
         min_year = min(sorted_years)
         max_year = max(max(sorted_years), now.year)
         
+        # Update yearly_counts
         filtered_yearly = {}
         for year in range(min_year, max_year + 1):
             filtered_yearly[str(year)] = yearly_counts.get(str(year), 0)
         yearly_counts = filtered_yearly
+        
+        # Update activity yearly data
+        for activity in activity_data.values():
+            filtered_activity_yearly = {}
+            for year in range(min_year, max_year + 1):
+                filtered_activity_yearly[str(year)] = activity['yearly'].get(str(year), 0)
+            activity['yearly'] = filtered_activity_yearly
     else:
         yearly_counts = {str(now.year): 0}
+        for activity in activity_data.values():
+            activity['yearly'] = {str(now.year): 0}
 
     return {
         "status_counts": status_counts,
