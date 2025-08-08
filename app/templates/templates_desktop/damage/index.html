@@ -28,10 +28,27 @@
 <!-- Asset Search -->
 <div class="bg-white rounded-lg shadow p-4 mb-4">
     <h3 class="font-semibold text-gray-900 mb-3">Search Asset</h3>
-    <input type="text" id="assetSearch" placeholder="Search by name or ID..." 
-           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
+        <input type="text" id="assetSearch" placeholder="Search by name or ID..." 
+               class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500">
+        <select id="locationFilter" class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500">
+            <option value="">All Locations</option>
+        </select>
+        <select id="roomFilter" class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500" disabled>
+            <option value="">All Rooms</option>
+        </select>
+    </div>
     <div id="searchResults" class="mt-3 space-y-2">
         <!-- Search results will appear here -->
+    </div>
+    
+    <!-- Selected Assets List -->
+    <div id="selectedAssetsList" class="mt-4" style="display: none;">
+        <h4 class="font-medium text-gray-900 mb-2">Selected Assets (<span id="selectedCount">0</span>)</h4>
+        <div id="selectedAssetsContainer" class="space-y-2 max-h-40 overflow-y-auto">
+            <!-- Selected assets will appear here -->
+        </div>
+        <button onclick="clearSelectedAssets()" class="mt-2 text-sm text-red-600 hover:text-red-800">Clear All</button>
     </div>
 </div>
 
@@ -152,45 +169,183 @@
 
 <script>
 const assetsData = {{ assets_data | tojson }};
-let selectedAsset = null;
+let selectedAssets = [];
+let roomsData = {};
 
-// Asset search functionality
-document.getElementById('assetSearch').addEventListener('input', function() {
-    const searchTerm = this.value.toLowerCase();
+// Initialize location and room data
+document.addEventListener('DOMContentLoaded', function() {
+    initializeFilters();
+    setupEventListeners();
+});
+
+function initializeFilters() {
+    const locationFilter = document.getElementById('locationFilter');
+    
+    // Build rooms data and populate locations
+    const locations = new Set();
+    assetsData.forEach(asset => {
+        const location = asset.ref_locations?.location_name || '';
+        const room = asset.ref_locations?.room_name || asset.room_name || '';
+        
+        if (location) {
+            locations.add(location);
+            if (!roomsData[location]) roomsData[location] = new Set();
+            if (room) roomsData[location].add(room);
+        }
+    });
+    
+    // Convert sets to arrays
+    Object.keys(roomsData).forEach(location => {
+        roomsData[location] = Array.from(roomsData[location]).sort();
+    });
+    
+    // Populate location dropdown
+    Array.from(locations).sort().forEach(location => {
+        const option = document.createElement('option');
+        option.value = location;
+        option.textContent = location;
+        locationFilter.appendChild(option);
+    });
+}
+
+function setupEventListeners() {
+    const locationFilter = document.getElementById('locationFilter');
+    const roomFilter = document.getElementById('roomFilter');
+    const assetSearch = document.getElementById('assetSearch');
+    
+    locationFilter.addEventListener('change', function() {
+        const selectedLocation = this.value;
+        roomFilter.innerHTML = '<option value="">All Rooms</option>';
+        roomFilter.disabled = !selectedLocation;
+        
+        if (selectedLocation && roomsData[selectedLocation]) {
+            roomsData[selectedLocation].forEach(room => {
+                const option = document.createElement('option');
+                option.value = room;
+                option.textContent = room;
+                roomFilter.appendChild(option);
+            });
+            roomFilter.disabled = false;
+        }
+        performSearch();
+    });
+    
+    roomFilter.addEventListener('change', performSearch);
+    assetSearch.addEventListener('input', performSearch);
+}
+
+function performSearch() {
+    const searchTerm = document.getElementById('assetSearch').value.toLowerCase();
+    const selectedLocation = document.getElementById('locationFilter').value;
+    const selectedRoom = document.getElementById('roomFilter').value;
     const resultsDiv = document.getElementById('searchResults');
     
-    if (searchTerm.length < 2) {
+    if (searchTerm.length < 2 && !selectedLocation && !selectedRoom) {
         resultsDiv.innerHTML = '';
         return;
     }
     
-    const filteredAssets = assetsData.filter(asset => 
-        asset.asset_name?.toLowerCase().includes(searchTerm) ||
-        asset.asset_id?.toString().includes(searchTerm)
-    ).slice(0, 5);
+    const filteredAssets = assetsData.filter(asset => {
+        const matchesSearch = !searchTerm || searchTerm.length < 2 || 
+            asset.asset_name?.toLowerCase().includes(searchTerm) ||
+            asset.asset_id?.toString().includes(searchTerm);
+        
+        const assetLocation = asset.ref_locations?.location_name || '';
+        const assetRoom = asset.ref_locations?.room_name || asset.room_name || '';
+        
+        const matchesLocation = !selectedLocation || assetLocation === selectedLocation;
+        const matchesRoom = !selectedRoom || assetRoom === selectedRoom;
+        
+        return matchesSearch && matchesLocation && matchesRoom;
+    }).slice(0, 10);
     
-    resultsDiv.innerHTML = filteredAssets.map(asset => `
-        <div class="p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50" onclick="selectAsset(${asset.asset_id}, '${asset.asset_name}')">
-            <div class="font-medium text-gray-900">${asset.asset_name}</div>
-            <div class="text-sm text-gray-500">ID: ${asset.asset_id}</div>
-        </div>
-    `).join('');
-});
-
-function selectAsset(assetId, assetName) {
-    selectedAsset = { id: assetId, name: assetName };
-    document.getElementById('assetSearch').value = assetName;
-    document.getElementById('searchResults').innerHTML = '';
+    resultsDiv.innerHTML = filteredAssets.map(asset => {
+        const location = asset.ref_locations?.location_name || '';
+        const room = asset.ref_locations?.room_name || asset.room_name || '';
+        
+        const isSelected = selectedAssets.some(a => a.id === asset.asset_id);
+        
+        return `
+            <div class="p-3 border border-gray-200 rounded-lg hover:bg-gray-50 flex justify-between items-center">
+                <div>
+                    <div class="font-medium text-gray-900">${asset.asset_name}</div>
+                    <div class="text-sm text-gray-500">ID: ${asset.asset_id}</div>
+                    <div class="text-xs text-gray-400">${location}${room ? ' - ' + room : ''}</div>
+                </div>
+                <button onclick="addAssetToList(${asset.asset_id}, '${asset.asset_name}', '${location}', '${room}')" 
+                        class="px-3 py-1 text-sm rounded-lg transition-colors ${
+                            isSelected ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-blue-600 text-white hover:bg-blue-700'
+                        }" ${isSelected ? 'disabled' : ''}>
+                    ${isSelected ? 'Added' : 'Add'}
+                </button>
+            </div>
+        `;
+    }).join('');
 }
 
-function openModal(type) {
-    if (!selectedAsset) {
-        alert('Please select an asset first');
+function addAssetToList(assetId, assetName, location, room) {
+    if (selectedAssets.some(a => a.id === assetId)) return;
+    
+    selectedAssets.push({
+        id: assetId,
+        name: assetName,
+        location: location,
+        room: room
+    });
+    
+    updateSelectedAssetsList();
+    performSearch(); // Refresh search results to update button states
+}
+
+function removeAssetFromList(assetId) {
+    selectedAssets = selectedAssets.filter(a => a.id !== assetId);
+    updateSelectedAssetsList();
+    performSearch(); // Refresh search results to update button states
+}
+
+function clearSelectedAssets() {
+    selectedAssets = [];
+    updateSelectedAssetsList();
+    performSearch();
+}
+
+function updateSelectedAssetsList() {
+    const listDiv = document.getElementById('selectedAssetsList');
+    const containerDiv = document.getElementById('selectedAssetsContainer');
+    const countSpan = document.getElementById('selectedCount');
+    
+    if (selectedAssets.length === 0) {
+        listDiv.style.display = 'none';
         return;
     }
     
-    document.getElementById(`${type}AssetId`).value = selectedAsset.id;
-    document.getElementById(`${type}AssetName`).value = selectedAsset.name;
+    listDiv.style.display = 'block';
+    countSpan.textContent = selectedAssets.length;
+    
+    containerDiv.innerHTML = selectedAssets.map(asset => `
+        <div class="flex justify-between items-center p-2 bg-gray-50 rounded-lg">
+            <div>
+                <div class="font-medium text-sm text-gray-900">${asset.name}</div>
+                <div class="text-xs text-gray-500">ID: ${asset.id} • ${asset.location}${asset.room ? ' - ' + asset.room : ''}</div>
+            </div>
+            <button onclick="removeAssetFromList(${asset.id})" class="text-red-600 hover:text-red-800 p-1">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    `).join('');
+}
+
+function openModal(type) {
+    if (selectedAssets.length === 0) {
+        alert('Please add assets to the list first');
+        return;
+    }
+    
+    // For multi-asset, we'll use the first asset's info in the form but process all selected assets
+    const firstAsset = selectedAssets[0];
+    document.getElementById(`${type}AssetId`).value = JSON.stringify(selectedAssets.map(a => a.id));
+    document.getElementById(`${type}AssetName`).value = selectedAssets.length === 1 ? 
+        firstAsset.name : `${selectedAssets.length} assets selected`;
     document.getElementById(`${type}Modal`).style.display = 'block';
 }
 
@@ -202,9 +357,9 @@ function closeModal(type) {
 document.getElementById('damageForm').addEventListener('submit', async function(e) {
     e.preventDefault();
     
+    const assetIds = JSON.parse(document.getElementById('damageAssetId').value);
     const formData = {
-        asset_id: document.getElementById('damageAssetId').value,
-        asset_name: document.getElementById('damageAssetName').value,
+        asset_ids: assetIds,
         damage_type: document.getElementById('damageType').value,
         severity: document.getElementById('damageSeverity').value,
         damage_description: document.getElementById('damageDescription').value
@@ -223,6 +378,7 @@ document.getElementById('damageForm').addEventListener('submit', async function(
         if (result.status === 'success') {
             closeModal('damage');
             document.getElementById('damageForm').reset();
+            clearSelectedAssets();
         }
     } catch (error) {
         alert('Error submitting damage report');
@@ -232,9 +388,9 @@ document.getElementById('damageForm').addEventListener('submit', async function(
 document.getElementById('lostForm').addEventListener('submit', async function(e) {
     e.preventDefault();
     
+    const assetIds = JSON.parse(document.getElementById('lostAssetId').value);
     const formData = {
-        asset_id: document.getElementById('lostAssetId').value,
-        asset_name: document.getElementById('lostAssetName').value,
+        asset_ids: assetIds,
         date_lost: document.getElementById('dateLost').value,
         description: document.getElementById('lostDescription').value
     };
@@ -252,6 +408,7 @@ document.getElementById('lostForm').addEventListener('submit', async function(e)
         if (result.status === 'success') {
             closeModal('lost');
             document.getElementById('lostForm').reset();
+            clearSelectedAssets();
         }
     } catch (error) {
         alert('Error submitting lost report');
@@ -261,9 +418,9 @@ document.getElementById('lostForm').addEventListener('submit', async function(e)
 document.getElementById('disposalForm').addEventListener('submit', async function(e) {
     e.preventDefault();
     
+    const assetIds = JSON.parse(document.getElementById('disposalAssetId').value);
     const formData = {
-        asset_id: document.getElementById('disposalAssetId').value,
-        asset_name: document.getElementById('disposalAssetName').value,
+        asset_ids: assetIds,
         disposal_reason: document.getElementById('disposalReason').value,
         description: document.getElementById('disposalDescription').value
     };
@@ -281,6 +438,7 @@ document.getElementById('disposalForm').addEventListener('submit', async functio
         if (result.status === 'success') {
             closeModal('disposal');
             document.getElementById('disposalForm').reset();
+            clearSelectedAssets();
         }
     } catch (error) {
         alert('Error submitting disposal request');
