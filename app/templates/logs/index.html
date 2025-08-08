@@ -4,9 +4,9 @@
 
 {% block content %}
 <div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="max-w-7xl mx-auto px-2 py-2 sm:px-6 sm:py-8 lg:px-8">
         <!-- Professional Header -->
-        <div class="bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 rounded-xl shadow-lg p-6 mb-6">
+        <div class="bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 rounded-lg shadow-lg p-3 mb-3 sm:p-6 sm:mb-6 sm:rounded-xl">
             <div class="flex items-center justify-between">
                 <div class="flex items-center space-x-4">
                     <div class="bg-white bg-opacity-20 p-3 rounded-xl">
@@ -14,18 +14,18 @@
                     </div>
                     <div>
                         {% if user.role.value == 'admin' %}
-                        <h1 class="text-2xl font-bold text-white">Admin Approvals</h1>
-                        <p class="text-blue-100 mt-1">Manage and review all system approvals</p>
+                        <h1 class="text-lg font-bold text-white sm:text-2xl">Admin Approvals</h1>
+                        <p class="text-blue-100 mt-1 text-sm sm:text-base">Manage and review all system approvals</p>
                         {% elif user.role.value == 'manager' %}
-                        <h1 class="text-2xl font-bold text-white">Manager Approvals</h1>
-                        <p class="text-blue-100 mt-1">Review and approve asset requests</p>
+                        <h1 class="text-lg font-bold text-white sm:text-2xl">Manager Approvals</h1>
+                        <p class="text-blue-100 mt-1 text-sm sm:text-base">Review and approve asset requests</p>
                         {% else %}
-                        <h1 class="text-2xl font-bold text-white">My Requests</h1>
-                        <p class="text-blue-100 mt-1">Track your submitted requests</p>
+                        <h1 class="text-lg font-bold text-white sm:text-2xl">My Requests</h1>
+                        <p class="text-blue-100 mt-1 text-sm sm:text-base">Track your submitted requests</p>
                         {% endif %}
                     </div>
                 </div>
-                <div class="hidden md:flex items-center space-x-6 text-white">
+                <div class="hidden sm:flex items-center space-x-4 text-white">
                     <div class="text-center">
                         <div class="text-2xl font-bold">{{ pending_approvals|length }}</div>
                         <div class="text-sm text-blue-100">Pending</div>
@@ -39,14 +39,14 @@
         </div>
         
         <!-- Professional Tabs -->
-        <div class="bg-white rounded-lg shadow p-2 mb-6">
+        <div class="bg-white rounded-lg shadow p-1 mb-3 sm:p-2 sm:mb-6">
             <nav class="flex space-x-2">
-                <button onclick="showTab('pending')" id="pending-tab" class="tab-button flex-1 flex items-center justify-center px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-md">
+                <button onclick="showTab('pending')" id="pending-tab" class="tab-button flex-1 flex items-center justify-center px-2 py-1 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all duration-200 bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-md">
                     <i class="fas fa-clock mr-2"></i>
                     Pending
                     <span class="ml-2 bg-white bg-opacity-20 px-2 py-1 rounded-full text-xs">{{ pending_approvals|length }}</span>
                 </button>
-                <button onclick="showTab('completed')" id="completed-tab" class="tab-button flex-1 flex items-center justify-center px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 text-gray-600 hover:text-gray-800 hover:bg-gray-50">
+                <button onclick="showTab('completed')" id="completed-tab" class="tab-button flex-1 flex items-center justify-center px-2 py-1 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all duration-200 text-gray-600 hover:text-gray-800 hover:bg-gray-50">
                     <i class="fas fa-check-circle mr-2"></i>
                     Completed
                     <span class="ml-2 bg-gray-100 px-2 py-1 rounded-full text-xs">{{ completed_approvals|length }}</span>
@@ -57,24 +57,24 @@
         <!-- Pending Approvals -->
         <div id="pending-content" class="tab-content">
             <div class="bg-white rounded-lg shadow overflow-hidden">
-                <div class="bg-gradient-to-r from-gray-50 to-gray-100 px-4 py-3 border-b border-gray-200">
+                <div class="bg-gradient-to-r from-gray-50 to-gray-100 px-2 py-2 sm:px-4 sm:py-3 border-b border-gray-200">
                     <div class="flex items-center justify-between">
-                        <div class="flex items-center space-x-3">
-                            <div class="bg-yellow-100 p-2 rounded-lg">
-                                <i class="fas fa-hourglass-half text-yellow-600"></i>
+                        <div class="flex items-center space-x-2 sm:space-x-3">
+                            <div class="bg-yellow-100 p-1 sm:p-2 rounded-lg">
+                                <i class="fas fa-hourglass-half text-yellow-600 text-sm sm:text-base"></i>
                             </div>
                             <div>
                                 {% if user.role.value in ['admin', 'manager'] %}
-                                <h3 class="text-lg font-semibold text-gray-900">Pending Approvals</h3>
-                                <p class="text-sm text-gray-600">Requests waiting for your approval</p>
+                                <h3 class="text-base sm:text-lg font-semibold text-gray-900">Pending Approvals</h3>
+                                <p class="text-xs sm:text-sm text-gray-600 hidden sm:block">Requests waiting for your approval</p>
                                 {% else %}
-                                <h3 class="text-lg font-semibold text-gray-900">Pending Requests</h3>
-                                <p class="text-sm text-gray-600">Your requests waiting for approval</p>
+                                <h3 class="text-base sm:text-lg font-semibold text-gray-900">Pending Requests</h3>
+                                <p class="text-xs sm:text-sm text-gray-600 hidden sm:block">Your requests waiting for approval</p>
                                 {% endif %}
                             </div>
                         </div>
-                        <div class="bg-yellow-100 px-3 py-1 rounded-full">
-                            <span class="text-sm font-semibold text-yellow-800">{{ pending_approvals|length }} items</span>
+                        <div class="bg-yellow-100 px-2 py-1 sm:px-3 rounded-full">
+                            <span class="text-xs sm:text-sm font-semibold text-yellow-800">{{ pending_approvals|length }}</span>
                         </div>
                     </div>
                 </div>
@@ -82,27 +82,27 @@
                 {% if pending_approvals %}
                 <div class="divide-y divide-gray-100">
                     {% for approval in pending_approvals %}
-                    <div class="p-4 hover:bg-gray-50 transition-colors duration-200">
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center space-x-4">
-                                <div class="bg-gradient-to-br from-yellow-400 to-orange-500 p-3 rounded-xl">
-                                    <i class="fas fa-file-alt text-white text-lg"></i>
+                    <div class="p-2 sm:p-4 hover:bg-gray-50 transition-colors duration-200">
+                        <div class="flex items-start justify-between">
+                            <div class="flex items-start space-x-2 sm:space-x-4 flex-1">
+                                <div class="bg-gradient-to-br from-yellow-400 to-orange-500 p-2 sm:p-3 rounded-lg sm:rounded-xl flex-shrink-0">
+                                    <i class="fas fa-file-alt text-white text-sm sm:text-lg"></i>
                                 </div>
-                                <div class="flex-1">
-                                    <div class="flex items-center space-x-3 mb-2">
-                                        <h4 class="text-lg font-semibold text-gray-900">{{ approval.get('asset_name', 'Unknown Asset') }}</h4>
-                                        <span class="px-3 py-1 bg-yellow-100 text-yellow-800 text-xs font-semibold rounded-full">
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex flex-col sm:flex-row sm:items-center sm:space-x-3 mb-1 sm:mb-2">
+                                        <h4 class="text-sm sm:text-lg font-semibold text-gray-900 truncate">{{ approval.get('asset_name', 'Unknown Asset') }}</h4>
+                                        <span class="px-2 py-1 sm:px-3 bg-yellow-100 text-yellow-800 text-xs font-semibold rounded-full mt-1 sm:mt-0 self-start">
                                             {{ approval.get('type', '').replace('_', ' ').title() }}
                                         </span>
                                     </div>
-                                    <div class="flex items-center space-x-6 text-sm text-gray-600">
+                                    <div class="flex flex-col sm:flex-row sm:items-center sm:space-x-6 text-xs sm:text-sm text-gray-600 space-y-1 sm:space-y-0">
                                         <div class="flex items-center space-x-1">
                                             <i class="fas fa-hashtag text-gray-400"></i>
                                             <span>{{ approval.get('asset_id', 'N/A') }}</span>
                                         </div>
                                         <div class="flex items-center space-x-1">
                                             <i class="fas fa-user text-gray-400"></i>
-                                            <span>{{ approval.get('submitted_by_name', 'Unknown') }}</span>
+                                            <span class="truncate">{{ approval.get('submitted_by_name', 'Unknown') }}</span>
                                         </div>
                                         <div class="flex items-center space-x-1">
                                             <i class="fas fa-calendar text-gray-400"></i>
@@ -111,10 +111,10 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="flex items-center space-x-3">
+                            <div class="flex items-center ml-2">
                                 <button onclick="showRequestDetail('{{ approval.get('approval_id', '') }}')" 
-                                    class="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 shadow-md hover:shadow-lg">
-                                    <i class="fas fa-eye mr-2"></i>View Detail
+                                    class="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-2 py-1 sm:px-4 sm:py-2 rounded text-xs sm:text-sm font-semibold transition-all duration-200 shadow-md hover:shadow-lg">
+                                    <i class="fas fa-eye sm:mr-2"></i><span class="hidden sm:inline">View Detail</span>
                                 </button>
                             </div>
                         </div>

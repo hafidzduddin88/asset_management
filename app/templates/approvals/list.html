@@ -4,20 +4,20 @@
 
 {% block content %}
 <div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="max-w-7xl mx-auto px-2 py-2 sm:px-6 sm:py-8 lg:px-8">
         <!-- Professional Header -->
-        <div class="bg-gradient-to-r from-indigo-600 via-purple-600 to-blue-700 rounded-xl shadow-lg p-6 mb-6">
+        <div class="bg-gradient-to-r from-indigo-600 via-purple-600 to-blue-700 rounded-lg shadow-lg p-3 mb-3 sm:p-6 sm:mb-6 sm:rounded-xl">
             <div class="flex items-center justify-between">
                 <div class="flex items-center space-x-4">
                     <div class="bg-white bg-opacity-20 p-3 rounded-xl">
                         <i class="fas fa-tasks text-3xl text-white"></i>
                     </div>
                     <div>
-                        <h1 class="text-2xl font-bold text-white">Approval Management</h1>
-                        <p class="text-blue-100 mt-1">Review and manage asset requests efficiently</p>
+                        <h1 class="text-lg font-bold text-white sm:text-2xl">Approval Management</h1>
+                        <p class="text-blue-100 mt-1 text-sm sm:text-base">Review and manage asset requests efficiently</p>
                     </div>
                 </div>
-                <div class="hidden md:flex items-center space-x-6 text-white">
+                <div class="hidden sm:flex items-center space-x-4 text-white">
                     <div class="text-center">
                         <div class="text-2xl font-bold">{{ pending_count }}</div>
                         <div class="text-sm text-blue-100">Pending</div>
@@ -31,14 +31,14 @@
         </div>
 
         <!-- Professional Tabs -->
-        <div class="bg-white rounded-lg shadow p-2 mb-6">
+        <div class="bg-white rounded-lg shadow p-1 mb-3 sm:p-2 sm:mb-6">
             <nav class="flex space-x-2">
-                <button onclick="showTab('pending')" id="pending-tab" class="tab-button flex-1 flex items-center justify-center px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md">
+                <button onclick="showTab('pending')" id="pending-tab" class="tab-button flex-1 flex items-center justify-center px-2 py-1 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all duration-200 bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md">
                     <i class="fas fa-hourglass-half mr-2"></i>
                     Pending Approvals
                     <span class="ml-2 bg-white bg-opacity-20 px-2 py-1 rounded-full text-xs">{{ pending_count }}</span>
                 </button>
-                <button onclick="showTab('complete')" id="complete-tab" class="tab-button flex-1 flex items-center justify-center px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 text-gray-600 hover:text-gray-800 hover:bg-gray-50">
+                <button onclick="showTab('complete')" id="complete-tab" class="tab-button flex-1 flex items-center justify-center px-2 py-1 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all duration-200 text-gray-600 hover:text-gray-800 hover:bg-gray-50">
                     <i class="fas fa-check-double mr-2"></i>
                     Completed
                     <span class="ml-2 bg-gray-100 px-2 py-1 rounded-full text-xs">{{ completed_count }}</span>
@@ -62,25 +62,25 @@
                 </div>
                 <ul class="divide-y divide-gray-100">
                     {% for approval in pending_approvals %}
-                    <li class="px-4 py-4 hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 transition-all duration-200">
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center space-x-4 flex-1">
+                    <li class="px-2 py-2 sm:px-4 sm:py-4 hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 transition-all duration-200">
+                        <div class="flex items-start justify-between">
+                            <div class="flex items-start space-x-2 sm:space-x-4 flex-1">
                                 <div class="flex-shrink-0">
                                     {% if approval.type == 'add_asset' %}
-                                        <div class="w-12 h-12 bg-gradient-to-br from-green-400 to-green-600 rounded-xl flex items-center justify-center shadow-lg">
-                                            <i class="fas fa-plus text-white text-lg"></i>
+                                        <div class="w-8 h-8 sm:w-12 sm:h-12 bg-gradient-to-br from-green-400 to-green-600 rounded-lg sm:rounded-xl flex items-center justify-center shadow-lg">
+                                            <i class="fas fa-plus text-white text-sm sm:text-lg"></i>
                                         </div>
                                     {% elif approval.type == 'relocation' %}
-                                        <div class="w-12 h-12 bg-gradient-to-br from-blue-400 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
-                                            <i class="fas fa-arrows-alt text-white text-lg"></i>
+                                        <div class="w-8 h-8 sm:w-12 sm:h-12 bg-gradient-to-br from-blue-400 to-blue-600 rounded-lg sm:rounded-xl flex items-center justify-center shadow-lg">
+                                            <i class="fas fa-arrows-alt text-white text-sm sm:text-lg"></i>
                                         </div>
                                     {% elif approval.type == 'damage_report' %}
-                                        <div class="w-12 h-12 bg-gradient-to-br from-red-400 to-red-600 rounded-xl flex items-center justify-center shadow-lg">
-                                            <i class="fas fa-exclamation-triangle text-white text-lg"></i>
+                                        <div class="w-8 h-8 sm:w-12 sm:h-12 bg-gradient-to-br from-red-400 to-red-600 rounded-lg sm:rounded-xl flex items-center justify-center shadow-lg">
+                                            <i class="fas fa-exclamation-triangle text-white text-sm sm:text-lg"></i>
                                         </div>
                                     {% else %}
-                                        <div class="w-12 h-12 bg-gradient-to-br from-gray-400 to-gray-600 rounded-xl flex items-center justify-center shadow-lg">
-                                            <i class="fas fa-file text-white text-lg"></i>
+                                        <div class="w-8 h-8 sm:w-12 sm:h-12 bg-gradient-to-br from-gray-400 to-gray-600 rounded-lg sm:rounded-xl flex items-center justify-center shadow-lg">
+                                            <i class="fas fa-file text-white text-sm sm:text-lg"></i>
                                         </div>
                                     {% endif %}
                                 </div>
@@ -133,18 +133,18 @@
                                     {% endif %}
                                 </div>
                             </div>
-                            <div class="flex items-center space-x-3">
+                            <div class="flex flex-col sm:flex-row items-end sm:items-center space-y-1 sm:space-y-0 sm:space-x-2 ml-2">
                                 <button onclick="showApprovalDetail('{{ approval.approval_id }}')" 
-                                    class="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 shadow-md hover:shadow-lg">
-                                    <i class="fas fa-eye mr-2"></i>Detail
+                                    class="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-2 py-1 sm:px-4 sm:py-2 rounded text-xs sm:text-sm font-semibold transition-all duration-200 shadow-md hover:shadow-lg w-full sm:w-auto">
+                                    <i class="fas fa-eye sm:mr-2"></i><span class="hidden sm:inline">Detail</span>
                                 </button>
                                 <button onclick="confirmApproval('{{ approval.approval_id }}', 'approved')" 
-                                    class="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 shadow-md hover:shadow-lg">
-                                    <i class="fas fa-check mr-2"></i>Approve
+                                    class="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white px-2 py-1 sm:px-4 sm:py-2 rounded text-xs sm:text-sm font-semibold transition-all duration-200 shadow-md hover:shadow-lg w-full sm:w-auto">
+                                    <i class="fas fa-check sm:mr-2"></i><span class="hidden sm:inline">Approve</span>
                                 </button>
                                 <button onclick="confirmApproval('{{ approval.approval_id }}', 'rejected')" 
-                                    class="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 shadow-md hover:shadow-lg">
-                                    <i class="fas fa-times mr-2"></i>Reject
+                                    class="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white px-2 py-1 sm:px-4 sm:py-2 rounded text-xs sm:text-sm font-semibold transition-all duration-200 shadow-md hover:shadow-lg w-full sm:w-auto">
+                                    <i class="fas fa-times sm:mr-2"></i><span class="hidden sm:inline">Reject</span>
                                 </button>
                             </div>
                         </div>

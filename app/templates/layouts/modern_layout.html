@@ -55,6 +55,15 @@
     <style>
         [x-cloak] { display: none !important; }
         
+        /* Mobile-first responsive utilities */
+        @media (max-width: 640px) {
+            .mobile-compact { padding: 0.5rem !important; }
+            .mobile-text-sm { font-size: 0.875rem !important; }
+            .mobile-hidden { display: none !important; }
+            .mobile-stack { flex-direction: column !important; }
+            .mobile-full { width: 100% !important; }
+        }
+        
         /* Loading Screen */
         #loading-screen {
             position: fixed;
@@ -302,7 +311,7 @@
 
     <!-- Main content -->
     <main class="flex-grow">
-        <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+        <div class="max-w-7xl mx-auto py-2 px-2 sm:py-6 sm:px-6 lg:px-8">
             {% block content %}{% endblock %}
         </div>
     </main>
