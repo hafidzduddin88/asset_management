@@ -91,7 +91,7 @@
                             </div>
                             <div>
                                 <label class="text-xs font-semibold text-gray-600 uppercase tracking-wide">Business Unit</label>
-                                <p class="text-gray-900 font-medium">{{ user.business_unit or 'Not specified' }}</p>
+                                <p class="text-gray-900 font-medium">{{ user.business_unit_name or 'Not specified' }}</p>
                             </div>
                         </div>
                     </div>
@@ -125,7 +125,11 @@
                                 <label class="text-xs font-semibold text-gray-600 uppercase tracking-wide">Member Since</label>
                                 <p class="text-gray-900 font-medium">
                                     {% if user.created_at %}
+                                    {% if user.created_at is string %}
+                                    {{ user.created_at[:10] }}
+                                    {% else %}
                                     {{ user.created_at.strftime('%B %d, %Y') }}
+                                    {% endif %}
                                     {% else %}
                                     Not available
                                     {% endif %}
@@ -135,7 +139,11 @@
                                 <label class="text-xs font-semibold text-gray-600 uppercase tracking-wide">Last Login</label>
                                 <p class="text-gray-900 font-medium">
                                     {% if user.last_login_at %}
+                                    {% if user.last_login_at is string %}
+                                    {{ user.last_login_at[:10] }}
+                                    {% else %}
                                     {{ user.last_login_at.strftime('%B %d, %Y at %I:%M %p') }}
+                                    {% endif %}
                                     {% else %}
                                     Never
                                     {% endif %}

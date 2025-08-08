@@ -22,14 +22,20 @@ EXPORT_TABLES = {
             'asset_id': 'Asset ID',
             'asset_name': 'Asset Name',
             'asset_tag': 'Asset Tag',
+            'category_name': 'Category',
+            'type_name': 'Asset Type',
             'manufacture': 'Manufacture',
             'model': 'Model',
             'serial_number': 'Serial Number',
+            'company_name': 'Company',
+            'business_unit_name': 'Business Unit',
+            'location_name': 'Location',
+            'room_name': 'Room',
+            'owner_name': 'Owner',
             'purchase_date': 'Purchase Date',
             'purchase_cost': 'Purchase Cost',
             'status': 'Status',
             'item_condition': 'Condition',
-            'room_name': 'Room',
             'notes': 'Notes',
             'warranty': 'Warranty',
             'supplier': 'Supplier'
@@ -109,8 +115,27 @@ async def export_to_excel(
         table_config = EXPORT_TABLES[table]
         supabase = get_supabase()
         
-        # Build query
-        query = supabase.table(table_config['table']).select(','.join(columns))
+        # Build query with foreign key relationships for assets
+        if table == 'assets':
+            # Include foreign key relationships for proper data display
+            select_fields = []
+            for col in columns:
+                if col in ['asset_id', 'asset_name', 'asset_tag', 'manufacture', 'model', 'serial_number', 'purchase_date', 'purchase_cost', 'status', 'item_condition', 'room_name', 'notes', 'warranty', 'supplier']:
+                    select_fields.append(col)
+            
+            # Add foreign key relationships
+            select_fields.extend([
+                'ref_categories(category_name)',
+                'ref_asset_types(type_name)', 
+                'ref_locations(location_name, room_name)',
+                'ref_business_units(business_unit_name)',
+                'ref_companies(company_name)',
+                'ref_owners(owner_name)'
+            ])
+            
+            query = supabase.table(table_config['table']).select(','.join(select_fields))
+        else:
+            query = supabase.table(table_config['table']).select(','.join(columns))
         
         # Apply filters
         if table == 'assets' and exclude_disposed:
@@ -142,6 +167,22 @@ async def export_to_excel(
             row_data = []
             for col in columns:
                 value = row.get(col, '')
+                
+                # Handle foreign key relationships for assets
+                if table == 'assets':
+                    if col == 'category_name':
+                        value = row.get('ref_categories', {}).get('category_name', '') if row.get('ref_categories') else ''
+                    elif col == 'type_name':
+                        value = row.get('ref_asset_types', {}).get('type_name', '') if row.get('ref_asset_types') else ''
+                    elif col == 'location_name':
+                        value = row.get('ref_locations', {}).get('location_name', '') if row.get('ref_locations') else ''
+                    elif col == 'business_unit_name':
+                        value = row.get('ref_business_units', {}).get('business_unit_name', '') if row.get('ref_business_units') else ''
+                    elif col == 'company_name':
+                        value = row.get('ref_companies', {}).get('company_name', '') if row.get('ref_companies') else ''
+                    elif col == 'owner_name':
+                        value = row.get('ref_owners', {}).get('owner_name', '') if row.get('ref_owners') else ''
+                
                 # Format dates
                 if col.endswith('_date') and value:
                     try:
@@ -150,7 +191,8 @@ async def export_to_excel(
                             value = dt.strftime('%Y-%m-%d %H:%M:%S')
                     except:
                         pass
-                row_data.append(value)
+                        
+                row_data.append(value or '')
             ws.append(row_data)
         
         # Auto-adjust column widths
