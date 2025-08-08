@@ -134,6 +134,26 @@ async def signup_form(
         )
 
 
+@router.post("/auth/forgot-password")
+async def forgot_password(request: Request):
+    try:
+        body = await request.json()
+        email = body.get('email')
+        
+        if not email:
+            return {"success": False, "error": "Email is required"}
+        
+        # Send password reset email via Supabase
+        result = supabase.auth.reset_password_email(email)
+        
+        logging.info(f"Password reset email sent to {email}")
+        return {"success": True, "message": "Password reset link sent to your email"}
+        
+    except Exception as e:
+        logging.error(f"Forgot password error: {str(e)}")
+        return {"success": False, "error": "Failed to send reset link"}
+
+
 @router.get("/logout")
 async def logout(request: Request):
     user_email = "unknown"
