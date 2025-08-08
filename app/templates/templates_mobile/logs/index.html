@@ -264,10 +264,24 @@ function viewDetail(index, type) {
                     </div>
                     ` : ''}
                     
+                    ${data.reporter_name ? `
+                    <div>
+                        <label class="text-sm font-medium text-gray-500">Reported By</label>
+                        <p class="text-sm text-gray-900">${data.reporter_name}</p>
+                    </div>
+                    ` : ''}
+                    
                     ${data.approved_by ? `
                     <div>
                         <label class="text-sm font-medium text-gray-500">Approved By</label>
                         <p class="text-sm text-gray-900">${data.approved_by}</p>
+                    </div>
+                    ` : ''}
+                    
+                    ${data.asset_id ? `
+                    <div>
+                        <label class="text-sm font-medium text-gray-500">Asset ID</label>
+                        <p class="text-sm text-gray-900">${data.asset_id}</p>
                     </div>
                     ` : ''}
                     

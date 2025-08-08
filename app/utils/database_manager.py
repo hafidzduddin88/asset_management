@@ -433,12 +433,7 @@ def get_chart_data():
     yearly_counts = {}
     
     # Activity data from logs
-    activity_data = {
-        'damaged': {'monthly': {}, 'quarterly': {}, 'yearly': {}},
-        'repaired': {'monthly': {}, 'quarterly': {}, 'yearly': {}},
-        'relocated': {'monthly': {}, 'quarterly': {}, 'yearly': {}},
-        'disposed': {'monthly': {}, 'quarterly': {}, 'yearly': {}}
-    }
+    activity_data = {}
     
     # Initialize periods
     for i in range(11, -1, -1):
@@ -463,72 +458,55 @@ def get_chart_data():
         # Process activity logs with same date filtering as asset additions
         start_date_monthly = now - relativedelta(months=12)
         
-        # Damage logs
-        damage_logs = supabase.table(TABLES['DAMAGE_LOG']).select('*').gte('report_date', start_date_monthly.isoformat()).execute().data or []
-        for log in damage_logs:
-            date_str = log.get('report_date') or log.get('created_at')
-            if date_str:
-                dt = datetime.fromisoformat(date_str.replace('Z', '+00:00')) if 'T' in date_str else datetime.strptime(date_str, '%Y-%m-%d')
-                month_key = dt.strftime("%b %Y")
-                quarter_key = f"Q{(dt.month - 1) // 3 + 1} {dt.year}"
-                year_key = str(dt.year)
-                
-                if month_key in activity_data['damaged']['monthly']:
-                    activity_data['damaged']['monthly'][month_key] += 1
-                if quarter_key in activity_data['damaged']['quarterly']:
-                    activity_data['damaged']['quarterly'][quarter_key] += 1
-                activity_data['damaged']['yearly'][year_key] = activity_data['damaged']['yearly'].get(year_key, 0) + 1
+        # Get all log data directly from tables
+        damage_logs = supabase.table('damage_log').select('created_at').gte('created_at', start_date_monthly.isoformat()).execute().data or []
+        repair_logs = supabase.table('repair_log').select('created_at').gte('created_at', start_date_monthly.isoformat()).execute().data or []
+        relocation_logs = supabase.table('relocation_log').select('created_at').gte('created_at', start_date_monthly.isoformat()).execute().data or []
+        disposal_logs = supabase.table('disposal_log').select('created_at').gte('created_at', start_date_monthly.isoformat()).execute().data or []
+        lost_logs = supabase.table('lost_log').select('created_at').gte('created_at', start_date_monthly.isoformat()).execute().data or []
         
-        # Repair logs
-        repair_logs = supabase.table(TABLES['REPAIR_LOG']).select('*').gte('action_date', start_date_monthly.isoformat()).execute().data or []
-        for log in repair_logs:
-            date_str = log.get('action_date') or log.get('created_at')
-            if date_str:
-                dt = datetime.fromisoformat(date_str.replace('Z', '+00:00')) if 'T' in date_str else datetime.strptime(date_str, '%Y-%m-%d')
-                month_key = dt.strftime("%b %Y")
-                quarter_key = f"Q{(dt.month - 1) // 3 + 1} {dt.year}"
-                year_key = str(dt.year)
-                
-                if month_key in activity_data['repaired']['monthly']:
-                    activity_data['repaired']['monthly'][month_key] += 1
-                if quarter_key in activity_data['repaired']['quarterly']:
-                    activity_data['repaired']['quarterly'][quarter_key] += 1
-                activity_data['repaired']['yearly'][year_key] = activity_data['repaired']['yearly'].get(year_key, 0) + 1
+        # Process each log type
+        log_types = [
+            (damage_logs, 'damaged'),
+            (repair_logs, 'repaired'), 
+            (relocation_logs, 'relocated'),
+            (disposal_logs, 'disposed'),
+            (lost_logs, 'lost')
+        ]
         
-        # Relocation from relocation_log table
-        try:
-            relocation_logs = supabase.table(TABLES['RELOCATION_LOG']).select('*').eq('status', 'approved').gte('relocation_date', start_date_monthly.date()).execute().data or []
-            for log in relocation_logs:
-                date_str = log.get('relocation_date') or log.get('created_at')
+        for logs, activity_type in log_types:
+            if activity_type not in activity_data:
+                activity_data[activity_type] = {'monthly': {}, 'quarterly': {}, 'yearly': {}}
+                # Initialize periods for new activity type
+                for i in range(11, -1, -1):
+                    month = (now.replace(day=1) - relativedelta(months=i)).strftime("%b %Y")
+                    activity_data[activity_type]['monthly'][month] = 0
+                for i in range(3, -1, -1):
+                    year = now.year
+                    quarter = ((now.month - 1) // 3 + 1) - i
+                    if quarter <= 0:
+                        year -= 1
+                        quarter += 4
+                    quarter_key = f"Q{quarter} {year}"
+                    activity_data[activity_type]['quarterly'][quarter_key] = 0
+            
+            for log in logs:
+                date_str = log.get('created_at')
                 if date_str:
-                    dt = datetime.fromisoformat(date_str.replace('Z', '+00:00')) if 'T' in date_str else datetime.strptime(date_str, '%Y-%m-%d')
-                    month_key = dt.strftime("%b %Y")
-                    quarter_key = f"Q{(dt.month - 1) // 3 + 1} {dt.year}"
-                    year_key = str(dt.year)
-                    
-                    if month_key in activity_data['relocated']['monthly']:
-                        activity_data['relocated']['monthly'][month_key] += 1
-                    if quarter_key in activity_data['relocated']['quarterly']:
-                        activity_data['relocated']['quarterly'][quarter_key] += 1
-                    activity_data['relocated']['yearly'][year_key] = activity_data['relocated']['yearly'].get(year_key, 0) + 1
-        except Exception:
-            pass
-        
-        # Disposal logs
-        disposal_logs = supabase.table(TABLES['DISPOSAL_LOG']).select('*').gte('disposal_date', start_date_monthly.isoformat()).execute().data or []
-        for log in disposal_logs:
-            date_str = log.get('disposal_date') or log.get('created_at')
-            if date_str:
-                dt = datetime.fromisoformat(date_str.replace('Z', '+00:00')) if 'T' in date_str else datetime.strptime(date_str, '%Y-%m-%d')
-                month_key = dt.strftime("%b %Y")
-                quarter_key = f"Q{(dt.month - 1) // 3 + 1} {dt.year}"
-                year_key = str(dt.year)
-                
-                if month_key in activity_data['disposed']['monthly']:
-                    activity_data['disposed']['monthly'][month_key] += 1
-                if quarter_key in activity_data['disposed']['quarterly']:
-                    activity_data['disposed']['quarterly'][quarter_key] += 1
-                activity_data['disposed']['yearly'][year_key] = activity_data['disposed']['yearly'].get(year_key, 0) + 1
+                    try:
+                        dt = datetime.fromisoformat(date_str.replace('Z', '+00:00'))
+                        month_key = dt.strftime("%b %Y")
+                        quarter_key = f"Q{(dt.month - 1) // 3 + 1} {dt.year}"
+                        year_key = str(dt.year)
+                        
+                        if month_key in activity_data[activity_type]['monthly']:
+                            activity_data[activity_type]['monthly'][month_key] += 1
+                        if quarter_key in activity_data[activity_type]['quarterly']:
+                            activity_data[activity_type]['quarterly'][quarter_key] += 1
+                        activity_data[activity_type]['yearly'][year_key] = activity_data[activity_type]['yearly'].get(year_key, 0) + 1
+                    except Exception as e:
+                        logging.error(f"Error parsing date {date_str}: {e}")
+                        continue
         
 
         
