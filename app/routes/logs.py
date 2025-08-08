@@ -6,6 +6,7 @@ from fastapi.templating import Jinja2Templates
 
 from app.utils.auth import get_current_profile
 from app.utils.database_manager import get_all_approvals, get_supabase
+from app.utils.device_detector import get_template
 
 router = APIRouter(prefix="/logs", tags=["logs"])
 templates = Jinja2Templates(directory="app/templates")
@@ -67,8 +68,9 @@ async def logs_page(
     pending_approvals = [a for a in approvals if a.get('status') == 'pending']
     completed_approvals = [a for a in approvals if a.get('status') in ['approved', 'rejected']]
     
+    template_path = get_template(request, "logs/index.html")
     return templates.TemplateResponse(
-        "logs/index.html",
+        template_path,
         {
             "request": request,
             "user": current_profile,

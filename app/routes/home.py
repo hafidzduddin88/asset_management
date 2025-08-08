@@ -6,6 +6,7 @@ from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 from app.utils.auth import get_current_profile
 from app.utils.database_manager import get_summary_data, get_chart_data, get_all_assets
+from app.utils.device_detector import get_template
 
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
@@ -169,11 +170,13 @@ async def home(request: Request, current_profile = Depends(get_current_profile),
             "error_message": error_message
         }
 
-        return templates.TemplateResponse("dashboard.html", context)
+        template_path = get_template(request, "dashboard.html")
+        return templates.TemplateResponse(template_path, context)
 
     except Exception as e:
         logging.error("Dashboard error: %s", e, exc_info=True)
-        return templates.TemplateResponse("dashboard.html", {
+        template_path = get_template(request, "dashboard.html")
+        return templates.TemplateResponse(template_path, {
             "request": request,
             "user": current_profile,
             "total_assets": 0,

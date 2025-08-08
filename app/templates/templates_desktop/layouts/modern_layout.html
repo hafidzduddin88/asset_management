@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Asset Management Business Platform{% endblock %}</title>
+    
+    <!-- PWA Support -->
+    <link rel="manifest" href="/static/manifest.json">
+    <meta name="theme-color" content="#3B82F6">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="AMBP">
+    
+    <!-- App Icons -->
+    <link rel="icon" type="image/png" sizes="16x16" href="/static/img/favicon-16x16.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/static/img/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="96x96" href="/static/img/favicon-96x96.png">
+    <link rel="apple-touch-icon" href="/static/img/apple-touch-icon.png">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#EFF6FF',
+                            100: '#DBEAFE',
+                            200: '#BFDBFE',
+                            300: '#93C5FD',
+                            400: '#60A5FA',
+                            500: '#3B82F6',
+                            600: '#2563EB',
+                            700: '#1D4ED8',
+                            800: '#1E40AF',
+                            900: '#1E3A8A',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Alpine.js -->
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    
+    <!-- HTMX -->
+    <script src="https://unpkg.com/htmx.org@1.9.2"></script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Custom CSS -->
+    <style>
+        [x-cloak] { display: none !important; }
+        
+        /* Loading Screen */
+        #loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.5s ease-out;
+        }
+        
+        #loading-screen.fade-out {
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        .loading-logo {
+            width: 120px;
+            height: 120px;
+            margin-bottom: 1rem;
+        }
+        
+        .loading-logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+        
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(59, 130, 246, 0.3);
+            border-top: 4px solid #3B82F6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+    
+    {% block head %}{% endblock %}
+</head>
+<body class="bg-gray-50 min-h-screen flex flex-col">
+    <!-- Loading Screen -->
+    <div id="loading-screen">
+        <div class="loading-logo">
+            <img src="/static/img/logo.png" alt="AMBP Logo">
+        </div>
+        <div class="loading-spinner"></div>
+        <p class="text-gray-600 text-sm mt-4">Loading...</p>
+    </div>
+
+    <!-- Desktop Navbar -->
+    <nav class="bg-white shadow-sm border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex">
+                    <div class="flex-shrink-0 flex items-center">
+                        <span class="text-2xl font-bold text-primary-600">AMBP</span>
+                    </div>
+                    <div class="ml-8 flex space-x-8">
+                        <a href="/" class="{% if request.url.path == '/' or request.url.path == '/dashboard' %}border-primary-500 text-gray-900{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                            <i class="fas fa-tachometer-alt mr-2"></i>Dashboard
+                        </a>
+                        <a href="/assets" class="{% if '/assets' in request.url.path %}border-primary-500 text-gray-900{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                            <i class="fas fa-database mr-2"></i>Database Assets
+                        </a>
+                        <a href="/asset_management/add" class="{% if '/asset_management/add' in request.url.path %}border-primary-500 text-gray-900{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                            <i class="fas fa-plus-circle mr-2"></i>Asset Registration
+                        </a>
+                        <a href="/relocation" class="{% if '/relocation' in request.url.path %}border-primary-500 text-gray-900{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                            <i class="fas fa-arrows-alt mr-2"></i>Relocation
+                        </a>
+                        <a href="/damage" class="{% if '/damage' in request.url.path %}border-primary-500 text-gray-900{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                            <i class="fas fa-exclamation-triangle mr-2"></i>Asset Issue
+                        </a>
+                        <a href="/logs" class="{% if '/logs' in request.url.path %}border-primary-500 text-gray-900{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                            <i class="fas fa-history mr-2"></i>Logs
+                        </a>
+                        {% if user and (user.role.value == 'admin' or user.role.value == 'manager') %}
+                        <a href="/approvals" class="{% if '/approvals' in request.url.path %}border-primary-500 text-gray-900{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                            <i class="fas fa-tasks mr-2"></i>Approvals
+                        </a>
+                        {% endif %}
+
+                        {% if user and user.role.value == 'admin' %}
+                        <div class="relative" x-data="{ open: false }">
+                            <button @click="open = !open" class="{% if request.url.path == '/disposal' or '/user_management' in request.url.path %}border-primary-500 text-gray-900{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                                <i class="fas fa-crown mr-2"></i>SuperAdmin
+                                <svg class="ml-1 h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                </svg>
+                            </button>
+                            <div x-show="open" @click.away="open = false" class="absolute z-10 mt-2 w-56 bg-white rounded-md shadow-lg py-1">
+                                <a href="/disposal" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                    <i class="fas fa-trash mr-2"></i>Disposal Asset
+                                </a>
+                                <a href="/user_management" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                    <i class="fas fa-users mr-2"></i>User Management
+                                </a>
+                                <a href="/export" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                    <i class="fas fa-download mr-2"></i>Export Data
+                                </a>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        {% if user and user.role.value == 'manager' %}
+                        <div class="relative" x-data="{ open: false }">
+                            <button @click="open = !open" class="{% if '/asset_management/' in request.url.path %}border-primary-500 text-gray-900{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                                <i class="fas fa-user-tie mr-2"></i>Manager
+                                <svg class="ml-1 h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                </svg>
+                            </button>
+                            <div x-show="open" @click.away="open = false" class="absolute z-10 mt-2 w-48 bg-white rounded-md shadow-lg py-1">
+                                <a href="/asset_management/list" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                    <i class="fas fa-edit mr-2"></i>Edit Asset
+                                </a>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="flex items-center">
+                    <!-- Profile dropdown -->
+                    <div class="ml-3 relative" x-data="{ open: false }">
+                        <div>
+                            <button @click="open = !open" class="max-w-xs bg-white flex items-center text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                                <span class="sr-only">Open user menu</span>
+                                {% if user and user.photo_url %}
+                                <img src="{{ user.photo_url }}" alt="Profile Photo" class="h-10 w-10 rounded-full object-cover">
+                                {% else %}
+                                <div class="h-10 w-10 rounded-full bg-primary-100 flex items-center justify-center text-primary-800 font-semibold text-lg">
+                                    {{ (user.full_name[0] if user.full_name else user.username[0]).upper() if user else 'U' }}
+                                </div>
+                                {% endif %}
+                                <div class="ml-3 text-left">
+                                    <div class="text-sm font-medium text-gray-900">{{ user.full_name if user and user.full_name else (user.username if user else 'User') }}</div>
+                                    <div class="text-xs text-gray-500">{{ user.role.value.title() if user and user.role else 'Role' }}</div>
+                                </div>
+                            </button>
+                        </div>
+                        <div x-show="open" 
+                             @click.away="open = false"
+                             x-transition:enter="transition ease-out duration-100"
+                             x-transition:enter-start="transform opacity-0 scale-95"
+                             x-transition:enter-end="transform opacity-100 scale-100"
+                             x-transition:leave="transition ease-in duration-75"
+                             x-transition:leave-start="transform opacity-100 scale-100"
+                             x-transition:leave-end="transform opacity-0 scale-95"
+                             class="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5 focus:outline-none"
+                             x-cloak>
+                            <a href="/profile" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                <i class="fas fa-user mr-2"></i>Your Profile
+                            </a>
+                            <a href="/logout" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                <i class="fas fa-sign-out-alt mr-2"></i>Sign out
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main content -->
+    <main class="flex-grow">
+        <div class="max-w-7xl mx-auto py-6 px-6 lg:px-8">
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-gray-200 py-6">
+        <div class="max-w-7xl mx-auto px-6 lg:px-8">
+            <div class="flex justify-between items-center">
+                <p class="text-sm text-gray-500">
+                    &copy; 2025 Asset Management & Business Process Department. All rights reserved.
+                </p>
+                <div class="flex space-x-4 text-sm text-gray-500">
+                    <span>Version 2.0</span>
+                    <span>•</span>
+                    <span>Desktop Mode</span>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Toast notifications -->
+    <div id="toast-container" class="fixed bottom-4 right-4 z-50">
+        {% include "components/toast_notification.html" %}
+    </div>
+
+    <!-- PWA Install Prompt -->
+    <div id="installPrompt" class="fixed bottom-4 left-4 bg-primary-600 text-white p-4 rounded-lg shadow-lg z-50" style="display: none;">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center">
+                <i class="fas fa-desktop mr-3 text-xl"></i>
+                <div>
+                    <p class="font-medium">Install AMBP</p>
+                    <p class="text-sm opacity-90">Add to desktop for quick access</p>
+                </div>
+            </div>
+            <div class="flex space-x-2">
+                <button id="installBtn" class="bg-white text-primary-600 px-3 py-1 rounded text-sm font-medium">Install</button>
+                <button id="dismissBtn" class="text-white opacity-75 hover:opacity-100">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script>
+        // Hide loading screen when page is loaded
+        window.addEventListener('load', function() {
+            setTimeout(() => {
+                const loadingScreen = document.getElementById('loading-screen');
+                loadingScreen.classList.add('fade-out');
+                setTimeout(() => {
+                    loadingScreen.style.display = 'none';
+                }, 500);
+            }, 1000);
+        });
+        
+        let deferredPrompt;
+        
+        // PWA Install Prompt
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            
+            if (!window.matchMedia('(display-mode: standalone)').matches && 
+                localStorage.getItem('installPromptDismissed') !== 'true') {
+                document.getElementById('installPrompt').style.display = 'block';
+            }
+        });
+        
+        document.getElementById('installBtn').addEventListener('click', async () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                deferredPrompt = null;
+                document.getElementById('installPrompt').style.display = 'none';
+            } else {
+                alert('To install this app:\n\n1. Open browser menu (⋮)\n2. Select "Install app" or "Add to desktop"\n3. Follow the prompts');
+                document.getElementById('installPrompt').style.display = 'none';
+            }
+        });
+        
+        document.getElementById('dismissBtn').addEventListener('click', () => {
+            document.getElementById('installPrompt').style.display = 'none';
+            localStorage.setItem('installPromptDismissed', 'true');
+        });
+        
+        // Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('/static/service-worker.js').then(function(registration) {
+                    console.log('ServiceWorker registration successful with scope: ', registration.scope);
+                }, function(err) {
+                    console.log('ServiceWorker registration failed: ', err);
+                });
+            });
+        }
+    </script>
+
+    <!-- Custom JS -->
+    {% block scripts %}{% endblock %}
+</body>
+</html>

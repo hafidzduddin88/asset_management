@@ -8,6 +8,7 @@ import json
 from app.utils.auth import get_current_profile
 from app.utils.database_manager import get_all_assets, get_dropdown_options, add_approval_request, get_asset_by_id
 from app.utils.flash import set_flash
+from app.utils.device_detector import get_template
 
 router = APIRouter(prefix="/relocation", tags=["relocation"])
 templates = Jinja2Templates(directory="app/templates")
@@ -22,8 +23,9 @@ async def relocation_page(
     all_assets = get_all_assets()
     dropdown_options = get_dropdown_options()
     
+    template_path = get_template(request, "relocation/index.html")
     return templates.TemplateResponse(
-        "relocation/index.html",
+        template_path,
         {
             "request": request,
             "user": current_profile,

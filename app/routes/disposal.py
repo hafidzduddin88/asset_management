@@ -7,6 +7,7 @@ from datetime import datetime
 from app.utils.auth import get_admin_user
 from app.utils.database_manager import get_all_assets, update_asset
 from app.utils.flash import set_flash
+from app.utils.device_detector import get_template
 
 router = APIRouter(prefix="/disposal", tags=["disposal"])
 templates = Jinja2Templates(directory="app/templates")
@@ -29,8 +30,9 @@ async def disposal_page(
         if status in ['To Be Disposed', 'To be Disposed', 'TO BE DISPOSED']:
             disposable_assets.append(asset)
     
+    template_path = get_template(request, "disposal/index.html")
     return templates.TemplateResponse(
-        "disposal/index.html",
+        template_path,
         {
             "request": request,
             "user": current_profile,

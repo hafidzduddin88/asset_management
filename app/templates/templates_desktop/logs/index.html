@@ -1,0 +1,207 @@
+{% extends "templates_desktop/layouts/modern_layout.html" %}
+
+{% block title %}Logs{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="bg-purple-600 rounded-lg p-4 mb-4">
+    <h1 class="text-xl font-bold text-white">Approval Logs</h1>
+    <p class="text-purple-100 text-sm">Track your requests</p>
+</div>
+
+<!-- Tabs -->
+<div class="bg-white rounded-lg shadow p-1 mb-4">
+    <nav class="flex space-x-1">
+        <button onclick="showTab('pending')" id="pending-tab" 
+            class="tab-button flex-1 flex items-center justify-center px-3 py-2 rounded-lg text-sm font-semibold transition-all bg-purple-600 text-white">
+            <i class="fas fa-hourglass-half mr-2"></i>
+            Pending
+            <span class="ml-2 bg-white bg-opacity-20 px-2 py-1 rounded-full text-xs">{{ pending_approvals|length }}</span>
+        </button>
+        <button onclick="showTab('complete')" id="complete-tab" 
+            class="tab-button flex-1 flex items-center justify-center px-3 py-2 rounded-lg text-sm font-semibold transition-all text-gray-600 hover:bg-gray-50">
+            <i class="fas fa-check-double mr-2"></i>
+            Complete
+            <span class="ml-2 bg-gray-100 px-2 py-1 rounded-full text-xs">{{ completed_approvals|length }}</span>
+        </button>
+    </nav>
+</div>
+
+<!-- Pending Requests -->
+<div id="pending-content" class="tab-content">
+    <div class="space-y-3">
+        {% for approval in pending_approvals %}
+        <div class="bg-white rounded-lg shadow p-4">
+            <div class="flex items-start justify-between mb-3">
+                <div class="flex items-start space-x-3">
+                    <div class="flex-shrink-0">
+                        {% if approval.type == 'add_asset' %}
+                            <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-plus text-green-600"></i>
+                            </div>
+                        {% elif approval.type == 'relocation' %}
+                            <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-arrows-alt text-blue-600"></i>
+                            </div>
+                        {% elif approval.type == 'damage_report' %}
+                            <div class="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-exclamation-triangle text-red-600"></i>
+                            </div>
+                        {% else %}
+                            <div class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-file text-gray-600"></i>
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="flex-1">
+                        <h4 class="font-semibold text-gray-900 text-sm">
+                            {% if approval.type == 'add_asset' %}
+                                Add Asset
+                            {% elif approval.type == 'edit_asset' %}
+                                Edit Asset
+                            {% elif approval.type == 'damage_report' %}
+                                Damage Report
+                            {% elif approval.type == 'repair_action' %}
+                                Repair Action
+                            {% elif approval.type == 'lost_report' %}
+                                Lost Report
+                            {% elif approval.type == 'disposal_request' %}
+                                Disposal Request
+                            {% elif approval.type == 'relocation' %}
+                                Asset Relocation
+                            {% else %}
+                                {{ approval.type.replace('_', ' ').title() }}
+                            {% endif %}
+                        </h4>
+                        <p class="text-gray-900 font-medium text-sm">{{ approval.asset_name }}</p>
+                        <div class="text-xs text-gray-500 mt-1">
+                            <div>📅 {{ approval.submitted_date[:10] if approval.submitted_date else '' }}</div>
+                        </div>
+                    </div>
+                </div>
+                <span class="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs font-semibold rounded-full">
+                    Pending
+                </span>
+            </div>
+            
+            {% if approval.description %}
+            <div class="text-xs text-gray-600 bg-gray-50 p-2 rounded">
+                {{ approval.description }}
+            </div>
+            {% endif %}
+        </div>
+        {% else %}
+        <div class="text-center py-12 text-gray-500">
+            <div class="bg-gray-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-hourglass-half text-2xl text-gray-400"></i>
+            </div>
+            <h3 class="font-semibold text-gray-900 mb-2">No Pending Requests</h3>
+            <p class="text-sm">Your submitted requests will appear here</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Completed Requests -->
+<div id="complete-content" class="tab-content hidden">
+    <div class="space-y-3">
+        {% for approval in completed_approvals %}
+        <div class="bg-white rounded-lg shadow p-4">
+            <div class="flex items-start justify-between mb-2">
+                <div class="flex items-start space-x-3">
+                    <div class="flex-shrink-0">
+                        {% if approval.type == 'add_asset' %}
+                            <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                                <i class="fas fa-plus text-green-600 text-sm"></i>
+                            </div>
+                        {% elif approval.type == 'relocation' %}
+                            <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                                <i class="fas fa-arrows-alt text-blue-600 text-sm"></i>
+                            </div>
+                        {% elif approval.type == 'damage_report' %}
+                            <div class="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
+                                <i class="fas fa-exclamation-triangle text-red-600 text-sm"></i>
+                            </div>
+                        {% else %}
+                            <div class="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
+                                <i class="fas fa-file text-gray-600 text-sm"></i>
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="flex-1">
+                        <div class="flex items-center">
+                            <p class="text-sm font-medium text-gray-900">
+                                {% if approval.type == 'add_asset' %}
+                                    Add Asset
+                                {% elif approval.type == 'edit_asset' %}
+                                    Edit Asset
+                                {% elif approval.type == 'damage_report' %}
+                                    Damage Report
+                                {% elif approval.type == 'repair_action' %}
+                                    Repair Action
+                                {% elif approval.type == 'lost_report' %}
+                                    Lost Report
+                                {% elif approval.type == 'disposal_request' %}
+                                    Disposal Request
+                                {% elif approval.type == 'relocation' %}
+                                    Asset Relocation
+                                {% else %}
+                                    {{ approval.type.replace('_', ' ').title() }}
+                                {% endif %}
+                            </p>
+                            {% if approval.status == 'approved' %}
+                                <span class="ml-2 px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                    <i class="fas fa-check mr-1"></i>Approved
+                                </span>
+                            {% else %}
+                                <span class="ml-2 px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                    <i class="fas fa-times mr-1"></i>Rejected
+                                </span>
+                            {% endif %}
+                        </div>
+                        <p class="text-sm text-gray-600">{{ approval.asset_name }}</p>
+                        <div class="text-xs text-gray-500 mt-1">
+                            <span>📅 {{ approval.submitted_date[:10] if approval.submitted_date else '' }}</span>
+                            {% if approval.approved_date %}
+                            <span class="mx-2">•</span>
+                            <span>✅ {{ approval.approved_date[:10] }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% if approval.description %}
+            <div class="text-xs text-gray-600 bg-gray-50 p-2 rounded mt-2">
+                {{ approval.description }}
+            </div>
+            {% endif %}
+        </div>
+        {% else %}
+        <div class="text-center py-8 text-gray-400">
+            <i class="fas fa-history text-3xl mb-4"></i>
+            <p class="font-medium">No completed requests</p>
+            <p class="text-sm">Processed requests will appear here</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<script>
+function showTab(tabName) {
+    document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.add('hidden');
+    });
+    
+    document.querySelectorAll('.tab-button').forEach(button => {
+        button.classList.remove('bg-purple-600', 'text-white');
+        button.classList.add('text-gray-600', 'hover:bg-gray-50');
+    });
+    
+    document.getElementById(tabName + '-content').classList.remove('hidden');
+    
+    const activeTab = document.getElementById(tabName + '-tab');
+    activeTab.classList.remove('text-gray-600', 'hover:bg-gray-50');
+    activeTab.classList.add('bg-purple-600', 'text-white');
+}
+</script>
+{% endblock %}

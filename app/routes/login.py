@@ -3,6 +3,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from app.config import load_config
 from app.utils.auth import decode_supabase_jwt
+from app.utils.device_detector import get_template
 from supabase import create_client, Client
 import logging
 from urllib.parse import urlparse
@@ -49,7 +50,8 @@ async def login_page(request: Request, next: str = "/"):
     from app.utils.database_manager import get_dropdown_options
     dropdown_options = get_dropdown_options()
 
-    return templates.TemplateResponse("login_logout.html", {
+    template_path = get_template(request, "login_logout.html")
+    return templates.TemplateResponse(template_path, {
         "request": request, 
         "next": next,
         "business_units": dropdown_options.get('business_units', [])
@@ -93,8 +95,9 @@ async def login_form(
 
     except Exception as e:
         logging.error(f"Login failed for {email}: Authentication error")
+        template_path = get_template(request, "login_logout.html")
         return templates.TemplateResponse(
-            "login_logout.html",
+            template_path,
             {
                 "request": request,
                 "error": "Login failed. Please check your credentials.",
@@ -108,7 +111,14 @@ async def login_form(
 async def signup_page(request: Request):
     if hasattr(request.state, 'user') and request.state.user:
         return RedirectResponse(url="/", status_code=303)
-    return templates.TemplateResponse("signup.html", {"request": request})
+    from app.utils.database_manager import get_dropdown_options
+    dropdown_options = get_dropdown_options()
+    
+    template_path = get_template(request, "login_logout.html")
+    return templates.TemplateResponse(template_path, {
+        "request": request,
+        "business_units": dropdown_options.get('business_units', [])
+    })
 
 
 @router.post("/signup")
@@ -135,20 +145,30 @@ async def signup_form(
         create_profile_if_not_exists(result.user.id, email, user_metadata)
 
         logging.info("User registered successfully")
+        from app.utils.database_manager import get_dropdown_options
+        dropdown_options = get_dropdown_options()
+        
+        template_path = get_template(request, "login_logout.html")
         return templates.TemplateResponse(
-            "signup.html",
+            template_path,
             {
                 "request": request,
-                "success": "Account created. Please check your email for verification."
+                "success": "Account created. Please check your email for verification.",
+                "business_units": dropdown_options.get('business_units', [])
             }
         )
     except Exception as e:
         logging.error("Signup failed: Registration error")
+        from app.utils.database_manager import get_dropdown_options
+        dropdown_options = get_dropdown_options()
+        
+        template_path = get_template(request, "login_logout.html")
         return templates.TemplateResponse(
-            "signup.html",
+            template_path,
             {
                 "request": request,
-                "error": "Signup failed. Please try again."
+                "error": "Signup failed. Please try again.",
+                "business_units": dropdown_options.get('business_units', [])
             },
             status_code=400
         )

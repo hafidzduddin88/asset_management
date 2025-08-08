@@ -1,0 +1,257 @@
+{% extends "templates_mobile/layouts/modern_layout.html" %}
+
+{% block title %}Add Asset{% endblock %}
+
+{% block head %}
+<style>
+    .required-field::after {
+        content: "*";
+        color: red;
+        margin-left: 4px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="bg-blue-600 rounded-lg p-4 mb-4">
+    <h1 class="text-xl font-bold text-white">Add New Asset</h1>
+    <p class="text-blue-100 text-sm">Register new asset to system</p>
+</div>
+
+{% if error %}
+<div class="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
+    <div class="flex items-center">
+        <i class="fas fa-exclamation-triangle text-red-500 mr-2"></i>
+        <p class="text-red-800 text-sm">{{ error }}</p>
+    </div>
+</div>
+{% endif %}
+
+<form method="POST" enctype="multipart/form-data" class="space-y-4 bg-white shadow rounded-lg p-4">
+    <div x-data="assetForm()" x-init="initializeForm()">
+        <!-- Asset Name -->
+        <div>
+            <label for="asset_name" class="block text-sm font-medium text-gray-700 required-field">Asset Name</label>
+            <input type="text" name="asset_name" id="asset_name" required
+                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500">
+        </div>
+        
+        <!-- Category -->
+        <div>
+            <label for="category_name" class="block text-sm font-medium text-gray-700 required-field">Category</label>
+            <select name="category_name" id="category_name" required x-on:change="updateTypes()"
+                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500">
+                <option value="">Select Category</option>
+                {% for category in dropdown_options.categories %}
+                <option value="{{ category }}">{{ category }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <!-- Type -->
+        <div>
+            <label for="type_name" class="block text-sm font-medium text-gray-700 required-field">Type</label>
+            <select name="type_name" id="type_name" required
+                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500">
+                <option value="">Select Type</option>
+                <template x-for="type in filteredTypes" :key="type.type_name">
+                    <option :value="type.type_name" x-text="type.type_name"></option>
+                </template>
+            </select>
+        </div>
+        
+        <!-- Manufacture & Model -->
+        <div class="grid grid-cols-2 gap-3">
+            <div>
+                <label for="manufacture" class="block text-sm font-medium text-gray-700">Manufacture</label>
+                <input type="text" name="manufacture" id="manufacture"
+                    class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500">
+            </div>
+            <div>
+                <label for="model" class="block text-sm font-medium text-gray-700">Model</label>
+                <input type="text" name="model" id="model"
+                    class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500">
+            </div>
+        </div>
+        
+        <!-- Serial Number -->
+        <div>
+            <label for="serial_number" class="block text-sm font-medium text-gray-700">Serial Number</label>
+            <input type="text" name="serial_number" id="serial_number"
+                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500">
+        </div>
+        
+        <!-- Company -->
+        <div>
+            <label for="company_name" class="block text-sm font-medium text-gray-700 required-field">Company</label>
+            <select name="company_name" id="company_name" required
+                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500">
+                <option value="">Select Company</option>
+                {% for company in dropdown_options.companies %}
+                <option value="{{ company }}">{{ company }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <!-- Business Unit -->
+        <div>
+            <label for="business_unit_name" class="block text-sm font-medium text-gray-700">Business Unit</label>
+            <select name="business_unit_name" id="business_unit_name"
+                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500">
+                <option value="">Select Business Unit</option>
+                {% for unit in dropdown_options.business_units %}
+                <option value="{{ unit }}">{{ unit }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <!-- Location -->
+        <div>
+            <label for="location_name" class="block text-sm font-medium text-gray-700 required-field">Location</label>
+            <select name="location_name" id="location_name" required x-on:change="updateRooms()"
+                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500">
+                <option value="">Select Location</option>
+                {% for location in dropdown_options.locations.keys() %}
+                <option value="{{ location }}">{{ location }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <!-- Room -->
+        <div>
+            <label for="room_name" class="block text-sm font-medium text-gray-700 required-field">Room</label>
+            <select name="room_name" id="room_name" required
+                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500">
+                <option value="">Select Room</option>
+                <template x-for="room in filteredRooms" :key="room">
+                    <option :value="room" x-text="room"></option>
+                </template>
+            </select>
+        </div>
+        
+        <!-- Purchase Date & Cost -->
+        <div class="grid grid-cols-2 gap-3">
+            <div>
+                <label for="purchase_date" class="block text-sm font-medium text-gray-700 required-field">Purchase Date</label>
+                <input type="date" name="purchase_date" id="purchase_date" required
+                    class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500">
+            </div>
+            <div>
+                <label for="purchase_cost" class="block text-sm font-medium text-gray-700 required-field">Purchase Cost</label>
+                <input type="number" name="purchase_cost" id="purchase_cost" required step="0.01"
+                    class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500">
+            </div>
+        </div>
+        
+        <!-- Item Condition & Warranty -->
+        <div class="grid grid-cols-2 gap-3">
+            <div>
+                <label for="item_condition" class="block text-sm font-medium text-gray-700">Condition</label>
+                <select name="item_condition" id="item_condition"
+                    class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500">
+                    <option value="">Select Condition</option>
+                    <option value="New">New</option>
+                    <option value="Good">Good</option>
+                    <option value="Fair">Fair</option>
+                    <option value="Poor">Poor</option>
+                </select>
+            </div>
+            <div>
+                <label for="warranty" class="block text-sm font-medium text-gray-700">Warranty</label>
+                <select name="warranty" id="warranty"
+                    class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500">
+                    <option value="">Select Warranty</option>
+                    <option value="Yes">Yes</option>
+                    <option value="No">No</option>
+                </select>
+            </div>
+        </div>
+        
+        <!-- Supplier & Journal -->
+        <div class="grid grid-cols-2 gap-3">
+            <div>
+                <label for="supplier" class="block text-sm font-medium text-gray-700">Supplier</label>
+                <input type="text" name="supplier" id="supplier"
+                    class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500">
+            </div>
+            <div>
+                <label for="journal" class="block text-sm font-medium text-gray-700">Journal</label>
+                <input type="text" name="journal" id="journal"
+                    class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500">
+            </div>
+        </div>
+        
+        <!-- Owner -->
+        <div>
+            <label for="owner_name" class="block text-sm font-medium text-gray-700 required-field">Owner</label>
+            <select name="owner_name" id="owner_name" required
+                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500">
+                <option value="">Select Owner</option>
+                {% for owner in dropdown_options.owners %}
+                <option value="{{ owner }}">{{ owner }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <!-- Notes -->
+        <div>
+            <label for="notes" class="block text-sm font-medium text-gray-700">Notes</label>
+            <textarea name="notes" id="notes" rows="3"
+                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500"></textarea>
+        </div>
+        
+        <!-- Photo Upload -->
+        <div>
+            <label for="photo" class="block text-sm font-medium text-gray-700">Asset Photo</label>
+            <input type="file" name="photo" id="photo" accept="image/*"
+                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500">
+            <p class="mt-1 text-xs text-gray-500">Upload a photo of the asset (optional)</p>
+        </div>
+        
+        <!-- Buttons -->
+        <div class="flex space-x-3 pt-4">
+            <a href="/assets" class="flex-1 bg-gray-300 py-3 px-4 rounded-lg text-center text-gray-700 font-medium">
+                Cancel
+            </a>
+            <button type="submit" onclick="return confirm('Are you sure you want to save this asset?')" 
+                class="flex-1 bg-primary-600 hover:bg-primary-700 py-3 px-4 rounded-lg text-white font-medium">
+                Save Asset
+            </button>
+        </div>
+    </div>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function assetForm() {
+        return {
+            types: {{ dropdown_options.types|tojson }},
+            locations: {{ dropdown_options.locations|tojson }},
+            filteredTypes: [],
+            filteredRooms: [],
+            
+            initializeForm() {
+                this.updateTypes();
+                this.updateRooms();
+            },
+            
+            updateTypes() {
+                const category = document.getElementById('category_name').value;
+                this.filteredTypes = category && this.types
+                    ? this.types.filter(type => type.category_name === category)
+                    : [];
+                document.getElementById('type_name').value = '';
+            },
+            
+            updateRooms() {
+                const location = document.getElementById('location_name').value;
+                this.filteredRooms = location && this.locations[location] 
+                    ? this.locations[location] 
+                    : [];
+            }
+        }
+    }
+</script>
+{% endblock %}

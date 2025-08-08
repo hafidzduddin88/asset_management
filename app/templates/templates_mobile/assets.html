@@ -1,0 +1,353 @@
+{% extends "templates_mobile/layouts/modern_layout.html" %}
+
+{% block title %}Assets{% endblock %}
+
+{% block head %}
+<style>
+    .asset-card {
+        transition: all 0.2s ease;
+        cursor: pointer;
+    }
+    .asset-card:active {
+        transform: scale(0.98);
+        background-color: rgba(59, 130, 246, 0.05);
+    }
+    .filter-section {
+        background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="bg-green-600 rounded-lg p-4 mb-4">
+    <h1 class="text-xl font-bold text-white">Asset Database</h1>
+    <p class="text-green-100 text-sm">{{ assets|length }} assets registered</p>
+</div>
+
+<!-- Quick Filters -->
+<div class="filter-section rounded-lg p-4 mb-4 text-white">
+    <div class="space-y-3">
+        <div>
+            <input type="text" id="searchInput" placeholder="Search assets..." 
+                   class="w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500">
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+            <select id="categoryFilter" class="px-3 py-3 border border-gray-300 rounded-lg text-gray-900">
+                <option value="">All Categories</option>
+            </select>
+            <select id="statusFilter" class="px-3 py-3 border border-gray-300 rounded-lg text-gray-900">
+                <option value="">All Status</option>
+                <option value="Active">Active</option>
+                <option value="Under Repair">Under Repair</option>
+                <option value="In Storage">In Storage</option>
+                <option value="Disposed">Disposed</option>
+            </select>
+        </div>
+        <div class="flex justify-between items-center">
+            <button id="clearFilters" class="px-4 py-2 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-lg text-sm font-medium">
+                Clear
+            </button>
+            <select id="itemsPerPage" class="px-3 py-2 border border-gray-300 rounded-lg text-gray-900 text-sm">
+                <option value="20" selected>20</option>
+                <option value="50">50</option>
+            </select>
+        </div>
+    </div>
+</div>
+
+<!-- Results Info -->
+<div class="flex justify-between items-center mb-4 text-sm text-gray-600">
+    <div id="resultsInfo">
+        Showing <span id="currentCount">0</span> of <span id="totalCount">0</span>
+    </div>
+    <div>
+        Page <span id="currentPage">1</span> of <span id="totalPages">1</span>
+    </div>
+</div>
+
+<!-- Assets List -->
+<div id="mobileAssetsList" class="space-y-3 mb-6">
+    <!-- Mobile assets will be populated here -->
+</div>
+
+<!-- Pagination -->
+<div id="pagination" class="flex justify-center items-center space-x-2 mb-4">
+    <!-- Pagination buttons will be populated here -->
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+const assetsData = {{ assets | tojson }};
+const dropdownOptions = {{ dropdown_options | tojson }};
+
+// Pagination settings
+let ITEMS_PER_PAGE = 20;
+let currentPage = 1;
+let filteredAssets = [];
+let allAssets = [];
+
+// Initialize
+document.addEventListener('DOMContentLoaded', function() {
+    // Process asset data
+    allAssets = assetsData.map(asset => {
+        return {
+            id: asset.asset_id,
+            name: asset.asset_name || 'Unnamed Asset',
+            location: asset.ref_locations?.location_name || '',
+            room: asset.ref_locations?.room_name || asset.room_name || '',
+            category: asset.ref_categories?.category_name || '',
+            status: asset.status || 'Active',
+            purchase_date: asset.purchase_date || '',
+            purchase_cost: parseFloat(asset.purchase_cost || 0),
+            book_value: parseFloat(asset.book_value || 0),
+            manufacture: asset.manufacture || '',
+            model: asset.model || '',
+            serial_number: asset.serial_number || '',
+            asset_tag: asset.asset_tag || ''
+        };
+    });
+    
+    filteredAssets = [...allAssets];
+    
+    initializeFilters();
+    displayAssets();
+    setupEventListeners();
+});
+
+function initializeFilters() {
+    const categoryFilter = document.getElementById('categoryFilter');
+    
+    // Populate categories
+    const categories = [...new Set(allAssets.map(asset => asset.category).filter(c => c))];
+    categories.forEach(category => {
+        const option = document.createElement('option');
+        option.value = category;
+        option.textContent = category;
+        categoryFilter.appendChild(option);
+    });
+}
+
+function setupEventListeners() {
+    const categoryFilter = document.getElementById('categoryFilter');
+    const statusFilter = document.getElementById('statusFilter');
+    const searchInput = document.getElementById('searchInput');
+    const clearFilters = document.getElementById('clearFilters');
+    const itemsPerPage = document.getElementById('itemsPerPage');
+    
+    categoryFilter.addEventListener('change', applyFilters);
+    statusFilter.addEventListener('change', applyFilters);
+    searchInput.addEventListener('input', applyFilters);
+    
+    itemsPerPage.addEventListener('change', function() {
+        ITEMS_PER_PAGE = parseInt(this.value);
+        currentPage = 1;
+        displayAssets();
+    });
+    
+    clearFilters.addEventListener('click', function() {
+        categoryFilter.value = '';
+        statusFilter.value = '';
+        searchInput.value = '';
+        applyFilters();
+    });
+}
+
+function applyFilters() {
+    const categoryFilter = document.getElementById('categoryFilter').value;
+    const statusFilter = document.getElementById('statusFilter').value;
+    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+    
+    filteredAssets = allAssets.filter(asset => {
+        const matchesCategory = !categoryFilter || asset.category === categoryFilter;
+        const matchesStatus = !statusFilter || asset.status === statusFilter;
+        const matchesSearch = !searchTerm || 
+            asset.name.toLowerCase().includes(searchTerm) ||
+            asset.category.toLowerCase().includes(searchTerm) ||
+            asset.id.toString().includes(searchTerm) ||
+            asset.asset_tag.toLowerCase().includes(searchTerm) ||
+            asset.manufacture.toLowerCase().includes(searchTerm) ||
+            asset.model.toLowerCase().includes(searchTerm);
+        
+        return matchesCategory && matchesStatus && matchesSearch;
+    });
+    
+    currentPage = 1;
+    displayAssets();
+}
+
+function displayAssets() {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    const endIndex = startIndex + ITEMS_PER_PAGE;
+    const assetsToShow = filteredAssets.slice(startIndex, endIndex);
+    
+    const mobileList = document.getElementById('mobileAssetsList');
+    if (assetsToShow.length === 0) {
+        mobileList.innerHTML = `
+            <div class="text-center py-12 text-gray-500">
+                <i class="fas fa-search text-4xl mb-4"></i>
+                <div class="text-lg font-medium">No assets found</div>
+                <div class="text-sm">Try adjusting your filters</div>
+            </div>
+        `;
+    } else {
+        mobileList.innerHTML = assetsToShow.map(asset => `
+            <div class="asset-card bg-white rounded-lg shadow p-4" onclick="viewAssetDetails(${asset.id})">
+                <div class="flex justify-between items-start mb-3">
+                    <div class="flex-1">
+                        <h3 class="font-semibold text-gray-900 text-base">${asset.name}</h3>
+                        <p class="text-sm text-gray-500">ID: ${asset.id}</p>
+                    </div>
+                    ${getStatusBadge(asset.status)}
+                </div>
+                <div class="space-y-2 text-sm text-gray-600">
+                    <div class="flex items-center">
+                        <i class="fas fa-tag w-5 text-gray-400"></i>
+                        <span>${asset.category}</span>
+                    </div>
+                    <div class="flex items-center">
+                        <i class="fas fa-map-marker-alt w-5 text-gray-400"></i>
+                        <span>${asset.location}</span>
+                    </div>
+                    <div class="flex items-center">
+                        <i class="fas fa-money-bill w-5 text-gray-400"></i>
+                        <span>Rp ${asset.book_value.toLocaleString()}</span>
+                    </div>
+                    ${asset.manufacture || asset.model ? `
+                    <div class="flex items-center">
+                        <i class="fas fa-industry w-5 text-gray-400"></i>
+                        <span>${asset.manufacture} ${asset.model}</span>
+                    </div>
+                    ` : ''}
+                </div>
+                <div class="mt-3 pt-3 border-t border-gray-100 flex justify-between items-center">
+                    <button onclick="event.stopPropagation(); quickActions(${asset.id})" class="text-primary-600 hover:text-primary-800 text-sm font-medium">
+                        <i class="fas fa-ellipsis-h mr-1"></i>Actions
+                    </button>
+                    <span class="text-xs text-gray-400">
+                        ${asset.purchase_date ? new Date(asset.purchase_date).toLocaleDateString() : 'No date'}
+                    </span>
+                </div>
+            </div>
+        `).join('');
+    }
+    
+    updatePagination();
+    updateResultsInfo();
+}
+
+function getStatusBadge(status) {
+    const badges = {
+        'Active': 'bg-green-100 text-green-800',
+        'Under Repair': 'bg-red-100 text-red-800',
+        'In Storage': 'bg-blue-100 text-blue-800',
+        'Disposed': 'bg-gray-100 text-gray-800'
+    };
+    const badgeClass = badges[status] || 'bg-gray-100 text-gray-800';
+    return `<span class="px-2 py-1 text-xs font-semibold rounded-full ${badgeClass}">${status}</span>`;
+}
+
+function updatePagination() {
+    const totalPages = Math.ceil(filteredAssets.length / ITEMS_PER_PAGE);
+    const pagination = document.getElementById('pagination');
+    
+    if (totalPages <= 1) {
+        pagination.innerHTML = '';
+        return;
+    }
+    
+    let paginationHTML = '';
+    
+    if (currentPage > 1) {
+        paginationHTML += `<button onclick="changePage(${currentPage - 1})" class="px-3 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">&laquo;</button>`;
+    }
+    
+    // Show fewer page numbers on mobile
+    const startPage = Math.max(1, currentPage - 1);
+    const endPage = Math.min(totalPages, currentPage + 1);
+    
+    if (startPage > 1) {
+        paginationHTML += `<button onclick="changePage(1)" class="px-3 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">1</button>`;
+        if (startPage > 2) {
+            paginationHTML += `<span class="px-2 py-2">...</span>`;
+        }
+    }
+    
+    for (let i = startPage; i <= endPage; i++) {
+        if (i === currentPage) {
+            paginationHTML += `<button class="px-3 py-2 bg-blue-600 text-white rounded-lg">${i}</button>`;
+        } else {
+            paginationHTML += `<button onclick="changePage(${i})" class="px-3 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">${i}</button>`;
+        }
+    }
+    
+    if (endPage < totalPages) {
+        if (endPage < totalPages - 1) {
+            paginationHTML += `<span class="px-2 py-2">...</span>`;
+        }
+        paginationHTML += `<button onclick="changePage(${totalPages})" class="px-3 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">${totalPages}</button>`;
+    }
+    
+    if (currentPage < totalPages) {
+        paginationHTML += `<button onclick="changePage(${currentPage + 1})" class="px-3 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">&raquo;</button>`;
+    }
+    
+    pagination.innerHTML = paginationHTML;
+    
+    document.getElementById('currentPage').textContent = currentPage;
+    document.getElementById('totalPages').textContent = totalPages;
+}
+
+function updateResultsInfo() {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE + 1;
+    const endIndex = Math.min(currentPage * ITEMS_PER_PAGE, filteredAssets.length);
+    
+    document.getElementById('currentCount').textContent = filteredAssets.length > 0 ? `${startIndex}-${endIndex}` : '0';
+    document.getElementById('totalCount').textContent = filteredAssets.length;
+}
+
+function changePage(page) {
+    currentPage = page;
+    displayAssets();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function viewAssetDetails(assetId) {
+    const asset = allAssets.find(a => a.id === assetId);
+    if (!asset) return;
+    
+    // Mobile-friendly alert with key info
+    const details = [
+        `📦 ${asset.name}`,
+        `🆔 ID: ${asset.id}`,
+        `🏷️ ${asset.category}`,
+        `📍 ${asset.location}`,
+        `💰 Rp ${asset.book_value.toLocaleString()}`,
+        `📊 Status: ${asset.status}`
+    ].join('\n');
+    
+    alert(details);
+}
+
+function quickActions(assetId) {
+    const asset = allAssets.find(a => a.id === assetId);
+    if (!asset) return;
+    
+    const actions = [
+        '1️⃣ View Details',
+        '2️⃣ Report Issue', 
+        '3️⃣ Request Move'
+    ].join('\n');
+    
+    const choice = prompt(`${asset.name}\n\n${actions}\n\nChoose (1-3):`);
+    
+    switch(choice) {
+        case '1': viewAssetDetails(assetId); break;
+        case '2': window.location.href = '/damage'; break;
+        case '3': window.location.href = '/relocation'; break;
+    }
+}
+</script>
+{% endblock %}

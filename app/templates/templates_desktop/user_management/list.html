@@ -1,0 +1,167 @@
+{% extends "templates_desktop/layouts/modern_layout.html" %}
+
+{% block title %}User Management - Asset Management{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Header -->
+        <div class="bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-700 rounded-2xl shadow-xl p-8 mb-8">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <div class="bg-white bg-opacity-20 p-3 rounded-xl">
+                        <i class="fas fa-users text-2xl text-white"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-3xl font-bold text-white">User Management</h1>
+                        <p class="text-purple-100">Manage system users and permissions</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-6">
+                    <div class="text-center text-white">
+                        <div class="text-2xl font-bold">{{ users|length }}</div>
+                        <div class="text-sm text-purple-100">Total Users</div>
+                    </div>
+                    <a href="/user_management/create" class="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-200 shadow hover:shadow-lg">
+                        <i class="fas fa-plus mr-2"></i>Add New User
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        {% if error %}
+        <div class="mb-6 rounded-md bg-red-50 p-4">
+            <div class="text-sm text-red-800">{{ error }}</div>
+        </div>
+        {% endif %}
+        
+        <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+            <div class="bg-gradient-to-r from-gray-50 to-gray-100 px-8 py-6 border-b border-gray-200">
+                <div class="flex items-center space-x-3">
+                    <div class="bg-purple-100 p-2 rounded-lg">
+                        <i class="fas fa-user-friends text-purple-600"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-semibold text-gray-900">System Users</h3>
+                        <p class="text-sm text-gray-600">{{ users|length }} registered users</p>
+                    </div>
+                </div>
+            </div>
+            <ul class="divide-y divide-gray-100">
+                {% for user_item in users %}
+                <li class="px-8 py-6 hover:bg-gradient-to-r hover:from-purple-50 hover:to-blue-50 transition-all duration-200">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-4">
+                            <div class="flex-shrink-0">
+                                {% if user_item.photo_url %}
+                                <img src="{{ user_item.photo_url }}" alt="Profile" class="h-12 w-12 rounded-lg object-cover shadow">
+                                {% else %}
+                                <div class="h-12 w-12 rounded-lg bg-gradient-to-br from-purple-400 to-blue-500 flex items-center justify-center text-white font-bold shadow">
+                                    {{ user_item.full_name[0].upper() if user_item.full_name else user_item.username[0].upper() }}
+                                </div>
+                                {% endif %}
+                            </div>
+                            <div>
+                                <div class="text-sm font-medium text-gray-900">{{ user_item.full_name or user_item.username }}</div>
+                                <div class="text-sm text-gray-500">{{ user_item.username }}</div>
+                                <div class="text-sm text-gray-400">{{ user_item.business_unit_name or 'No business unit' }}</div>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <span class="px-3 py-1 text-sm font-semibold rounded-full {% if user_item.is_active %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
+                                {% if user_item.is_active %}Active{% else %}Inactive{% endif %}
+                            </span>
+                            <span class="px-3 py-1 text-sm font-semibold rounded-full bg-blue-100 text-blue-800">
+                                {{ user_item.role.title() }}
+                            </span>
+                            {% if user_item.email_verified %}
+                            <span class="px-3 py-1 text-sm font-semibold rounded-full bg-green-100 text-green-800">Verified</span>
+                            {% else %}
+                            <span class="px-3 py-1 text-sm font-semibold rounded-full bg-yellow-100 text-yellow-800">Unverified</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="mt-4 flex flex-wrap gap-3">
+                        <!-- Toggle Status -->
+                        <form method="POST" action="/user_management/toggle_status/{{ user_item.id }}" class="inline" 
+                              onsubmit="return confirm('Are you sure you want to {% if user_item.is_active %}deactivate{% else %}activate{% endif %} this user?')">
+                            <input type="hidden" name="is_active" value="{% if user_item.is_active %}false{% else %}true{% endif %}">
+                            <button type="submit" class="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded text-white {% if user_item.is_active %}bg-red-600 hover:bg-red-700{% else %}bg-green-600 hover:bg-green-700{% endif %}">
+                                {% if user_item.is_active %}Deactivate{% else %}Activate{% endif %}
+                            </button>
+                        </form>
+                        
+                        <!-- Reset Password -->
+                        <form method="POST" action="/user_management/reset_password/{{ user_item.id }}" class="inline"
+                              onsubmit="return confirm('Are you sure you want to reset password to 54321 for {{ user_item.username }}?')">
+                            <button type="submit" class="inline-flex items-center px-3 py-2 border border-gray-300 text-sm font-medium rounded text-gray-700 bg-white hover:bg-gray-50">
+                                Reset Password
+                            </button>
+                        </form>
+                        
+                        <!-- Change Role -->
+                        <form method="POST" action="/user_management/change_role/{{ user_item.id }}" class="inline flex items-center space-x-2"
+                              onsubmit="return confirm('Are you sure you want to change role for {{ user_item.username }}?')">
+                            <select name="new_role" class="text-sm border-gray-300 rounded">
+                                <option value="staff" {% if user_item.role == 'staff' %}selected{% endif %}>Staff</option>
+                                <option value="manager" {% if user_item.role == 'manager' %}selected{% endif %}>Manager</option>
+                                <option value="admin" {% if user_item.role == 'admin' %}selected{% endif %}>Admin</option>
+                            </select>
+                            <button type="submit" class="inline-flex items-center px-3 py-2 border border-purple-300 text-sm font-medium rounded text-purple-700 bg-purple-50 hover:bg-purple-100">
+                                Change Role
+                            </button>
+                        </form>
+                        
+                        <!-- Change Business Unit -->
+                        <form method="POST" action="/user_management/change_department/{{ user_item.id }}" class="inline flex items-center space-x-2"
+                              onsubmit="return confirm('Are you sure you want to change business unit for {{ user_item.username }}?')">
+                            <select name="business_unit_name" class="text-sm border-gray-300 rounded">
+                                <option value="">No Business Unit</option>
+                                {% for bu in business_units %}
+                                <option value="{{ bu }}" {% if user_item.business_unit_name == bu %}selected{% endif %}>{{ bu }}</option>
+                                {% endfor %}
+                            </select>
+                            <button type="submit" class="inline-flex items-center px-3 py-2 border border-orange-300 text-sm font-medium rounded text-orange-700 bg-orange-50 hover:bg-orange-100">
+                                Change Unit
+                            </button>
+                        </form>
+                        
+                        <!-- Verify Email -->
+                        {% if not user_item.email_verified %}
+                        <form method="POST" action="/user_management/verify_email/{{ user_item.id }}" class="inline"
+                              onsubmit="return confirm('Are you sure you want to manually verify {{ user_item.username }}?')">
+                            <button type="submit" class="inline-flex items-center px-3 py-2 border border-blue-300 text-sm font-medium rounded text-blue-700 bg-blue-50 hover:bg-blue-100">
+                                Verify Email
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        
+        {% if not users %}
+        <div class="text-center py-16">
+            <div class="bg-gray-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-user-slash text-3xl text-gray-400"></i>
+            </div>
+            <h3 class="text-lg font-semibold text-gray-900 mb-2">No Users Found</h3>
+            <p class="text-gray-500">Start by adding your first user</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+// Auto-hide flash messages after 5 seconds
+setTimeout(function() {
+    const alerts = document.querySelectorAll('.bg-green-50, .bg-red-50');
+    alerts.forEach(alert => {
+        alert.style.transition = 'opacity 0.5s';
+        alert.style.opacity = '0';
+        setTimeout(() => alert.remove(), 500);
+    });
+}, 5000);
+</script>
+{% endblock %}

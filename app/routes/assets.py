@@ -2,6 +2,7 @@
 from fastapi import APIRouter, Request, Depends, Query
 from fastapi.templating import Jinja2Templates
 from app.utils.auth import get_current_profile
+from app.utils.device_detector import get_template
 
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
@@ -27,7 +28,8 @@ async def assets_page(
     all_assets = get_all_assets()
     dropdown_options = get_dropdown_options()
     
-    return templates.TemplateResponse("assets.html", {
+    template_path = get_template(request, "assets.html")
+    return templates.TemplateResponse(template_path, {
         "request": request,
         "user": current_profile,
         "assets": all_assets,

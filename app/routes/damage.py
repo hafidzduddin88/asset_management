@@ -3,6 +3,7 @@ import logging
 from fastapi import APIRouter, Request, Depends
 from fastapi.templating import Jinja2Templates
 from app.utils.auth import get_current_profile
+from app.utils.device_detector import get_template
 
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
@@ -17,7 +18,8 @@ async def damaged_assets_page(request: Request, current_profile = Depends(get_cu
         all_assets = get_all_assets() or []
         dropdown_options = get_dropdown_options() or {}
 
-        return templates.TemplateResponse("damage/index.html", {
+        template_path = get_template(request, "damage/index.html")
+        return templates.TemplateResponse(template_path, {
             "request": request,
             "user": current_profile,
             "assets_data": all_assets,
@@ -25,7 +27,8 @@ async def damaged_assets_page(request: Request, current_profile = Depends(get_cu
         })
     except Exception as e:
         logging.error(f"Error loading damage page: {e}")
-        return templates.TemplateResponse("damage/index.html", {
+        template_path = get_template(request, "damage/index.html")
+        return templates.TemplateResponse(template_path, {
             "request": request,
             "user": current_profile,
             "assets_data": [],

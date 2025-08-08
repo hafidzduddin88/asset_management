@@ -8,6 +8,7 @@ from app.utils.auth import get_current_profile
 from app.utils.photo import resize_and_convert_image, upload_to_drive
 from app.utils.flash import set_flash
 from app.utils.database_manager import get_dropdown_options
+from app.utils.device_detector import get_template
 
 router = APIRouter(tags=["profile"])
 templates = Jinja2Templates(directory="app/templates")
@@ -18,8 +19,9 @@ async def profile_page(
     current_profile = Depends(get_current_profile)
 ):
     """User profile page."""
+    template_path = get_template(request, "profile/view.html")
     return templates.TemplateResponse(
-        "profile/view.html",
+        template_path,
         {
             "request": request,
             "user": current_profile
@@ -33,8 +35,9 @@ async def edit_profile_page(
 ):
     """Edit user profile page."""
     dropdown_options = get_dropdown_options()
+    template_path = get_template(request, "profile/edit.html")
     return templates.TemplateResponse(
-        "profile/edit.html",
+        template_path,
         {
             "request": request,
             "user": current_profile,
@@ -99,8 +102,9 @@ async def update_profile(
                 if photo_url:
                     update_data["photo_url"] = photo_url
         except Exception as e:
+            template_path = get_template(request, "profile/edit.html")
             return templates.TemplateResponse(
-                "profile/edit.html",
+                template_path,
                 {
                     "request": request,
                     "user": current_profile,

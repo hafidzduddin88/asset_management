@@ -8,6 +8,7 @@ from app.database.models import UserRole
 from app.utils.auth import get_current_profile, get_admin_user
 from app.utils.flash import set_flash
 from app.utils.database_manager import get_dropdown_options
+from app.utils.device_detector import get_template
 import logging
 import os
 
@@ -39,8 +40,9 @@ async def user_list(
         # Get business units for dropdown
         dropdown_options = get_dropdown_options()
         
+        template_path = get_template(request, "user_management/list.html")
         return templates.TemplateResponse(
-            "user_management/list.html",
+            template_path,
             {
                 "request": request,
                 "user": current_profile,
@@ -50,8 +52,9 @@ async def user_list(
         )
     except Exception as e:
         logging.error(f"Failed to get users: {e}")
+        template_path = get_template(request, "user_management/list.html")
         return templates.TemplateResponse(
-            "user_management/list.html",
+            template_path,
             {
                 "request": request,
                 "user": current_profile,
@@ -68,8 +71,9 @@ async def create_user_form(
 ):
     """Create user form (admin only)."""
     dropdown_options = get_dropdown_options()
+    template_path = get_template(request, "user_management/create.html")
     return templates.TemplateResponse(
-        "user_management/create.html",
+        template_path,
         {
             "request": request,
             "user": current_profile,
@@ -92,8 +96,9 @@ async def create_user(
         # Check if user exists
         existing = supabase.table("profiles").select("username").eq("username", email).execute()
         if existing.data:
+            template_path = get_template(request, "user_management/create.html")
             return templates.TemplateResponse(
-                "user_management/create.html",
+                template_path,
                 {
                     "request": request,
                     "user": current_profile,
@@ -150,8 +155,9 @@ async def create_user(
             
     except Exception as e:
         logging.error(f"Failed to create user: {e}")
+        template_path = get_template(request, "user_management/create.html")
         return templates.TemplateResponse(
-            "user_management/create.html",
+            template_path,
             {
                 "request": request,
                 "user": current_profile,

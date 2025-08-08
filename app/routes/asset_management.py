@@ -11,6 +11,7 @@ from app.database.models import UserRole
 from app.utils.database_manager import get_dropdown_options, add_approval_request, get_all_assets, get_asset_by_id
 from app.utils.flash import set_flash
 from app.utils.auth import get_current_profile
+from app.utils.device_detector import get_template
 import logging
 
 router = APIRouter(prefix="/asset_management", tags=["asset_management"])
@@ -24,8 +25,9 @@ async def add_asset_form(
 ):
     """Form to add a new asset."""
     dropdown_options = get_dropdown_options()
+    template_path = get_template(request, "asset_management/add.html")
     return templates.TemplateResponse(
-        "asset_management/add.html",
+        template_path,
         {
             "request": request,
             "user": current_profile,
@@ -59,8 +61,9 @@ async def asset_list(
     for location in location_rooms:
         location_rooms[location] = list(location_rooms[location])
     
+    template_path = get_template(request, "asset_management/list.html")
     return templates.TemplateResponse(
-        "asset_management/list.html",
+        template_path,
         {
             "request": request,
             "user": current_profile,
@@ -87,8 +90,9 @@ async def edit_asset_form(
     
     dropdown_options = get_dropdown_options()
     
+    template_path = get_template(request, "asset_management/edit.html")
     return templates.TemplateResponse(
-        "asset_management/edit.html",
+        template_path,
         {
             "request": request,
             "user": current_profile,
@@ -146,8 +150,9 @@ async def update_asset(
         return response
     else:
         dropdown_options = get_dropdown_options()
+        template_path = get_template(request, "asset_management/edit.html")
         return templates.TemplateResponse(
-            "asset_management/edit.html",
+            template_path,
             {
                 "request": request,
                 "user": current_profile,
@@ -234,8 +239,9 @@ async def add_asset(
     }
     
     if add_approval_request(approval_data):
+        template_path = get_template(request, "asset_management/confirmation.html")
         return templates.TemplateResponse(
-            "asset_management/confirmation.html",
+            template_path,
             {
                 "request": request,
                 "user": current_profile,
@@ -245,8 +251,9 @@ async def add_asset(
         )
     else:
         dropdown_options = get_dropdown_options()
+        template_path = get_template(request, "asset_management/add.html")
         return templates.TemplateResponse(
-            "asset_management/add.html",
+            template_path,
             {
                 "request": request,
                 "user": current_profile,

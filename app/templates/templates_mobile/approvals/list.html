@@ -1,0 +1,393 @@
+{% extends "templates_mobile/layouts/modern_layout.html" %}
+
+{% block title %}Approvals{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-lg p-4 mb-4 text-white">
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-xl font-bold">Approvals</h1>
+            <p class="text-indigo-100 text-sm">Review and manage requests</p>
+        </div>
+        <div class="text-right">
+            <div class="text-lg font-bold">{{ pending_count }}</div>
+            <div class="text-xs text-indigo-100">Pending</div>
+        </div>
+    </div>
+</div>
+
+<!-- Tabs -->
+<div class="bg-white rounded-lg shadow p-1 mb-4">
+    <nav class="flex space-x-1">
+        <button onclick="showTab('pending')" id="pending-tab" 
+            class="tab-button flex-1 flex items-center justify-center px-3 py-2 rounded-lg text-sm font-semibold transition-all bg-gradient-to-r from-indigo-600 to-purple-600 text-white">
+            <i class="fas fa-hourglass-half mr-2"></i>
+            Pending
+            <span class="ml-2 bg-white bg-opacity-20 px-2 py-1 rounded-full text-xs">{{ pending_count }}</span>
+        </button>
+        <button onclick="showTab('complete')" id="complete-tab" 
+            class="tab-button flex-1 flex items-center justify-center px-3 py-2 rounded-lg text-sm font-semibold transition-all text-gray-600 hover:bg-gray-50">
+            <i class="fas fa-check-double mr-2"></i>
+            Complete
+            <span class="ml-2 bg-gray-100 px-2 py-1 rounded-full text-xs">{{ completed_count }}</span>
+        </button>
+    </nav>
+</div>
+
+<!-- Pending Approvals -->
+<div id="pending-content" class="tab-content">
+    <div class="space-y-3">
+        {% for approval in pending_approvals %}
+        <div class="bg-white rounded-lg shadow p-4">
+            <div class="flex items-start justify-between mb-3">
+                <div class="flex items-start space-x-3">
+                    <div class="flex-shrink-0">
+                        {% if approval.type == 'add_asset' %}
+                            <div class="w-10 h-10 bg-gradient-to-br from-green-400 to-green-600 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-plus text-white"></i>
+                            </div>
+                        {% elif approval.type == 'relocation' %}
+                            <div class="w-10 h-10 bg-gradient-to-br from-blue-400 to-blue-600 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-arrows-alt text-white"></i>
+                            </div>
+                        {% elif approval.type == 'damage_report' %}
+                            <div class="w-10 h-10 bg-gradient-to-br from-red-400 to-red-600 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-exclamation-triangle text-white"></i>
+                            </div>
+                        {% else %}
+                            <div class="w-10 h-10 bg-gradient-to-br from-gray-400 to-gray-600 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-file text-white"></i>
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="flex-1">
+                        <h4 class="font-semibold text-gray-900 text-sm">
+                            {% if approval.type == 'add_asset' %}
+                                Add Asset
+                            {% elif approval.type == 'edit_asset' %}
+                                Edit Asset
+                            {% elif approval.type == 'damage_report' %}
+                                Damage Report
+                            {% elif approval.type == 'repair_action' %}
+                                Repair Action
+                            {% elif approval.type == 'lost_report' %}
+                                Lost Report
+                            {% elif approval.type == 'disposal_request' %}
+                                Disposal Request
+                            {% elif approval.type == 'relocation' %}
+                                Asset Relocation
+                            {% else %}
+                                {{ approval.type.replace('_', ' ').title() }}
+                            {% endif %}
+                        </h4>
+                        <p class="text-gray-900 font-medium text-sm">{{ approval.asset_name }}</p>
+                        <div class="text-xs text-gray-500 mt-1">
+                            <div>👤 {{ approval.submitted_by_name }}</div>
+                            <div>📅 {{ approval.submitted_date[:10] if approval.submitted_date else '' }}</div>
+                            {% if approval.location_name %}
+                            <div>📍 {{ approval.location_name }} - {{ approval.room_name }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <span class="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs font-semibold rounded-full">
+                    Pending
+                </span>
+            </div>
+            
+            {% if approval.description %}
+            <div class="text-xs text-gray-600 bg-gray-50 p-2 rounded mb-3">
+                {{ approval.description }}
+            </div>
+            {% endif %}
+            
+            <div class="flex space-x-2">
+                <button onclick="showApprovalDetail('{{ approval.approval_id }}')" 
+                    class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded text-xs font-semibold">
+                    <i class="fas fa-eye mr-1"></i>Detail
+                </button>
+                <button onclick="confirmApproval('{{ approval.approval_id }}', 'approved')" 
+                    class="flex-1 bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded text-xs font-semibold">
+                    <i class="fas fa-check mr-1"></i>Approve
+                </button>
+                <button onclick="confirmApproval('{{ approval.approval_id }}', 'rejected')" 
+                    class="flex-1 bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded text-xs font-semibold">
+                    <i class="fas fa-times mr-1"></i>Reject
+                </button>
+            </div>
+        </div>
+        {% else %}
+        <div class="text-center py-12 text-gray-500">
+            <div class="bg-gray-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-inbox text-2xl text-gray-400"></i>
+            </div>
+            <h3 class="font-semibold text-gray-900 mb-2">No Pending Approvals</h3>
+            <p class="text-sm">All requests have been processed</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Completed Approvals -->
+<div id="complete-content" class="tab-content hidden">
+    <div class="space-y-3">
+        {% for approval in completed_approvals %}
+        <div class="bg-white rounded-lg shadow p-4">
+            <div class="flex items-start justify-between mb-2">
+                <div class="flex items-start space-x-3">
+                    <div class="flex-shrink-0">
+                        {% if approval.type == 'add_asset' %}
+                            <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                                <i class="fas fa-plus text-green-600 text-sm"></i>
+                            </div>
+                        {% elif approval.type == 'relocation' %}
+                            <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                                <i class="fas fa-arrows-alt text-blue-600 text-sm"></i>
+                            </div>
+                        {% elif approval.type == 'damage_report' %}
+                            <div class="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
+                                <i class="fas fa-exclamation-triangle text-red-600 text-sm"></i>
+                            </div>
+                        {% else %}
+                            <div class="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
+                                <i class="fas fa-file text-gray-600 text-sm"></i>
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="flex-1">
+                        <div class="flex items-center">
+                            <p class="text-sm font-medium text-gray-900">
+                                {% if approval.type == 'add_asset' %}
+                                    Add Asset
+                                {% elif approval.type == 'edit_asset' %}
+                                    Edit Asset
+                                {% elif approval.type == 'damage_report' %}
+                                    Damage Report
+                                {% elif approval.type == 'repair_action' %}
+                                    Repair Action
+                                {% elif approval.type == 'lost_report' %}
+                                    Lost Report
+                                {% elif approval.type == 'disposal_request' %}
+                                    Disposal Request
+                                {% elif approval.type == 'relocation' %}
+                                    Asset Relocation
+                                {% else %}
+                                    {{ approval.type.replace('_', ' ').title() }}
+                                {% endif %}
+                            </p>
+                            {% if approval.status == 'approved' %}
+                                <span class="ml-2 px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                    <i class="fas fa-check mr-1"></i>Approved
+                                </span>
+                            {% else %}
+                                <span class="ml-2 px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                    <i class="fas fa-times mr-1"></i>Rejected
+                                </span>
+                            {% endif %}
+                        </div>
+                        <p class="text-sm text-gray-600">{{ approval.asset_name }}</p>
+                        <div class="text-xs text-gray-500 mt-1">
+                            <span>👤 {{ approval.submitted_by_name }}</span>
+                            <span class="mx-2">•</span>
+                            <span>📅 {{ approval.submitted_date[:10] if approval.submitted_date else '' }}</span>
+                        </div>
+                    </div>
+                </div>
+                <button onclick="showApprovalDetail('{{ approval.approval_id }}')" 
+                    class="px-3 py-1 border border-gray-300 text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50">
+                    <i class="fas fa-eye mr-1"></i>Detail
+                </button>
+            </div>
+            {% if approval.description %}
+            <div class="text-xs text-gray-600 bg-gray-50 p-2 rounded mt-2">
+                {{ approval.description }}
+            </div>
+            {% endif %}
+        </div>
+        {% else %}
+        <div class="text-center py-8 text-gray-400">
+            <i class="fas fa-history text-3xl mb-4"></i>
+            <p class="font-medium">No completed approvals</p>
+            <p class="text-sm">Processed requests will appear here</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Approval Detail Modal -->
+<div id="approvalModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" style="display: none;">
+    <div class="relative top-4 mx-4 p-4 border shadow-lg rounded-lg bg-white">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-medium text-gray-900">Request Details</h3>
+            <button onclick="closeApprovalModal()" class="text-gray-400 hover:text-gray-600">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+        <div id="approvalContent" class="space-y-4">
+            <!-- Details will be populated here -->
+        </div>
+    </div>
+</div>
+
+<!-- Confirmation Modal -->
+<div id="confirmModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" style="display: none;">
+    <div class="relative top-20 mx-4 p-4 border shadow-lg rounded-lg bg-white">
+        <div class="text-center">
+            <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-yellow-100">
+                <i class="fas fa-exclamation-triangle text-yellow-600 text-xl"></i>
+            </div>
+            <h3 class="text-lg font-medium text-gray-900 mt-4">Confirm Action</h3>
+            <div class="mt-2 px-4 py-3">
+                <p class="text-sm text-gray-500" id="confirmMessage">Are you sure you want to perform this action?</p>
+            </div>
+            <div class="flex space-x-3 px-4 py-3">
+                <button id="confirmYes" class="flex-1 px-4 py-2 bg-blue-500 text-white text-sm font-medium rounded hover:bg-blue-600">Yes</button>
+                <button onclick="closeConfirmModal()" class="flex-1 px-4 py-2 bg-gray-300 text-gray-800 text-sm font-medium rounded hover:bg-gray-400">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const approvalsData = {{ (pending_approvals + completed_approvals) | tojson }};
+let currentApprovalId = null;
+let currentAction = null;
+
+function showTab(tabName) {
+    document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.add('hidden');
+    });
+    
+    document.querySelectorAll('.tab-button').forEach(button => {
+        button.classList.remove('bg-gradient-to-r', 'from-indigo-600', 'to-purple-600', 'text-white');
+        button.classList.add('text-gray-600', 'hover:bg-gray-50');
+    });
+    
+    document.getElementById(tabName + '-content').classList.remove('hidden');
+    
+    const activeTab = document.getElementById(tabName + '-tab');
+    activeTab.classList.remove('text-gray-600', 'hover:bg-gray-50');
+    activeTab.classList.add('bg-gradient-to-r', 'from-indigo-600', 'to-purple-600', 'text-white');
+}
+
+function showApprovalDetail(approvalId) {
+    const approval = approvalsData.find(a => a.approval_id == approvalId);
+    if (!approval) return;
+    
+    let notes = {};
+    try {
+        notes = JSON.parse(approval.notes || '{}');
+    } catch (e) {
+        notes = {};
+    }
+    
+    const approvalContent = document.getElementById('approvalContent');
+    approvalContent.innerHTML = `
+        <div class="space-y-4">
+            <div>
+                <h4 class="font-semibold text-gray-900 mb-2">Request Information</h4>
+                <div class="space-y-2 text-sm">
+                    <div><strong>Type:</strong> ${approval.type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}</div>
+                    <div><strong>Asset:</strong> ${approval.asset_name || 'N/A'}</div>
+                    <div><strong>ID:</strong> ${approval.asset_id || 'N/A'}</div>
+                    <div><strong>Description:</strong> ${approval.description || 'N/A'}</div>
+                </div>
+            </div>
+            
+            <div>
+                <h4 class="font-semibold text-gray-900 mb-2">Status & Details</h4>
+                <div class="space-y-2 text-sm">
+                    <div><strong>Status:</strong> 
+                        <span class="px-2 py-1 text-xs rounded-full ${
+                            approval.status === 'approved' ? 'bg-green-100 text-green-800' :
+                            approval.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                            'bg-yellow-100 text-yellow-800'
+                        }">${approval.status.charAt(0).toUpperCase() + approval.status.slice(1)}</span>
+                    </div>
+                    <div><strong>Submitted By:</strong> ${approval.submitted_by_info?.full_name || 'Unknown'}</div>
+                    <div><strong>Date:</strong> ${approval.submitted_date ? approval.submitted_date.substring(0, 10) : 'N/A'}</div>
+                    ${approval.location_name ? `<div><strong>Location:</strong> ${approval.location_name} - ${approval.room_name || ''}</div>` : ''}
+                </div>
+            </div>
+            
+            ${approval.status === 'pending' ? `
+            <div class="flex space-x-2 pt-4">
+                <button onclick="confirmApproval('${approval.approval_id}', 'approved')" 
+                    class="flex-1 px-4 py-2 bg-green-600 text-white text-sm font-medium rounded hover:bg-green-700">
+                    <i class="fas fa-check mr-1"></i>Approve
+                </button>
+                <button onclick="confirmApproval('${approval.approval_id}', 'rejected')" 
+                    class="flex-1 px-4 py-2 bg-red-600 text-white text-sm font-medium rounded hover:bg-red-700">
+                    <i class="fas fa-times mr-1"></i>Reject
+                </button>
+            </div>
+            ` : ''}
+        </div>
+    `;
+    
+    document.getElementById('approvalModal').style.display = 'block';
+}
+
+function confirmApproval(approvalId, status) {
+    const approval = approvalsData.find(a => a.approval_id == approvalId);
+    if (!approval) return;
+    
+    currentApprovalId = approvalId;
+    currentAction = status;
+    
+    const action = status === 'approved' ? 'approve' : 'reject';
+    const message = `Are you sure you want to ${action} the request for "${approval.asset_name || 'this asset'}"?`;
+    
+    document.getElementById('confirmMessage').textContent = message;
+    document.getElementById('confirmYes').onclick = () => executeApproval();
+    document.getElementById('confirmModal').style.display = 'block';
+}
+
+function executeApproval() {
+    if (!currentApprovalId || !currentAction) return;
+    
+    fetch(`/approvals/${currentApprovalId}/${currentAction}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            closeConfirmModal();
+            closeApprovalModal();
+            location.reload();
+        } else {
+            alert('Error: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while processing the request');
+    });
+}
+
+function closeApprovalModal() {
+    document.getElementById('approvalModal').style.display = 'none';
+}
+
+function closeConfirmModal() {
+    document.getElementById('confirmModal').style.display = 'none';
+    currentApprovalId = null;
+    currentAction = null;
+}
+
+window.onclick = function(event) {
+    const approvalModal = document.getElementById('approvalModal');
+    const confirmModal = document.getElementById('confirmModal');
+    if (event.target === approvalModal) {
+        closeApprovalModal();
+    }
+    if (event.target === confirmModal) {
+        closeConfirmModal();
+    }
+}
+</script>
+{% endblock %}

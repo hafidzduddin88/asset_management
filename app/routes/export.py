@@ -4,6 +4,7 @@ from fastapi.responses import StreamingResponse
 from fastapi.templating import Jinja2Templates
 from app.utils.auth import get_current_profile
 from app.utils.database_manager import get_supabase
+from app.utils.device_detector import get_template
 import io
 import json
 from datetime import datetime
@@ -81,7 +82,8 @@ EXPORT_TABLES = {
 @router.get("/")
 async def export_page(request: Request, current_profile=Depends(get_current_profile)):
     """Export data page"""
-    return templates.TemplateResponse("export/index.html", {
+    template_path = get_template(request, "export/index.html")
+    return templates.TemplateResponse(template_path, {
         "request": request,
         "user": current_profile,
         "tables": EXPORT_TABLES
