@@ -65,6 +65,13 @@ async def login_form(
     next: str = Form("/")
 ):
     try:
+        # Clear any existing session first
+        try:
+            supabase.auth.sign_out()
+        except:
+            pass
+        
+        # Sign in with fresh credentials
         result = supabase.auth.sign_in_with_password({"email": email, "password": password})
         session = result.session
 
@@ -77,15 +84,15 @@ async def login_form(
         from app.utils.profile_utils import create_profile_if_not_exists
         create_profile_if_not_exists(payload.get("sub"), email)
         
-        # Set cookie
+        # Set fresh cookies
         redirect_response = RedirectResponse(url=next or "/", status_code=303)
         set_auth_cookies(redirect_response, session, remember_me)
 
-        logging.info("User logged in successfully")
+        logging.info(f"User {email} logged in successfully with fresh token")
         return redirect_response
 
     except Exception as e:
-        logging.error("Login failed: Authentication error")
+        logging.error(f"Login failed for {email}: Authentication error")
         return templates.TemplateResponse(
             "login_logout.html",
             {
@@ -174,8 +181,13 @@ async def logout(request: Request):
         user_email = request.state.user.get("email", "unknown")
 
     try:
+        # Get access token from cookies to sign out properly
+        access_token = request.cookies.get("sb_access_token")
+        if access_token:
+            # Set the session before signing out
+            supabase.auth.set_session(access_token, request.cookies.get("sb_refresh_token", ""))
         supabase.auth.sign_out()
-        logging.info("User logged out successfully")
+        logging.info(f"User {user_email} logged out successfully")
     except Exception as e:
         logging.warning(f"Logout error: {e}")
 
