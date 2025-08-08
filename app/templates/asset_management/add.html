@@ -13,43 +13,43 @@
 {% endblock %}
 
 {% block content %}
-<div class="py-6">
+<div class="py-4">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h1 class="text-2xl font-semibold text-gray-900">Add New Asset</h1>
+        <h1 class="text-xl font-semibold text-gray-900">Add New Asset</h1>
         
         {% if error %}
-        <div class="mt-4 rounded-md bg-red-50 p-4">
+        <div class="mt-3 rounded bg-red-50 p-3">
             <div class="flex">
                 <div class="flex-shrink-0">
-                    <svg class="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                    <svg class="h-4 w-4 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                         <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
                     </svg>
                 </div>
-                <div class="ml-3">
-                    <h3 class="text-sm font-medium text-red-800">{{ error }}</h3>
+                <div class="ml-2">
+                    <h3 class="text-xs font-medium text-red-800">{{ error }}</h3>
                 </div>
             </div>
         </div>
         {% endif %}
         
-        <form method="POST" enctype="multipart/form-data" class="mt-6 space-y-6 bg-white shadow sm:rounded-lg p-6">
+        <form method="POST" enctype="multipart/form-data" class="mt-4 space-y-4 bg-white shadow sm:rounded p-4">
             <div x-data="assetForm()" x-init="initializeForm()">
-                <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
+                <div class="grid grid-cols-1 gap-y-3 gap-x-3 sm:grid-cols-6">
                     <!-- Asset Name -->
                     <div class="sm:col-span-3">
-                        <label for="asset_name" class="block text-sm font-medium text-gray-700 required-field">Asset Name</label>
+                        <label for="asset_name" class="block text-xs font-medium text-gray-700 required-field">Asset Name</label>
                         <div class="mt-1">
                             <input type="text" name="asset_name" id="asset_name" required
-                                class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                                class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full text-xs border-gray-300 rounded px-2 py-1.5">
                         </div>
                     </div>
                     
                     <!-- Category -->
                     <div class="sm:col-span-3">
-                        <label for="category_name" class="block text-sm font-medium text-gray-700 required-field">Category</label>
+                        <label for="category_name" class="block text-xs font-medium text-gray-700 required-field">Category</label>
                         <div class="mt-1">
                             <select name="category_name" id="category_name" required x-on:change="updateTypes()"
-                                class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                                class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full text-xs border-gray-300 rounded px-2 py-1.5">
                                 <option value="">Select Category</option>
                                 {% for category in dropdown_options.categories %}
                                 <option value="{{ category }}">{{ category }}</option>
@@ -253,11 +253,11 @@
                     </div>
                 </div>
                 
-                <div class="mt-6 flex justify-end">
-                    <a href="/assets" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                <div class="mt-4 flex justify-end space-x-2">
+                    <a href="/assets" class="bg-white py-1.5 px-3 border border-gray-300 rounded shadow-sm text-xs font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-1 focus:ring-offset-1 focus:ring-primary-500">
                         Cancel
                     </a>
-                    <button type="submit" onclick="return confirm('Are you sure you want to save this asset? Please verify all information is correct.')" class="ml-3 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                    <button type="submit" onclick="return confirm('Are you sure you want to save this asset? Please verify all information is correct.')" class="inline-flex justify-center py-1.5 px-3 border border-transparent shadow-sm text-xs font-medium rounded text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-1 focus:ring-offset-1 focus:ring-primary-500">
                         Save
                     </button>
                 </div>

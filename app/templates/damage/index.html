@@ -12,21 +12,21 @@
 {% endblock %}
 
 {% block content %}
-<div class="py-6">
+<div class="py-4">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="mb-6">
-            <h1 class="text-2xl font-bold text-gray-900">Asset Issues</h1>
-            <p class="text-gray-600">Report damage, loss, or disposal requests</p>
+        <div class="mb-4">
+            <h1 class="text-xl font-bold text-gray-900">Asset Issues</h1>
+            <p class="text-gray-600 text-sm">Report damage, loss, or disposal requests</p>
         </div>
 
         {% if error %}
-        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+        <div class="bg-red-100 border border-red-400 text-red-700 px-3 py-2 rounded mb-3 text-xs">
             {{ error }}
         </div>
         {% endif %}
 
         <!-- Filter and Search Bar -->
-        <div class="filter-bar rounded-lg p-6 mb-6">
+        <div class="filter-bar rounded-lg p-4 mb-4">
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <!-- Search -->
                 <div class="md:col-span-2">
@@ -86,20 +86,20 @@
         </div>
 
         <!-- Assets Table -->
-        <div class="bg-white shadow overflow-hidden sm:rounded-md">
-            <div class="px-4 py-5 sm:px-6">
-                <h3 class="text-lg leading-6 font-medium text-gray-900">Available Assets</h3>
-                <p class="mt-1 max-w-2xl text-sm text-gray-500">Select assets to report issues</p>
+        <div class="bg-white shadow overflow-hidden sm:rounded">
+            <div class="px-3 py-3 sm:px-4">
+                <h3 class="text-base leading-5 font-medium text-gray-900">Available Assets</h3>
+                <p class="mt-1 max-w-2xl text-xs text-gray-500">Select assets to report issues</p>
             </div>
             
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
                         <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Asset</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Current Location</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Asset</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Current Location</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                         </tr>
                     </thead>
                     <tbody id="assetsTableBody" class="bg-white divide-y divide-gray-200">
@@ -404,23 +404,23 @@ function displayAssets() {
     const tableBody = document.getElementById('assetsTableBody');
     
     if (assetsToShow.length === 0) {
-        tableBody.innerHTML = '<tr><td colspan="4" class="px-6 py-12 text-center text-gray-500"><i class="fas fa-search text-4xl mb-4"></i><br>No assets found matching your criteria</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="4" class="px-4 py-8 text-center text-gray-500"><i class="fas fa-search text-2xl mb-2"></i><br>No assets found matching your criteria</td></tr>';
     } else {
         tableBody.innerHTML = assetsToShow.map(asset => `
             <tr>
-                <td class="px-6 py-4 whitespace-nowrap">
-                    <div class="text-sm font-medium text-gray-900">${asset.name}</div>
-                    <div class="text-sm text-gray-500">ID: ${asset.id}</div>
+                <td class="px-4 py-3 whitespace-nowrap">
+                    <div class="text-xs font-medium text-gray-900">${asset.name}</div>
+                    <div class="text-xs text-gray-500">ID: ${asset.id}</div>
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                    <div class="text-sm text-gray-900">${asset.location}</div>
-                    <div class="text-sm text-gray-500">${asset.room}</div>
+                <td class="px-4 py-3 whitespace-nowrap">
+                    <div class="text-xs text-gray-900">${asset.location}</div>
+                    <div class="text-xs text-gray-500">${asset.room}</div>
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap">
+                <td class="px-4 py-3 whitespace-nowrap">
                     ${getStatusBadge(asset.status)}
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <div class="flex space-x-2">
+                <td class="px-4 py-3 whitespace-nowrap text-xs font-medium">
+                    <div class="flex space-x-1">
                         <button onclick="openDamageModal('${asset.id}', '${asset.name}')" 
                             class="text-red-600 hover:text-red-900">
                             <i class="fas fa-exclamation-triangle mr-1"></i>Damage
