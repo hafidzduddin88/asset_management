@@ -57,6 +57,7 @@ async def submit_lost_report(request: Request, current_profile = Depends(get_cur
                     'date_lost': data.get('date_lost'),
                     'description': data.get('description'),
                     'reported_by': current_profile.id,
+                    'reported_by_name': current_profile.full_name or current_profile.username,
                     'status': 'pending'
                 }
                 supabase.table('lost_log').insert(lost_data).execute()
@@ -96,6 +97,7 @@ async def submit_disposal_request(request: Request, current_profile = Depends(ge
                     'disposal_reason': data.get('disposal_reason', 'User request'),
                     'description': data.get('description'),
                     'requested_by': current_profile.id,
+                    'requested_by_name': current_profile.full_name or current_profile.username,
                     'status': 'pending'
                 }
                 supabase.table('disposal_log').insert(disposal_data).execute()
@@ -136,6 +138,7 @@ async def submit_repair_report(request: Request, current_profile = Depends(get_c
                     'action_type': 'repair',
                     'description': data.get('description'),
                     'performed_by': current_profile.id,
+                    'performed_by_name': current_profile.full_name or current_profile.username,
                     'status': 'completed'
                 }
                 
@@ -186,6 +189,7 @@ async def submit_damage_report(request: Request, current_profile = Depends(get_c
                     'severity': data.get('severity'),
                     'description': data.get('damage_description'),
                     'reported_by': current_profile.id,
+                    'reported_by_name': current_profile.full_name or current_profile.username,
                     'status': 'pending'
                 }
                 supabase.table('damage_log').insert(damage_data).execute()

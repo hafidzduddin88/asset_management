@@ -327,7 +327,7 @@ def add_approval_request(approval_data):
         logging.error(f"Error adding approval request: {str(e)}")
         return False
 
-def update_approval_status(approval_id, status, approved_by, notes=''):
+def update_approval_status(approval_id, status, approved_by, approved_by_name='', notes=''):
     try:
         supabase = get_supabase()
         update_data = {

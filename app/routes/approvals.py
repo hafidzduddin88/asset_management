@@ -126,6 +126,14 @@ async def approve_request(
             success = update_asset(approval.get('asset_id'), {'status': 'Under Repair'})
             if not success:
                 return JSONResponse({"status": "error", "message": "Failed to update asset status"})
+            
+            # Update damage_log with approver info
+            supabase = get_supabase()
+            supabase.table('damage_log').update({
+                'status': 'approved',
+                'approved_by': current_profile.id,
+                'approved_by_name': current_profile.full_name or current_profile.username
+            }).eq('asset_id', approval.get('asset_id')).execute()
         
         elif approval.get('type') == 'relocation':
             # Process relocation approval
@@ -239,7 +247,8 @@ async def approve_request(
         success = update_approval_status(
             approval_id, 
             'approved',
-            current_profile.id
+            current_profile.id,
+            current_profile.full_name or current_profile.username
         )
         
         if success:
@@ -260,11 +269,46 @@ async def reject_request(
     if current_profile.role not in ['admin', 'manager']:
         raise HTTPException(status_code=403, detail="Access denied")
     
+    # Update approval status and log tables
+    all_approvals = get_all_approvals()
+    approval = next((a for a in all_approvals if str(a.get('approval_id')) == str(approval_id)), None)
+    
+    if approval:
+        # Update corresponding log table
+        supabase = get_supabase()
+        approver_name = current_profile.full_name or current_profile.username
+        
+        if approval.get('type') == 'damage_report':
+            supabase.table('damage_log').update({
+                'status': 'rejected',
+                'approved_by': current_profile.id,
+                'approved_by_name': approver_name
+            }).eq('asset_id', approval.get('asset_id')).execute()
+        elif approval.get('type') in ['lost_report']:
+            supabase.table('lost_log').update({
+                'status': 'rejected',
+                'approved_by': current_profile.id,
+                'approved_by_name': approver_name
+            }).eq('asset_id', approval.get('asset_id')).execute()
+        elif approval.get('type') == 'disposal_request':
+            supabase.table('disposal_log').update({
+                'status': 'rejected',
+                'approved_by': current_profile.id,
+                'approved_by_name': approver_name
+            }).eq('asset_id', approval.get('asset_id')).execute()
+        elif approval.get('type') == 'relocation':
+            supabase.table('relocation_log').update({
+                'status': 'rejected',
+                'approved_by': current_profile.id,
+                'approved_by_name': approver_name
+            }).eq('asset_id', approval.get('asset_id')).execute()
+    
     # Update approval status
     success = update_approval_status(
         approval_id,
         'rejected', 
-        current_profile.id
+        current_profile.id,
+        current_profile.full_name or current_profile.username
     )
     
     if success:
