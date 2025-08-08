@@ -181,15 +181,12 @@ async def logout(request: Request):
         user_email = request.state.user.get("email", "unknown")
 
     try:
-        # Get access token from cookies to sign out properly
-        access_token = request.cookies.get("sb_access_token")
-        if access_token:
-            # Set the session before signing out
-            supabase.auth.set_session(access_token, request.cookies.get("sb_refresh_token", ""))
+        # Simply sign out without setting session (let Supabase handle it)
         supabase.auth.sign_out()
         logging.info(f"User {user_email} logged out successfully")
-    except Exception as e:
-        logging.warning(f"Logout error: {e}")
+    except Exception:
+        # Ignore logout errors - user will be logged out via cookie clearing
+        pass
 
     response = RedirectResponse(url="/login", status_code=303)
     clear_auth_cookies(response)
