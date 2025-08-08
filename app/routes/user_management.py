@@ -96,12 +96,14 @@ async def create_user(
         # Check if user exists
         existing = supabase.table("profiles").select("username").eq("username", email).execute()
         if existing.data:
+            dropdown_options = get_dropdown_options()
             template_path = get_template(request, "user_management/create.html")
             return templates.TemplateResponse(
                 template_path,
                 {
                     "request": request,
                     "user": current_profile,
+                    "business_units": dropdown_options.get('business_units', []),
                     "error": "Email already exists"
                 }
             )
@@ -144,23 +146,25 @@ async def create_user(
                 "admin_id": current_profile.id,
                 "target_user_id": auth_response.user.id,
                 "action": "CREATE_USER",
-                "details": f"Created user {email} with role {role}"
+                "details": f"Created user {full_name} ({email}) with role {role}"
             }).execute()
             
             response = RedirectResponse(url="/user_management", status_code=status.HTTP_303_SEE_OTHER)
-            set_flash(response, f"User {email} created successfully with password: 54321", "success")
+            set_flash(response, f"User {full_name} ({email}) created successfully with password: 54321", "success")
             return response
         else:
             raise Exception("Failed to create user")
             
     except Exception as e:
         logging.error(f"Failed to create user: {e}")
+        dropdown_options = get_dropdown_options()
         template_path = get_template(request, "user_management/create.html")
         return templates.TemplateResponse(
             template_path,
             {
                 "request": request,
                 "user": current_profile,
+                "business_units": dropdown_options.get('business_units', []),
                 "error": "Failed to create user"
             }
         )
@@ -174,11 +178,13 @@ async def reset_password(
     """Reset user password to default (admin only)."""
     try:
         # Get user from profiles
-        user_response = supabase.table("profiles").select("username").eq("id", user_id).execute()
+        user_response = supabase.table("profiles").select("username, full_name").eq("id", user_id).execute()
         if not user_response.data:
             raise HTTPException(status_code=404, detail="User not found")
         
-        user_email = user_response.data[0]["username"]
+        user_data = user_response.data[0]
+        user_email = user_data["username"]
+        user_name = user_data.get("full_name") or user_email
         
         # Reset password to default
         default_password = os.getenv('DEFAULT_USER_PASSWORD', '54321')
@@ -189,11 +195,11 @@ async def reset_password(
             "admin_id": current_profile.id,
             "target_user_id": user_id,
             "action": "RESET_PASSWORD",
-            "details": f"Reset password for {user_email} to default"
+            "details": f"Reset password for {user_name} ({user_email}) to default"
         }).execute()
         
         response = RedirectResponse(url="/user_management", status_code=status.HTTP_303_SEE_OTHER)
-        set_flash(response, f"Password reset to 54321 for {user_email}", "success")
+        set_flash(response, f"Password reset to 54321 for {user_name}", "success")
         return response
         
     except Exception as e:
@@ -222,6 +228,143 @@ async def toggle_user_status(
             # Log status change
             supabase.table("user_management_logs").insert({
                 "admin_id": current_profile.id,
+                "target_user_id": user_id,
+                "action": "TOGGLE_STATUS",
+                "details": f"User {status_text}"
+            }).execute()
+            
+            response = RedirectResponse(url="/user_management", status_code=status.HTTP_303_SEE_OTHER)
+            set_flash(response, f"User {status_text} successfully", "success")
+            return response
+            
+    except Exception as e:
+        logging.error(f"Failed to toggle user status: {e}")
+        response = RedirectResponse(url="/user_management", status_code=status.HTTP_303_SEE_OTHER)
+        set_flash(response, "Failed to update user status", "error")
+        return response
+
+@router.post("/change_role/{user_id}")
+async def change_user_role(
+    user_id: str,
+    request: Request,
+    new_role: str = Form(...),
+    current_profile = Depends(get_admin_user)
+):
+    """Change user role (admin only)."""
+    try:
+        # Get user info
+        user_response = supabase.table("profiles").select("username, full_name").eq("id", user_id).execute()
+        if not user_response.data:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        user_data = user_response.data[0]
+        user_name = user_data.get("full_name") or user_data["username"]
+        
+        # Update role
+        supabase.table("profiles").update({"role": new_role}).eq("id", user_id).execute()
+        
+        # Log role change
+        supabase.table("user_management_logs").insert({
+            "admin_id": current_profile.id,
+            "target_user_id": user_id,
+            "action": "CHANGE_ROLE",
+            "details": f"Changed role to {new_role} for {user_name}"
+        }).execute()
+        
+        response = RedirectResponse(url="/user_management", status_code=status.HTTP_303_SEE_OTHER)
+        set_flash(response, f"Role changed to {new_role} for {user_name}", "success")
+        return response
+        
+    except Exception as e:
+        logging.error(f"Failed to change user role: {e}")
+        response = RedirectResponse(url="/user_management", status_code=status.HTTP_303_SEE_OTHER)
+        set_flash(response, "Failed to change user role", "error")
+        return response
+
+@router.post("/change_department/{user_id}")
+async def change_user_department(
+    user_id: str,
+    request: Request,
+    business_unit_name: str = Form(...),
+    current_profile = Depends(get_admin_user)
+):
+    """Change user business unit (admin only)."""
+    try:
+        # Get user info
+        user_response = supabase.table("profiles").select("username, full_name").eq("id", user_id).execute()
+        if not user_response.data:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        user_data = user_response.data[0]
+        user_name = user_data.get("full_name") or user_data["username"]
+        
+        # Get business_unit_id from name
+        business_unit_id = None
+        if business_unit_name:
+            bu_response = supabase.table("ref_business_units").select("business_unit_id").eq("business_unit_name", business_unit_name).execute()
+            if bu_response.data:
+                business_unit_id = bu_response.data[0]['business_unit_id']
+        
+        # Update business unit
+        supabase.table("profiles").update({
+            "business_unit_id": business_unit_id,
+            "business_unit_name": business_unit_name if business_unit_name else None
+        }).eq("id", user_id).execute()
+        
+        # Log business unit change
+        supabase.table("user_management_logs").insert({
+            "admin_id": current_profile.id,
+            "target_user_id": user_id,
+            "action": "CHANGE_BUSINESS_UNIT",
+            "details": f"Changed business unit to {business_unit_name or 'None'} for {user_name}"
+        }).execute()
+        
+        response = RedirectResponse(url="/user_management", status_code=status.HTTP_303_SEE_OTHER)
+        set_flash(response, f"Business unit changed for {user_name}", "success")
+        return response
+        
+    except Exception as e:
+        logging.error(f"Failed to change user business unit: {e}")
+        response = RedirectResponse(url="/user_management", status_code=status.HTTP_303_SEE_OTHER)
+        set_flash(response, "Failed to change user business unit", "error")
+        return response
+
+@router.post("/verify_email/{user_id}")
+async def verify_user_email(
+    user_id: str,
+    request: Request,
+    current_profile = Depends(get_admin_user)
+):
+    """Manually verify user email (admin only)."""
+    try:
+        # Get user info
+        user_response = supabase.table("profiles").select("username, full_name").eq("id", user_id).execute()
+        if not user_response.data:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        user_data = user_response.data[0]
+        user_name = user_data.get("full_name") or user_data["username"]
+        
+        # Update email verification status
+        supabase.table("profiles").update({"email_verified": True}).eq("id", user_id).execute()
+        
+        # Log email verification
+        supabase.table("user_management_logs").insert({
+            "admin_id": current_profile.id,
+            "target_user_id": user_id,
+            "action": "VERIFY_EMAIL",
+            "details": f"Manually verified email for {user_name}"
+        }).execute()
+        
+        response = RedirectResponse(url="/user_management", status_code=status.HTTP_303_SEE_OTHER)
+        set_flash(response, f"Email verified for {user_name}", "success")
+        return response
+        
+    except Exception as e:
+        logging.error(f"Failed to verify user email: {e}")
+        response = RedirectResponse(url="/user_management", status_code=status.HTTP_303_SEE_OTHER)
+        set_flash(response, "Failed to verify user email", "error")
+        return response             "admin_id": current_profile.id,
                 "target_user_id": user_id,
                 "action": "TOGGLE_STATUS",
                 "details": f"User {status_text}"

@@ -12,7 +12,7 @@ class ProfileResponse(BaseModel):
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
     photo_url: Optional[str] = None
-    business_unit: Optional[str] = None
+    business_unit_name: Optional[str] = None
     last_login_at: Optional[datetime] = None
     
     # Computed fields for compatibility
