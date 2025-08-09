@@ -1,6 +1,6 @@
 {% extends "templates_desktop/layouts/modern_layout.html" %}
 
-{% block title %}Database Assets{% endblock %}
+{% block title %}Assets Management{% endblock %}
 
 {% block head %}
 <style>
@@ -26,10 +26,14 @@
         <div class="mb-6">
             <div class="flex justify-between items-center">
                 <div>
-                    <h1 class="text-3xl font-bold text-gray-900">Database Assets</h1>
-                    <p class="text-gray-600 mt-1">Complete inventory of all registered assets in the system</p>
+                    <h1 class="text-3xl font-bold text-gray-900">Assets Management</h1>
+                    <p class="text-gray-600 mt-1">Manage and monitor all organizational assets with comprehensive tracking</p>
                 </div>
                 <div class="flex items-center space-x-4">
+                    <a href="/asset_management/add" class="inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors shadow-lg">
+                        <i class="fas fa-plus mr-2"></i>
+                        Add Asset
+                    </a>
                     <div class="bg-white px-4 py-2 rounded-lg shadow border">
                         <div class="text-2xl font-bold text-primary-600">{{ assets|length }}</div>
                         <div class="text-sm text-gray-500">Total Assets</div>
@@ -122,8 +126,8 @@
         <!-- Assets Table -->
         <div class="bg-white shadow-xl overflow-hidden rounded-xl border border-gray-200">
             <div class="px-4 py-3 bg-gradient-to-r from-gray-50 to-slate-50 border-b border-gray-200">
-                <h3 class="text-base font-semibold text-gray-900">Asset Database</h3>
-                <p class="mt-1 text-xs text-gray-500">Complete list of all registered assets</p>
+                <h3 class="text-base font-semibold text-gray-900">Assets Management</h3>
+                <p class="mt-1 text-xs text-gray-500">View, search, and manage all organizational assets</p>
             </div>
             
             <div class="overflow-x-auto">

@@ -4,9 +4,10 @@
 
 ### 1. Project Overview
 **AMBP (Asset Management Business Platform)** is a modern web-based asset management system built with:
-- **Backend**: FastAPI + Supabase PostgreSQL
+- **Backend**: FastAPI + Supabase PostgreSQL (11 optimized packages)
 - **Frontend**: Tailwind CSS + Alpine.js + HTMX + Jinja2
-- **Features**: Asset management, issue reporting, repair workflows, analytics dashboard
+- **Features**: Asset management, issue reporting, repair workflows, compact analytics dashboard
+- **Authentication**: JWT-based with profile protection system
 
 ### 2. Key System Concepts
 
@@ -88,18 +89,21 @@ approval_data = {
 
 #### Implemented Features ✅
 - Asset Registration with approval workflow
-- Asset Issues (damage/lost/disposal) in single page
-- Asset Repair as separate workflow
-- Dashboard with real-time analytics
-- User management with business units
-- Export to Excel/PDF
+- Asset Issues (damage/lost/disposal) integrated in single page
+- Asset Repair as separate workflow for damaged assets
+- Compact dashboard with monthly/quarterly/yearly analytics
+- User management with business unit terminology
+- Export to Excel/PDF with role-based access
 - PWA support with offline capability
+- Profile protection against overwrites during authentication
+- Mobile-optimized templates with scrollable lists
 
 #### Key Integrations
-- **Supabase**: Primary database with real-time features
-- **Google Drive**: Asset photo storage
-- **Chart.js**: Dashboard analytics
+- **Supabase**: Primary database with foreign key relationships and log tables
+- **Google Drive**: Asset photo storage with organized folder structure
+- **Chart.js**: Dashboard analytics with activity data from log tables
 - **Alpine.js**: Client-side reactivity
+- **Database Triggers**: Auto-sync auth.users with public.profiles
 
 ### 6. Common Tasks
 
@@ -136,12 +140,15 @@ add_approval_request(approval_data)
 - **Database errors**: Verify foreign key relationships
 - **Auth issues**: Check role-based access in routes
 - **Chart errors**: Ensure data format matches Chart.js requirements
+- **Profile overwrites**: Check profile protection in auth.py and middleware
+- **Full name changes**: Verify last_login_at updates preserve existing full_name
 
 #### Debug Steps
 1. Check logs for specific error messages
 2. Verify database schema matches code expectations
 3. Test with different user roles
 4. Check both desktop and mobile templates
+5. Verify profile protection mechanisms are working
 
 ### 8. Environment Setup
 
@@ -175,10 +182,19 @@ docker build -t ambp .
 - **Auth**: `app/middleware/session_auth.py` - Authentication
 
 ### Key Concepts
-- **Asset Issues**: Damage/Lost/Disposal in single workflow
-- **Asset Repair**: Separate workflow for repair completion
-- **Dual Templates**: Desktop and mobile versions
+- **Asset Issues**: Damage/Lost/Disposal integrated in single workflow
+- **Asset Repair**: Separate workflow showing only damaged assets
+- **Dual Templates**: Desktop and mobile versions (always update both)
 - **Approval Workflow**: Role-based hierarchical approvals
-- **Supabase Integration**: PostgreSQL with foreign keys
+- **Supabase Integration**: PostgreSQL with foreign keys and comprehensive logging
+- **Profile Protection**: Prevents full_name overwrites during authentication
+- **Compact Design**: Optimized spacing and sizing for better UX
+
+### Recent Optimizations
+- **Requirements**: Reduced from 25+ to 11 essential packages
+- **Dashboard**: Made compact with smaller cards and charts
+- **Authentication**: Fixed full_name preservation during login
+- **Mobile**: Added scrollable lists and compact filters
+- **Export**: Available to all users with role-based restrictions
 
 This guidance should help you quickly understand and work with the AMBP system effectively.
