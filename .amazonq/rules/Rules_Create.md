@@ -118,21 +118,87 @@
 
 ## Commit Standards
 
-Use Conventional Commits format:
+Always use Conventional Commits format with these suggestions:
 
+### Feature Development
 ```bash
-# Feature additions
+# New features
 feat: add asset repair completion workflow
+feat: implement lost asset reporting system
+feat: create dashboard analytics charts
+feat: add Excel export functionality
 
-# Bug fixes
+# Feature enhancements
+feat: enhance approval workflow with role-based routing
+feat: add mobile template for asset issues
+feat: integrate Google Drive photo storage
+```
+
+### Bug Fixes
+```bash
+# Critical fixes
 fix: resolve chart data persistence issue
+fix: correct asset status update in approval workflow
+fix: prevent duplicate asset registration
 
-# Documentation
-docs: update API documentation
+# UI/UX fixes
+fix: mobile navigation menu not closing
+fix: asset search pagination limit
+fix: template path resolution for mobile devices
+```
 
+### Code Quality
+```bash
 # Refactoring
-refactor: optimize database queries
+refactor: optimize database queries for asset listing
+refactor: consolidate template components
+refactor: simplify approval workflow logic
 
 # Performance improvements
 perf: implement caching for reference data
+perf: optimize chart rendering performance
+perf: reduce database query count in dashboard
+```
+
+### Documentation & Configuration
+```bash
+# Documentation
+docs: update API documentation
+docs: add Amazon Q guidance for new sessions
+docs: update README with current features
+
+# Configuration changes
+chore: update dependencies to latest versions
+chore: configure Docker for production deployment
+chore: add environment variables for Supabase
+```
+
+### Database & Schema
+```bash
+# Database changes
+feat: add comprehensive logging tables
+feat: implement foreign key relationships
+fix: correct database schema for user profiles
+
+# Migration related
+chore: migrate from Google Sheets to Supabase
+feat: add audit trail tables for all operations
+```
+
+### Testing & CI/CD
+```bash
+# Testing
+test: add unit tests for approval workflow
+test: implement integration tests for asset operations
+
+# CI/CD
+ci: configure GitHub Actions for auto-deployment
+ci: add Docker build optimization
+```
+
+### Breaking Changes
+```bash
+# Breaking changes (use ! after type)
+feat!: migrate authentication to JWT-based system
+refactor!: restructure template organization
 ```
