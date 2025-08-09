@@ -93,6 +93,13 @@ class SessionAuthMiddleware(BaseHTTPMiddleware):
         
         # Update cookies if tokens refreshed
         if new_tokens:
+            # Protect profile after token refresh
+            try:
+                from app.utils.profile_utils import protect_profile_data
+                protect_profile_data(user_info["id"])
+            except Exception as e:
+                logging.warning(f"Failed to protect profile in middleware: {e}")
+            
             is_secure = not config.APP_URL.startswith("http://localhost")
             
             response.set_cookie(

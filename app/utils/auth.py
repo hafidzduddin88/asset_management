@@ -113,6 +113,15 @@ def refresh_supabase_token(refresh_token: str) -> Optional[dict]:
         response = requests.post(url, headers=headers, json=payload)
         response.raise_for_status()
         data = response.json()
+        
+        # Protect profile after token refresh
+        if "user" in data and data["user"].get("id"):
+            user_id = data["user"]["id"]
+            try:
+                from app.utils.profile_utils import protect_profile_data
+                protect_profile_data(user_id)
+            except Exception as e:
+                logging.warning(f"Failed to protect profile after token refresh: {e}")
 
         return {
             "access_token": data["access_token"],
@@ -159,11 +168,7 @@ def get_current_profile(request: Request) -> ProfileResponse:
 
         profile_data = response.data[0]
         
-        # Protect profile data from external overwrites
-        from app.utils.profile_utils import protect_profile_data
-        protect_profile_data(user_id)
-        
-        # Update last_login_at only if not updated recently (prevent frequent updates)
+        # Update last_login_at only if not updated recently
         now = datetime.now(timezone.utc)
         last_update = _last_login_cache.get(user_id)
         
@@ -175,11 +180,6 @@ def get_current_profile(request: Request) -> ProfileResponse:
                 _last_login_cache[user_id] = now
             except Exception as e:
                 logging.warning(f"Failed to update last_login_at: {e}")
-        
-        # Re-fetch profile data after protection
-        response = admin_supabase.table("profiles").select("*").eq("id", user_id).execute()
-        if response.data:
-            profile_data = response.data[0]
         
         return ProfileResponse(
             id=str(profile_data.get("id")),

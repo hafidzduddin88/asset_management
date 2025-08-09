@@ -49,16 +49,27 @@ def protect_profile_data(user_id: str) -> bool:
         admin_supabase = create_client(config.SUPABASE_URL, config.SUPABASE_SERVICE_KEY)
         
         # Get current profile
-        response = admin_supabase.table("profiles").select("full_name, username").eq("id", user_id).execute()
+        response = admin_supabase.table("profiles").select("full_name, username, updated_at").eq("id", user_id).execute()
         
         if response.data:
             profile = response.data[0]
-            # If full_name was overwritten with username, restore it to empty
-            if profile.get('full_name') == profile.get('username'):
+            current_full_name = profile.get('full_name')
+            username = profile.get('username')
+            updated_at = profile.get('updated_at')
+            
+            logging.info(f"Profile check for {user_id}: full_name='{current_full_name}', username='{username}', updated_at='{updated_at}'")
+            
+            # Check if full_name was overwritten with username or email
+            needs_protection = (
+                current_full_name == username or  # Overwritten with username
+                (current_full_name and '@' in current_full_name and '.' in current_full_name)  # Overwritten with email
+            )
+            
+            if needs_protection:
                 admin_supabase.table("profiles").update({
                     "full_name": None
                 }).eq("id", user_id).execute()
-                logging.info(f"Protected profile data for user {user_id}")
+                logging.warning(f"PROFILE OVERWRITE DETECTED! User {user_id} - restored full_name from '{current_full_name}' to null")
                 return True
         
         return False

@@ -125,26 +125,26 @@
                         <span class="text-2xl font-bold text-primary-600">AMBP</span>
                     </div>
                     <div class="ml-6 flex space-x-6">
-                        <a href="/" class="{% if request.url.path == '/' or request.url.path == '/dashboard' %}border-primary-500 text-gray-900{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} inline-flex items-center px-1 pt-1 border-b-2 text-xs font-medium">
-                            <i class="fas fa-tachometer-alt mr-1"></i>Dashboard
+                        <a href="/" class="{% if request.url.path == '/' or request.url.path == '/dashboard' %}border-primary-500 text-gray-900{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                            <i class="fas fa-tachometer-alt mr-2"></i>Dashboard
                         </a>
-                        <a href="/assets" class="{% if '/assets' in request.url.path %}border-primary-500 text-gray-900{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} inline-flex items-center px-1 pt-1 border-b-2 text-xs font-medium">
-                            <i class="fas fa-database mr-1"></i>Assets
+                        <a href="/assets" class="{% if '/assets' in request.url.path %}border-primary-500 text-gray-900{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                            <i class="fas fa-database mr-2"></i>Assets
                         </a>
-                        <a href="/asset_management/add" class="{% if '/asset_management/add' in request.url.path %}border-primary-500 text-gray-900{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} inline-flex items-center px-1 pt-1 border-b-2 text-xs font-medium">
-                            <i class="fas fa-plus-circle mr-1"></i>Add Asset
+                        <a href="/asset_management/add" class="{% if '/asset_management/add' in request.url.path %}border-primary-500 text-gray-900{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                            <i class="fas fa-plus-circle mr-2"></i>Add Asset
                         </a>
-                        <a href="/relocation" class="{% if '/relocation' in request.url.path %}border-primary-500 text-gray-900{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} inline-flex items-center px-1 pt-1 border-b-2 text-xs font-medium">
-                            <i class="fas fa-arrows-alt mr-1"></i>Relocation
+                        <a href="/relocation" class="{% if '/relocation' in request.url.path %}border-primary-500 text-gray-900{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                            <i class="fas fa-arrows-alt mr-2"></i>Relocation
                         </a>
-                        <a href="/damage" class="{% if '/damage' in request.url.path %}border-primary-500 text-gray-900{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} inline-flex items-center px-1 pt-1 border-b-2 text-xs font-medium">
-                            <i class="fas fa-exclamation-triangle mr-1"></i>Issues
+                        <a href="/damage" class="{% if '/damage' in request.url.path %}border-primary-500 text-gray-900{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                            <i class="fas fa-exclamation-triangle mr-2"></i>Issues
                         </a>
-                        <a href="/repair" class="{% if '/repair' in request.url.path %}border-primary-500 text-gray-900{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} inline-flex items-center px-1 pt-1 border-b-2 text-xs font-medium">
-                            <i class="fas fa-wrench mr-1"></i>Repair
+                        <a href="/repair" class="{% if '/repair' in request.url.path %}border-primary-500 text-gray-900{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                            <i class="fas fa-wrench mr-2"></i>Repair
                         </a>
-                        <a href="/logs" class="{% if '/logs' in request.url.path %}border-primary-500 text-gray-900{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} inline-flex items-center px-1 pt-1 border-b-2 text-xs font-medium">
-                            <i class="fas fa-history mr-1"></i>Logs
+                        <a href="/logs" class="{% if '/logs' in request.url.path %}border-primary-500 text-gray-900{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                            <i class="fas fa-history mr-2"></i>Logs
                         </a>
                         {% if user and (user.role == 'admin' or user.role == 'manager') %}
                         <a href="/approvals" class="{% if '/approvals' in request.url.path %}border-primary-500 text-gray-900{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
@@ -156,7 +156,7 @@
                         <div class="relative" x-data="{ open: false }">
                             <button @click="open = !open" class="{% if request.url.path == '/disposal' or '/user_management' in request.url.path %}border-primary-500 text-gray-900{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
                                 <i class="fas fa-crown mr-2"></i>SuperAdmin
-                                <svg class="ml-1 h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                                <svg class="ml-2 h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
                                 </svg>
                             </button>
@@ -178,7 +178,7 @@
                         <div class="relative" x-data="{ open: false }">
                             <button @click="open = !open" class="{% if '/asset_management/' in request.url.path %}border-primary-500 text-gray-900{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
                                 <i class="fas fa-user-tie mr-2"></i>Manager
-                                <svg class="ml-1 h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                                <svg class="ml-2 h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
                                 </svg>
                             </button>
