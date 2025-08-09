@@ -97,9 +97,10 @@
                 <div class="flex items-center space-x-3">
                     <label class="text-sm font-medium">Show:</label>
                     <select id="itemsPerPage" class="px-3 py-1 border border-gray-300 rounded-lg text-gray-900 text-sm">
+                        <option value="20" selected>20</option>
                         <option value="25">25</option>
                         <option value="50">50</option>
-                        <option value="100" selected>100</option>
+                        <option value="100">100</option>
                         <option value="500">500</option>
                         <option value="all">Show All</option>
                     </select>
@@ -160,7 +161,7 @@ const assetsData = {{ assets | tojson }};
 const dropdownOptions = {{ dropdown_options | tojson }};
 
 // Pagination settings
-let ITEMS_PER_PAGE = 100;
+let ITEMS_PER_PAGE = 20;
 let currentPage = 1;
 let filteredAssets = [];
 let allAssets = [];
@@ -310,9 +311,14 @@ function applyFilters() {
 }
 
 function displayAssets() {
-    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-    const endIndex = ITEMS_PER_PAGE === filteredAssets.length ? filteredAssets.length : startIndex + ITEMS_PER_PAGE;
-    const assetsToShow = filteredAssets.slice(startIndex, endIndex);
+    let assetsToShow;
+    if (ITEMS_PER_PAGE === 'all' || ITEMS_PER_PAGE >= filteredAssets.length) {
+        assetsToShow = filteredAssets;
+    } else {
+        const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+        const endIndex = startIndex + ITEMS_PER_PAGE;
+        assetsToShow = filteredAssets.slice(startIndex, endIndex);
+    }
     
     const tableBody = document.getElementById('assetsTableBody');
     if (assetsToShow.length === 0) {
@@ -379,8 +385,14 @@ function getStatusBadge(status) {
 }
 
 function updatePagination() {
-    const totalPages = ITEMS_PER_PAGE === filteredAssets.length ? 1 : Math.ceil(filteredAssets.length / ITEMS_PER_PAGE);
     const pagination = document.getElementById('pagination');
+    
+    if (ITEMS_PER_PAGE === 'all' || ITEMS_PER_PAGE >= filteredAssets.length) {
+        pagination.innerHTML = '';
+        return;
+    }
+    
+    const totalPages = Math.ceil(filteredAssets.length / ITEMS_PER_PAGE);
     
     if (totalPages <= 1) {
         pagination.innerHTML = '';
@@ -414,10 +426,13 @@ function updatePagination() {
 }
 
 function updateResultsInfo() {
-    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE + 1;
-    const endIndex = Math.min(currentPage * ITEMS_PER_PAGE, filteredAssets.length);
-    
-    document.getElementById('currentCount').textContent = filteredAssets.length > 0 ? `${startIndex}-${endIndex}` : '0';
+    if (ITEMS_PER_PAGE === 'all' || ITEMS_PER_PAGE >= filteredAssets.length) {
+        document.getElementById('currentCount').textContent = filteredAssets.length;
+    } else {
+        const startIndex = (currentPage - 1) * ITEMS_PER_PAGE + 1;
+        const endIndex = Math.min(currentPage * ITEMS_PER_PAGE, filteredAssets.length);
+        document.getElementById('currentCount').textContent = filteredAssets.length > 0 ? `${startIndex}-${endIndex}` : '0';
+    }
     document.getElementById('totalCount').textContent = filteredAssets.length;
 }
 

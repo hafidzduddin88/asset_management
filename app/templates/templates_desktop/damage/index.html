@@ -340,7 +340,7 @@ function performSearch() {
         const matchesRoom = !selectedRoom || assetRoom === selectedRoom;
         
         return matchesSearch && matchesLocation && matchesRoom;
-    }).slice(0, 10);
+    });
     
     resultsDiv.innerHTML = filteredAssets.map(asset => {
         const location = asset.ref_locations?.location_name || '';

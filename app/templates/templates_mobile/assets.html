@@ -59,6 +59,7 @@
             <select id="itemsPerPage" class="px-3 py-2 border border-gray-300 rounded-lg text-gray-900 text-sm">
                 <option value="20" selected>20</option>
                 <option value="50">50</option>
+                <option value="all">Show All</option>
             </select>
         </div>
     </div>
@@ -75,7 +76,7 @@
 </div>
 
 <!-- Assets List -->
-<div id="mobileAssetsList" class="space-y-3 mb-6">
+<div id="mobileAssetsList" class="space-y-3 mb-6 max-h-96 overflow-y-auto">
     <!-- Mobile assets will be populated here -->
 </div>
 
@@ -198,7 +199,7 @@ function setupEventListeners() {
     searchInput.addEventListener('input', applyFilters);
     
     itemsPerPage.addEventListener('change', function() {
-        ITEMS_PER_PAGE = parseInt(this.value);
+        ITEMS_PER_PAGE = this.value === 'all' ? 'all' : parseInt(this.value);
         currentPage = 1;
         displayAssets();
     });
@@ -242,9 +243,14 @@ function applyFilters() {
 }
 
 function displayAssets() {
-    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-    const endIndex = startIndex + ITEMS_PER_PAGE;
-    const assetsToShow = filteredAssets.slice(startIndex, endIndex);
+    let assetsToShow;
+    if (ITEMS_PER_PAGE === 'all') {
+        assetsToShow = filteredAssets;
+    } else {
+        const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+        const endIndex = startIndex + ITEMS_PER_PAGE;
+        assetsToShow = filteredAssets.slice(startIndex, endIndex);
+    }
     
     const mobileList = document.getElementById('mobileAssetsList');
     if (assetsToShow.length === 0) {
@@ -304,8 +310,14 @@ function getStatusBadge(status) {
 }
 
 function updatePagination() {
-    const totalPages = Math.ceil(filteredAssets.length / ITEMS_PER_PAGE);
     const pagination = document.getElementById('pagination');
+    
+    if (ITEMS_PER_PAGE === 'all') {
+        pagination.innerHTML = '';
+        return;
+    }
+    
+    const totalPages = Math.ceil(filteredAssets.length / ITEMS_PER_PAGE);
     
     if (totalPages <= 1) {
         pagination.innerHTML = '';
@@ -355,10 +367,13 @@ function updatePagination() {
 }
 
 function updateResultsInfo() {
-    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE + 1;
-    const endIndex = Math.min(currentPage * ITEMS_PER_PAGE, filteredAssets.length);
-    
-    document.getElementById('currentCount').textContent = filteredAssets.length > 0 ? `${startIndex}-${endIndex}` : '0';
+    if (ITEMS_PER_PAGE === 'all') {
+        document.getElementById('currentCount').textContent = filteredAssets.length;
+    } else {
+        const startIndex = (currentPage - 1) * ITEMS_PER_PAGE + 1;
+        const endIndex = Math.min(currentPage * ITEMS_PER_PAGE, filteredAssets.length);
+        document.getElementById('currentCount').textContent = filteredAssets.length > 0 ? `${startIndex}-${endIndex}` : '0';
+    }
     document.getElementById('totalCount').textContent = filteredAssets.length;
 }
 
