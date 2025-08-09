@@ -449,11 +449,11 @@ function viewAssetDetails(assetId) {
     alert(`Asset Details:\n\nName: ${asset.name}\nID: ${asset.id}\nTag: ${asset.asset_tag}\nCategory: ${asset.category}\nLocation: ${asset.location} - ${asset.room}\nStatus: ${asset.status}\nBook Value: Rp ${asset.book_value.toLocaleString()}`);
 }
 
-// Set user role from backend
-window.userRole = '{{ current_user.role if current_user else "staff" }}';
-
 function editAsset(assetId) {
     window.location.href = `/asset_management/edit/${assetId}`;
 }
+
+// Set user role from backend
+window.userRole = '{{ current_user.role if current_user else "staff" }}';
 </script>
 {% endblock %}
