@@ -12,6 +12,7 @@ router = APIRouter(prefix="/repair", tags=["repair"])
 templates = Jinja2Templates(directory="app/templates")
 
 @router.get("/", response_class=HTMLResponse)
+@router.get("", response_class=HTMLResponse)
 async def repair_page(request: Request, current_profile=Depends(get_current_profile)):
     """Repair asset page - accessible by all users"""
     try:
