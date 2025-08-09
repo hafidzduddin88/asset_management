@@ -1,94 +1,138 @@
-# Web-Based Asset Management System
+# Asset Management Business Platform (AMBP)
 
-Features
+## Core Features
 
-- Add/Edit/Relocate/Dispose Assets (with Admin Approval)
-- Role-based Authentication (Admin & Staff)
-- Card-style Asset UI with Photo Previews (Google Drive)
-- PWA Support (Offline-friendly, Mobile-ready)
-- Export Reports to Excel and PDF
-- Google Sheets & Drive API Integration
-- Admin Approval Workflow for all critical actions
+- **Asset Registration** - Add/Edit/Relocate assets with approval workflow
+- **Asset Issues** - Report Damage/Lost/Disposal requests
+- **Asset Repair** - Report repair completion for damaged assets
+- **Role-based Authentication** - Admin/Manager/Staff with hierarchical approvals
+- **Dashboard Analytics** - Real-time charts and metrics
+- **PWA Support** - Offline-friendly, mobile-ready application
+- **Export Reports** - Excel and PDF generation
+- **Google Drive Integration** - Asset photo storage and management
 
-Backend:
-- FastAPI + Uvicorn
-- SQLAlchemy (PostgreSQL)
-- Google Sheets API (gspread)
-- Google Drive API
-- JWT Authentication
-- Argon2 Password Hashing
+## Backend Architecture
+- **FastAPI + Uvicorn** - Modern Python web framework
+- **Supabase PostgreSQL** - Primary database with foreign key relationships
+- **Google Drive API** - Asset photo storage
+- **JWT Authentication** - Session-based auth with middleware
+- **Argon2 Password Hashing** - Secure password storage
 
-Frontend:
-- Tailwind CSS
-- Alpine.js
-- HTMX
-- Jinja2
-- Client-side filtering, responsive design
-- PWA (Service Worker + Web Manifest)
+## Frontend Stack
+- **Tailwind CSS** - Utility-first styling
+- **Alpine.js** - Reactive JavaScript framework
+- **HTMX** - Dynamic content loading
+- **Jinja2** - Server-side templating
+- **Chart.js** - Dashboard analytics
+- **PWA** - Service Worker + Web Manifest for offline support
+- **Responsive Design** - Desktop and mobile templates
 
-Google Drive Integration
-- Upload asset photos via form (Admin only)
-- Stored in structured folders by asset tag
+## Google Drive Integration
+- Asset photo upload and storage
+- Organized folder structure by asset tag
 - Public preview via Google Drive viewer
-- File metadata saved to backend
+- Secure file handling with service account
 
-Authentication & Role
-- JWT-based Auth
-- Argon2 password hashing
-- Role-Based Access:
-  - **Admin:** Full control, approves changes
-  - **Staff:** Submit requests
+## Authentication & Roles
+- **JWT-based Authentication** with session middleware
+- **Argon2 Password Hashing** for security
+- **Role-Based Access Control:**
+  - **Admin:** Full system access, user management, approves staff/manager requests
+  - **Manager:** Asset operations, approves admin requests
+  - **Staff:** Basic operations, submit requests for approval
 
-Admin Approval Workflow
-All critical actions require admin approval:
-- Adding Assets
-- Damaged Assets
-- Repaired Assets
-- Relocation
-- Disposal
-- Upload/Change Photos Assets
+## Approval Workflow System
+**Hierarchical Approval Process:**
+- **Staff/Manager → Admin:** Asset registration, damage reports, repairs, relocations, disposals
+- **Admin → Manager:** Admin-initiated requests require manager approval
 
-Flow:
-1. Staff submits request
-2. Stored in pending approvals
-3. Admin dashboard to approve/reject
-4. Decisions logged in audit trail
+**Critical Actions Requiring Approval:**
+- Asset Registration (Add/Edit)
+- Asset Issues (Damage/Lost/Disposal)
+- Asset Repair Completion
+- Asset Relocation
 
-Disposal Management
+**Workflow Process:**
+1. User submits request
+2. Stored in approvals table with proper role routing
+3. Approver reviews and approves/rejects
+4. System updates asset status and logs action
+5. Complete audit trail maintained
 
-- Admin only
-- Stores:
-  - Disposal Date
-  - Reason
-  - Notes/Evidence
-  - Disposed By
-- Asset archived (not deleted)
+## Asset Issue Management
+**Integrated Issue Reporting:**
+- **Damage Reports** - Report asset damage with severity levels
+- **Lost Assets** - Report missing assets with circumstances
+- **Disposal Requests** - Request asset disposal with reasons
 
----
-
-Reporting
-
-- Reports include:
-  - New, Damaged, Repaired, Relocated, Disposed
-- Export options:
-  - Excel (.xlsx)
-  - PDF
-- Include asset photo URLs, approval metadata
+**Issue Processing:**
+- All issues require approval workflow
+- Comprehensive logging in dedicated log tables
+- Asset status automatically updated upon approval
+- Complete audit trail with timestamps and approvers
 
 ---
 
-Dev Guidelines
+## Reporting & Analytics
+**Dashboard Features:**
+- Real-time asset metrics and summaries
+- Interactive charts (monthly/quarterly/yearly views)
+- Activity tracking for all asset operations
+- Financial summaries (purchase value, book value, depreciation)
 
-- Modular Code (Separation of concerns)
-- Follow REST API standard
-- Form + API validation
-- Secure Service Account setup
-- Use Conventional Commits
+**Export Capabilities:**
+- **Excel Export** - Customizable table and column selection
+- **PDF Reports** - Formatted reports with asset details
+- **Role-based Access** - Admin-only for sensitive data
+- Include asset photos, approval metadata, and audit trails
 
 ---
 
-Commit Example
+## Development Guidelines
+
+**Code Organization:**
+- Modular architecture with clear separation of concerns
+- Route-based organization (`/routes` directory)
+- Utility functions in `/utils` directory
+- Template separation for desktop and mobile
+
+**API Standards:**
+- RESTful API design
+- Proper HTTP status codes
+- JSON request/response format
+- Form and API validation
+
+**Security:**
+- Secure service account setup for Google APIs
+- Role-based access control
+- Input validation and sanitization
+- Proper error handling
+
+**Database:**
+- Foreign key relationships for data integrity
+- Comprehensive logging tables
+- Proper indexing for performance
+- Cache management for reference data
+
+---
+
+## Commit Standards
+
+Use Conventional Commits format:
 
 ```bash
-feat: implement admin approval workflow with audit trail
+# Feature additions
+feat: add asset repair completion workflow
+
+# Bug fixes
+fix: resolve chart data persistence issue
+
+# Documentation
+docs: update API documentation
+
+# Refactoring
+refactor: optimize database queries
+
+# Performance improvements
+perf: implement caching for reference data
 ```
