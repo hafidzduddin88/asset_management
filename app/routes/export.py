@@ -21,24 +21,27 @@ EXPORT_TABLES = {
         'columns': {
             'asset_id': 'Asset ID',
             'asset_name': 'Asset Name',
-            'asset_tag': 'Asset Tag',
-            'category_name': 'Category',
-            'type_name': 'Asset Type',
             'manufacture': 'Manufacture',
             'model': 'Model',
             'serial_number': 'Serial Number',
-            'company_name': 'Company',
-            'business_unit_name': 'Business Unit',
+            'category_name': 'Category',
+            'type_name': 'Asset Type',
+            'asset_tag': 'Asset Tag',
+            'item_condition': 'Condition',
             'location_name': 'Location',
             'room_name': 'Room',
+            'company_name': 'Company',
+            'business_unit_name': 'Business Unit',
             'owner_name': 'Owner',
+            'notes': 'Notes',
             'purchase_date': 'Purchase Date',
             'purchase_cost': 'Purchase Cost',
-            'status': 'Status',
-            'item_condition': 'Condition',
-            'notes': 'Notes',
+            'supplier': 'Supplier',
             'warranty': 'Warranty',
-            'supplier': 'Supplier'
+            'depreciation_value': 'Depreciation Value',
+            'residual_value': 'Residual Value',
+            'book_value': 'Book Value',
+            'status': 'Status'
         }
     },
     'approvals': {
@@ -82,17 +85,38 @@ EXPORT_TABLES = {
             'repair_date': 'Repair Date',
             'status': 'Status'
         }
+    },
+    'users': {
+        'name': 'Users',
+        'table': 'profiles',
+        'columns': {
+            'id': 'User ID',
+            'username': 'Email',
+            'full_name': 'Full Name',
+            'role': 'Role',
+            'business_unit_name': 'Business Unit',
+            'is_active': 'Active Status',
+            'email_verified': 'Email Verified',
+            'created_at': 'Created Date',
+            'last_login_at': 'Last Login'
+        }
     }
 }
 
 @router.get("/")
 async def export_page(request: Request, current_profile=Depends(get_current_profile)):
-    """Export data page"""
+    """Export data page - accessible by all users"""
+    # Filter tables based on user role
+    available_tables = EXPORT_TABLES.copy()
+    if current_profile.role not in ['admin']:
+        # Non-admin users cannot export user data
+        available_tables.pop('users', None)
+    
     template_path = get_template(request, "export/index.html")
     return templates.TemplateResponse(template_path, {
         "request": request,
         "user": current_profile,
-        "tables": EXPORT_TABLES
+        "tables": available_tables
     })
 
 @router.post("/excel")
@@ -103,7 +127,7 @@ async def export_to_excel(
     exclude_disposed: bool = Form(False),
     current_profile=Depends(get_current_profile)
 ):
-    """Export selected table and columns to Excel"""
+    """Export selected table and columns to Excel - accessible by all users"""
     try:
         # Import openpyxl here to avoid dependency if not used
         from openpyxl import Workbook
@@ -111,6 +135,10 @@ async def export_to_excel(
         
         if table not in EXPORT_TABLES:
             raise ValueError("Invalid table selected")
+        
+        # Check user permissions for table access
+        if table == 'users' and current_profile.role not in ['admin']:
+            raise ValueError("Access denied: Admin role required for user data export")
         
         table_config = EXPORT_TABLES[table]
         supabase = get_supabase()
@@ -120,7 +148,7 @@ async def export_to_excel(
             # Include foreign key relationships for proper data display
             select_fields = []
             for col in columns:
-                if col in ['asset_id', 'asset_name', 'asset_tag', 'manufacture', 'model', 'serial_number', 'purchase_date', 'purchase_cost', 'status', 'item_condition', 'room_name', 'notes', 'warranty', 'supplier']:
+                if col in ['asset_id', 'asset_name', 'asset_tag', 'manufacture', 'model', 'serial_number', 'purchase_date', 'purchase_cost', 'status', 'item_condition', 'room_name', 'notes', 'warranty', 'supplier', 'depreciation_value', 'residual_value', 'book_value']:
                     select_fields.append(col)
             
             # Add foreign key relationships
@@ -133,6 +161,15 @@ async def export_to_excel(
                 'ref_owners(owner_name)'
             ])
             
+            query = supabase.table(table_config['table']).select(','.join(select_fields))
+        elif table == 'users':
+            # Include business unit relationship for users
+            select_fields = []
+            for col in columns:
+                if col in ['id', 'username', 'full_name', 'role', 'is_active', 'email_verified', 'created_at', 'last_login_at', 'business_unit_name']:
+                    select_fields.append(col)
+            
+            select_fields.append('ref_business_units(business_unit_name)')
             query = supabase.table(table_config['table']).select(','.join(select_fields))
         else:
             query = supabase.table(table_config['table']).select(','.join(columns))
@@ -168,7 +205,7 @@ async def export_to_excel(
             for col in columns:
                 value = row.get(col, '')
                 
-                # Handle foreign key relationships for assets
+                # Handle foreign key relationships
                 if table == 'assets':
                     if col == 'category_name':
                         value = row.get('ref_categories', {}).get('category_name', '') if row.get('ref_categories') else ''
@@ -182,6 +219,13 @@ async def export_to_excel(
                         value = row.get('ref_companies', {}).get('company_name', '') if row.get('ref_companies') else ''
                     elif col == 'owner_name':
                         value = row.get('ref_owners', {}).get('owner_name', '') if row.get('ref_owners') else ''
+                elif table == 'users':
+                    if col == 'business_unit_name':
+                        value = row.get('ref_business_units', {}).get('business_unit_name', '') if row.get('ref_business_units') else ''
+                    elif col == 'is_active':
+                        value = 'Active' if value else 'Inactive'
+                    elif col == 'email_verified':
+                        value = 'Verified' if value else 'Not Verified'
                 
                 # Format dates
                 if col.endswith('_date') and value:

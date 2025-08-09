@@ -1,245 +1,166 @@
-{% extends "templates_mobile/layouts/modern_layout.html" %}
+{% extends "layouts/modern_layout.html" %}
 
 {% block title %}Export Data{% endblock %}
 
 {% block content %}
-<div class="px-4 py-4">
-    <!-- Header -->
-    <div class="mb-4">
-        <div class="text-center">
-            <h1 class="text-lg font-bold text-gray-900">
-                <i class="fas fa-download mr-2 text-primary-600"></i>
-                Export Data
-            </h1>
-            <p class="mt-1 text-xs text-gray-500">Export system data to Excel format</p>
-            <span class="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20 mt-2">
-                <i class="fas fa-shield-alt mr-1"></i>
-                Admin Only
-            </span>
-        </div>
-    </div>
-
-    <!-- Export Form -->
-    <div class="bg-white shadow-lg rounded-lg border border-gray-200">
-        <div class="px-4 py-3 border-b border-gray-200 bg-gradient-to-r from-primary-50 to-blue-50">
-            <h2 class="text-sm font-semibold text-gray-900">
-                <i class="fas fa-cog mr-2 text-primary-600"></i>
-                Export Configuration
-            </h2>
-        </div>
-
-        <form id="exportForm" action="/export/excel" method="post" class="p-4 space-y-4">
-            <!-- Table Selection -->
-            <div class="space-y-2">
-                <label class="block text-xs font-semibold text-gray-700">
-                    <i class="fas fa-table mr-1 text-primary-600"></i>
-                    Select Data Source
-                </label>
-                <select name="table" id="tableSelect" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-sm" required>
-                    <option value="">Choose a table to export...</option>
-                    {% for key, table in tables.items() %}
-                    <option value="{{ key }}" data-columns='{{ table.columns | tojson | safe }}'>
-                        {{ table.name }}
-                    </option>
-                    {% endfor %}
-                </select>
+<div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+    <div class="container mx-auto px-3 py-4">
+        <!-- Header -->
+        <div class="bg-white rounded-lg shadow-md p-4 mb-4 border border-gray-100">
+            <div class="flex items-center space-x-3">
+                <div class="p-2 bg-blue-100 rounded-lg">
+                    <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold text-gray-900">Export Data</h1>
+                    <p class="text-sm text-gray-600">Export to Excel</p>
+                </div>
             </div>
+        </div>
 
-            <!-- Column Selection -->
-            <div class="space-y-2" id="columnSection" style="display: none;">
-                <label class="block text-xs font-semibold text-gray-700">
-                    <i class="fas fa-columns mr-1 text-primary-600"></i>
-                    Select Columns to Export
-                </label>
-                <div class="border border-gray-200 rounded-lg bg-gray-50">
-                    <div class="p-3 border-b border-gray-200 bg-white rounded-t-lg">
-                        <label class="inline-flex items-center cursor-pointer">
-                            <input type="checkbox" id="selectAll" class="rounded border-gray-300 text-primary-600 focus:ring-primary-500 h-4 w-4">
-                            <span class="ml-2 text-xs font-medium text-gray-700">
-                                <i class="fas fa-check-double mr-1 text-primary-600"></i>
-                                Select All Columns
-                            </span>
-                        </label>
-                    </div>
-                    <div class="p-3 max-h-48 overflow-y-auto">
-                        <div id="columnCheckboxes" class="space-y-2">
-                            <!-- Checkboxes will be populated by JavaScript -->
+        <!-- Export Form -->
+        <div class="bg-white rounded-lg shadow-md border border-gray-100">
+            <div class="p-4">
+                <form id="exportForm" action="/export/excel" method="post" class="space-y-4">
+                    <!-- Table Selection -->
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Select Table</label>
+                        <div class="space-y-2">
+                            {% for table_key, table_info in tables.items() %}
+                            <div class="relative">
+                                <input type="radio" name="table" value="{{ table_key }}" id="table_{{ table_key }}" 
+                                       class="peer sr-only" onchange="updateColumns('{{ table_key }}')">
+                                <label for="table_{{ table_key }}" 
+                                       class="flex items-center p-3 bg-gray-50 border-2 border-gray-200 rounded-lg cursor-pointer hover:bg-blue-50 hover:border-blue-300 peer-checked:bg-blue-50 peer-checked:border-blue-500 peer-checked:text-blue-700 transition-all">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="p-1.5 bg-white rounded-lg shadow-sm">
+                                            {% if table_key == 'assets' %}
+                                            <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                                            </svg>
+                                            {% elif table_key == 'users' %}
+                                            <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-2.239"></path>
+                                            </svg>
+                                            {% else %}
+                                            <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                            </svg>
+                                            {% endif %}
+                                        </div>
+                                        <span class="font-medium text-sm">{{ table_info.name }}</span>
+                                    </div>
+                                </label>
+                            </div>
+                            {% endfor %}
                         </div>
                     </div>
-                </div>
-            </div>
 
-            <!-- Asset-specific Options -->
-            <div class="space-y-2" id="assetOptions" style="display: none;">
-                <label class="block text-xs font-semibold text-gray-700">
-                    <i class="fas fa-filter mr-1 text-primary-600"></i>
-                    Filter Options
-                </label>
-                <div class="bg-amber-50 border border-amber-200 rounded-lg p-3">
-                    <label class="inline-flex items-center cursor-pointer">
-                        <input type="checkbox" name="exclude_disposed" value="true" class="rounded border-gray-300 text-amber-600 focus:ring-amber-500 h-4 w-4">
-                        <span class="ml-2 text-xs font-medium text-amber-800">
-                            <i class="fas fa-trash-alt mr-1"></i>
-                            Exclude disposed assets
-                        </span>
-                    </label>
-                </div>
-            </div>
+                    <!-- Column Selection -->
+                    <div id="columnSelection" class="hidden">
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Select Columns</label>
+                        <div class="bg-gray-50 rounded-lg p-3">
+                            <div class="flex items-center justify-between mb-3">
+                                <button type="button" onclick="selectAllColumns()" 
+                                        class="text-xs text-blue-600 hover:text-blue-800 font-medium">Select All</button>
+                                <button type="button" onclick="deselectAllColumns()" 
+                                        class="text-xs text-gray-600 hover:text-gray-800 font-medium">Deselect All</button>
+                            </div>
+                            <div id="columnList" class="space-y-2">
+                                <!-- Columns will be populated by JavaScript -->
+                            </div>
+                        </div>
+                    </div>
 
-            <!-- Export Button -->
-            <div class="pt-4 border-t border-gray-200">
-                <button type="submit" id="exportBtn" class="w-full bg-gradient-to-r from-primary-600 to-blue-600 hover:from-primary-700 hover:to-blue-700 text-white px-4 py-3 rounded-lg font-semibold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation" disabled>
-                    <i class="fas fa-file-excel mr-2"></i>
-                    <span id="exportBtnText">Export to Excel</span>
-                </button>
-            </div>
-        </form>
-    </div>
+                    <!-- Filters -->
+                    <div id="filterSection" class="hidden">
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Filters</label>
+                        <div class="bg-gray-50 rounded-lg p-3">
+                            <div id="assetFilters" class="hidden">
+                                <label class="flex items-center space-x-2">
+                                    <input type="checkbox" name="exclude_disposed" value="true" 
+                                           class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                    <span class="text-xs text-gray-700">Exclude disposed assets</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
 
-    <!-- Help Section -->
-    <div class="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <h3 class="text-sm font-semibold text-blue-900 mb-2">
-            <i class="fas fa-question-circle mr-1"></i>
-            How to Use Export
-        </h3>
-        <div class="space-y-1 text-xs text-blue-800">
-            <p><i class="fas fa-arrow-right mr-1 text-blue-600"></i>Select the data table you want to export</p>
-            <p><i class="fas fa-arrow-right mr-1 text-blue-600"></i>Choose specific columns or select all</p>
-            <p><i class="fas fa-arrow-right mr-1 text-blue-600"></i>Apply filters if needed (for assets)</p>
-            <p><i class="fas fa-arrow-right mr-1 text-blue-600"></i>Click export to download Excel file</p>
+                    <!-- Export Button -->
+                    <div class="pt-2">
+                        <button type="submit" id="exportBtn" disabled
+                                class="w-full px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center justify-center space-x-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                            <span class="text-sm font-medium">Export to Excel</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const tableSelect = document.getElementById('tableSelect');
-    const columnSection = document.getElementById('columnSection');
-    const columnCheckboxes = document.getElementById('columnCheckboxes');
-    const selectAll = document.getElementById('selectAll');
+const tables = {{ tables | tojson }};
+
+function updateColumns(tableKey) {
+    const columnSelection = document.getElementById('columnSelection');
+    const columnList = document.getElementById('columnList');
+    const filterSection = document.getElementById('filterSection');
+    const assetFilters = document.getElementById('assetFilters');
     const exportBtn = document.getElementById('exportBtn');
-    const exportBtnText = document.getElementById('exportBtnText');
-    const assetOptions = document.getElementById('assetOptions');
-    const exportForm = document.getElementById('exportForm');
-
-    function showSection(element) {
-        element.style.display = 'block';
-        element.style.opacity = '0';
-        setTimeout(() => {
-            element.style.transition = 'all 0.3s ease';
-            element.style.opacity = '1';
-        }, 10);
+    
+    columnSelection.classList.remove('hidden');
+    filterSection.classList.remove('hidden');
+    
+    // Show/hide asset-specific filters
+    if (tableKey === 'assets') {
+        assetFilters.classList.remove('hidden');
+    } else {
+        assetFilters.classList.add('hidden');
     }
-
-    function hideSection(element) {
-        element.style.transition = 'all 0.3s ease';
-        element.style.opacity = '0';
-        setTimeout(() => {
-            element.style.display = 'none';
-        }, 300);
-    }
-
-    tableSelect.addEventListener('change', function() {
-        const selectedOption = this.options[this.selectedIndex];
-        
-        if (this.value) {
-            try {
-                const columns = JSON.parse(selectedOption.dataset.columns || '{}');
-                console.log('Columns data:', columns);
-                populateColumns(columns);
-                columnSection.style.display = 'block';
-                
-                if (this.value === 'assets') {
-                    assetOptions.style.display = 'block';
-                } else {
-                    assetOptions.style.display = 'none';
-                }
-            } catch (e) {
-                console.error('Error parsing columns:', e);
-            }
-        } else {
-            columnSection.style.display = 'none';
-            assetOptions.style.display = 'none';
-            exportBtn.disabled = true;
-        }
+    
+    // Clear existing columns
+    columnList.innerHTML = '';
+    
+    // Add columns for selected table
+    const columns = tables[tableKey].columns;
+    Object.entries(columns).forEach(([key, label]) => {
+        const div = document.createElement('div');
+        div.innerHTML = `
+            <label class="flex items-center space-x-2 p-2 hover:bg-white rounded cursor-pointer">
+                <input type="checkbox" name="columns" value="${key}" 
+                       class="rounded border-gray-300 text-blue-600 focus:ring-blue-500" 
+                       onchange="checkExportButton()">
+                <span class="text-xs text-gray-700">${label}</span>
+            </label>
+        `;
+        columnList.appendChild(div);
     });
+    
+    exportBtn.disabled = true;
+}
 
-    function populateColumns(columns) {
-        columnCheckboxes.innerHTML = '';
-        console.log('Populating columns:', columns);
-        
-        if (Object.keys(columns).length === 0) {
-            columnCheckboxes.innerHTML = '<p class="text-gray-500 text-xs">No columns available</p>';
-            return;
-        }
-        
-        Object.entries(columns).forEach(([key, label]) => {
-            const div = document.createElement('div');
-            div.innerHTML = `
-                <label class="inline-flex items-center p-2 rounded cursor-pointer hover:bg-white">
-                    <input type="checkbox" name="columns" value="${key}" class="column-checkbox h-4 w-4">
-                    <span class="ml-2 text-xs">${label}</span>
-                </label>
-            `;
-            columnCheckboxes.appendChild(div);
-        });
+function selectAllColumns() {
+    const checkboxes = document.querySelectorAll('input[name="columns"]');
+    checkboxes.forEach(cb => cb.checked = true);
+    checkExportButton();
+}
 
-        const columnCheckboxElements = document.querySelectorAll('.column-checkbox');
-        columnCheckboxElements.forEach(checkbox => {
-            checkbox.addEventListener('change', updateExportButton);
-        });
+function deselectAllColumns() {
+    const checkboxes = document.querySelectorAll('input[name="columns"]');
+    checkboxes.forEach(cb => cb.checked = false);
+    checkExportButton();
+}
 
-        updateExportButton();
-    }
-
-    selectAll.addEventListener('change', function() {
-        const columnCheckboxElements = document.querySelectorAll('.column-checkbox');
-        columnCheckboxElements.forEach(checkbox => {
-            checkbox.checked = this.checked;
-        });
-        updateExportButton();
-    });
-
-    function updateExportButton() {
-        const checkedColumns = document.querySelectorAll('.column-checkbox:checked');
-        const isDisabled = checkedColumns.length === 0;
-        
-        exportBtn.disabled = isDisabled;
-        
-        if (isDisabled) {
-            exportBtnText.textContent = 'Select columns to export';
-        } else {
-            exportBtnText.textContent = `Export ${checkedColumns.length} column${checkedColumns.length > 1 ? 's' : ''}`;
-        }
-        
-        const allColumns = document.querySelectorAll('.column-checkbox');
-        const checkedCount = checkedColumns.length;
-        
-        if (checkedCount === 0) {
-            selectAll.indeterminate = false;
-            selectAll.checked = false;
-        } else if (checkedCount === allColumns.length) {
-            selectAll.indeterminate = false;
-            selectAll.checked = true;
-        } else {
-            selectAll.indeterminate = true;
-        }
-    }
-
-    exportForm.addEventListener('submit', function(e) {
-        exportBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i><span>Generating...</span>';
-        exportBtn.disabled = true;
-        
-        setTimeout(() => {
-            exportBtn.innerHTML = '<i class="fas fa-check mr-2"></i><span>Complete!</span>';
-            
-            setTimeout(() => {
-                exportBtn.innerHTML = '<i class="fas fa-file-excel mr-2"></i><span id="exportBtnText">Export to Excel</span>';
-                exportBtn.disabled = false;
-                updateExportButton();
-            }, 2000);
-        }, 3000);
-    });
-});
+function checkExportButton() {
+    const selectedColumns = document.querySelectorAll('input[name="columns"]:checked');
+    const exportBtn = document.getElementById('exportBtn');
+    exportBtn.disabled = selectedColumns.length === 0;
+}
 </script>
 {% endblock %}
