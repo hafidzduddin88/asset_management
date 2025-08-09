@@ -10,14 +10,10 @@
 </div>
 
 <!-- Quick Actions -->
-<div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+<div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
     <button onclick="openModal('damage')" class="bg-red-600 text-white rounded-lg p-4 text-center">
         <i class="fas fa-exclamation-triangle text-2xl mb-2"></i>
         <div class="text-sm font-medium">Damage</div>
-    </button>
-    <button onclick="openModal('repair')" class="bg-green-600 text-white rounded-lg p-4 text-center">
-        <i class="fas fa-wrench text-2xl mb-2"></i>
-        <div class="text-sm font-medium">Repaired</div>
     </button>
     <button onclick="openModal('lost')" class="bg-orange-600 text-white rounded-lg p-4 text-center">
         <i class="fas fa-search text-2xl mb-2"></i>
@@ -56,49 +52,7 @@
     </div>
 </div>
 
-<!-- Repair Report Modal -->
-<div id="repairModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" style="display: none;">
-    <div class="relative top-4 mx-4 p-4 border shadow-lg rounded-lg bg-white">
-        <div class="flex justify-between items-center mb-4">
-            <h3 class="text-lg font-medium text-gray-900">Report Repaired Asset</h3>
-            <button onclick="closeModal('repair')" class="text-gray-400 hover:text-gray-600">
-                <i class="fas fa-times text-xl"></i>
-            </button>
-        </div>
-        <form id="repairForm" class="space-y-4">
-            <input type="hidden" id="repairAssetId">
-            <div>
-                <label class="block text-sm font-medium text-gray-700">Asset Name</label>
-                <input type="text" id="repairAssetName" readonly class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50">
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700">Repair Action</label>
-                <select id="repairAction" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg">
-                    <option value="">Select Action</option>
-                    <option value="Fixed">Fixed</option>
-                    <option value="Replaced Parts">Replaced Parts</option>
-                    <option value="Software Update">Software Update</option>
-                    <option value="Maintenance">Maintenance</option>
-                    <option value="Other">Other</option>
-                </select>
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700">New Location (Optional)</label>
-                <select id="repairNewLocation" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg">
-                    <option value="">Keep Current Location</option>
-                </select>
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700">Description</label>
-                <textarea id="repairDescription" required rows="3" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="Describe the repair work done..."></textarea>
-            </div>
-            <div class="flex space-x-3">
-                <button type="button" onclick="closeModal('repair')" class="flex-1 bg-gray-300 py-2 px-4 rounded-lg text-gray-700 font-medium">Cancel</button>
-                <button type="submit" class="flex-1 bg-green-600 hover:bg-green-700 py-2 px-4 rounded-lg text-white font-medium">Submit Report</button>
-            </div>
-        </form>
-    </div>
-</div>
+
 
 <!-- Damage Report Modal -->
 <div id="damageModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" style="display: none;">
@@ -224,34 +178,16 @@ let roomsData = {};
 document.addEventListener('DOMContentLoaded', function() {
     initializeFilters();
     setupEventListeners();
-    initializeRepairLocations();
+
 });
 
-function initializeRepairLocations() {
-    const repairLocationSelect = document.getElementById('repairNewLocation');
-    const locations = new Set();
-    
-    assetsData.forEach(asset => {
-        const location = asset.ref_locations?.location_name || '';
-        const room = asset.ref_locations?.room_name || asset.room_name || '';
-        if (location && room) {
-            locations.add(`${location} - ${room}`);
-        }
-    });
-    
-    Array.from(locations).sort().forEach(location => {
-        const option = document.createElement('option');
-        option.value = location;
-        option.textContent = location;
-        repairLocationSelect.appendChild(option);
-    });
-}
+
 
 function confirmSubmission(type) {
     const assetNames = selectedAssets.map(asset => `• ${asset.name} (ID: ${asset.id})`).join('\n');
     const actionText = {
         'damage': 'report damage for',
-        'repair': 'report repair for', 
+ 
         'lost': 'report as lost',
         'disposal': 'request disposal for'
     };
@@ -483,7 +419,7 @@ document.getElementById('lostForm').addEventListener('submit', async function(e)
     };
     
     try {
-        const response = await fetch('/lost', {
+        const response = await fetch('/damage/lost', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(formData)
@@ -502,38 +438,7 @@ document.getElementById('lostForm').addEventListener('submit', async function(e)
     }
 });
 
-document.getElementById('repairForm').addEventListener('submit', async function(e) {
-    e.preventDefault();
-    
-    if (!confirmSubmission('repair')) return;
-    
-    const assetIds = JSON.parse(document.getElementById('repairAssetId').value);
-    const formData = {
-        asset_ids: assetIds,
-        repair_action: document.getElementById('repairAction').value,
-        new_location: document.getElementById('repairNewLocation').value,
-        description: document.getElementById('repairDescription').value
-    };
-    
-    try {
-        const response = await fetch('/repair', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(formData)
-        });
-        
-        const result = await response.json();
-        alert(result.message);
-        
-        if (result.status === 'success') {
-            closeModal('repair');
-            document.getElementById('repairForm').reset();
-            clearSelectedAssets();
-        }
-    } catch (error) {
-        alert('Error submitting repair report');
-    }
-});
+
 
 document.getElementById('disposalForm').addEventListener('submit', async function(e) {
     e.preventDefault();

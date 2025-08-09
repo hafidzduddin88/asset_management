@@ -16,6 +16,5 @@ from app.routes import (
     user_management,
     logs,
     relocation,
-    export,
-    lost
+    export
 )

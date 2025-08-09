@@ -17,11 +17,11 @@ async def repair_page(request: Request, current_profile=Depends(get_current_prof
     try:
         supabase = get_supabase()
         
-        # Get damaged assets that need repair
+        # Get damaged assets that need repair (approved damage reports)
         damaged_response = supabase.table("damage_log").select('''
             damage_id, asset_id, asset_name, damage_type, severity, description,
-            reported_by, report_date, status
-        ''').eq('status', 'Reported').execute()
+            reported_by_name, created_at, status
+        ''').eq('status', 'approved').execute()
         
         damaged_assets = damaged_response.data or []
         

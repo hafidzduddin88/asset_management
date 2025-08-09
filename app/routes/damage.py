@@ -37,7 +37,7 @@ async def damaged_assets_page(request: Request, current_profile = Depends(get_cu
         })
 
 
-@router.post("/lost")
+@router.post("/damage/lost")
 async def submit_lost_report(request: Request, current_profile = Depends(get_current_profile)):
     """Submit lost report - syncs to Supabase"""
     from app.utils.database_manager import add_approval_request, get_supabase

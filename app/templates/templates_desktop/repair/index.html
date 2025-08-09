@@ -1,4 +1,4 @@
-{% extends "layouts/modern_layout.html" %}
+{% extends "templates_desktop/layouts/modern_layout.html" %}
 
 {% block title %}Asset Repair{% endblock %}
 
@@ -66,8 +66,8 @@
                                 {% endif %}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                <div>{{ asset.reported_by }}</div>
-                                <div>{{ asset.report_date }}</div>
+                                <div>{{ asset.reported_by_name or 'Unknown' }}</div>
+                                <div>{{ asset.created_at[:10] if asset.created_at else 'Unknown' }}</div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                 <button onclick="openRepairModal({{ asset.damage_id }}, '{{ asset.asset_name }}')" 

@@ -1,4 +1,4 @@
-{% extends "layouts/modern_layout.html" %}
+{% extends "templates_mobile/layouts/modern_layout.html" %}
 
 {% block title %}Asset Repair{% endblock %}
 
@@ -44,11 +44,11 @@
                     </div>
                     <div class="flex items-center">
                         <i class="fas fa-user w-5 text-gray-400"></i>
-                        <span>{{ asset.reported_by }}</span>
+                        <span>{{ asset.reported_by_name or 'Unknown' }}</span>
                     </div>
                     <div class="flex items-center">
                         <i class="fas fa-calendar w-5 text-gray-400"></i>
-                        <span>{{ asset.report_date }}</span>
+                        <span>{{ asset.created_at[:10] if asset.created_at else 'Unknown' }}</span>
                     </div>
                 </div>
                 
