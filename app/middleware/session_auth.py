@@ -96,7 +96,9 @@ class SessionAuthMiddleware(BaseHTTPMiddleware):
             # Protect profile after token refresh
             try:
                 from app.utils.profile_utils import protect_profile_data
-                protect_profile_data(user_info["id"])
+                protected = protect_profile_data(user_info["id"])
+                if protected:
+                    logging.info(f"Profile protection applied in middleware for user {user_info['id']}")
             except Exception as e:
                 logging.warning(f"Failed to protect profile in middleware: {e}")
             

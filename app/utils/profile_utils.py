@@ -43,6 +43,9 @@ def create_profile_if_not_exists(user_id: str, user_email: str, user_metadata: d
         logging.error(f"Failed to create profile: {type(e).__name__}")
         return False
 
+# Cache to store original full_name values to prevent overwrites
+_profile_cache = {}
+
 def protect_profile_data(user_id: str) -> bool:
     """Ensure profile data is not overwritten by external sources"""
     try:
@@ -57,19 +60,23 @@ def protect_profile_data(user_id: str) -> bool:
             username = profile.get('username')
             updated_at = profile.get('updated_at')
             
+            # Store original full_name in cache if not already stored
+            if user_id not in _profile_cache and current_full_name and current_full_name != username:
+                _profile_cache[user_id] = current_full_name
+                logging.info(f"Cached original full_name for {user_id}: '{current_full_name}'")
+            
             logging.info(f"Profile check for {user_id}: full_name='{current_full_name}', username='{username}', updated_at='{updated_at}'")
             
-            # Check if full_name was overwritten with username or email
-            needs_protection = (
-                current_full_name == username or  # Overwritten with username
-                (current_full_name and '@' in current_full_name and '.' in current_full_name)  # Overwritten with email
-            )
+            # Check if full_name was overwritten with username (which contains email)
+            needs_protection = (current_full_name == username)
             
             if needs_protection:
+                # Restore from cache if available, otherwise set to None
+                restore_value = _profile_cache.get(user_id)
                 admin_supabase.table("profiles").update({
-                    "full_name": None
+                    "full_name": restore_value
                 }).eq("id", user_id).execute()
-                logging.warning(f"PROFILE OVERWRITE DETECTED! User {user_id} - restored full_name from '{current_full_name}' to null")
+                logging.warning(f"PROFILE OVERWRITE DETECTED! User {user_id} - restored full_name from '{current_full_name}' to '{restore_value}'")
                 return True
         
         return False
