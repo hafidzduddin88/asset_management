@@ -10,7 +10,7 @@ def create_profile_if_not_exists(user_id: str, user_email: str, user_metadata: d
         admin_supabase = create_client(config.SUPABASE_URL, config.SUPABASE_SERVICE_KEY)
         
         # Check if profile exists
-        response = admin_supabase.table("profiles").select("id, full_name").eq("id", user_id).execute()
+        response = admin_supabase.table("profiles").select("id").eq("id", user_id).execute()
         
         if not response.data:
             # Get business_unit_id from name if provided
@@ -22,23 +22,20 @@ def create_profile_if_not_exists(user_id: str, user_email: str, user_metadata: d
                 if bu_response.data:
                     business_unit_id = bu_response.data[0]['business_unit_id']
             
-            # Create profile with basic data - use email as full_name if no metadata provided
-            full_name = user_metadata.get('full_name') if user_metadata else user_email
-            
             profile_data = {
                 "id": user_id,
                 "username": user_email,
-                "full_name": full_name,
+                "full_name": user_metadata.get('full_name') if user_metadata else None,
                 "role": "staff",
                 "is_active": True,
                 "business_unit_id": business_unit_id,
-                "business_unit_name": business_unit_name
+                "business_unit_name": business_unit_name,
+                "email_verified": False
             }
             admin_supabase.table("profiles").insert(profile_data).execute()
             logging.info("Profile created successfully")
             return True
         else:
-            # Profile exists - absolutely no database operations
             logging.info(f"Profile already exists for user {user_id} - no operations performed")
             return False
         

@@ -158,7 +158,7 @@ def get_current_profile(request: Request) -> ProfileResponse:
         return ProfileResponse(
             id=str(profile_data.get("id")),
             username=profile_data.get("username"),
-            full_name=profile_data.get("full_name"),
+            full_name=profile_data.get("full_name") or "",
             business_unit_name=profile_data.get("business_unit_name"),
             role=UserRole(profile_data.get("role", "staff")),
             is_active=profile_data.get("is_active", True),
