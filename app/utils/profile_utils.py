@@ -42,3 +42,27 @@ def create_profile_if_not_exists(user_id: str, user_email: str, user_metadata: d
     except Exception as e:
         logging.error(f"Failed to create profile: {type(e).__name__}")
         return False
+
+def protect_profile_data(user_id: str) -> bool:
+    """Ensure profile data is not overwritten by external sources"""
+    try:
+        admin_supabase = create_client(config.SUPABASE_URL, config.SUPABASE_SERVICE_KEY)
+        
+        # Get current profile
+        response = admin_supabase.table("profiles").select("full_name, username").eq("id", user_id).execute()
+        
+        if response.data:
+            profile = response.data[0]
+            # If full_name was overwritten with username, restore it to empty
+            if profile.get('full_name') == profile.get('username'):
+                admin_supabase.table("profiles").update({
+                    "full_name": None
+                }).eq("id", user_id).execute()
+                logging.info(f"Protected profile data for user {user_id}")
+                return True
+        
+        return False
+        
+    except Exception as e:
+        logging.error(f"Failed to protect profile data: {type(e).__name__}")
+        return False

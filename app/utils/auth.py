@@ -8,6 +8,9 @@ from enum import Enum
 import requests
 import logging
 
+# Cache for last login updates to prevent frequent database writes
+_last_login_cache = {}
+
 class UserRole(str, Enum):
     ADMIN = "admin"
     MANAGER = "manager"
@@ -155,6 +158,29 @@ def get_current_profile(request: Request) -> ProfileResponse:
             )
 
         profile_data = response.data[0]
+        
+        # Protect profile data from external overwrites
+        from app.utils.profile_utils import protect_profile_data
+        protect_profile_data(user_id)
+        
+        # Update last_login_at only if not updated recently (prevent frequent updates)
+        now = datetime.now(timezone.utc)
+        last_update = _last_login_cache.get(user_id)
+        
+        if not last_update or (now - last_update).total_seconds() > 300:  # 5 minutes
+            try:
+                admin_supabase.table("profiles").update({
+                    "last_login_at": now.isoformat()
+                }).eq("id", user_id).execute()
+                _last_login_cache[user_id] = now
+            except Exception as e:
+                logging.warning(f"Failed to update last_login_at: {e}")
+        
+        # Re-fetch profile data after protection
+        response = admin_supabase.table("profiles").select("*").eq("id", user_id).execute()
+        if response.data:
+            profile_data = response.data[0]
+        
         return ProfileResponse(
             id=str(profile_data.get("id")),
             username=profile_data.get("username"),

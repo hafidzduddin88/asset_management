@@ -69,13 +69,16 @@ async def update_profile(
         if bu_response.data:
             business_unit_id = bu_response.data[0]['business_unit_id']
     
-    # Update profile data
+    # Update profile data - only update full_name if it's different and not empty
     update_data = {
-        "full_name": full_name,
         "business_unit_id": business_unit_id,
         "business_unit_name": business_unit_name,
         "updated_at": datetime.now(timezone.utc).isoformat()
     }
+    
+    # Only update full_name if it's provided and different from current
+    if full_name and full_name.strip() and full_name != current_profile.full_name:
+        update_data["full_name"] = full_name
     
     # Only admin can update role
     if current_profile.role == "admin" and role:
