@@ -244,6 +244,7 @@
     // Handle period change
     document.getElementById('chartPeriod').addEventListener('change', function() {
         const period = this.value;
+        currentPeriod = period;
         window.mobileChart.data.labels = chartData[period].labels;
         window.mobileChart.data.datasets[0].data = chartData[period].values;
         window.mobileChart.update();

@@ -513,7 +513,15 @@
                 
                 const period = this.dataset.period;
                 const data = activityData[dataKey] || {};
-                const periodData = data[period] || {};
+                let periodData;
+                
+                if (period === 'month') {
+                    periodData = data.monthly || {};
+                } else if (period === 'quarter') {
+                    periodData = data.quarterly || {};
+                } else if (period === 'year') {
+                    periodData = data.yearly || {};
+                }
                 
                 chart.data.labels = Object.keys(periodData);
                 chart.data.datasets[0].data = Object.values(periodData);
