@@ -268,12 +268,13 @@ asset_management/
 <tr>
 <td width="50%" align="center">
 
-### 🗄️ Supabase
+### 🗄️ Supabase PostgreSQL
 - Primary database
 - User authentication
 - Real-time features
 - Row-level security
 - Asset & reference data
+- Comprehensive logging
 
 </td>
 <td width="50%" align="center">
@@ -283,6 +284,7 @@ asset_management/
 - Organized folders
 - Public previews
 - Asset images
+- Secure file handling
 
 </td>
 </tr>
