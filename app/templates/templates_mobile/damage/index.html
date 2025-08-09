@@ -28,8 +28,18 @@
 <!-- Asset Search -->
 <div class="bg-white rounded-lg shadow p-4 mb-4">
     <h3 class="font-semibold text-gray-900 mb-3">Search Asset</h3>
-    <input type="text" id="assetSearch" placeholder="Search by name or ID..." 
-           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500">
+    <div class="space-y-3">
+        <input type="text" id="assetSearch" placeholder="Search by name or ID..." 
+               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500">
+        <div class="grid grid-cols-2 gap-3">
+            <select id="locationFilter" class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500">
+                <option value="">All Locations</option>
+            </select>
+            <select id="roomFilter" class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500" disabled>
+                <option value="">All Rooms</option>
+            </select>
+        </div>
+    </div>
     <div id="searchResults" class="mt-3 space-y-2 max-h-96 overflow-y-auto">
         <!-- Search results will appear here -->
     </div>
@@ -153,29 +163,108 @@
 <script>
 const assetsData = {{ assets_data | tojson }};
 let selectedAsset = null;
+let roomsData = {};
 
-// Asset search functionality
-document.getElementById('assetSearch').addEventListener('input', function() {
-    const searchTerm = this.value.toLowerCase();
+// Initialize
+document.addEventListener('DOMContentLoaded', function() {
+    initializeFilters();
+    setupEventListeners();
+});
+
+function initializeFilters() {
+    const locationFilter = document.getElementById('locationFilter');
+    
+    // Build rooms data and populate locations
+    const locations = new Set();
+    assetsData.forEach(asset => {
+        const location = asset.ref_locations?.location_name || '';
+        const room = asset.ref_locations?.room_name || asset.room_name || '';
+        
+        if (location) {
+            locations.add(location);
+            if (!roomsData[location]) roomsData[location] = new Set();
+            if (room) roomsData[location].add(room);
+        }
+    });
+    
+    // Convert sets to arrays
+    Object.keys(roomsData).forEach(location => {
+        roomsData[location] = Array.from(roomsData[location]).sort();
+    });
+    
+    // Populate location dropdown
+    Array.from(locations).sort().forEach(location => {
+        const option = document.createElement('option');
+        option.value = location;
+        option.textContent = location;
+        locationFilter.appendChild(option);
+    });
+}
+
+function setupEventListeners() {
+    const locationFilter = document.getElementById('locationFilter');
+    const roomFilter = document.getElementById('roomFilter');
+    const assetSearch = document.getElementById('assetSearch');
+    
+    locationFilter.addEventListener('change', function() {
+        const selectedLocation = this.value;
+        roomFilter.innerHTML = '<option value="">All Rooms</option>';
+        roomFilter.disabled = !selectedLocation;
+        
+        if (selectedLocation && roomsData[selectedLocation]) {
+            roomsData[selectedLocation].forEach(room => {
+                const option = document.createElement('option');
+                option.value = room;
+                option.textContent = room;
+                roomFilter.appendChild(option);
+            });
+            roomFilter.disabled = false;
+        }
+        performSearch();
+    });
+    
+    roomFilter.addEventListener('change', performSearch);
+    assetSearch.addEventListener('input', performSearch);
+}
+
+function performSearch() {
+    const searchTerm = document.getElementById('assetSearch').value.toLowerCase();
+    const selectedLocation = document.getElementById('locationFilter').value;
+    const selectedRoom = document.getElementById('roomFilter').value;
     const resultsDiv = document.getElementById('searchResults');
     
-    if (searchTerm.length < 2) {
+    if (searchTerm.length < 2 && !selectedLocation && !selectedRoom) {
         resultsDiv.innerHTML = '';
         return;
     }
     
-    const filteredAssets = assetsData.filter(asset => 
-        asset.asset_name?.toLowerCase().includes(searchTerm) ||
-        asset.asset_id?.toString().includes(searchTerm)
-    );
+    const filteredAssets = assetsData.filter(asset => {
+        const matchesSearch = !searchTerm || searchTerm.length < 2 || 
+            asset.asset_name?.toLowerCase().includes(searchTerm) ||
+            asset.asset_id?.toString().includes(searchTerm);
+        
+        const assetLocation = asset.ref_locations?.location_name || '';
+        const assetRoom = asset.ref_locations?.room_name || asset.room_name || '';
+        
+        const matchesLocation = !selectedLocation || assetLocation === selectedLocation;
+        const matchesRoom = !selectedRoom || assetRoom === selectedRoom;
+        
+        return matchesSearch && matchesLocation && matchesRoom;
+    });
     
-    resultsDiv.innerHTML = filteredAssets.map(asset => `
-        <div class="p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50" onclick="selectAsset(${asset.asset_id}, '${asset.asset_name}')">
-            <div class="font-medium text-gray-900">${asset.asset_name}</div>
-            <div class="text-sm text-gray-500">ID: ${asset.asset_id}</div>
-        </div>
-    `).join('');
-});
+    resultsDiv.innerHTML = filteredAssets.map(asset => {
+        const location = asset.ref_locations?.location_name || '';
+        const room = asset.ref_locations?.room_name || asset.room_name || '';
+        
+        return `
+            <div class="p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50" onclick="selectAsset(${asset.asset_id}, '${asset.asset_name}')">
+                <div class="font-medium text-gray-900">${asset.asset_name}</div>
+                <div class="text-sm text-gray-500">ID: ${asset.asset_id}</div>
+                <div class="text-xs text-gray-400">${location}${room ? ' - ' + room : ''}</div>
+            </div>
+        `;
+    }).join('');
+}
 
 function selectAsset(assetId, assetName) {
     selectedAsset = { id: assetId, name: assetName };
