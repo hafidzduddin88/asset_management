@@ -20,15 +20,7 @@ async def disposal_page(
     """Disposal assets page (admin only)."""
     # Get assets that are ready to dispose only
     all_assets = get_all_assets()
-    # Debug: check all statuses
-    statuses = [str(asset.get('Status', '')).strip() for asset in all_assets]
-    print(f"All statuses found: {set(statuses)}")
-    
-    disposable_assets = []
-    for asset in all_assets:
-        status = str(asset.get('Status', '')).strip()
-        if status in ['To Be Disposed', 'To be Disposed', 'TO BE DISPOSED']:
-            disposable_assets.append(asset)
+    disposable_assets = [asset for asset in all_assets if asset.get('status') == 'To Be Disposed']
     
     template_path = get_template(request, "disposal/index.html")
     return templates.TemplateResponse(
@@ -58,29 +50,30 @@ async def dispose_asset(
     if not asset:
         raise HTTPException(status_code=404, detail="Asset not found")
     
-    if str(asset.get('Status', '')).strip() != 'To Be Disposed':
+    if asset.get('status') != 'To Be Disposed':
         raise HTTPException(status_code=400, detail="Asset must be marked 'To Be Disposed' first")
     
     # Create disposal approval request
     from app.utils.database_manager import add_approval_request
     
     approval_data = {
-        'type': 'disposal',
+        'type': 'disposal_request',
         'asset_id': asset_id,
-        'asset_name': asset.get('Item Name', ''),
-        'submitted_by': current_profile.full_name or current_profile.email,
-        'submitted_date': datetime.now().strftime('%Y-%m-%d'),
+        'asset_name': asset.get('asset_name', ''),
+        'submitted_by': current_profile.id,
+        'submitted_date': datetime.now().isoformat(),
         'description': f"Disposal request: {disposal_reason} - {disposal_method}",
-        'disposal_reason': disposal_reason,
-        'disposal_method': disposal_method,
-        'notes': f"Description: {description or ''} | Notes: {notes or ''}"
+        'metadata': f'{{"disposal_reason": "{disposal_reason}", "disposal_method": "{disposal_method}", "description": "{description or ""}", "notes": "{notes or ""}"}}',
+        'requires_admin_approval': True if current_profile.role.value in ['staff', 'manager'] else False,
+        'requires_manager_approval': True if current_profile.role.value == 'admin' else False,
+        'status': 'pending'
     }
     
     approval_success = add_approval_request(approval_data)
     
     if approval_success:
         response = RedirectResponse(url="/disposal", status_code=status.HTTP_303_SEE_OTHER)
-        set_flash(response, f"Disposal request for {asset.get('Item Name', '')} submitted for manager approval", "success")
+        set_flash(response, f"Disposal request for {asset.get('asset_name', '')} submitted for approval", "success")
         return response
     else:
         response = RedirectResponse(url="/disposal", status_code=status.HTTP_303_SEE_OTHER)

@@ -1,77 +1,97 @@
-# /app/app/routes/repair.py
-from fastapi import APIRouter, Request, Depends
+# app/routes/repair.py
+from fastapi import APIRouter, Request, Depends, Form
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from app.utils.auth import get_current_profile
+from app.utils.database_manager import get_supabase
+from app.utils.device_detector import get_template
+from app.utils.flash import set_flash
+import logging
 
-router = APIRouter()
+router = APIRouter(prefix="/repair", tags=["repair"])
 templates = Jinja2Templates(directory="app/templates")
 
-@router.post("/action")
-async def submit_repair_action(request: Request, current_profile = Depends(get_current_profile)):
-    """Submit repair action - creates approval request for store, direct action for allocate"""
-    from app.utils.database_manager import add_repair_log, update_asset, add_approval_request
-    from datetime import datetime
-    
+@router.get("/", response_class=HTMLResponse)
+async def repair_page(request: Request, current_profile=Depends(get_current_profile)):
+    """Repair asset page - accessible by all users"""
     try:
-        # Get JSON data
-        data = await request.json()
-        action_type = data.get('action_type')  # 'store' or 'allocate'
+        supabase = get_supabase()
         
-        if action_type == 'store':
-            # Store action requires approval - only create approval request
-            approval_data = {
-                'type': 'repair_action',
-                'asset_id': data.get('asset_id'),
-                'asset_name': data.get('asset_name'),
-                'submitted_by': current_profile.full_name or current_profile.email,
-                'submitted_date': datetime.now().strftime('%Y-%m-%d'),
-                'description': f"Request to store asset: {data.get('description')}",
-                'action': 'Store Asset'
-            }
-            
-            approval_success = add_approval_request(approval_data)
-            
-            if approval_success:
-                return {"status": "success", "message": "Store request submitted for admin approval"}
-            else:
-                return {"status": "error", "message": "Failed to submit approval request"}
+        # Get damaged assets that need repair
+        damaged_response = supabase.table("damage_log").select('''
+            damage_id, asset_id, asset_name, damage_type, severity, description,
+            reported_by, report_date, status
+        ''').eq('status', 'Reported').execute()
         
-        else:  # allocate - direct action
-            # Add to Repair_Log sheet
-            repair_data = {
-                'asset_id': data.get('asset_id'),
-                'asset_name': data.get('asset_name'),
-                'repair_action': 'Allocate Asset',
-                'action_type': action_type,
-                'description': data.get('description', ''),
-                'performed_by': current_profile.full_name or current_profile.email,
-                'action_date': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-                'new_location': data.get('location', ''),
-                'new_room': data.get('room', ''),
-                'notes': data.get('notes', '')
-            }
-            
-            # Add to repair log
-            log_success = add_repair_log(repair_data)
-            
-            # Update asset status based on location
-            location = data.get('location', '')
-            room = data.get('room', '')
-            new_status = 'In Storage' if location == 'HO - Ciputat' and room == '1022 - Gudang Support TOG' else 'Active'
-            
-            update_data = {
-                'status': new_status,
-                'business_unit_name': data.get('business_unit', ''),
-                'location_name': location,
-                'room_name': room
-            }
-            
-            asset_success = update_asset(data.get('asset_id'), update_data)
-            
-            if log_success and asset_success:
-                return {"status": "success", "message": "Asset allocated successfully and synced to database"}
-            else:
-                return {"status": "error", "message": "Failed to sync with database"}
-            
+        damaged_assets = damaged_response.data or []
+        
+        template_path = get_template(request, "repair/index.html")
+        return templates.TemplateResponse(template_path, {
+            "request": request,
+            "user": current_profile,
+            "damaged_assets": damaged_assets
+        })
+        
     except Exception as e:
-        return {"status": "error", "message": str(e)}
+        logging.error(f"Error loading repair page: {e}")
+        template_path = get_template(request, "repair/index.html")
+        return templates.TemplateResponse(template_path, {
+            "request": request,
+            "user": current_profile,
+            "damaged_assets": [],
+            "error": "Failed to load damaged assets"
+        })
+
+@router.post("/report/{damage_id}")
+async def report_repair(
+    damage_id: int,
+    request: Request,
+    repair_action: str = Form(...),
+    description: str = Form(...),
+    current_profile=Depends(get_current_profile)
+):
+    """Report asset repair with approval workflow"""
+    try:
+        supabase = get_supabase()
+        
+        # Get damage record
+        damage_response = supabase.table("damage_log").select("*").eq("damage_id", damage_id).execute()
+        if not damage_response.data:
+            raise Exception("Damage record not found")
+        
+        damage_record = damage_response.data[0]
+        
+        # Create approval request based on user role
+        approval_data = {
+            "type": "repair",
+            "asset_id": damage_record["asset_id"],
+            "asset_name": damage_record["asset_name"],
+            "submitted_by": current_profile.full_name or current_profile.username,
+            "submitted_by_id": current_profile.id,
+            "submitted_date": "now()",
+            "status": "pending",
+            "description": f"Repair Action: {repair_action}\nDescription: {description}",
+            "metadata": {
+                "damage_id": damage_id,
+                "repair_action": repair_action,
+                "repair_description": description
+            }
+        }
+        
+        # Set approver based on requester role
+        if current_profile.role in ["staff", "manager"]:
+            approval_data["requires_admin_approval"] = True
+        elif current_profile.role == "admin":
+            approval_data["requires_manager_approval"] = True
+        
+        supabase.table("approvals").insert(approval_data).execute()
+        
+        response = RedirectResponse(url="/repair", status_code=303)
+        set_flash(response, f"Repair request submitted for approval: {damage_record['asset_name']}", "success")
+        return response
+        
+    except Exception as e:
+        logging.error(f"Error submitting repair request: {e}")
+        response = RedirectResponse(url="/repair", status_code=303)
+        set_flash(response, "Failed to submit repair request", "error")
+        return response

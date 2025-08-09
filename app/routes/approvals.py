@@ -76,11 +76,13 @@ async def approvals_page(
                 approval['location_name'] = 'Unknown Location'
                 approval['room_name'] = 'Unknown Room'
     
-    # Filter approvals based on user role
+    # Filter approvals based on role-based approval workflow
     if current_profile.role.value == 'admin':
-        approvals_data = [a for a in all_approvals if a.get('type') not in ['admin_add_asset', 'disposal', 'edit_asset']]
+        # Admin approves requests from staff and manager
+        approvals_data = [a for a in all_approvals if a.get('requires_admin_approval') == True]
     elif current_profile.role.value == 'manager':
-        approvals_data = [a for a in all_approvals if a.get('type') in ['admin_add_asset', 'disposal', 'edit_asset']]
+        # Manager approves requests from admin
+        approvals_data = [a for a in all_approvals if a.get('requires_manager_approval') == True]
     else:
         approvals_data = []
     
@@ -243,6 +245,101 @@ async def approve_request(
             except Exception as e:
                 return JSONResponse({"status": "error", "message": f"Error processing asset addition: {str(e)}"})
         
+        elif approval.get('type') == 'repair':
+            # Process repair approval
+            import json
+            try:
+                metadata = approval.get('metadata', {})
+                if isinstance(metadata, str):
+                    metadata = json.loads(metadata)
+                
+                damage_id = metadata.get('damage_id')
+                repair_action = metadata.get('repair_action')
+                repair_description = metadata.get('repair_description')
+                
+                if damage_id:
+                    # Insert repair log
+                    repair_data = {
+                        "asset_id": approval.get('asset_id'),
+                        "asset_name": approval.get('asset_name'),
+                        "repair_action": repair_action,
+                        "description": repair_description,
+                        "performed_by": approval.get('submitted_by'),
+                        "repair_date": "now()",
+                        "status": "Completed"
+                    }
+                    
+                    supabase = get_supabase()
+                    supabase.table("repair_log").insert(repair_data).execute()
+                    
+                    # Update damage status to Repaired
+                    supabase.table("damage_log").update({"status": "Repaired"}).eq("damage_id", damage_id).execute()
+                    
+                    # Update asset status back to Active
+                    supabase.table("assets").update({"status": "Active"}).eq("asset_id", approval.get('asset_id')).execute()
+                    
+            except Exception as e:
+                return JSONResponse({"status": "error", "message": f"Error processing repair: {str(e)}"})
+        
+        elif approval.get('type') == 'lost_report':
+            # Process lost asset approval
+            try:
+                # Update asset status to Lost
+                from app.utils.database_manager import update_asset
+                success = update_asset(approval.get('asset_id'), {'status': 'Lost'})
+                if not success:
+                    return JSONResponse({"status": "error", "message": "Failed to update asset status"})
+                
+                # Update lost_log with approver info
+                supabase = get_supabase()
+                supabase.table('lost_log').update({
+                    'status': 'approved',
+                    'approved_by': current_profile.id,
+                    'approved_by_name': current_profile.full_name or current_profile.username
+                }).eq('asset_id', approval.get('asset_id')).execute()
+                
+            except Exception as e:
+                return JSONResponse({"status": "error", "message": f"Error processing lost report: {str(e)}"})
+        
+        elif approval.get('type') == 'disposal_request':
+            # Process disposal approval
+            import json
+            try:
+                metadata = approval.get('metadata', '{}')
+                if isinstance(metadata, str):
+                    metadata = json.loads(metadata)
+                
+                disposal_reason = metadata.get('disposal_reason', '')
+                disposal_method = metadata.get('disposal_method', '')
+                description = metadata.get('description', '')
+                notes = metadata.get('notes', '')
+                
+                # Insert disposal log
+                disposal_data = {
+                    "asset_id": approval.get('asset_id'),
+                    "asset_name": approval.get('asset_name'),
+                    "disposal_reason": disposal_reason,
+                    "disposal_method": disposal_method,
+                    "description": description,
+                    "notes": notes,
+                    "disposed_by": current_profile.id,
+                    "disposed_by_name": current_profile.full_name or current_profile.username,
+                    "disposal_date": "now()",
+                    "status": "Disposed"
+                }
+                
+                supabase = get_supabase()
+                supabase.table("disposal_log").insert(disposal_data).execute()
+                
+                # Update asset status to Disposed
+                from app.utils.database_manager import update_asset
+                success = update_asset(approval.get('asset_id'), {'status': 'Disposed'})
+                if not success:
+                    return JSONResponse({"status": "error", "message": "Failed to update asset status"})
+                
+            except Exception as e:
+                return JSONResponse({"status": "error", "message": f"Error processing disposal: {str(e)}"})
+        
         # Update approval status in database
         success = update_approval_status(
             approval_id, 
@@ -284,18 +381,18 @@ async def reject_request(
                 'approved_by': current_profile.id,
                 'approved_by_name': approver_name
             }).eq('asset_id', approval.get('asset_id')).execute()
-        elif approval.get('type') in ['lost_report']:
+        elif approval.get('type') == 'lost_report':
             supabase.table('lost_log').update({
                 'status': 'rejected',
                 'approved_by': current_profile.id,
                 'approved_by_name': approver_name
             }).eq('asset_id', approval.get('asset_id')).execute()
+        elif approval.get('type') == 'repair':
+            # For repair rejection, keep damage status as reported
+            pass
         elif approval.get('type') == 'disposal_request':
-            supabase.table('disposal_log').update({
-                'status': 'rejected',
-                'approved_by': current_profile.id,
-                'approved_by_name': approver_name
-            }).eq('asset_id', approval.get('asset_id')).execute()
+            # For disposal rejection, just update the approval - no disposal log entry needed
+            pass
         elif approval.get('type') == 'relocation':
             supabase.table('relocation_log').update({
                 'status': 'rejected',

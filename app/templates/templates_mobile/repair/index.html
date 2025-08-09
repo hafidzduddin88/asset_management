@@ -1,0 +1,125 @@
+{% extends "layouts/modern_layout.html" %}
+
+{% block title %}Asset Repair{% endblock %}
+
+{% block content %}
+<div class="px-4 py-4">
+    <!-- Header -->
+    <div class="bg-green-600 rounded-lg p-4 mb-4">
+        <h1 class="text-xl font-bold text-white">Asset Repair</h1>
+        <p class="text-green-100 text-sm">Report repairs for damaged assets</p>
+    </div>
+
+    <!-- Damaged Assets List -->
+    <div class="bg-white rounded-lg shadow mb-4">
+        <div class="p-4 border-b border-gray-200">
+            <h2 class="font-semibold text-gray-900">Damaged Assets</h2>
+            <p class="text-gray-600 text-sm">{{ damaged_assets|length }} assets awaiting repair</p>
+        </div>
+        
+        {% if damaged_assets %}
+        <div class="divide-y divide-gray-100 max-h-96 overflow-y-auto">
+            {% for asset in damaged_assets %}
+            <div class="p-4">
+                <div class="flex justify-between items-start mb-3">
+                    <div class="flex-1">
+                        <h3 class="font-medium text-gray-900">{{ asset.asset_name }}</h3>
+                        <p class="text-sm text-gray-500">ID: {{ asset.asset_id }}</p>
+                    </div>
+                    {% if asset.severity == 'Critical' %}
+                    <span class="px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">Critical</span>
+                    {% elif asset.severity == 'High' %}
+                    <span class="px-2 py-1 text-xs font-semibold rounded-full bg-orange-100 text-orange-800">High</span>
+                    {% elif asset.severity == 'Medium' %}
+                    <span class="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">Medium</span>
+                    {% else %}
+                    <span class="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">Low</span>
+                    {% endif %}
+                </div>
+                
+                <div class="space-y-2 text-sm text-gray-600 mb-3">
+                    <div class="flex items-center">
+                        <i class="fas fa-exclamation-triangle w-5 text-red-400"></i>
+                        <span>{{ asset.damage_type }}</span>
+                    </div>
+                    <div class="flex items-center">
+                        <i class="fas fa-user w-5 text-gray-400"></i>
+                        <span>{{ asset.reported_by }}</span>
+                    </div>
+                    <div class="flex items-center">
+                        <i class="fas fa-calendar w-5 text-gray-400"></i>
+                        <span>{{ asset.report_date }}</span>
+                    </div>
+                </div>
+                
+                <button onclick="openRepairModal({{ asset.damage_id }}, '{{ asset.asset_name }}')" 
+                        class="w-full bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors">
+                    <i class="fas fa-wrench mr-2"></i>Report Repair
+                </button>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="p-8 text-center text-gray-500">
+            <i class="fas fa-check-circle text-4xl mb-4 text-green-400"></i>
+            <div class="font-medium">No Damaged Assets</div>
+            <div class="text-sm">All assets are in good condition</div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Repair Modal -->
+<div id="repairModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 hidden">
+    <div class="relative top-4 mx-4 p-4 border shadow-lg rounded-lg bg-white">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-medium text-gray-900">Report Repair</h3>
+            <button onclick="closeRepairModal()" class="text-gray-400 hover:text-gray-600">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        
+        <form id="repairForm" method="post" class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Asset</label>
+                <input type="text" id="assetName" readonly class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50">
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Repair Action</label>
+                <select name="repair_action" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg">
+                    <option value="">Select Action</option>
+                    <option value="Fixed">Fixed</option>
+                    <option value="Replaced Parts">Replaced Parts</option>
+                    <option value="Software Update">Software Update</option>
+                    <option value="Maintenance">Maintenance</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Description</label>
+                <textarea name="description" required rows="3" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="Describe the repair work done..."></textarea>
+            </div>
+            
+            <div class="flex space-x-3 pt-4">
+                <button type="button" onclick="closeRepairModal()" class="flex-1 bg-gray-300 py-2 px-4 rounded-lg text-gray-700 font-medium">Cancel</button>
+                <button type="submit" class="flex-1 bg-green-600 hover:bg-green-700 py-2 px-4 rounded-lg text-white font-medium">Submit Report</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function openRepairModal(damageId, assetName) {
+    document.getElementById('assetName').value = assetName;
+    document.getElementById('repairForm').action = `/repair/report/${damageId}`;
+    document.getElementById('repairModal').classList.remove('hidden');
+}
+
+function closeRepairModal() {
+    document.getElementById('repairModal').classList.add('hidden');
+    document.getElementById('repairForm').reset();
+}
+</script>
+{% endblock %}
