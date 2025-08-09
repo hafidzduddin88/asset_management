@@ -5,7 +5,7 @@ import logging
 config = load_config()
 
 def create_profile_if_not_exists(user_id: str, user_email: str, user_metadata: dict = None) -> bool:
-    """Create profile only when explicitly needed (e.g., first login)."""
+    """Create profile only when explicitly needed (e.g., first login). Never updates existing profiles."""
     try:
         admin_supabase = create_client(config.SUPABASE_URL, config.SUPABASE_SERVICE_KEY)
         
@@ -22,11 +22,13 @@ def create_profile_if_not_exists(user_id: str, user_email: str, user_metadata: d
                 if bu_response.data:
                     business_unit_id = bu_response.data[0]['business_unit_id']
             
-            # Create profile with basic data
+            # Create profile with basic data - use email as full_name if no metadata provided
+            full_name = user_metadata.get('full_name') if user_metadata else user_email
+            
             profile_data = {
                 "id": user_id,
                 "username": user_email,
-                "full_name": user_metadata.get('full_name', '') if user_metadata else '',
+                "full_name": full_name,
                 "role": "staff",
                 "is_active": True,
                 "business_unit_id": business_unit_id,
@@ -35,8 +37,10 @@ def create_profile_if_not_exists(user_id: str, user_email: str, user_metadata: d
             admin_supabase.table("profiles").insert(profile_data).execute()
             logging.info("Profile created successfully")
             return True
-        
-        return False
+        else:
+            # Profile exists - do not update anything to preserve existing data
+            logging.info("Profile already exists - skipping update")
+            return False
         
     except Exception as e:
         logging.error(f"Failed to create profile: {type(e).__name__}")
