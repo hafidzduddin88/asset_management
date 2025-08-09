@@ -13,7 +13,7 @@
         }
         .chart-container {
             position: relative;
-            height: 280px;
+            height: 200px;
         }
         .status-card {
             transition: all 0.3s ease;
@@ -91,45 +91,45 @@
     </div>
 
     <!-- Summary Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mb-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 mb-4">
         <!-- Total Assets Card -->
         <div class="bg-white shadow-xl rounded-xl border border-gray-200 overflow-hidden">
-            <div class="bg-gradient-to-r from-primary-50 to-blue-50 px-4 py-3 border-b border-gray-200">
+            <div class="bg-gradient-to-r from-primary-50 to-blue-50 px-3 py-2 border-b border-gray-200">
                 <div class="flex items-center justify-between">
-                    <h2 class="text-base font-semibold text-gray-900">
-                        <i class="fas fa-database mr-2 text-primary-600"></i>
+                    <h2 class="text-sm font-semibold text-gray-900">
+                        <i class="fas fa-database mr-1 text-primary-600"></i>
                         Total Assets
                     </h2>
-                    <div class="bg-primary-100 p-1.5 rounded-lg">
-                        <i class="fas fa-boxes text-primary-600"></i>
+                    <div class="bg-primary-100 p-1 rounded-lg">
+                        <i class="fas fa-boxes text-primary-600 text-xs"></i>
                     </div>
                 </div>
             </div>
-            <div class="p-4">
-                <p class="text-2xl font-bold text-primary-600 mb-3">{{ total_assets }}</p>
-                <div class="space-y-2">
-                    <div class="flex justify-between items-center p-2 bg-gray-50 rounded">
+            <div class="p-3">
+                <p class="text-xl font-bold text-primary-600 mb-2">{{ total_assets }}</p>
+                <div class="space-y-1">
+                    <div class="flex justify-between items-center p-1.5 bg-gray-50 rounded">
                         <p class="text-xs font-medium text-gray-600">
                             <i class="fas fa-dollar-sign mr-1 text-green-600"></i>
                             Purchase Value:
                         </p>
                         <p class="text-xs font-bold text-green-600">Rp {{ "{:,.0f}".format(total_purchase_value) }}</p>
                     </div>
-                    <div class="flex justify-between items-center p-2 bg-blue-50 rounded">
+                    <div class="flex justify-between items-center p-1.5 bg-blue-50 rounded">
                         <p class="text-xs font-medium text-gray-600">
                             <i class="fas fa-chart-line mr-1 text-blue-600"></i>
                             Book Value:
                         </p>
                         <p class="text-xs font-bold text-blue-600">Rp {{ "{:,.0f}".format(total_book_value) }}</p>
                     </div>
-                    <div class="flex justify-between items-center p-2 bg-orange-50 rounded">
+                    <div class="flex justify-between items-center p-1.5 bg-orange-50 rounded">
                         <p class="text-xs font-medium text-gray-600">
                             <i class="fas fa-chart-line-down mr-1 text-orange-600"></i>
                             Depreciation:
                         </p>
                         <p class="text-xs font-bold text-orange-600">Rp {{ "{:,.0f}".format(total_depreciation_value) }}</p>
                     </div>
-                    <div class="flex justify-between items-center pt-2 mt-2 border-t border-gray-200">
+                    <div class="flex justify-between items-center pt-1.5 mt-1.5 border-t border-gray-200">
                         <p class="text-xs font-medium text-gray-500">
                             <i class="fas fa-trash-alt mr-1"></i>
                             Disposed Assets:
@@ -142,21 +142,21 @@
 
         <!-- By Category Card -->
         <div class="bg-white shadow-xl rounded-xl border border-gray-200 overflow-hidden">
-            <div class="bg-gradient-to-r from-green-50 to-emerald-50 px-4 py-3 border-b border-gray-200">
-                <h2 class="text-base font-semibold text-gray-900">
-                    <i class="fas fa-tags mr-2 text-green-600"></i>
+            <div class="bg-gradient-to-r from-green-50 to-emerald-50 px-3 py-2 border-b border-gray-200">
+                <h2 class="text-sm font-semibold text-gray-900">
+                    <i class="fas fa-tags mr-1 text-green-600"></i>
                     By Category
                 </h2>
             </div>
-            <div class="p-4">
-                <ul class="space-y-2">
+            <div class="p-3">
+                <ul class="space-y-1">
                     {% for category, count in category_counts.items() %}
-                        <li class="flex justify-between items-center p-2 hover:bg-gray-50 rounded transition-colors">
-                            <span class="text-gray-700 font-medium truncate text-sm">
+                        <li class="flex justify-between items-center p-1.5 hover:bg-gray-50 rounded transition-colors">
+                            <span class="text-gray-700 font-medium truncate text-xs">
                                 <i class="fas fa-tag mr-1 text-green-500"></i>
                                 {{ category }}
                             </span>
-                            <span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-bold">{{ count }}</span>
+                            <span class="bg-green-100 text-green-800 px-1.5 py-0.5 rounded-full text-xs font-bold">{{ count }}</span>
                         </li>
                     {% endfor %}
                 </ul>
@@ -165,21 +165,21 @@
 
         <!-- By Location Card -->
         <div class="bg-white shadow-xl rounded-xl border border-gray-200 overflow-hidden">
-            <div class="bg-gradient-to-r from-purple-50 to-indigo-50 px-4 py-3 border-b border-gray-200">
-                <h2 class="text-base font-semibold text-gray-900">
-                    <i class="fas fa-map-marker-alt mr-2 text-purple-600"></i>
+            <div class="bg-gradient-to-r from-purple-50 to-indigo-50 px-3 py-2 border-b border-gray-200">
+                <h2 class="text-sm font-semibold text-gray-900">
+                    <i class="fas fa-map-marker-alt mr-1 text-purple-600"></i>
                     By Location
                 </h2>
             </div>
-            <div class="p-4">
-                <ul class="space-y-2">
+            <div class="p-3">
+                <ul class="space-y-1">
                     {% for location, count in location_counts.items() %}
-                        <li class="flex justify-between items-center p-2 hover:bg-gray-50 rounded transition-colors">
-                            <span class="text-gray-700 font-medium truncate text-sm">
+                        <li class="flex justify-between items-center p-1.5 hover:bg-gray-50 rounded transition-colors">
+                            <span class="text-gray-700 font-medium truncate text-xs">
                                 <i class="fas fa-building mr-1 text-purple-500"></i>
                                 {{ location }}
                             </span>
-                            <span class="bg-purple-100 text-purple-800 px-2 py-1 rounded-full text-xs font-bold">{{ count }}</span>
+                            <span class="bg-purple-100 text-purple-800 px-1.5 py-0.5 rounded-full text-xs font-bold">{{ count }}</span>
                         </li>
                     {% endfor %}
                 </ul>
@@ -188,84 +188,82 @@
     </div>
     
     <!-- Asset Activity Charts -->
-    <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-6">
+    <div class="grid grid-cols-1 xl:grid-cols-2 gap-4 mb-4">
         <!-- Damaged Assets Chart -->
-        <div class="bg-white rounded-xl shadow-xl p-6">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-lg font-semibold text-gray-900">Damaged Assets</h3>
-                <div class="flex space-x-2">
-                    <button class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded text-gray-600 damaged-period-btn active" data-period="month">Monthly</button>
-                    <button class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded text-gray-600 damaged-period-btn" data-period="quarter">Quarterly</button>
-                    <button class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded text-gray-600 damaged-period-btn" data-period="year">Yearly</button>
+        <div class="bg-white rounded-xl shadow-xl p-4">
+            <div class="flex justify-between items-center mb-3">
+                <h3 class="text-base font-semibold text-gray-900">Damaged Assets</h3>
+                <div class="flex space-x-1">
+                    <button class="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded text-gray-600 damaged-period-btn active" data-period="month">Monthly</button>
+                    <button class="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded text-gray-600 damaged-period-btn" data-period="quarter">Quarterly</button>
+                    <button class="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded text-gray-600 damaged-period-btn" data-period="year">Yearly</button>
                 </div>
             </div>
-            <div class="chart-container">
+            <div class="chart-container" style="height: 200px;">
                 <canvas id="damagedChart"></canvas>
             </div>
         </div>
         
         <!-- Repaired Assets Chart -->
-        <div class="bg-white rounded-xl shadow-xl p-6">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-lg font-semibold text-gray-900">Repaired Assets</h3>
-                <div class="flex space-x-2">
-                    <button class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded text-gray-600 repaired-period-btn active" data-period="month">Monthly</button>
-                    <button class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded text-gray-600 repaired-period-btn" data-period="quarter">Quarterly</button>
-                    <button class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded text-gray-600 repaired-period-btn" data-period="year">Yearly</button>
+        <div class="bg-white rounded-xl shadow-xl p-4">
+            <div class="flex justify-between items-center mb-3">
+                <h3 class="text-base font-semibold text-gray-900">Repaired Assets</h3>
+                <div class="flex space-x-1">
+                    <button class="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded text-gray-600 repaired-period-btn active" data-period="month">Monthly</button>
+                    <button class="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded text-gray-600 repaired-period-btn" data-period="quarter">Quarterly</button>
+                    <button class="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded text-gray-600 repaired-period-btn" data-period="year">Yearly</button>
                 </div>
             </div>
-            <div class="chart-container">
+            <div class="chart-container" style="height: 200px;">
                 <canvas id="repairedChart"></canvas>
             </div>
         </div>
     </div>
     
     <!-- Additional Charts -->
-    <div class="grid grid-cols-1 xl:grid-cols-3 gap-6 mb-6">
+    <div class="grid grid-cols-1 xl:grid-cols-3 gap-4 mb-4">
         <!-- Relocated Assets Chart -->
-        <div class="bg-white rounded-xl shadow-xl p-6">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-lg font-semibold text-gray-900">Relocated Assets</h3>
-                <div class="flex space-x-2">
-                    <button class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded text-gray-600 relocated-period-btn active" data-period="month">Monthly</button>
-                    <button class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded text-gray-600 relocated-period-btn" data-period="quarter">Quarterly</button>
-                    <button class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded text-gray-600 relocated-period-btn" data-period="year">Yearly</button>
+        <div class="bg-white rounded-xl shadow-xl p-4">
+            <div class="flex justify-between items-center mb-3">
+                <h3 class="text-base font-semibold text-gray-900">Relocated Assets</h3>
+                <div class="flex space-x-1">
+                    <button class="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded text-gray-600 relocated-period-btn active" data-period="month">Monthly</button>
+                    <button class="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded text-gray-600 relocated-period-btn" data-period="quarter">Quarterly</button>
+                    <button class="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded text-gray-600 relocated-period-btn" data-period="year">Yearly</button>
                 </div>
             </div>
-            <div class="chart-container">
+            <div class="chart-container" style="height: 200px;">
                 <canvas id="relocatedChart"></canvas>
             </div>
         </div>
         
-
-        
         <!-- Disposed Assets Chart -->
-        <div class="bg-white rounded-xl shadow-xl p-6">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-lg font-semibold text-gray-900">Disposed Assets</h3>
-                <div class="flex space-x-2">
-                    <button class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded text-gray-600 disposed-period-btn active" data-period="month">Monthly</button>
-                    <button class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded text-gray-600 disposed-period-btn" data-period="quarter">Quarterly</button>
-                    <button class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded text-gray-600 disposed-period-btn" data-period="year">Yearly</button>
+        <div class="bg-white rounded-xl shadow-xl p-4">
+            <div class="flex justify-between items-center mb-3">
+                <h3 class="text-base font-semibold text-gray-900">Disposed Assets</h3>
+                <div class="flex space-x-1">
+                    <button class="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded text-gray-600 disposed-period-btn active" data-period="month">Monthly</button>
+                    <button class="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded text-gray-600 disposed-period-btn" data-period="quarter">Quarterly</button>
+                    <button class="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded text-gray-600 disposed-period-btn" data-period="year">Yearly</button>
                 </div>
             </div>
-            <div class="chart-container">
+            <div class="chart-container" style="height: 200px;">
                 <canvas id="disposedChart"></canvas>
             </div>
         </div>
         
         <!-- Lost Assets Chart (if data exists) -->
         {% if activity_data.lost %}
-        <div class="bg-white rounded-xl shadow-xl p-6">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-lg font-semibold text-gray-900">Lost Assets</h3>
-                <div class="flex space-x-2">
-                    <button class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded text-gray-600 lost-period-btn active" data-period="month">Monthly</button>
-                    <button class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded text-gray-600 lost-period-btn" data-period="quarter">Quarterly</button>
-                    <button class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded text-gray-600 lost-period-btn" data-period="year">Yearly</button>
+        <div class="bg-white rounded-xl shadow-xl p-4">
+            <div class="flex justify-between items-center mb-3">
+                <h3 class="text-base font-semibold text-gray-900">Lost Assets</h3>
+                <div class="flex space-x-1">
+                    <button class="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded text-gray-600 lost-period-btn active" data-period="month">Monthly</button>
+                    <button class="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded text-gray-600 lost-period-btn" data-period="quarter">Quarterly</button>
+                    <button class="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded text-gray-600 lost-period-btn" data-period="year">Yearly</button>
                 </div>
             </div>
-            <div class="chart-container">
+            <div class="chart-container" style="height: 200px;">
                 <canvas id="lostChart"></canvas>
             </div>
         </div>
@@ -273,18 +271,18 @@
     </div>
     
     <!-- Main Chart Section -->
-    <div class="mb-6">
+    <div class="mb-4">
         <div class="bg-white rounded-xl shadow-xl overflow-hidden">
-            <div class="p-6">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-lg font-semibold text-gray-900 chart-title">Monthly Asset Additions (Last 12 Months)</h3>
-                    <div class="flex space-x-2">
-                        <button class="text-sm px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded text-gray-600 chart-period-btn active" data-period="month">Monthly</button>
-                        <button class="text-sm px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded text-gray-600 chart-period-btn" data-period="quarter">Quarterly</button>
-                        <button class="text-sm px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded text-gray-600 chart-period-btn" data-period="year">Yearly</button>
+            <div class="p-4">
+                <div class="flex justify-between items-center mb-3">
+                    <h3 class="text-base font-semibold text-gray-900 chart-title">Monthly Asset Additions (Last 12 Months)</h3>
+                    <div class="flex space-x-1">
+                        <button class="text-xs px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded text-gray-600 chart-period-btn active" data-period="month">Monthly</button>
+                        <button class="text-xs px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded text-gray-600 chart-period-btn" data-period="quarter">Quarterly</button>
+                        <button class="text-xs px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded text-gray-600 chart-period-btn" data-period="year">Yearly</button>
                     </div>
                 </div>
-                <div class="chart-container">
+                <div class="chart-container" style="height: 250px;">
                     <canvas id="monthlyChart"></canvas>
                 </div>
             </div>
