@@ -363,6 +363,9 @@ function displayAssets() {
                     <button onclick="viewAssetDetails(${asset.id})" class="text-blue-600 hover:text-blue-900 p-1 hover:bg-blue-50 rounded" title="View Details">
                         <i class="fas fa-eye"></i>
                     </button>
+                    <button onclick="relocateAsset(${asset.id})" class="text-purple-600 hover:text-purple-900 p-1 hover:bg-purple-50 rounded ml-1" title="Relocate Asset">
+                        <i class="fas fa-arrows-alt"></i>
+                    </button>
                     ${window.userRole === 'admin' ? `
                     <button onclick="editAsset(${asset.id})" class="text-green-600 hover:text-green-900 p-1 hover:bg-green-50 rounded ml-1" title="Edit Asset">
                         <i class="fas fa-edit"></i>
@@ -455,6 +458,10 @@ function viewAssetDetails(assetId) {
 
 function editAsset(assetId) {
     window.location.href = `/asset_management/edit/${assetId}`;
+}
+
+function relocateAsset(assetId) {
+    window.location.href = `/relocation?asset_id=${assetId}`;
 }
 
 // Set user role from backend
