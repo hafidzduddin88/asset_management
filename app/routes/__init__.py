@@ -15,5 +15,7 @@ from app.routes import (
     disposal,
     user_management,
     logs,
-    relocation
+    relocation,
+    export,
+    lost
 )
