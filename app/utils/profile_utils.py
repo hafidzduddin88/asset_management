@@ -63,9 +63,6 @@ def protect_profile_data(user_id: str) -> bool:
             # Store original full_name in cache if not already stored
             if user_id not in _profile_cache and current_full_name and current_full_name != username:
                 _profile_cache[user_id] = current_full_name
-                logging.info(f"Cached original full_name for {user_id}: '{current_full_name}'")
-            
-            logging.info(f"Profile check for {user_id}: full_name='{current_full_name}', username='{username}', updated_at='{updated_at}'")
             
             # Check if full_name was overwritten with username (which contains email)
             needs_protection = (current_full_name == username)
@@ -76,7 +73,6 @@ def protect_profile_data(user_id: str) -> bool:
                 admin_supabase.table("profiles").update({
                     "full_name": restore_value
                 }).eq("id", user_id).execute()
-                logging.warning(f"PROFILE OVERWRITE DETECTED! User {user_id} - restored full_name from '{current_full_name}' to '{restore_value}'")
                 return True
         
         return False

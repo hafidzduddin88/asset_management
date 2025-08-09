@@ -120,7 +120,6 @@ def refresh_supabase_token(refresh_token: str) -> Optional[dict]:
             try:
                 from app.utils.profile_utils import protect_profile_data
                 protect_profile_data(user_id)
-                logging.info(f"Protected profile data after token refresh for user {user_id}")
             except Exception as e:
                 logging.warning(f"Failed to protect profile after token refresh: {e}")
 
@@ -185,7 +184,6 @@ def get_current_profile(request: Request) -> ProfileResponse:
                 
                 admin_supabase.table("profiles").update(update_data).eq("id", user_id).execute()
                 _last_login_cache[user_id] = now
-                logging.info(f"Updated last_login_at for user {user_id}, preserved full_name: '{current_full_name}'")
             except Exception as e:
                 logging.warning(f"Failed to update last_login_at: {e}")
         
