@@ -105,6 +105,13 @@ async def edit_asset_form(
 async def update_asset(
     asset_id: str,
     request: Request,
+    asset_name: str = Form(...),
+    manufacture: str = Form(""),
+    model: str = Form(""),
+    serial_number: str = Form(""),
+    purchase_cost: float = Form(...),
+    journal: str = Form(""),
+    photo_url: str = Form(""),
     status: str = Form(...),
     company: str = Form(...),
     location: str = Form(...),
@@ -120,6 +127,13 @@ async def update_asset(
     asset = get_asset_by_id(asset_id)
 
     update_data = {
+        "asset_name": asset_name,
+        "manufacture": manufacture,
+        "model": model,
+        "serial_number": serial_number,
+        "purchase_cost": purchase_cost,
+        "journal": journal,
+        "photo_url": photo_url,
         "status": status,
         "company_name": company,
         "location_name": location,
@@ -137,7 +151,7 @@ async def update_asset(
         'asset_name': asset.get('asset_name', ''),
         'submitted_by': current_profile.id,
         'status': 'pending',
-        'description': f"Edit asset: {asset.get('asset_name', '')} - Reason: {edit_reason}",
+        'description': f"Edit asset: {asset_name} - Reason: {edit_reason}",
         'notes': json.dumps(update_data)
     }
     
