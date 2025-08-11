@@ -4,8 +4,23 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AMBP - Authentication</title>
+    
+    <!-- PWA Support -->
+    <link rel="manifest" href="/static/manifest.json">
+    <meta name="theme-color" content="#3B82F6">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="AMBP">
+    
+    <!-- App Icons -->
+    <link rel="icon" type="image/png" sizes="16x16" href="/static/img/favicon-16x16.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/static/img/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="96x96" href="/static/img/favicon-96x96.png">
+    <link rel="apple-touch-icon" href="/static/img/apple-touch-icon.png">
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body class="bg-gray-50 min-h-screen flex items-center justify-center px-4 py-4">
     <div class="max-w-sm w-full space-y-4" x-data="authForm()">
@@ -125,6 +140,25 @@
         </div>
     </div>
 
+    <!-- PWA Install Prompt -->
+    <div id="installPrompt" class="fixed bottom-4 left-4 bg-blue-600 text-white p-3 rounded-lg shadow-lg z-50" style="display: none;">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center">
+                <i class="fas fa-mobile-alt mr-2 text-lg"></i>
+                <div>
+                    <p class="font-medium text-sm">Install AMBP</p>
+                    <p class="text-xs opacity-90">Add to home screen</p>
+                </div>
+            </div>
+            <div class="flex space-x-2">
+                <button id="installBtn" class="bg-white text-blue-600 px-2 py-1 rounded text-xs font-medium">Install</button>
+                <button id="dismissBtn" class="text-white opacity-75 hover:opacity-100">
+                    <i class="fas fa-times text-sm"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script>
         function authForm() {
             return {
@@ -166,6 +200,47 @@
                     }
                 }
             }
+        }
+        
+        let deferredPrompt;
+        
+        // PWA Install Prompt
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            
+            if (!window.matchMedia('(display-mode: standalone)').matches && 
+                localStorage.getItem('installPromptDismissed') !== 'true') {
+                document.getElementById('installPrompt').style.display = 'block';
+            }
+        });
+        
+        document.getElementById('installBtn').addEventListener('click', async () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                deferredPrompt = null;
+                document.getElementById('installPrompt').style.display = 'none';
+            } else {
+                alert('To install this app:\n\n1. Open browser menu (⋮)\n2. Select "Install app" or "Add to home screen"\n3. Follow the prompts');
+                document.getElementById('installPrompt').style.display = 'none';
+            }
+        });
+        
+        document.getElementById('dismissBtn').addEventListener('click', () => {
+            document.getElementById('installPrompt').style.display = 'none';
+            localStorage.setItem('installPromptDismissed', 'true');
+        });
+        
+        // Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('/static/service-worker.js').then(function(registration) {
+                    console.log('ServiceWorker registration successful with scope: ', registration.scope);
+                }, function(err) {
+                    console.log('ServiceWorker registration failed: ', err);
+                });
+            });
         }
     </script>
 </body>
