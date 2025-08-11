@@ -12,6 +12,7 @@ from app.utils.device_detector import get_template
 router = APIRouter(prefix="/disposal", tags=["disposal"])
 templates = Jinja2Templates(directory="app/templates")
 
+@router.get("", response_class=HTMLResponse)
 @router.get("/", response_class=HTMLResponse)
 async def disposal_page(
     request: Request,
