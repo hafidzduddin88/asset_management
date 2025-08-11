@@ -36,8 +36,8 @@
                         </div>
                         <div class="flex-1 min-w-0">
                             <div class="flex items-center space-x-2 mb-1">
-                                <h4 class="text-sm font-semibold text-gray-900 truncate">{{ asset.get('Item Name', 'Unknown Asset') }}</h4>
-                                {% set status = asset.get('Status', '') %}
+                                <h4 class="text-sm font-semibold text-gray-900 truncate">{{ asset.get('asset_name', 'Unknown Asset') }}</h4>
+                                {% set status = asset.get('status', '') %}
                                 {% if status == 'To Be Disposed' %}
                                     <span class="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs font-semibold rounded-full">
                                         <i class="fas fa-exclamation-triangle mr-1"></i>{{ status }}
@@ -49,19 +49,19 @@
                             <div class="space-y-1 text-xs text-gray-600">
                                 <div class="flex items-center space-x-1">
                                     <i class="fas fa-hashtag text-gray-400"></i>
-                                    <span>{{ asset.get('ID', 'N/A') }}</span>
+                                    <span>{{ asset.get('asset_id', 'N/A') }}</span>
                                 </div>
                                 <div class="flex items-center space-x-1">
                                     <i class="fas fa-tag text-gray-400"></i>
-                                    <span>{{ asset.get('Category', 'N/A') }}</span>
+                                    <span>{{ asset.ref_categories.category_name if asset.ref_categories else 'N/A' }}</span>
                                 </div>
                                 <div class="flex items-center space-x-1">
                                     <i class="fas fa-map-marker-alt text-gray-400"></i>
-                                    <span>{{ asset.get('Location', 'N/A') }}</span>
+                                    <span>{{ asset.ref_locations.location_name if asset.ref_locations else 'N/A' }}</span>
                                 </div>
                             </div>
                             <div class="mt-3">
-                                <button onclick="openDisposalModal('{{ asset.get('ID', '') }}', '{{ asset.get('Item Name', '') }}')" 
+                                <button onclick="openDisposalModal('{{ asset.get('asset_id', '') }}', '{{ asset.get('asset_name', '') }}')" 
                                     class="w-full bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white px-3 py-2 rounded-lg text-xs font-semibold transition-all duration-200 touch-manipulation">
                                     <i class="fas fa-trash mr-1"></i>Dispose Asset
                                 </button>
