@@ -86,12 +86,12 @@ async def relocate_asset(
         'type': 'relocation',
         'asset_id': int(asset_id),
         'asset_name': asset.get('asset_name', ''),
-        'submitted_by': current_profile.id,
+        'submitted_by': current_profile.full_name or current_profile.username,
+        'submitted_by_id': current_profile.id,
+        'submitted_date': datetime.now().isoformat(),
         'status': 'pending',
         'description': f"Relocate from {asset.get('ref_locations', {}).get('location_name', '') if asset.get('ref_locations') else ''} - {asset.get('ref_locations', {}).get('room_name', '') if asset.get('ref_locations') else asset.get('room_name', '')} to {new_location} - {new_room}",
-        'from_location_id': current_location_id,
-        'to_location_id': new_location_id,
-        'notes': json.dumps(relocation_data)
+        'metadata': json.dumps(relocation_data)
     }
     
     # Set approver based on requester role
