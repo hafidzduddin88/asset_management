@@ -148,16 +148,16 @@ jobs:
           fi
         done
         
-        # Clean old GHCR images (keep latest + last 2 SHA tags)
+        # Clean old GHCR images (keep only 2 latest)
         echo "Cleaning old GHCR images..."
         
-        # Get package versions
+        # Get package versions sorted by created date
         VERSIONS=$(curl -s -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
                         -H "Accept: application/vnd.github+json" \
                         "https://api.github.com/users/${{ github.repository_owner }}/packages/container/ambp/versions")
         
-        # Delete old versions (keep latest + 2 recent)
-        echo "$VERSIONS" | jq -r '.[3:] | .[].id' | while read version_id; do
+        # Delete all versions except the 2 most recent
+        echo "$VERSIONS" | jq -r 'sort_by(.created_at) | reverse | .[2:] | .[].id' | while read version_id; do
           if [ ! -z "$version_id" ]; then
             echo "Deleting GHCR version: $version_id"
             curl -X DELETE \
