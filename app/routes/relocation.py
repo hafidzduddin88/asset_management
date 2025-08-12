@@ -18,21 +18,8 @@ async def relocation_page(
     request: Request,
     current_profile = Depends(get_current_profile)
 ):
-    """Asset relocation page."""
-    # Get assets and dropdown options
-    all_assets = get_all_assets()
-    dropdown_options = get_dropdown_options()
-    
-    template_path = get_template(request, "relocation/index.html")
-    return templates.TemplateResponse(
-        template_path,
-        {
-            "request": request,
-            "user": current_profile,
-            "assets": all_assets,
-            "dropdown_options": dropdown_options
-        }
-    )
+    """Redirect to assets management page."""
+    return RedirectResponse(url="/assets", status_code=status.HTTP_301_MOVED_PERMANENTLY)
 
 @router.post("/relocate/{asset_id}")
 async def relocate_asset(
@@ -88,10 +75,10 @@ async def relocate_asset(
     approval_success = add_approval_request(approval_data)
     
     if approval_success:
-        response = RedirectResponse(url="/relocation", status_code=status.HTTP_303_SEE_OTHER)
+        response = RedirectResponse(url="/assets", status_code=status.HTTP_303_SEE_OTHER)
         set_flash(response, f"Relocation request for {asset.get('asset_name', '')} submitted for approval", "success")
         return response
     else:
-        response = RedirectResponse(url="/relocation", status_code=status.HTTP_303_SEE_OTHER)
+        response = RedirectResponse(url="/assets", status_code=status.HTTP_303_SEE_OTHER)
         set_flash(response, "Error submitting relocation request", "error")
         return response
