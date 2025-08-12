@@ -10,11 +10,47 @@ templates = Jinja2Templates(directory="app/templates")
 
 
 @router.get("/damage")
-async def damage_redirect(request: Request):
-    """Redirect to assets management for damage reporting"""
-    from fastapi.responses import RedirectResponse
-    return RedirectResponse(url="/asset_management/list", status_code=302)
+async def damage_page(request: Request, asset_id: int = None, current_profile = Depends(get_current_profile)):
+    """Damage reporting page"""
+    from app.utils.database_manager import get_supabase
+    
+    supabase = get_supabase()
+    asset_data = None
+    
+    if asset_id:
+        # Get specific asset
+        response = supabase.table('assets').select('*').eq('asset_id', asset_id).execute()
+        if response.data:
+            asset_data = response.data[0]
+    
+    template_path = get_template(request, "damage/form.html")
+    return templates.TemplateResponse(template_path, {
+        "request": request,
+        "current_profile": current_profile,
+        "asset": asset_data
+    })
 
+
+@router.get("/lost")
+async def lost_page(request: Request, asset_id: int = None, current_profile = Depends(get_current_profile)):
+    """Lost reporting page"""
+    from app.utils.database_manager import get_supabase
+    
+    supabase = get_supabase()
+    asset_data = None
+    
+    if asset_id:
+        # Get specific asset
+        response = supabase.table('assets').select('*').eq('asset_id', asset_id).execute()
+        if response.data:
+            asset_data = response.data[0]
+    
+    template_path = get_template(request, "lost/form.html")
+    return templates.TemplateResponse(template_path, {
+        "request": request,
+        "current_profile": current_profile,
+        "asset": asset_data
+    })
 
 @router.post("/damage/lost")
 async def submit_lost_report(request: Request, current_profile = Depends(get_current_profile)):

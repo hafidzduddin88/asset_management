@@ -4,7 +4,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from datetime import datetime
 
-from app.utils.auth import get_admin_user
+from app.utils.auth import get_admin_user, get_current_profile, get_current_profile
 from app.utils.database_manager import get_all_assets, update_asset
 from app.utils.flash import set_flash
 from app.utils.device_detector import get_template
@@ -16,20 +16,28 @@ templates = Jinja2Templates(directory="app/templates")
 @router.get("/", response_class=HTMLResponse)
 async def disposal_page(
     request: Request,
-    current_profile = Depends(get_admin_user)
+    asset_id: int = None,
+    current_profile = Depends(get_current_profile)
 ):
-    """Disposal assets page (admin only)."""
-    # Get assets that are ready to dispose only
-    all_assets = get_all_assets()
-    disposable_assets = [asset for asset in all_assets if asset.get('status') == 'To be Disposed']
+    """Disposal request page."""
+    from app.utils.database_manager import get_supabase
     
-    template_path = get_template(request, "disposal/index.html")
+    supabase = get_supabase()
+    asset_data = None
+    
+    if asset_id:
+        # Get specific asset
+        response = supabase.table('assets').select('*').eq('asset_id', asset_id).execute()
+        if response.data:
+            asset_data = response.data[0]
+    
+    template_path = get_template(request, "disposal/form.html")
     return templates.TemplateResponse(
         template_path,
         {
             "request": request,
-            "user": current_profile,
-            "assets": disposable_assets
+            "current_profile": current_profile,
+            "asset": asset_data
         }
     )
 

@@ -78,15 +78,15 @@
                                     </button>
                                     <div x-show="open" @click.away="open = false" x-transition class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10 border">
                                         <div class="py-2 space-y-1">
-                                            <button @click="showIssueForm('{{ asset.asset_id }}', '{{ asset.asset_name }}', 'damage'); open = false" class="w-full mx-2 px-3 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 text-sm font-medium">
+                                            <a href="/damage?asset_id={{ asset.asset_id }}" class="block w-full mx-2 px-3 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 text-sm font-medium text-center">
                                                 <i class="fas fa-tools mr-2"></i>Damage
-                                            </button>
-                                            <button @click="showIssueForm('{{ asset.asset_id }}', '{{ asset.asset_name }}', 'lost'); open = false" class="w-full mx-2 px-3 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 text-sm font-medium">
+                                            </a>
+                                            <a href="/lost?asset_id={{ asset.asset_id }}" class="block w-full mx-2 px-3 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 text-sm font-medium text-center">
                                                 <i class="fas fa-search mr-2"></i>Lost
-                                            </button>
-                                            <button @click="showIssueForm('{{ asset.asset_id }}', '{{ asset.asset_name }}', 'disposal'); open = false" class="w-full mx-2 px-3 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 text-sm font-medium">
+                                            </a>
+                                            <a href="/disposal?asset_id={{ asset.asset_id }}" class="block w-full mx-2 px-3 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 text-sm font-medium text-center">
                                                 <i class="fas fa-trash mr-2"></i>Disposal
-                                            </button>
+                                            </a>
                                         </div>
                                     </div>
                                 </div>

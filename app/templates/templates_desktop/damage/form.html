@@ -1,0 +1,136 @@
+{% extends "templates_desktop/layouts/modern_layout.html" %}
+
+{% block title %}Report Asset Damage{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto px-6 py-8">
+    <!-- Header -->
+    <div class="bg-orange-600 rounded-lg p-4 mb-6">
+        <h1 class="text-xl font-bold text-white">Report Asset Damage</h1>
+        <p class="text-orange-100 text-sm">Report damage for asset repair</p>
+    </div>
+
+    <!-- Form -->
+    <div class="bg-white rounded-lg shadow p-6">
+        <form id="damageForm" class="space-y-4">
+            <input type="hidden" id="assetId" value="{{ asset.asset_id if asset else '' }}">
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Asset Name</label>
+                <input type="text" id="assetName" value="{{ asset.asset_name if asset else '' }}" readonly class="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50">
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Damage Type</label>
+                <select id="damageType" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500">
+                    <option value="">Select damage type</option>
+                    <option value="Physical Damage">Physical Damage</option>
+                    <option value="Software Issue">Software Issue</option>
+                    <option value="Hardware Failure">Hardware Failure</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Severity</label>
+                <select id="severity" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500">
+                    <option value="">Select severity</option>
+                    <option value="Low">Low</option>
+                    <option value="Medium">Medium</option>
+                    <option value="High">High</option>
+                    <option value="Critical">Critical</option>
+                </select>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                <textarea id="description" required rows="4" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500" placeholder="Describe the damage in detail..."></textarea>
+            </div>
+            
+            <div class="flex space-x-3 pt-4">
+                <a href="/asset_management/list" class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 text-center">Cancel</a>
+                <button type="submit" class="flex-1 px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700">Submit Report</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+document.getElementById('damageForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const formData = {
+        asset_ids: [document.getElementById('assetId').value],
+        damage_type: document.getElementById('damageType').value,
+        severity: document.getElementById('severity').value,
+        damage_description: document.getElementById('description').value
+    };
+    
+    try {
+        const response = await fetch('/damage/report', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(formData)
+        });
+        const result = await response.json();
+        
+        if (result.status === 'success') {
+            showSuccessMessage('Damage Report Submitted', `Asset "${document.getElementById('assetName').value}" has been reported as damaged and submitted for approval.`);
+            setTimeout(() => window.location.href = '/asset_management/list', 2000);
+        } else {
+            showErrorMessage('Submission Failed', result.message);
+        }
+    } catch (error) {
+        showErrorMessage('Network Error', 'Failed to submit report. Please try again.');
+    }
+});
+
+function showSuccessMessage(title, message) {
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4';
+    modal.innerHTML = `
+        <div class="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+            <div class="flex items-center mb-4">
+                <div class="flex-shrink-0">
+                    <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                        <i class="fas fa-check text-green-600"></i>
+                    </div>
+                </div>
+                <div class="ml-3">
+                    <h3 class="text-lg font-medium text-gray-900">${title}</h3>
+                </div>
+            </div>
+            <p class="text-sm text-gray-600 mb-6">${message}</p>
+            <div class="flex justify-end">
+                <button onclick="this.closest('.fixed').remove()" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">OK</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+function showErrorMessage(title, message) {
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4';
+    modal.innerHTML = `
+        <div class="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+            <div class="flex items-center mb-4">
+                <div class="flex-shrink-0">
+                    <div class="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                        <i class="fas fa-exclamation-triangle text-red-600"></i>
+                    </div>
+                </div>
+                <div class="ml-3">
+                    <h3 class="text-lg font-medium text-gray-900">${title}</h3>
+                </div>
+            </div>
+            <p class="text-sm text-gray-600 mb-6">${message}</p>
+            <div class="flex justify-end">
+                <button onclick="this.closest('.fixed').remove()" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">OK</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+</script>
+{% endblock %}

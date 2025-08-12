@@ -23,16 +23,20 @@ Registration → Active → Issues (Damage/Lost) → Repair → Active/Disposed
 
 #### Core Workflows
 1. **Asset Registration**: Add/Edit assets with approval
-2. **Asset Issues**: Report damage/lost/disposal (integrated in `/damage` route)
+2. **Asset Issues**: Report damage/lost/disposal requests (separate pages with asset_id)
 3. **Asset Repair**: Report repair completion (separate `/repair` route)
-4. **Approval System**: Hierarchical approval workflow
+4. **SuperAdmin Disposal**: Actual disposal execution (different from disposal requests)
+5. **Approval System**: Hierarchical approval workflow
 
 ### 3. Architecture Patterns
 
 #### Route Organization
 ```
 /routes/
-├── damage.py          # Asset Issues (damage/lost/disposal)
+├── damage.py          # Asset Issues (damage/lost pages)
+├── disposal.py        # TWO DIFFERENT FUNCTIONS:
+│                      # 1. Asset Issue disposal requests (/disposal?asset_id=***)
+│                      # 2. SuperAdmin disposal execution (admin-only)
 ├── repair.py          # Asset Repair completion
 ├── asset_management.py # Asset CRUD operations
 ├── approvals.py       # Approval workflow
@@ -52,6 +56,12 @@ Registration → Active → Issues (Damage/Lost) → Repair → Active/Disposed
 - **Reference Tables**: Categories, locations, business units
 
 ### 4. Development Guidelines
+
+#### Disposal Workflow (IMPORTANT)
+- **Asset Issue Disposal**: User requests disposal via `/disposal?asset_id=***` → Creates approval request
+- **SuperAdmin Disposal**: Admin executes actual disposal of approved assets → Updates asset status to disposed
+- **Different Routes**: Same disposal.py file handles both functions with different access levels
+- **Different Templates**: disposal/form.html (requests) vs disposal/index.html (admin execution)
 
 #### Code Style
 - **Modular**: Each feature in separate route file
@@ -89,8 +99,9 @@ approval_data = {
 
 #### Implemented Features ✅
 - Asset Registration with approval workflow
-- Asset Issues (damage/lost/disposal) integrated in single page
+- Asset Issues (damage/lost/disposal) as separate pages with asset_id parameter
 - Asset Repair as separate workflow for damaged assets
+- SuperAdmin Disposal execution (different from user disposal requests)
 - Compact dashboard with monthly/quarterly/yearly analytics
 - User management with business unit terminology
 - Export to Excel/PDF with role-based access
@@ -196,5 +207,7 @@ docker build -t ambp .
 - **Authentication**: Fixed full_name preservation during login
 - **Mobile**: Added scrollable lists and compact filters
 - **Export**: Available to all users with role-based restrictions
+- **Asset Issues**: Separated into individual pages (/damage, /lost, /disposal) with asset_id parameter
+- **Disposal Workflow**: Clear separation between user requests and SuperAdmin execution
 
 This guidance should help you quickly understand and work with the AMBP system effectively.
