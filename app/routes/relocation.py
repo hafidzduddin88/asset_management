@@ -104,14 +104,16 @@ async def relocate_asset(
     relocation_log_data = {
         'asset_id': int(asset_id),
         'asset_name': asset.get('asset_name', ''),
-        'from_location': asset.get('ref_locations', {}).get('location_name', '') if asset.get('ref_locations') else '',
-        'from_room': asset.get('ref_locations', {}).get('room_name', '') if asset.get('ref_locations') else asset.get('room_name', ''),
-        'to_location': new_location,
-        'to_room': new_room,
+        'old_location_id': current_location_id,
+        'old_location_name': asset.get('ref_locations', {}).get('location_name', '') if asset.get('ref_locations') else '',
+        'old_room_name': asset.get('ref_locations', {}).get('room_name', '') if asset.get('ref_locations') else asset.get('room_name', ''),
+        'new_location_id': new_location_id,
+        'new_location_name': new_location,
+        'new_room_name': new_room,
         'reason': reason,
         'notes': notes or '',
-        'requested_by': current_profile.full_name or current_profile.username,
-        'requested_by_id': current_profile.id,
+        'requested_by': current_profile.id,
+        'requested_by_name': current_profile.full_name or current_profile.username,
         'status': 'pending'
     }
     
