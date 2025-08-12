@@ -118,6 +118,8 @@
 
 ## Commit Standards
 
+**IMPORTANT: Always provide commit message suggestions before any explanation or implementation.**
+
 Always use Conventional Commits format with these suggestions:
 
 ### Feature Development
