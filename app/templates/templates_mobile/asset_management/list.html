@@ -61,13 +61,132 @@
             </div>
         </div>
         
-        <div class="mt-3 pt-3 border-t border-gray-100 flex justify-center">
+        <div class="mt-3 pt-3 border-t border-gray-100 flex justify-center space-x-4">
             <a href="/asset_management/edit/{{ asset.asset_id }}" class="text-blue-600 hover:text-blue-800 font-medium">
                 <i class="fas fa-edit mr-1"></i>Edit Asset
             </a>
+            <div class="relative" x-data="{ open: false }">
+                <button @click="open = !open" class="text-orange-600 hover:text-orange-800 font-medium">
+                    <i class="fas fa-exclamation-triangle mr-1"></i>Asset Issue
+                </button>
+                <div x-show="open" @click.away="open = false" x-transition class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10 border">
+                    <div class="py-1">
+                        <button @click="showIssueForm('{{ asset.asset_id }}', '{{ asset.asset_name }}', 'damage'); open = false" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                            <i class="fas fa-tools mr-2"></i>Report Damage
+                        </button>
+                        <button @click="showIssueForm('{{ asset.asset_id }}', '{{ asset.asset_name }}', 'lost'); open = false" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                            <i class="fas fa-search mr-2"></i>Report Lost
+                        </button>
+                        <button @click="showIssueForm('{{ asset.asset_id }}', '{{ asset.asset_name }}', 'disposal'); open = false" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                            <i class="fas fa-trash mr-2"></i>Request Disposal
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
     {% endfor %}
+</div>
+
+<!-- Asset Issue Forms -->
+<div id="issueFormContainer" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-sm max-h-screen overflow-y-auto">
+            <div class="p-4">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 id="formTitle" class="text-lg font-semibold text-gray-900"></h3>
+                    <button onclick="hideIssueForm()" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <!-- Damage Form -->
+                <form id="damageForm" class="hidden space-y-4">
+                    <input type="hidden" id="damageAssetId">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Asset Name</label>
+                        <input type="text" id="damageAssetName" readonly class="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Damage Type</label>
+                        <select id="damageType" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500">
+                            <option value="">Select damage type</option>
+                            <option value="Physical Damage">Physical Damage</option>
+                            <option value="Software Issue">Software Issue</option>
+                            <option value="Hardware Failure">Hardware Failure</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Severity</label>
+                        <select id="damageSeverity" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500">
+                            <option value="">Select severity</option>
+                            <option value="Low">Low</option>
+                            <option value="Medium">Medium</option>
+                            <option value="High">High</option>
+                            <option value="Critical">Critical</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                        <textarea id="damageDescription" required rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500" placeholder="Describe the damage..."></textarea>
+                    </div>
+                    <div class="flex space-x-3">
+                        <button type="button" onclick="hideIssueForm()" class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50">Cancel</button>
+                        <button type="submit" class="flex-1 px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700">Submit</button>
+                    </div>
+                </form>
+                
+                <!-- Lost Form -->
+                <form id="lostForm" class="hidden space-y-4">
+                    <input type="hidden" id="lostAssetId">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Asset Name</label>
+                        <input type="text" id="lostAssetName" readonly class="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Date Lost</label>
+                        <input type="date" id="dateLost" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                        <textarea id="lostDescription" required rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500" placeholder="Describe circumstances..."></textarea>
+                    </div>
+                    <div class="flex space-x-3">
+                        <button type="button" onclick="hideIssueForm()" class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50">Cancel</button>
+                        <button type="submit" class="flex-1 px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700">Submit</button>
+                    </div>
+                </form>
+                
+                <!-- Disposal Form -->
+                <form id="disposalForm" class="hidden space-y-4">
+                    <input type="hidden" id="disposalAssetId">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Asset Name</label>
+                        <input type="text" id="disposalAssetName" readonly class="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Disposal Reason</label>
+                        <select id="disposalReason" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500">
+                            <option value="">Select reason</option>
+                            <option value="End of Life">End of Life</option>
+                            <option value="Obsolete">Obsolete</option>
+                            <option value="Beyond Repair">Beyond Repair</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                        <textarea id="disposalDescription" required rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500" placeholder="Additional details..."></textarea>
+                    </div>
+                    <div class="flex space-x-3">
+                        <button type="button" onclick="hideIssueForm()" class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50">Cancel</button>
+                        <button type="submit" class="flex-1 px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700">Submit</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -94,6 +213,131 @@ document.addEventListener('DOMContentLoaded', function() {
 
     searchInput.addEventListener('input', filterAssets);
     locationFilter.addEventListener('change', filterAssets);
+});
+
+// Asset Issue Functions
+function showIssueForm(assetId, assetName, type) {
+    const container = document.getElementById('issueFormContainer');
+    const title = document.getElementById('formTitle');
+    
+    // Hide all forms
+    document.getElementById('damageForm').classList.add('hidden');
+    document.getElementById('lostForm').classList.add('hidden');
+    document.getElementById('disposalForm').classList.add('hidden');
+    
+    // Show specific form
+    if (type === 'damage') {
+        title.textContent = 'Report Asset Damage';
+        document.getElementById('damageForm').classList.remove('hidden');
+        document.getElementById('damageAssetId').value = assetId;
+        document.getElementById('damageAssetName').value = assetName;
+    } else if (type === 'lost') {
+        title.textContent = 'Report Lost Asset';
+        document.getElementById('lostForm').classList.remove('hidden');
+        document.getElementById('lostAssetId').value = assetId;
+        document.getElementById('lostAssetName').value = assetName;
+        document.getElementById('dateLost').value = new Date().toISOString().split('T')[0];
+    } else if (type === 'disposal') {
+        title.textContent = 'Request Asset Disposal';
+        document.getElementById('disposalForm').classList.remove('hidden');
+        document.getElementById('disposalAssetId').value = assetId;
+        document.getElementById('disposalAssetName').value = assetName;
+    }
+    
+    container.classList.remove('hidden');
+}
+
+function hideIssueForm() {
+    document.getElementById('issueFormContainer').classList.add('hidden');
+    document.getElementById('damageForm').reset();
+    document.getElementById('lostForm').reset();
+    document.getElementById('disposalForm').reset();
+}
+
+// Form submissions
+document.getElementById('damageForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const formData = {
+        asset_ids: [document.getElementById('damageAssetId').value],
+        damage_type: document.getElementById('damageType').value,
+        severity: document.getElementById('damageSeverity').value,
+        damage_description: document.getElementById('damageDescription').value
+    };
+    
+    try {
+        const response = await fetch('/damage/report', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(formData)
+        });
+        const result = await response.json();
+        
+        if (result.status === 'success') {
+            alert('Damage report submitted successfully!');
+            hideIssueForm();
+            location.reload();
+        } else {
+            alert('Error: ' + result.message);
+        }
+    } catch (error) {
+        alert('Error submitting damage report');
+    }
+});
+
+document.getElementById('lostForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const formData = {
+        asset_ids: [document.getElementById('lostAssetId').value],
+        date_lost: document.getElementById('dateLost').value,
+        description: document.getElementById('lostDescription').value
+    };
+    
+    try {
+        const response = await fetch('/damage/lost', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(formData)
+        });
+        const result = await response.json();
+        
+        if (result.status === 'success') {
+            alert('Lost report submitted successfully!');
+            hideIssueForm();
+            location.reload();
+        } else {
+            alert('Error: ' + result.message);
+        }
+    } catch (error) {
+        alert('Error submitting lost report');
+    }
+});
+
+document.getElementById('disposalForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const formData = {
+        asset_ids: [document.getElementById('disposalAssetId').value],
+        disposal_reason: document.getElementById('disposalReason').value,
+        description: document.getElementById('disposalDescription').value
+    };
+    
+    try {
+        const response = await fetch('/disposal', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(formData)
+        });
+        const result = await response.json();
+        
+        if (result.status === 'success') {
+            alert('Disposal request submitted successfully!');
+            hideIssueForm();
+            location.reload();
+        } else {
+            alert('Error: ' + result.message);
+        }
+    } catch (error) {
+        alert('Error submitting disposal request');
+    }
 });
 </script>
 {% endblock %}
