@@ -69,7 +69,7 @@ async def report_repair(
     room_name: str = Form(""),
     current_profile=Depends(get_current_profile)
 ):
-    """Report asset repair with approval workflow"""
+    """Report asset repair completion - goes to approval workflow"""
     try:
         supabase = get_supabase()
         
@@ -80,7 +80,7 @@ async def report_repair(
         
         asset_record = asset_response.data[0]
         
-        # Create approval request based on user role
+        # Create approval request - repair reports go to approval
         approval_data = {
             "type": "repair",
             "asset_id": asset_record["asset_id"],
@@ -99,18 +99,16 @@ async def report_repair(
             }
         }
         
-        # Role-based approval will be handled in approvals page filtering
-        
         supabase.table("approvals").insert(approval_data).execute()
         
         response = RedirectResponse(url="/repair", status_code=303)
-        set_flash(response, f"Repair request submitted for approval: {asset_record['asset_name']}", "success")
+        set_flash(response, f"Repair completion report submitted for approval: {asset_record['asset_name']}", "success")
         return response
         
     except Exception as e:
-        logging.error(f"Error submitting repair request: {e}")
+        logging.error(f"Error submitting repair completion report: {e}")
         response = RedirectResponse(url="/repair", status_code=303)
-        set_flash(response, "Failed to submit repair request", "error")
+        set_flash(response, "Failed to submit repair completion report", "error")
         return response
 
 @router.get("/api/locations")

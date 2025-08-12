@@ -74,7 +74,7 @@
         <!-- Actions -->
         <div class="flex space-x-3 mt-6">
             <a href="/assets" class="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 text-center font-medium">Cancel</a>
-            <button type="submit" class="flex-1 px-4 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 font-medium">Submit Request</button>
+            <button type="button" onclick="confirmRelocation()" class="flex-1 px-4 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 font-medium">Submit Request</button>
         </div>
     </form>
 </div>
@@ -100,5 +100,38 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 });
+
+function confirmRelocation() {
+    const form = document.querySelector('form');
+    const newLocation = document.getElementById('newLocation').value;
+    const newRoom = document.getElementById('newRoom').value;
+    const reason = document.querySelector('select[name="reason"]').value;
+    const notes = document.querySelector('textarea[name="notes"]').value;
+    
+    if (!newLocation || !newRoom || !reason) {
+        alert('Please fill in all required fields.');
+        return;
+    }
+    
+    const currentLocation = '{{ asset.ref_locations.location_name if asset.ref_locations else "N/A" }}';
+    const currentRoom = '{{ asset.ref_locations.room_name if asset.ref_locations else "N/A" }}';
+    
+    const confirmMessage = `Confirm Asset Relocation:\n\n` +
+        `Asset: {{ asset.asset_name }} (ID: {{ asset.asset_id }})\n\n` +
+        `FROM:\n` +
+        `Location: ${currentLocation}\n` +
+        `Room: ${currentRoom}\n\n` +
+        `TO:\n` +
+        `Location: ${newLocation}\n` +
+        `Room: ${newRoom}\n\n` +
+        `Reason: ${reason}\n` +
+        (notes ? `Notes: ${notes}\n\n` : '\n') +
+        `This request will be submitted for approval.\n\n` +
+        `Proceed with relocation request?`;
+    
+    if (confirm(confirmMessage)) {
+        form.submit();
+    }
+}
 </script>
 {% endblock %}

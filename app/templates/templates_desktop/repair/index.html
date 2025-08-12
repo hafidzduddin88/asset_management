@@ -159,7 +159,7 @@
                 
                 <div class="flex space-x-3 pt-4">
                     <button type="button" onclick="closeRepairModal()" class="flex-1 bg-gray-300 py-2 px-4 rounded-md text-gray-700 font-medium">Cancel</button>
-                    <button type="submit" onclick="return confirmRepairSubmission()" class="flex-1 bg-green-600 hover:bg-green-700 py-2 px-4 rounded-md text-white font-medium">Submit Report</button>
+                    <button type="submit" onclick="return confirmRepairSubmission()" class="flex-1 bg-green-600 hover:bg-green-700 py-2 px-4 rounded-md text-white font-medium">Submit for Approval</button>
                 </div>
             </form>
         </div>
@@ -237,7 +237,7 @@ function confirmRepairSubmission() {
         statusText = 'Active';
     }
     
-    const details = `Repair Report Confirmation\n\nAsset: ${assetName}\n\nRepair Details:\n• Action: ${repairAction}\n• Description: ${description}\n• Return Location: ${locationText}\n• New Status: ${statusText}\n\n⚠️ This will create a repair completion request requiring approval.\n\nProceed with repair report?`;
+    const details = `Repair Completion Report\n\nAsset: ${assetName}\n\nRepair Details:\n• Action: ${repairAction}\n• Description: ${description}\n• Return Location: ${locationText}\n• New Status: ${statusText}\n\n⚠️ This repair completion report will be submitted for approval.\n\nProceed with submission?`;
     
     return confirm(details);
 }
