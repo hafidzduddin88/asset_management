@@ -155,6 +155,12 @@ async def update_asset(
         'notes': json.dumps(update_data)
     }
     
+    # Set approver based on requester role
+    if current_profile.role in ["staff", "manager"]:
+        approval_data["requires_admin_approval"] = True
+    elif current_profile.role == "admin":
+        approval_data["requires_manager_approval"] = True
+    
     approval_success = add_approval_request(approval_data)
     
     if approval_success:
@@ -250,6 +256,12 @@ async def add_asset(
         "to_location_id": to_location_id,
         "notes": json.dumps(asset_data)
     }
+    
+    # Set approver based on requester role
+    if current_profile.role in ["staff", "manager"]:
+        approval_data["requires_admin_approval"] = True
+    elif current_profile.role == "admin":
+        approval_data["requires_manager_approval"] = True
     
     if add_approval_request(approval_data):
         template_path = get_template(request, "asset_management/confirmation.html")

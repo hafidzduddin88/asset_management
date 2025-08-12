@@ -78,10 +78,10 @@ async def approvals_page(
                 approval['room_name'] = 'Unknown Room'
     
     # Filter approvals based on role-based approval workflow
-    if current_profile.role.value == 'admin':
+    if current_profile.role == 'admin':
         # Admin approves requests from staff and manager
         approvals_data = [a for a in all_approvals if a.get('requires_admin_approval') == True]
-    elif current_profile.role.value == 'manager':
+    elif current_profile.role == 'manager':
         # Manager approves requests from admin
         approvals_data = [a for a in all_approvals if a.get('requires_manager_approval') == True]
     else:
