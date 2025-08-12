@@ -13,8 +13,8 @@
     <!-- Damaged Assets List -->
     <div class="bg-white rounded-lg shadow mb-4">
         <div class="p-4 border-b border-gray-200">
-            <h2 class="font-semibold text-gray-900">Damaged Assets</h2>
-            <p class="text-gray-600 text-sm">{{ damaged_assets|length }} assets awaiting repair</p>
+            <h2 class="font-semibold text-gray-900">Assets Under Repair</h2>
+            <p class="text-gray-600 text-sm">{{ damaged_assets|length }} assets awaiting repair completion</p>
         </div>
         
         {% if damaged_assets %}
@@ -24,35 +24,65 @@
                 <div class="flex justify-between items-start mb-3">
                     <div class="flex-1">
                         <h3 class="font-medium text-gray-900">{{ asset.asset_name }}</h3>
-                        <p class="text-sm text-gray-500">ID: {{ asset.asset_id }}</p>
+                        <p class="text-xs text-gray-500">{{ asset.asset_tag or 'No Tag' }} • ID: {{ asset.asset_id }}</p>
+                        <p class="text-xs text-blue-600">{{ asset.ref_categories.category_name if asset.ref_categories else 'Unknown Category' }}</p>
                     </div>
-                    {% if asset.severity == 'Critical' %}
-                    <span class="px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">Critical</span>
-                    {% elif asset.severity == 'High' %}
-                    <span class="px-2 py-1 text-xs font-semibold rounded-full bg-orange-100 text-orange-800">High</span>
-                    {% elif asset.severity == 'Medium' %}
-                    <span class="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">Medium</span>
-                    {% else %}
-                    <span class="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">Low</span>
-                    {% endif %}
+                    <span class="px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">Under Repair</span>
                 </div>
                 
-                <div class="space-y-2 text-sm text-gray-600 mb-3">
-                    <div class="flex items-center">
-                        <i class="fas fa-exclamation-triangle w-5 text-red-400"></i>
-                        <span>{{ asset.damage_type }}</span>
+                <!-- Damage Information -->
+                {% if asset.damage_info %}
+                <div class="bg-red-50 rounded-lg p-3 mb-3">
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="flex items-center">
+                            <i class="fas fa-exclamation-triangle w-4 text-red-500 mr-2"></i>
+                            <span class="font-medium text-red-700">{{ asset.damage_info.damage_type }}</span>
+                        </div>
+                        <span class="px-2 py-1 text-xs font-semibold rounded-full 
+                            {% if asset.damage_info.severity == 'Critical' %}bg-red-100 text-red-800
+                            {% elif asset.damage_info.severity == 'High' %}bg-orange-100 text-orange-800
+                            {% elif asset.damage_info.severity == 'Medium' %}bg-yellow-100 text-yellow-800
+                            {% else %}bg-blue-100 text-blue-800{% endif %}">
+                            {{ asset.damage_info.severity }}
+                        </span>
                     </div>
-                    <div class="flex items-center">
-                        <i class="fas fa-user w-5 text-gray-400"></i>
-                        <span>{{ asset.reported_by_name or 'Unknown' }}</span>
+                    <div class="text-xs text-gray-600 mb-1">{{ asset.damage_info.description }}</div>
+                    <div class="text-xs text-gray-500">Reported by: {{ asset.damage_info.reported_by_name }}</div>
+                </div>
+                {% endif %}
+                
+                <div class="grid grid-cols-2 gap-3 text-sm text-gray-600 mb-3">
+                    <div>
+                        <div class="flex items-center mb-1">
+                            <i class="fas fa-industry w-4 text-blue-400 mr-2"></i>
+                            <span class="font-medium">Brand:</span>
+                        </div>
+                        <span class="text-xs">{{ asset.manufacture or 'Unknown' }}</span>
                     </div>
-                    <div class="flex items-center">
-                        <i class="fas fa-calendar w-5 text-gray-400"></i>
-                        <span>{{ asset.created_at[:10] if asset.created_at else 'Unknown' }}</span>
+                    <div>
+                        <div class="flex items-center mb-1">
+                            <i class="fas fa-cog w-4 text-green-400 mr-2"></i>
+                            <span class="font-medium">Model:</span>
+                        </div>
+                        <span class="text-xs">{{ asset.model or 'Unknown' }}</span>
+                    </div>
+                    <div>
+                        <div class="flex items-center mb-1">
+                            <i class="fas fa-map-marker-alt w-4 text-red-400 mr-2"></i>
+                            <span class="font-medium">Location:</span>
+                        </div>
+                        <span class="text-xs">{{ asset.ref_locations.location_name if asset.ref_locations else 'Unknown' }}</span>
+                    </div>
+                    <div>
+                        <div class="flex items-center mb-1">
+                            <i class="fas fa-dollar-sign w-4 text-yellow-400 mr-2"></i>
+                            <span class="font-medium">Value:</span>
+                        </div>
+                        <span class="text-xs">${{ "{:,.0f}".format(asset.purchase_cost) if asset.purchase_cost else 'Unknown' }}</span>
                     </div>
                 </div>
                 
-                <button onclick="openRepairModal({{ asset.damage_log_id }}, '{{ asset.asset_name }}')" 
+                <button onclick="openRepairModal({{ asset.asset_id }}, '{{ asset.asset_name }}')" 
                         class="w-full bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors">
                     <i class="fas fa-wrench mr-2"></i>Report Repair
                 </button>
@@ -62,7 +92,7 @@
         {% else %}
         <div class="p-8 text-center text-gray-500">
             <i class="fas fa-check-circle text-4xl mb-4 text-green-400"></i>
-            <div class="font-medium">No Damaged Assets</div>
+            <div class="font-medium">No Assets Under Repair</div>
             <div class="text-sm">All assets are in good condition</div>
         </div>
         {% endif %}

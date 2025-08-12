@@ -33,44 +33,61 @@
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
                         <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Asset</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Damage Type</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Severity</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reported</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Asset Details</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Specifications</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Damage Info</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location & Value</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
                         {% for asset in damaged_assets %}
                         <tr class="hover:bg-gray-50">
-                            <td class="px-6 py-4 whitespace-nowrap">
+                            <td class="px-6 py-4">
                                 <div>
                                     <div class="text-sm font-medium text-gray-900">{{ asset.asset_name }}</div>
-                                    <div class="text-sm text-gray-500">ID: {{ asset.asset_id }}</div>
+                                    <div class="text-xs text-gray-500">{{ asset.asset_tag or 'No Tag' }}</div>
+                                    <div class="text-xs text-blue-600">{{ asset.ref_categories.category_name if asset.ref_categories else 'Unknown Category' }}</div>
+                                    <div class="text-xs text-purple-600">{{ asset.ref_companies.company_name if asset.ref_companies else 'Unknown Company' }}</div>
                                 </div>
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">
-                                    {{ asset.damage_type }}
-                                </span>
+                            <td class="px-6 py-4">
+                                <div class="text-sm text-gray-900">
+                                    <div><strong>Brand:</strong> {{ asset.manufacture or 'Unknown' }}</div>
+                                    <div><strong>Model:</strong> {{ asset.model or 'Unknown' }}</div>
+                                    <div><strong>S/N:</strong> {{ asset.serial_number or 'Unknown' }}</div>
+                                </div>
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                {% if asset.severity == 'Critical' %}
-                                <span class="px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">Critical</span>
-                                {% elif asset.severity == 'High' %}
-                                <span class="px-2 py-1 text-xs font-semibold rounded-full bg-orange-100 text-orange-800">High</span>
-                                {% elif asset.severity == 'Medium' %}
-                                <span class="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">Medium</span>
+                            <td class="px-6 py-4">
+                                {% if asset.damage_info %}
+                                <div>
+                                    <div class="text-sm font-medium text-red-600">{{ asset.damage_info.damage_type }}</div>
+                                    <span class="inline-block px-2 py-1 text-xs font-semibold rounded-full 
+                                        {% if asset.damage_info.severity == 'Critical' %}bg-red-100 text-red-800
+                                        {% elif asset.damage_info.severity == 'High' %}bg-orange-100 text-orange-800
+                                        {% elif asset.damage_info.severity == 'Medium' %}bg-yellow-100 text-yellow-800
+                                        {% else %}bg-blue-100 text-blue-800{% endif %}">
+                                        {{ asset.damage_info.severity }}
+                                    </span>
+                                    <div class="text-xs text-gray-500 mt-1">{{ asset.damage_info.description[:50] }}...</div>
+                                    <div class="text-xs text-gray-400">By: {{ asset.damage_info.reported_by_name }}</div>
+                                </div>
                                 {% else %}
-                                <span class="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">Low</span>
+                                <div class="text-sm text-gray-500">No damage info</div>
                                 {% endif %}
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                <div>{{ asset.reported_by_name or 'Unknown' }}</div>
-                                <div>{{ asset.created_at[:10] if asset.created_at else 'Unknown' }}</div>
+                            <td class="px-6 py-4">
+                                <div>
+                                    <div class="text-sm font-medium text-gray-900">{{ asset.ref_locations.location_name if asset.ref_locations else 'Unknown' }}</div>
+                                    <div class="text-xs text-gray-500">{{ asset.ref_locations.room_name if asset.ref_locations else asset.room_name or 'Unknown Room' }}</div>
+                                    <span class="inline-block mt-1 px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">Under Repair</span>
+                                    <div class="text-sm text-gray-900 mt-1">
+                                        <div><strong>Cost:</strong> ${{ "{:,.2f}".format(asset.purchase_cost) if asset.purchase_cost else 'Unknown' }}</div>
+                                    </div>
+                                </div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                <button onclick="openRepairModal({{ asset.damage_log_id }}, '{{ asset.asset_name }}')" 
+                                <button onclick="openRepairModal({{ asset.asset_id }}, '{{ asset.asset_name }}')" 
                                         class="text-green-600 hover:text-green-900 bg-green-50 hover:bg-green-100 px-3 py-1 rounded-lg transition-colors">
                                     <i class="fas fa-wrench mr-1"></i>Report Repair
                                 </button>

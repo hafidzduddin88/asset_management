@@ -19,13 +19,28 @@ async def repair_page(request: Request, current_profile=Depends(get_current_prof
     try:
         supabase = get_supabase()
         
-        # Get damage records that are approved but not yet repaired
-        damaged_response = supabase.table("damage_log").select('''
-            damage_log_id, asset_id, asset_name, damage_type, severity, description,
-            reported_by_name, created_at, status
-        ''').eq('status', 'approved').execute()
+        # Get assets with Under Repair status directly
+        assets_response = supabase.table("assets").select('''
+            asset_id, asset_name, asset_tag, manufacture, model, serial_number,
+            purchase_date, purchase_cost, status, updated_at,
+            ref_categories(category_name),
+            ref_locations(location_name, room_name),
+            ref_companies(company_name),
+            ref_business_units(business_unit_name)
+        ''').eq('status', 'Under Repair').execute()
         
-        damaged_assets = damaged_response.data or []
+        damaged_assets = assets_response.data or []
+        
+        # Get damage info for each asset
+        for asset in damaged_assets:
+            damage_response = supabase.table("damage_log").select('''
+                damage_type, severity, description, reported_by_name, created_at
+            ''').eq('asset_id', asset['asset_id']).eq('status', 'approved').order('created_at', desc=True).limit(1).execute()
+            
+            if damage_response.data:
+                asset['damage_info'] = damage_response.data[0]
+            else:
+                asset['damage_info'] = None
         
         template_path = get_template(request, "repair/index.html")
         return templates.TemplateResponse(template_path, {
@@ -44,9 +59,9 @@ async def repair_page(request: Request, current_profile=Depends(get_current_prof
             "error": "Failed to load damaged assets"
         })
 
-@router.post("/report/{damage_log_id}")
+@router.post("/report/{asset_id}")
 async def report_repair(
-    damage_log_id: int,
+    asset_id: int,
     request: Request,
     repair_action: str = Form(...),
     description: str = Form(...),
@@ -58,25 +73,25 @@ async def report_repair(
     try:
         supabase = get_supabase()
         
-        # Get damage record
-        damage_response = supabase.table("damage_log").select("*").eq("damage_log_id", damage_log_id).execute()
-        if not damage_response.data:
-            raise Exception("Damage record not found")
+        # Get asset record
+        asset_response = supabase.table("assets").select("asset_id, asset_name").eq("asset_id", asset_id).execute()
+        if not asset_response.data:
+            raise Exception("Asset not found")
         
-        damage_record = damage_response.data[0]
+        asset_record = asset_response.data[0]
         
         # Create approval request based on user role
         approval_data = {
             "type": "repair",
-            "asset_id": damage_record["asset_id"],
-            "asset_name": damage_record["asset_name"],
+            "asset_id": asset_record["asset_id"],
+            "asset_name": asset_record["asset_name"],
             "submitted_by": current_profile.full_name or current_profile.username,
             "submitted_by_id": current_profile.id,
             "submitted_date": "now()",
             "status": "pending",
             "description": f"Repair Action: {repair_action}\nDescription: {description}",
             "metadata": {
-                "damage_log_id": damage_log_id,
+                "asset_id": asset_id,
                 "repair_action": repair_action,
                 "repair_description": description,
                 "return_location": location_name,
@@ -93,7 +108,7 @@ async def report_repair(
         supabase.table("approvals").insert(approval_data).execute()
         
         response = RedirectResponse(url="/repair", status_code=303)
-        set_flash(response, f"Repair request submitted for approval: {damage_record['asset_name']}", "success")
+        set_flash(response, f"Repair request submitted for approval: {asset_record['asset_name']}", "success")
         return response
         
     except Exception as e:
