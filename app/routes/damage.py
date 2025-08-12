@@ -10,31 +10,10 @@ templates = Jinja2Templates(directory="app/templates")
 
 
 @router.get("/damage")
-async def damaged_assets_page(request: Request, current_profile = Depends(get_current_profile)):
-    """Damaged assets page with search and log functionality"""
-    try:
-        from app.utils.database_manager import get_all_assets, get_dropdown_options
-
-        all_assets = get_all_assets() or []
-        dropdown_options = get_dropdown_options() or {}
-
-        template_path = get_template(request, "damage/index.html")
-        return templates.TemplateResponse(template_path, {
-            "request": request,
-            "user": current_profile,
-            "assets_data": all_assets,
-            "dropdown_options": dropdown_options
-        })
-    except Exception as e:
-        logging.error(f"Error loading damage page: {e}")
-        template_path = get_template(request, "damage/index.html")
-        return templates.TemplateResponse(template_path, {
-            "request": request,
-            "user": current_profile,
-            "assets_data": [],
-            "dropdown_options": {},
-            "error": "Failed to load asset issue page. Please try again."
-        })
+async def damage_redirect(request: Request):
+    """Redirect to assets management for damage reporting"""
+    from fastapi.responses import RedirectResponse
+    return RedirectResponse(url="/asset_management/list", status_code=302)
 
 
 @router.post("/damage/lost")

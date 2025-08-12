@@ -61,15 +61,15 @@
             </div>
         </div>
         
-        <div class="mt-3 pt-3 border-t border-gray-100 flex justify-center space-x-4">
-            <a href="/asset_management/edit/{{ asset.asset_id }}" class="text-blue-600 hover:text-blue-800 font-medium">
-                <i class="fas fa-edit mr-1"></i>Edit Asset
+        <div class="mt-3 pt-3 border-t border-gray-100 flex space-x-2">
+            <a href="/asset_management/edit/{{ asset.asset_id }}" class="flex-1 px-3 py-2 bg-blue-600 text-white text-center rounded-md hover:bg-blue-700 text-sm font-medium">
+                <i class="fas fa-edit mr-1"></i>Edit
             </a>
-            <div class="relative" x-data="{ open: false }">
-                <button @click="open = !open" class="text-orange-600 hover:text-orange-800 font-medium">
-                    <i class="fas fa-exclamation-triangle mr-1"></i>Asset Issue
+            <div class="relative flex-1" x-data="{ open: false }">
+                <button @click="open = !open" class="w-full px-3 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 text-sm font-medium">
+                    <i class="fas fa-exclamation-triangle mr-1"></i>Issue
                 </button>
-                <div x-show="open" @click.away="open = false" x-transition class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10 border">
+                <div x-show="open" @click.away="open = false" x-transition class="absolute left-0 mt-2 w-full bg-white rounded-md shadow-lg z-10 border">
                     <div class="py-1">
                         <button @click="showIssueForm('{{ asset.asset_id }}', '{{ asset.asset_name }}', 'damage'); open = false" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                             <i class="fas fa-tools mr-2"></i>Report Damage
@@ -273,11 +273,11 @@ document.getElementById('damageForm').addEventListener('submit', async function(
         const result = await response.json();
         
         if (result.status === 'success') {
-            alert('Damage report submitted successfully!');
+            showSuccessMessage('Damage Report Submitted', `Asset "${document.getElementById('damageAssetName').value}" has been reported as damaged and will be moved to storage for repair.`);
             hideIssueForm();
-            location.reload();
+            setTimeout(() => location.reload(), 2000);
         } else {
-            alert('Error: ' + result.message);
+            showErrorMessage('Submission Failed', result.message);
         }
     } catch (error) {
         alert('Error submitting damage report');
@@ -301,11 +301,11 @@ document.getElementById('lostForm').addEventListener('submit', async function(e)
         const result = await response.json();
         
         if (result.status === 'success') {
-            alert('Lost report submitted successfully!');
+            showSuccessMessage('Lost Report Submitted', `Asset "${document.getElementById('lostAssetName').value}" has been reported as lost and status will be updated.`);
             hideIssueForm();
-            location.reload();
+            setTimeout(() => location.reload(), 2000);
         } else {
-            alert('Error: ' + result.message);
+            showErrorMessage('Submission Failed', result.message);
         }
     } catch (error) {
         alert('Error submitting lost report');
@@ -329,15 +329,64 @@ document.getElementById('disposalForm').addEventListener('submit', async functio
         const result = await response.json();
         
         if (result.status === 'success') {
-            alert('Disposal request submitted successfully!');
+            showSuccessMessage('Disposal Request Submitted', `Asset "${document.getElementById('disposalAssetName').value}" disposal request has been submitted for approval.`);
             hideIssueForm();
-            location.reload();
+            setTimeout(() => location.reload(), 2000);
         } else {
-            alert('Error: ' + result.message);
+            showErrorMessage('Submission Failed', result.message);
         }
     } catch (error) {
-        alert('Error submitting disposal request');
+        showErrorMessage('Network Error', 'Failed to submit request. Please check your connection and try again.');
     }
 });
+
+// Confirmation and notification functions
+function showSuccessMessage(title, message) {
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4';
+    modal.innerHTML = `
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-sm p-4">
+            <div class="flex items-center mb-3">
+                <div class="flex-shrink-0">
+                    <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                        <i class="fas fa-check text-green-600 text-sm"></i>
+                    </div>
+                </div>
+                <div class="ml-3">
+                    <h3 class="text-base font-medium text-gray-900">${title}</h3>
+                </div>
+            </div>
+            <p class="text-sm text-gray-600 mb-4">${message}</p>
+            <div class="flex justify-end">
+                <button onclick="this.closest('.fixed').remove()" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 text-sm">OK</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+function showErrorMessage(title, message) {
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4';
+    modal.innerHTML = `
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-sm p-4">
+            <div class="flex items-center mb-3">
+                <div class="flex-shrink-0">
+                    <div class="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
+                        <i class="fas fa-exclamation-triangle text-red-600 text-sm"></i>
+                    </div>
+                </div>
+                <div class="ml-3">
+                    <h3 class="text-base font-medium text-gray-900">${title}</h3>
+                </div>
+            </div>
+            <p class="text-sm text-gray-600 mb-4">${message}</p>
+            <div class="flex justify-end">
+                <button onclick="this.closest('.fixed').remove()" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 text-sm">OK</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
 </script>
 {% endblock %}
