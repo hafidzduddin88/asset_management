@@ -86,12 +86,12 @@ async def relocate_asset(
         'type': 'relocation',
         'asset_id': int(asset_id),
         'asset_name': asset.get('asset_name', ''),
-        'submitted_by': current_profile.full_name or current_profile.username,
-        'submitted_by_id': current_profile.id,
-        'submitted_date': datetime.now().isoformat(),
+        'submitted_by': current_profile.id,
         'status': 'pending',
         'description': f"Relocate from {asset.get('ref_locations', {}).get('location_name', '') if asset.get('ref_locations') else ''} - {asset.get('ref_locations', {}).get('room_name', '') if asset.get('ref_locations') else asset.get('room_name', '')} to {new_location} - {new_room}",
-        'metadata': json.dumps(relocation_data)
+        'from_location_id': current_location_id,
+        'to_location_id': new_location_id,
+        'notes': json.dumps(relocation_data)
     }
     
     # Set approver based on requester role
@@ -99,26 +99,6 @@ async def relocate_asset(
         approval_data["requires_admin_approval"] = True
     elif current_profile.role == "admin":
         approval_data["requires_manager_approval"] = True
-    
-    # Add to relocation log for tracking
-    relocation_log_data = {
-        'asset_id': int(asset_id),
-        'asset_name': asset.get('asset_name', ''),
-        'old_location_id': current_location_id,
-        'old_location_name': asset.get('ref_locations', {}).get('location_name', '') if asset.get('ref_locations') else '',
-        'old_room_name': asset.get('ref_locations', {}).get('room_name', '') if asset.get('ref_locations') else asset.get('room_name', ''),
-        'new_location_id': new_location_id,
-        'new_location_name': new_location,
-        'new_room_name': new_room,
-        'reason': reason,
-        'notes': notes or '',
-        'requested_by': current_profile.id,
-        'requested_by_name': current_profile.full_name or current_profile.username,
-        'status': 'pending'
-    }
-    
-    # Add to relocation log
-    supabase.table('relocation_log').insert(relocation_log_data).execute()
     
     approval_success = add_approval_request(approval_data)
     

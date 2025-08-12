@@ -160,15 +160,43 @@ async def approve_request(
                     new_location = relocation_data.get('new_location')
                     new_room = relocation_data.get('new_room')
                     
-                    # Get new location_id
                     supabase = get_supabase()
+                    
+                    # Get current asset data
+                    asset_response = supabase.table('assets').select('location_id, ref_locations(location_name, room_name)').eq('asset_id', approval.get('asset_id')).execute()
+                    current_location_id = asset_response.data[0]['location_id'] if asset_response.data else None
+                    current_location_data = asset_response.data[0]['ref_locations'] if asset_response.data and asset_response.data[0].get('ref_locations') else {}
+                    
+                    # Get new location_id
                     loc_response = supabase.table('ref_locations').select('location_id').eq('location_name', new_location).eq('room_name', new_room).execute()
                     
                     if loc_response.data:
                         new_location_id = loc_response.data[0]['location_id']
                         
+                        # Create relocation_log entry
+                        relocation_log_data = {
+                            'asset_id': approval.get('asset_id'),
+                            'asset_name': approval.get('asset_name'),
+                            'old_location_id': current_location_id,
+                            'old_location_name': current_location_data.get('location_name', ''),
+                            'old_room_name': current_location_data.get('room_name', ''),
+                            'new_location_id': new_location_id,
+                            'new_location_name': new_location,
+                            'new_room_name': new_room,
+                            'reason': relocation_data.get('reason', ''),
+                            'notes': relocation_data.get('notes', ''),
+                            'requested_by': approval.get('submitted_by'),
+                            'requested_by_name': approval.get('submitted_by_name', ''),
+                            'approved_by': current_profile.id,
+                            'approved_by_name': current_profile.full_name or current_profile.username,
+                            'status': 'approved',
+                            'approved_at': 'now()'
+                        }
+                        
+                        supabase.table('relocation_log').insert(relocation_log_data).execute()
+                        
                         # Determine new status based on location
-                        new_status = 'In Storage' if new_location == 'HO - Ciputat' and new_room == '1022 - Gudang Support TOG' else 'Active'
+                        new_status = 'In Storage' if new_location == 'HO-Ciputat' and new_room == '1022 - Gudang Support TOG' else 'Active'
                         
                         update_data = {
                             'location_id': new_location_id,
@@ -458,11 +486,9 @@ async def reject_request(
             # For disposal rejection, just update the approval - no disposal log entry needed
             pass
         elif approval.get('type') == 'relocation':
-            supabase.table('relocation_log').update({
-                'status': 'rejected',
-                'approved_by': current_profile.id,
-                'approved_by_name': approver_name
-            }).eq('asset_id', approval.get('asset_id')).execute()
+            # For relocation rejection, no relocation_log entry is created
+            # Only the approval record is updated
+            pass
     
     # Update approval status
     success = update_approval_status(
