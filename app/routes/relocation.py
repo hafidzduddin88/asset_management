@@ -13,6 +13,7 @@ from app.utils.device_detector import get_template
 router = APIRouter(prefix="/relocation", tags=["relocation"])
 templates = Jinja2Templates(directory="app/templates")
 
+@router.get("", response_class=HTMLResponse)
 @router.get("/", response_class=HTMLResponse)
 async def relocation_page(
     request: Request,
