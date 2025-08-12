@@ -1,0 +1,137 @@
+{% extends "templates_desktop/layouts/modern_layout.html" %}
+
+{% block title %}Update Depreciation{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-6 py-8">
+    <!-- Header -->
+    <div class="bg-purple-600 rounded-lg p-4 mb-6">
+        <h1 class="text-xl font-bold text-white">Update Asset Depreciation</h1>
+        <p class="text-purple-100 text-sm">Recalculate depreciation and book values for all assets</p>
+    </div>
+
+    <!-- Warning Card -->
+    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+        <div class="flex items-start">
+            <div class="flex-shrink-0">
+                <i class="fas fa-exclamation-triangle text-yellow-600 text-lg"></i>
+            </div>
+            <div class="ml-3">
+                <h3 class="text-sm font-medium text-yellow-800">Important Notice</h3>
+                <div class="mt-2 text-sm text-yellow-700">
+                    <p>This action will recalculate depreciation and book values for all assets based on:</p>
+                    <ul class="list-disc list-inside mt-2 space-y-1">
+                        <li>Current year ({{ "now"|date("Y") }})</li>
+                        <li>Asset purchase year</li>
+                        <li>Category residual percentage and useful life</li>
+                        <li>Original purchase cost</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Action Card -->
+    <div class="bg-white rounded-lg shadow p-6">
+        <div class="text-center">
+            <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-purple-100 mb-4">
+                <i class="fas fa-calculator text-purple-600 text-xl"></i>
+            </div>
+            <h3 class="text-lg font-medium text-gray-900 mb-2">Recalculate Asset Values</h3>
+            <p class="text-sm text-gray-500 mb-6">
+                This will update depreciation_value and book_value for all assets in the database.
+                The process may take a few moments to complete.
+            </p>
+            
+            <button id="updateBtn" onclick="updateDepreciation()" 
+                    class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500">
+                <i class="fas fa-sync-alt mr-2"></i>
+                Update All Assets
+            </button>
+        </div>
+    </div>
+
+    <!-- Results -->
+    <div id="results" class="hidden mt-6">
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Update Results</h3>
+            <div id="resultContent"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+async function updateDepreciation() {
+    const btn = document.getElementById('updateBtn');
+    const results = document.getElementById('results');
+    const resultContent = document.getElementById('resultContent');
+    
+    // Confirm action
+    if (!confirm('Are you sure you want to update depreciation values for all assets? This action cannot be undone.')) {
+        return;
+    }
+    
+    // Show loading state
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Updating...';
+    
+    try {
+        const response = await fetch('/depreciation/update', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        const result = await response.json();
+        
+        if (result.status === 'success') {
+            resultContent.innerHTML = `
+                <div class="flex items-center p-4 bg-green-50 rounded-lg">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-check-circle text-green-600 text-xl"></i>
+                    </div>
+                    <div class="ml-3">
+                        <h4 class="text-sm font-medium text-green-800">Update Successful</h4>
+                        <p class="text-sm text-green-700 mt-1">${result.message}</p>
+                        <p class="text-xs text-green-600 mt-2">Assets updated: ${result.updated_count}</p>
+                    </div>
+                </div>
+            `;
+        } else {
+            resultContent.innerHTML = `
+                <div class="flex items-center p-4 bg-red-50 rounded-lg">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-exclamation-circle text-red-600 text-xl"></i>
+                    </div>
+                    <div class="ml-3">
+                        <h4 class="text-sm font-medium text-red-800">Update Failed</h4>
+                        <p class="text-sm text-red-700 mt-1">${result.message}</p>
+                    </div>
+                </div>
+            `;
+        }
+        
+        results.classList.remove('hidden');
+        
+    } catch (error) {
+        resultContent.innerHTML = `
+            <div class="flex items-center p-4 bg-red-50 rounded-lg">
+                <div class="flex-shrink-0">
+                    <i class="fas fa-exclamation-circle text-red-600 text-xl"></i>
+                </div>
+                <div class="ml-3">
+                    <h4 class="text-sm font-medium text-red-800">Network Error</h4>
+                    <p class="text-sm text-red-700 mt-1">Failed to connect to server. Please try again.</p>
+                </div>
+            </div>
+        `;
+        results.classList.remove('hidden');
+    } finally {
+        // Reset button
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-sync-alt mr-2"></i>Update All Assets';
+    }
+}
+</script>
+{% endblock %}
