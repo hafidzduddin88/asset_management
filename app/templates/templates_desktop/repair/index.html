@@ -159,7 +159,7 @@
                 
                 <div class="flex space-x-3 pt-4">
                     <button type="button" onclick="closeRepairModal()" class="flex-1 bg-gray-300 py-2 px-4 rounded-md text-gray-700 font-medium">Cancel</button>
-                    <button type="submit" onclick="return confirmRepairSubmission()" class="flex-1 bg-green-600 hover:bg-green-700 py-2 px-4 rounded-md text-white font-medium">Submit for Approval</button>
+                    <button type="button" onclick="confirmRepairSubmission() && document.getElementById('repairForm').submit()" class="flex-1 bg-green-600 hover:bg-green-700 py-2 px-4 rounded-md text-white font-medium">Submit for Approval</button>
                 </div>
             </form>
         </div>
@@ -229,6 +229,11 @@ function confirmRepairSubmission() {
     const location = document.getElementById('returnLocation').value;
     const room = document.getElementById('returnRoom').value;
     
+    if (!repairAction || !description) {
+        alert('Please fill in all required fields.');
+        return false;
+    }
+    
     let locationText = 'Storage (In Storage status)';
     let statusText = 'In Storage';
     
@@ -237,7 +242,16 @@ function confirmRepairSubmission() {
         statusText = 'Active';
     }
     
-    const details = `Repair Completion Report\n\nAsset: ${assetName}\n\nRepair Details:\n• Action: ${repairAction}\n• Description: ${description}\n• Return Location: ${locationText}\n• New Status: ${statusText}\n\n⚠️ This repair completion report will be submitted for approval.\n\nProceed with submission?`;
+    const details = `Confirm Repair Completion Report\n\n` +
+        `Asset: ${assetName}\n\n` +
+        `Repair Details:\n` +
+        `• Action Taken: ${repairAction}\n` +
+        `• Work Description: ${description}\n` +
+        `• Return Location: ${locationText}\n` +
+        `• New Asset Status: ${statusText}\n\n` +
+        `⚠️ This repair completion report will be submitted for approval.\n` +
+        `Once approved, the asset status will be updated accordingly.\n\n` +
+        `Proceed with repair completion report?`;
     
     return confirm(details);
 }
