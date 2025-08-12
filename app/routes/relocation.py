@@ -84,7 +84,7 @@ async def relocate_asset(
     
     approval_data = {
         'type': 'relocation',
-        'asset_id': asset_id,
+        'asset_id': int(asset_id),
         'asset_name': asset.get('asset_name', ''),
         'submitted_by': current_profile.id,
         'status': 'pending',
@@ -93,6 +93,12 @@ async def relocate_asset(
         'to_location_id': new_location_id,
         'notes': json.dumps(relocation_data)
     }
+    
+    # Set approver based on requester role
+    if current_profile.role in ["staff", "manager"]:
+        approval_data["requires_admin_approval"] = True
+    elif current_profile.role == "admin":
+        approval_data["requires_manager_approval"] = True
     
     approval_success = add_approval_request(approval_data)
     
