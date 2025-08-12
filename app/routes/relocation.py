@@ -16,10 +16,31 @@ templates = Jinja2Templates(directory="app/templates")
 @router.get("/", response_class=HTMLResponse)
 async def relocation_page(
     request: Request,
+    asset_id: int = None,
     current_profile = Depends(get_current_profile)
 ):
-    """Redirect to assets management page."""
-    return RedirectResponse(url="/assets", status_code=status.HTTP_301_MOVED_PERMANENTLY)
+    """Handle relocation requests with asset_id parameter."""
+    if asset_id:
+        # Get asset data
+        asset = get_asset_by_id(asset_id)
+        if not asset:
+            return RedirectResponse(url="/assets", status_code=status.HTTP_303_SEE_OTHER)
+        
+        # Get dropdown options for locations
+        dropdown_options = get_dropdown_options()
+        
+        template_path = get_template(request, "relocation/form.html")
+        return templates.TemplateResponse(
+            template_path,
+            {
+                "request": request,
+                "user": current_profile,
+                "asset": asset,
+                "dropdown_options": dropdown_options
+            }
+        )
+    else:
+        return RedirectResponse(url="/assets", status_code=status.HTTP_303_SEE_OTHER)
 
 @router.post("/relocate/{asset_id}")
 async def relocate_asset(
