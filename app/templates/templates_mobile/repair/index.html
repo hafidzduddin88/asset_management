@@ -75,10 +75,10 @@
                     </div>
                     <div>
                         <div class="flex items-center mb-1">
-                            <i class="fas fa-dollar-sign w-4 text-yellow-400 mr-2"></i>
-                            <span class="font-medium">Value:</span>
+                            <i class="fas fa-money-bill w-4 text-yellow-400 mr-2"></i>
+                            <span class="font-medium">Book Value:</span>
                         </div>
-                        <span class="text-xs">${{ "{:,.0f}".format(asset.purchase_cost) if asset.purchase_cost else 'Unknown' }}</span>
+                        <span class="text-xs">Rp {{ "{:,.0f}".format(asset.book_value) if asset.book_value else 'Unknown' }}</span>
                     </div>
                 </div>
                 

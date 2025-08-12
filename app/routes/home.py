@@ -130,7 +130,7 @@ async def home(request: Request, current_profile = Depends(get_current_profile),
             if asset.get("purchase_cost"):
                 try:
                     cost = float(asset["purchase_cost"])
-                    asset["purchase_cost_display"] = f"${cost:,.2f}"
+                    asset["purchase_cost_display"] = f"Rp {cost:,.0f}"
                 except:
                     asset["purchase_cost_display"] = "Not specified"
             else:

@@ -22,7 +22,7 @@ async def repair_page(request: Request, current_profile=Depends(get_current_prof
         # Get assets with Under Repair status directly
         assets_response = supabase.table("assets").select('''
             asset_id, asset_name, asset_tag, manufacture, model, serial_number,
-            purchase_date, purchase_cost, status, updated_at,
+            purchase_date, purchase_cost, book_value, status, updated_at,
             ref_categories(category_name),
             ref_locations(location_name, room_name),
             ref_companies(company_name),

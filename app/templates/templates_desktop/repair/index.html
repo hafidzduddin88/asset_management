@@ -82,7 +82,7 @@
                                     <div class="text-xs text-gray-500">{{ asset.ref_locations.room_name if asset.ref_locations else asset.room_name or 'Unknown Room' }}</div>
                                     <span class="inline-block mt-1 px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">Under Repair</span>
                                     <div class="text-sm text-gray-900 mt-1">
-                                        <div><strong>Cost:</strong> ${{ "{:,.2f}".format(asset.purchase_cost) if asset.purchase_cost else 'Unknown' }}</div>
+                                        <div><strong>Book Value:</strong> Rp {{ "{:,.0f}".format(asset.book_value) if asset.book_value else 'Unknown' }}</div>
                                     </div>
                                 </div>
                             </td>

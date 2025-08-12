@@ -286,7 +286,7 @@ function confirmAssetSubmission() {
         owner_name: document.getElementById('owner_name').value
     };
     
-    const details = `Asset Registration Confirmation\n\nAsset Details:\n• Name: ${formData.asset_name}\n• Category: ${formData.category_name}\n• Type: ${formData.type_name}\n• Company: ${formData.company_name}\n• Location: ${formData.location_name} - ${formData.room_name}\n• Purchase Cost: $${formData.purchase_cost}\n• Owner: ${formData.owner_name}\n\n⚠️ This will create a new asset registration request that requires approval.\n\nProceed with submission?`;
+    const details = `Asset Registration Confirmation\n\nAsset Details:\n• Name: ${formData.asset_name}\n• Category: ${formData.category_name}\n• Type: ${formData.type_name}\n• Company: ${formData.company_name}\n• Location: ${formData.location_name} - ${formData.room_name}\n• Purchase Cost: Rp ${formData.purchase_cost}\n• Owner: ${formData.owner_name}\n\n⚠️ This will create a new asset registration request that requires approval.\n\nProceed with submission?`;
     
     return confirm(details);
 }
