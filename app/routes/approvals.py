@@ -26,9 +26,10 @@ async def approvals_page(
     supabase = get_supabase()
     for approval in all_approvals:
         # Get submitted by user details
-        if approval.get('submitted_by'):
+        user_id = approval.get('submitted_by_id') or approval.get('submitted_by')
+        if user_id:
             try:
-                user_response = supabase.table('profiles').select('username, full_name').eq('id', approval['submitted_by']).execute()
+                user_response = supabase.table('profiles').select('username, full_name').eq('id', user_id).execute()
                 if user_response.data:
                     user = user_response.data[0]
                     approval['submitted_by_info'] = {

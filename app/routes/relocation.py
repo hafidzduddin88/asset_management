@@ -100,6 +100,24 @@ async def relocate_asset(
     elif current_profile.role == "admin":
         approval_data["requires_manager_approval"] = True
     
+    # Add to relocation log for tracking
+    relocation_log_data = {
+        'asset_id': int(asset_id),
+        'asset_name': asset.get('asset_name', ''),
+        'from_location': asset.get('ref_locations', {}).get('location_name', '') if asset.get('ref_locations') else '',
+        'from_room': asset.get('ref_locations', {}).get('room_name', '') if asset.get('ref_locations') else asset.get('room_name', ''),
+        'to_location': new_location,
+        'to_room': new_room,
+        'reason': reason,
+        'notes': notes or '',
+        'requested_by': current_profile.full_name or current_profile.username,
+        'requested_by_id': current_profile.id,
+        'status': 'pending'
+    }
+    
+    # Add to relocation log
+    supabase.table('relocation_log').insert(relocation_log_data).execute()
+    
     approval_success = add_approval_request(approval_data)
     
     if approval_success:
