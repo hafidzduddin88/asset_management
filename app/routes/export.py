@@ -20,28 +20,28 @@ EXPORT_TABLES = {
         'table': 'assets',
         'columns': {
             'asset_id': 'Asset ID',
+            'asset_tag': 'Asset Tag',
             'asset_name': 'Asset Name',
+            'category_name': 'Category',
+            'type_name': 'Asset Type',
             'manufacture': 'Manufacture',
             'model': 'Model',
             'serial_number': 'Serial Number',
-            'category_name': 'Category',
-            'type_name': 'Asset Type',
-            'asset_tag': 'Asset Tag',
+            'status': 'Status',
             'item_condition': 'Condition',
-            'location_name': 'Location',
-            'room_name': 'Room',
             'company_name': 'Company',
             'business_unit_name': 'Business Unit',
+            'location_name': 'Location',
+            'room_name': 'Room',
             'owner_name': 'Owner',
-            'notes': 'Notes',
             'purchase_date': 'Purchase Date',
             'purchase_cost': 'Purchase Cost',
             'supplier': 'Supplier',
             'warranty': 'Warranty',
+            'book_value': 'Book Value',
             'depreciation_value': 'Depreciation Value',
             'residual_value': 'Residual Value',
-            'book_value': 'Book Value',
-            'status': 'Status'
+            'notes': 'Notes'
         }
     },
     'approvals': {
@@ -125,6 +125,8 @@ async def export_to_excel(
     table: str = Form(...),
     columns: List[str] = Form(...),
     exclude_disposed: bool = Form(False),
+    exclude_to_be_disposed: bool = Form(False),
+    exclude_damaged: bool = Form(False),
     current_profile=Depends(get_current_profile)
 ):
     """Export selected table and columns to Excel - accessible by all users"""
@@ -175,8 +177,25 @@ async def export_to_excel(
             query = supabase.table(table_config['table']).select(','.join(columns))
         
         # Apply filters
-        if table == 'assets' and exclude_disposed:
-            query = query.neq('status', 'Disposed')
+        if table == 'assets':
+            if exclude_disposed:
+                query = query.neq('status', 'Disposed')
+            if exclude_to_be_disposed:
+                query = query.neq('status', 'To be Disposed')
+            if exclude_damaged:
+                query = query.neq('status', 'Damaged')
+        
+        # Apply sorting
+        if table == 'assets':
+            query = query.order('asset_id')
+        elif table == 'approvals':
+            query = query.order('submitted_date', desc=True)
+        elif table == 'damage_log':
+            query = query.order('created_at', desc=True)
+        elif table == 'repair_log':
+            query = query.order('created_at', desc=True)
+        elif table == 'users':
+            query = query.order('created_at', desc=True)
         
         # Execute query
         response = query.execute()

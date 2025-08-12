@@ -102,24 +102,102 @@
                 <textarea name="description" required rows="3" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="Describe the repair work done..."></textarea>
             </div>
             
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Return Location (Optional)</label>
+                <select name="location_name" id="returnLocation" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg">
+                    <option value="">Keep in Storage</option>
+                </select>
+                <p class="text-xs text-gray-500 mt-1">Leave empty to keep asset in storage</p>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Return Room (Optional)</label>
+                <select name="room_name" id="returnRoom" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg" disabled>
+                    <option value="">Select Room</option>
+                </select>
+            </div>
+            
             <div class="flex space-x-3 pt-4">
                 <button type="button" onclick="closeRepairModal()" class="flex-1 bg-gray-300 py-2 px-4 rounded-lg text-gray-700 font-medium">Cancel</button>
-                <button type="submit" class="flex-1 bg-green-600 hover:bg-green-700 py-2 px-4 rounded-lg text-white font-medium">Submit Report</button>
+                <button type="submit" onclick="return confirmRepairSubmission()" class="flex-1 bg-green-600 hover:bg-green-700 py-2 px-4 rounded-lg text-white font-medium">Submit Report</button>
             </div>
         </form>
     </div>
 </div>
 
 <script>
+let locationsData = {};
+
 function openRepairModal(damageId, assetName) {
     document.getElementById('assetName').value = assetName;
     document.getElementById('repairForm').action = `/repair/report/${damageId}`;
+    loadLocations();
     document.getElementById('repairModal').classList.remove('hidden');
+}
+
+async function loadLocations() {
+    try {
+        const response = await fetch('/repair/api/locations');
+        const data = await response.json();
+        locationsData = data.locations || {};
+        
+        const locationSelect = document.getElementById('returnLocation');
+        locationSelect.innerHTML = '<option value="">Keep in Storage</option>';
+        
+        Object.keys(locationsData).forEach(location => {
+            const option = document.createElement('option');
+            option.value = location;
+            option.textContent = location;
+            locationSelect.appendChild(option);
+        });
+        
+        locationSelect.addEventListener('change', updateReturnRooms);
+    } catch (error) {
+        console.error('Failed to load locations:', error);
+    }
+}
+
+function updateReturnRooms() {
+    const locationSelect = document.getElementById('returnLocation');
+    const roomSelect = document.getElementById('returnRoom');
+    const selectedLocation = locationSelect.value;
+    
+    roomSelect.innerHTML = '<option value="">Select Room</option>';
+    roomSelect.disabled = !selectedLocation;
+    
+    if (selectedLocation && locationsData[selectedLocation]) {
+        locationsData[selectedLocation].forEach(room => {
+            const option = document.createElement('option');
+            option.value = room;
+            roomSelect.appendChild(option);
+        });
+        roomSelect.disabled = false;
+    }
 }
 
 function closeRepairModal() {
     document.getElementById('repairModal').classList.add('hidden');
     document.getElementById('repairForm').reset();
+}
+
+function confirmRepairSubmission() {
+    const assetName = document.getElementById('assetName').value;
+    const repairAction = document.querySelector('select[name="repair_action"]').value;
+    const description = document.querySelector('textarea[name="description"]').value;
+    const location = document.getElementById('returnLocation').value;
+    const room = document.getElementById('returnRoom').value;
+    
+    let locationText = 'Storage';
+    let statusText = 'In Storage';
+    
+    if (location && room) {
+        locationText = `${location} - ${room}`;
+        statusText = 'Active';
+    }
+    
+    const details = `Repair Report\n\nAsset: ${assetName}\n\n• Action: ${repairAction}\n• Description: ${description}\n• Return: ${locationText}\n• Status: ${statusText}\n\n⚠️ Requires approval.\n\nProceed?`;
+    
+    return confirm(details);
 }
 </script>
 {% endblock %}

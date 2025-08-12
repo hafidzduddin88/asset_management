@@ -287,20 +287,45 @@ function closeModal(type) {
     document.getElementById(`${type}Modal`).style.display = 'none';
 }
 
+function confirmSubmission(type, formData) {
+    let details = '';
+    let actionText = '';
+    
+    switch(type) {
+        case 'damage':
+            actionText = 'Report Damage';
+            details = `\nDamage Details:\n• Type: ${formData.damage_type}\n• Severity: ${formData.severity}\n• Description: ${formData.damage_description}`;
+            break;
+        case 'lost':
+            actionText = 'Report as Lost';
+            details = `\nLost Details:\n• Date Lost: ${formData.date_lost}\n• Description: ${formData.description}`;
+            break;
+        case 'disposal':
+            actionText = 'Request Disposal';
+            details = `\nDisposal Details:\n• Reason: ${formData.disposal_reason}\n• Description: ${formData.description}`;
+            break;
+    }
+    
+    const message = `${actionText} Confirmation\n\nAsset: ${selectedAsset.name} (ID: ${selectedAsset.id})${details}\n\n⚠️ This action will create a request that requires approval.\n\nProceed with submission?`;
+    
+    return confirm(message);
+}
+
 // Form submissions
 document.getElementById('damageForm').addEventListener('submit', async function(e) {
     e.preventDefault();
     
     const formData = {
-        asset_id: document.getElementById('damageAssetId').value,
-        asset_name: document.getElementById('damageAssetName').value,
+        asset_ids: [parseInt(document.getElementById('damageAssetId').value)],
         damage_type: document.getElementById('damageType').value,
         severity: document.getElementById('damageSeverity').value,
         damage_description: document.getElementById('damageDescription').value
     };
     
+    if (!confirmSubmission('damage', formData)) return;
+    
     try {
-        const response = await fetch('/report', {
+        const response = await fetch('/damage/report', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(formData)
@@ -322,14 +347,15 @@ document.getElementById('lostForm').addEventListener('submit', async function(e)
     e.preventDefault();
     
     const formData = {
-        asset_id: document.getElementById('lostAssetId').value,
-        asset_name: document.getElementById('lostAssetName').value,
+        asset_ids: [parseInt(document.getElementById('lostAssetId').value)],
         date_lost: document.getElementById('dateLost').value,
         description: document.getElementById('lostDescription').value
     };
     
+    if (!confirmSubmission('lost', formData)) return;
+    
     try {
-        const response = await fetch('/lost', {
+        const response = await fetch('/damage/lost', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(formData)
@@ -351,11 +377,12 @@ document.getElementById('disposalForm').addEventListener('submit', async functio
     e.preventDefault();
     
     const formData = {
-        asset_id: document.getElementById('disposalAssetId').value,
-        asset_name: document.getElementById('disposalAssetName').value,
+        asset_ids: [parseInt(document.getElementById('disposalAssetId').value)],
         disposal_reason: document.getElementById('disposalReason').value,
         description: document.getElementById('disposalDescription').value
     };
+    
+    if (!confirmSubmission('disposal', formData)) return;
     
     try {
         const response = await fetch('/disposal', {

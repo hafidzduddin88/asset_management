@@ -20,7 +20,7 @@ async def disposal_page(
     """Disposal assets page (admin only)."""
     # Get assets that are ready to dispose only
     all_assets = get_all_assets()
-    disposable_assets = [asset for asset in all_assets if asset.get('status') == 'To Be Disposed']
+    disposable_assets = [asset for asset in all_assets if asset.get('status') == 'To be Disposed']
     
     template_path = get_template(request, "disposal/index.html")
     return templates.TemplateResponse(
@@ -50,7 +50,7 @@ async def dispose_asset(
     if not asset:
         raise HTTPException(status_code=404, detail="Asset not found")
     
-    if asset.get('status') != 'To Be Disposed':
+    if asset.get('status') != 'To be Disposed':
         raise HTTPException(status_code=400, detail="Asset must be marked 'To Be Disposed' first")
     
     # Create disposal approval request

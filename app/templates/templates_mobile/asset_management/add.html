@@ -208,7 +208,7 @@
             <a href="/assets" class="flex-1 bg-gray-300 py-3 px-4 rounded-lg text-center text-gray-700 font-medium">
                 Cancel
             </a>
-            <button type="submit" onclick="return confirm('Are you sure you want to save this asset?')" 
+            <button type="submit" onclick="return confirmAssetSubmission()" 
                 class="flex-1 bg-primary-600 hover:bg-primary-700 py-3 px-4 rounded-lg text-white font-medium">
                 Save Asset
             </button>
@@ -257,6 +257,23 @@ function updateRooms() {
             roomSelect.appendChild(option);
         });
     }
+}
+
+function confirmAssetSubmission() {
+    const formData = {
+        asset_name: document.getElementById('asset_name').value,
+        category_name: document.getElementById('category_name').value,
+        type_name: document.getElementById('type_name').value,
+        company_name: document.getElementById('company_name').value,
+        location_name: document.getElementById('location_name').value,
+        room_name: document.getElementById('room_name').value,
+        purchase_cost: document.getElementById('purchase_cost').value,
+        owner_name: document.getElementById('owner_name').value
+    };
+    
+    const details = `Asset Registration\n\n• Name: ${formData.asset_name}\n• Category: ${formData.category_name}\n• Type: ${formData.type_name}\n• Company: ${formData.company_name}\n• Location: ${formData.location_name} - ${formData.room_name}\n• Cost: $${formData.purchase_cost}\n• Owner: ${formData.owner_name}\n\n⚠️ This will create a registration request requiring approval.\n\nProceed?`;
+    
+    return confirm(details);
 }
 
 document.addEventListener('DOMContentLoaded', function() {

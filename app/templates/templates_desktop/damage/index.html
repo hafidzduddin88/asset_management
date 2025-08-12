@@ -185,14 +185,33 @@ document.addEventListener('DOMContentLoaded', function() {
 
 function confirmSubmission(type) {
     const assetNames = selectedAssets.map(asset => `• ${asset.name} (ID: ${asset.id})`).join('\n');
-    const actionText = {
-        'damage': 'report damage for',
- 
-        'lost': 'report as lost',
-        'disposal': 'request disposal for'
-    };
     
-    const message = `Are you sure you want to ${actionText[type]} the following asset(s)?\n\n${assetNames}\n\nThis action cannot be undone.`;
+    let details = '';
+    let actionText = '';
+    
+    switch(type) {
+        case 'damage':
+            actionText = 'Report Damage';
+            const damageType = document.getElementById('damageType').value;
+            const severity = document.getElementById('damageSeverity').value;
+            const description = document.getElementById('damageDescription').value;
+            details = `\nDamage Details:\n• Type: ${damageType}\n• Severity: ${severity}\n• Description: ${description}`;
+            break;
+        case 'lost':
+            actionText = 'Report as Lost';
+            const dateLost = document.getElementById('dateLost').value;
+            const lostDesc = document.getElementById('lostDescription').value;
+            details = `\nLost Details:\n• Date Lost: ${dateLost}\n• Description: ${lostDesc}`;
+            break;
+        case 'disposal':
+            actionText = 'Request Disposal';
+            const reason = document.getElementById('disposalReason').value;
+            const dispDesc = document.getElementById('disposalDescription').value;
+            details = `\nDisposal Details:\n• Reason: ${reason}\n• Description: ${dispDesc}`;
+            break;
+    }
+    
+    const message = `${actionText} Confirmation\n\nAssets (${selectedAssets.length}):\n${assetNames}${details}\n\n⚠️ This action will create a request that requires approval.\n\nProceed with submission?`;
     
     return confirm(message);
 }
@@ -387,7 +406,7 @@ document.getElementById('damageForm').addEventListener('submit', async function(
     };
     
     try {
-        const response = await fetch('/report', {
+        const response = await fetch('/damage/report', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(formData)

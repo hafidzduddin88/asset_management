@@ -123,14 +123,26 @@ async def approve_request(
     # Process approval based on type
     try:
         if approval.get('type') == 'damage_report':
-            # Update asset status to "Under Repair"
-            from app.utils.database_manager import update_asset
-            success = update_asset(approval.get('asset_id'), {'status': 'Under Repair'})
-            if not success:
-                return JSONResponse({"status": "error", "message": "Failed to update asset status"})
+            # Get storage location ID (HO-Ciputat, 1022 - Gudang Support TOG)
+            supabase = get_supabase()
+            storage_response = supabase.table('ref_locations').select('location_id').eq('location_name', 'HO-Ciputat').eq('room_name', '1022 - Gudang Support TOG').execute()
+            
+            if storage_response.data:
+                storage_location_id = storage_response.data[0]['location_id']
+                
+                # Update asset status to "Under Repair" and move to storage
+                from app.utils.database_manager import update_asset
+                success = update_asset(approval.get('asset_id'), {
+                    'status': 'Under Repair',
+                    'location_id': storage_location_id,
+                    'room_name': '1022 - Gudang Support TOG'
+                })
+                if not success:
+                    return JSONResponse({"status": "error", "message": "Failed to update asset status and location"})
+            else:
+                return JSONResponse({"status": "error", "message": "Storage location not found"})
             
             # Update damage_log with approver info
-            supabase = get_supabase()
             supabase.table('damage_log').update({
                 'status': 'approved',
                 'approved_by': current_profile.id,
@@ -256,6 +268,8 @@ async def approve_request(
                 damage_id = metadata.get('damage_id')
                 repair_action = metadata.get('repair_action')
                 repair_description = metadata.get('repair_description')
+                return_location = metadata.get('return_location', '')
+                return_room = metadata.get('return_room', '')
                 
                 if damage_id:
                     # Insert repair log
@@ -265,7 +279,7 @@ async def approve_request(
                         "repair_action": repair_action,
                         "description": repair_description,
                         "performed_by": approval.get('submitted_by'),
-                        "repair_date": "now()",
+                        "created_at": "now()",
                         "status": "Completed"
                     }
                     
@@ -275,8 +289,32 @@ async def approve_request(
                     # Update damage status to Repaired
                     supabase.table("damage_log").update({"status": "Repaired"}).eq("damage_id", damage_id).execute()
                     
-                    # Update asset status back to Active
-                    supabase.table("assets").update({"status": "Active"}).eq("asset_id", approval.get('asset_id')).execute()
+                    # Determine new status and location
+                    if return_location and return_room:
+                        # Get location ID for return location
+                        loc_response = supabase.table('ref_locations').select('location_id').eq('location_name', return_location).eq('room_name', return_room).execute()
+                        if loc_response.data:
+                            location_id = loc_response.data[0]['location_id']
+                            # Update asset to Active status and return location
+                            supabase.table("assets").update({
+                                "status": "Active",
+                                "location_id": location_id,
+                                "room_name": return_room
+                            }).eq("asset_id", approval.get('asset_id')).execute()
+                        else:
+                            return JSONResponse({"status": "error", "message": "Return location not found"})
+                    else:
+                        # No return location specified, keep in storage
+                        storage_response = supabase.table('ref_locations').select('location_id').eq('location_name', 'HO-Ciputat').eq('room_name', '1022 - Gudang Support TOG').execute()
+                        if storage_response.data:
+                            storage_location_id = storage_response.data[0]['location_id']
+                            supabase.table("assets").update({
+                                "status": "In Storage",
+                                "location_id": storage_location_id,
+                                "room_name": "1022 - Gudang Support TOG"
+                            }).eq("asset_id", approval.get('asset_id')).execute()
+                        else:
+                            return JSONResponse({"status": "error", "message": "Storage location not found"})
                     
             except Exception as e:
                 return JSONResponse({"status": "error", "message": f"Error processing repair: {str(e)}"})
@@ -284,14 +322,26 @@ async def approve_request(
         elif approval.get('type') == 'lost_report':
             # Process lost asset approval
             try:
-                # Update asset status to Lost
-                from app.utils.database_manager import update_asset
-                success = update_asset(approval.get('asset_id'), {'status': 'Lost'})
-                if not success:
-                    return JSONResponse({"status": "error", "message": "Failed to update asset status"})
+                # Get storage location ID
+                supabase = get_supabase()
+                storage_response = supabase.table('ref_locations').select('location_id').eq('location_name', 'HO-Ciputat').eq('room_name', '1022 - Gudang Support TOG').execute()
+                
+                if storage_response.data:
+                    storage_location_id = storage_response.data[0]['location_id']
+                    
+                    # Update asset status to Lost and move to storage
+                    from app.utils.database_manager import update_asset
+                    success = update_asset(approval.get('asset_id'), {
+                        'status': 'Lost',
+                        'location_id': storage_location_id,
+                        'room_name': '1022 - Gudang Support TOG'
+                    })
+                    if not success:
+                        return JSONResponse({"status": "error", "message": "Failed to update asset status and location"})
+                else:
+                    return JSONResponse({"status": "error", "message": "Storage location not found"})
                 
                 # Update lost_log with approver info
-                supabase = get_supabase()
                 supabase.table('lost_log').update({
                     'status': 'approved',
                     'approved_by': current_profile.id,
@@ -314,28 +364,41 @@ async def approve_request(
                 description = metadata.get('description', '')
                 notes = metadata.get('notes', '')
                 
-                # Insert disposal log
-                disposal_data = {
-                    "asset_id": approval.get('asset_id'),
-                    "asset_name": approval.get('asset_name'),
-                    "disposal_reason": disposal_reason,
-                    "disposal_method": disposal_method,
-                    "description": description,
-                    "notes": notes,
-                    "disposed_by": current_profile.id,
-                    "disposed_by_name": current_profile.full_name or current_profile.username,
-                    "disposal_date": "now()",
-                    "status": "Disposed"
-                }
-                
                 supabase = get_supabase()
-                supabase.table("disposal_log").insert(disposal_data).execute()
                 
-                # Update asset status to Disposed
-                from app.utils.database_manager import update_asset
-                success = update_asset(approval.get('asset_id'), {'status': 'Disposed'})
-                if not success:
-                    return JSONResponse({"status": "error", "message": "Failed to update asset status"})
+                # Get storage location ID
+                storage_response = supabase.table('ref_locations').select('location_id').eq('location_name', 'HO-Ciputat').eq('room_name', '1022 - Gudang Support TOG').execute()
+                
+                if storage_response.data:
+                    storage_location_id = storage_response.data[0]['location_id']
+                    
+                    # Insert disposal log
+                    disposal_data = {
+                        "asset_id": approval.get('asset_id'),
+                        "asset_name": approval.get('asset_name'),
+                        "disposal_reason": disposal_reason,
+                        "disposal_method": disposal_method,
+                        "description": description,
+                        "notes": notes,
+                        "disposed_by": current_profile.id,
+                        "disposed_by_name": current_profile.full_name or current_profile.username,
+                        "created_at": "now()",
+                        "status": "Disposed"
+                    }
+                    
+                    supabase.table("disposal_log").insert(disposal_data).execute()
+                    
+                    # Update asset status to Disposed (final disposal)
+                    from app.utils.database_manager import update_asset
+                    success = update_asset(approval.get('asset_id'), {
+                        'status': 'Disposed',
+                        'location_id': storage_location_id,
+                        'room_name': '1022 - Gudang Support TOG'
+                    })
+                    if not success:
+                        return JSONResponse({"status": "error", "message": "Failed to update asset status and location"})
+                else:
+                    return JSONResponse({"status": "error", "message": "Storage location not found"})
                 
             except Exception as e:
                 return JSONResponse({"status": "error", "message": f"Error processing disposal: {str(e)}"})

@@ -168,7 +168,7 @@ async def submit_repair_report(request: Request, current_profile = Depends(get_c
         return {"status": "error", "message": str(e)}
 
 
-@router.post("/report")
+@router.post("/damage/report")
 async def submit_damage_report(request: Request, current_profile = Depends(get_current_profile)):
     """Submit damage report - syncs to Supabase"""
     from app.utils.database_manager import add_approval_request, get_supabase

@@ -6,6 +6,7 @@ from app.utils.auth import get_current_profile
 from app.utils.database_manager import get_supabase
 from app.utils.device_detector import get_template
 from app.utils.flash import set_flash
+from fastapi.responses import JSONResponse
 import logging
 
 router = APIRouter(prefix="/repair", tags=["repair"])
@@ -18,13 +19,23 @@ async def repair_page(request: Request, current_profile=Depends(get_current_prof
     try:
         supabase = get_supabase()
         
-        # Get damaged assets that need repair (approved damage reports)
-        damaged_response = supabase.table("damage_log").select('''
-            damage_id, asset_id, asset_name, damage_type, severity, description,
-            reported_by_name, created_at, status
-        ''').eq('status', 'approved').execute()
+        # Get assets with "Under Repair" status from assets table
+        assets_response = supabase.table("assets").select('''
+            asset_id, asset_name, status,
+            ref_categories(category_name),
+            ref_locations(location_name, room_name)
+        ''').eq('status', 'Under Repair').execute()
         
-        damaged_assets = damaged_response.data or []
+        # Get corresponding damage records for these assets
+        damaged_assets = []
+        if assets_response.data:
+            asset_ids = [asset['asset_id'] for asset in assets_response.data]
+            damaged_response = supabase.table("damage_log").select('''
+                damage_id, asset_id, asset_name, damage_type, severity, description,
+                reported_by_name, created_at, status
+            ''').in_('asset_id', asset_ids).eq('status', 'approved').execute()
+            
+            damaged_assets = damaged_response.data or []
         
         template_path = get_template(request, "repair/index.html")
         return templates.TemplateResponse(template_path, {
@@ -49,6 +60,8 @@ async def report_repair(
     request: Request,
     repair_action: str = Form(...),
     description: str = Form(...),
+    location_name: str = Form(""),
+    room_name: str = Form(""),
     current_profile=Depends(get_current_profile)
 ):
     """Report asset repair with approval workflow"""
@@ -75,7 +88,9 @@ async def report_repair(
             "metadata": {
                 "damage_id": damage_id,
                 "repair_action": repair_action,
-                "repair_description": description
+                "repair_description": description,
+                "return_location": location_name,
+                "return_room": room_name
             }
         }
         
@@ -96,3 +111,14 @@ async def report_repair(
         response = RedirectResponse(url="/repair", status_code=303)
         set_flash(response, "Failed to submit repair request", "error")
         return response
+
+@router.get("/api/locations")
+async def get_locations():
+    """Get locations for repair form"""
+    try:
+        from app.utils.database_manager import get_dropdown_options
+        dropdown_options = get_dropdown_options()
+        return JSONResponse({"locations": dropdown_options.get('locations', {})})
+    except Exception as e:
+        logging.error(f"Error getting locations: {e}")
+        return JSONResponse({"locations": {}})
