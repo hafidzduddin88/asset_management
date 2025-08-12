@@ -94,11 +94,7 @@ async def relocate_asset(
         'notes': json.dumps(relocation_data)
     }
     
-    # Set approver based on requester role
-    if current_profile.role in ["staff", "manager"]:
-        approval_data["requires_admin_approval"] = True
-    elif current_profile.role == "admin":
-        approval_data["requires_manager_approval"] = True
+    # Role-based approval will be handled in approvals page filtering
     
     approval_success = add_approval_request(approval_data)
     

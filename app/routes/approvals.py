@@ -77,13 +77,35 @@ async def approvals_page(
                 approval['location_name'] = 'Unknown Location'
                 approval['room_name'] = 'Unknown Room'
     
-    # Filter approvals based on role-based approval workflow
+    # Filter approvals based on role hierarchy
     if current_profile.role == 'admin':
         # Admin approves requests from staff and manager
-        approvals_data = [a for a in all_approvals if a.get('requires_admin_approval') == True]
+        approvals_data = []
+        for approval in all_approvals:
+            submitter_id = approval.get('submitted_by')
+            if submitter_id:
+                try:
+                    submitter_response = supabase.table('profiles').select('role').eq('id', submitter_id).execute()
+                    if submitter_response.data:
+                        submitter_role = submitter_response.data[0]['role']
+                        if submitter_role in ['staff', 'manager']:
+                            approvals_data.append(approval)
+                except:
+                    pass
     elif current_profile.role == 'manager':
         # Manager approves requests from admin
-        approvals_data = [a for a in all_approvals if a.get('requires_manager_approval') == True]
+        approvals_data = []
+        for approval in all_approvals:
+            submitter_id = approval.get('submitted_by')
+            if submitter_id:
+                try:
+                    submitter_response = supabase.table('profiles').select('role').eq('id', submitter_id).execute()
+                    if submitter_response.data:
+                        submitter_role = submitter_response.data[0]['role']
+                        if submitter_role == 'admin':
+                            approvals_data.append(approval)
+                except:
+                    pass
     else:
         approvals_data = []
     
