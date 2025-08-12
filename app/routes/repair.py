@@ -31,7 +31,7 @@ async def repair_page(request: Request, current_profile=Depends(get_current_prof
         if assets_response.data:
             asset_ids = [asset['asset_id'] for asset in assets_response.data]
             damaged_response = supabase.table("damage_log").select('''
-                damage_id, asset_id, asset_name, damage_type, severity, description,
+                damage_log_id, asset_id, asset_name, damage_type, severity, description,
                 reported_by_name, created_at, status
             ''').in_('asset_id', asset_ids).eq('status', 'approved').execute()
             
@@ -54,9 +54,9 @@ async def repair_page(request: Request, current_profile=Depends(get_current_prof
             "error": "Failed to load damaged assets"
         })
 
-@router.post("/report/{damage_id}")
+@router.post("/report/{damage_log_id}")
 async def report_repair(
-    damage_id: int,
+    damage_log_id: int,
     request: Request,
     repair_action: str = Form(...),
     description: str = Form(...),
@@ -69,7 +69,7 @@ async def report_repair(
         supabase = get_supabase()
         
         # Get damage record
-        damage_response = supabase.table("damage_log").select("*").eq("damage_id", damage_id).execute()
+        damage_response = supabase.table("damage_log").select("*").eq("damage_log_id", damage_log_id).execute()
         if not damage_response.data:
             raise Exception("Damage record not found")
         
@@ -86,7 +86,7 @@ async def report_repair(
             "status": "pending",
             "description": f"Repair Action: {repair_action}\nDescription: {description}",
             "metadata": {
-                "damage_id": damage_id,
+                "damage_log_id": damage_log_id,
                 "repair_action": repair_action,
                 "repair_description": description,
                 "return_location": location_name,

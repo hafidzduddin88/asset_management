@@ -265,13 +265,13 @@ async def approve_request(
                 if isinstance(metadata, str):
                     metadata = json.loads(metadata)
                 
-                damage_id = metadata.get('damage_id')
+                damage_log_id = metadata.get('damage_log_id')
                 repair_action = metadata.get('repair_action')
                 repair_description = metadata.get('repair_description')
                 return_location = metadata.get('return_location', '')
                 return_room = metadata.get('return_room', '')
                 
-                if damage_id:
+                if damage_log_id:
                     # Insert repair log
                     repair_data = {
                         "asset_id": approval.get('asset_id'),
@@ -287,7 +287,7 @@ async def approve_request(
                     supabase.table("repair_log").insert(repair_data).execute()
                     
                     # Update damage status to Repaired
-                    supabase.table("damage_log").update({"status": "Repaired"}).eq("damage_id", damage_id).execute()
+                    supabase.table("damage_log").update({"status": "Repaired"}).eq("damage_log_id", damage_log_id).execute()
                     
                     # Determine new status and location
                     if return_location and return_room:

@@ -21,21 +21,23 @@
 <td width="50%">
 
 ### 🎯 Core Features
-- 📝 **Asset Registration** - Add/Edit/Relocate/Dispose
-- 👥 **Role-based Auth** - Admin/Manager/Staff
+- 📝 **Asset Management** - Add/Edit/Relocate with integrated actions
+- 🔧 **Asset Issues** - Damage/Lost/Disposal integrated in main page
+- 🛠️ **Asset Repair** - Separate repair workflow for damaged assets
+- 👥 **Role-based Auth** - Admin/Manager/Staff with JWT
 - ✅ **Approval Workflows** - Hierarchical approvals
-- 🔧 **Issue Management** - Damage/Lost reporting
-- 👤 **User Management** - Admin controls
+- 👤 **User Management** - Business unit integration
 
 </td>
 <td width="50%">
 
 ### 🚀 Advanced Features
-- 📱 **PWA Support** - Offline-ready mobile app
-- 📊 **Export Reports** - Excel & PDF generation
-- 🔗 **Google Integration** - Sheets & Drive API
-- 📋 **Audit Trail** - Complete action logging
-- 🎨 **Modern UI** - Card-style responsive design
+- 📱 **PWA Support** - Offline-ready with install prompts
+- 📊 **Export Reports** - Excel with customizable filters
+- 📈 **Dashboard Analytics** - Monthly/Quarterly/Yearly charts
+- 🔗 **Google Drive** - Asset photo storage
+- 📋 **Audit Trail** - Comprehensive logging system
+- 🎨 **Compact Design** - Modern responsive UI
 
 </td>
 </tr>
@@ -47,7 +49,7 @@
 
 <div align="center">
 
-### Backend
+### Backend (11 Optimized Packages)
 ![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=flat-square&logo=fastapi&logoColor=white)
 ![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?style=flat-square&logo=supabase&logoColor=white)
 ![JWT](https://img.shields.io/badge/JWT-000000?style=flat-square&logo=json-web-tokens&logoColor=white)
@@ -57,6 +59,7 @@
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=flat-square&logo=tailwind-css&logoColor=white)
 ![Alpine.js](https://img.shields.io/badge/Alpine.js-8BC34A?style=flat-square&logo=alpine.js&logoColor=white)
 ![HTMX](https://img.shields.io/badge/HTMX-3366CC?style=flat-square&logo=htmx&logoColor=white)
+![Chart.js](https://img.shields.io/badge/Chart.js-FF6384?style=flat-square&logo=chart.js&logoColor=white)
 ![PWA](https://img.shields.io/badge/PWA-5A0FC8?style=flat-square&logo=pwa&logoColor=white)
 
 ### DevOps
@@ -236,55 +239,62 @@ sequenceDiagram
 
 ```
 asset_management/
+├── 📁 .amazonq/rules/       # Amazon Q AI guidance
 ├── 📁 app/
-│   ├── 📁 database/          # Database models & connections
-│   ├── 📁 middleware/        # Authentication middleware
-│   ├── 📁 routes/           # API endpoints
-│   │   ├── 📄 asset_management.py
-│   │   ├── 📄 user_management.py
-│   │   ├── 📄 damage.py
-│   │   └── 📄 approvals.py
-│   ├── 📁 static/           # CSS, JS, images
-│   ├── 📁 templates/        # HTML templates
-│   ├── 📁 utils/           # Utility functions
-│   │   ├── 📄 sheets.py    # Google Sheets integration
-│   │   ├── 📄 auth.py      # Authentication
-│   │   └── 📄 photo.py     # Image processing
-│   ├── 📄 config.py        # Configuration
-│   └── 📄 main.py          # FastAPI entry point
-├── 📁 .github/workflows/   # CI/CD pipeline
-├── 📄 Dockerfile          # Container config
-├── 📄 requirements.txt    # Dependencies
-└── 📄 render.yaml         # Deployment config
+│   ├── 📁 middleware/        # JWT session authentication
+│   ├── 📁 routes/           # API endpoints (12+ modules)
+│   │   ├── 📄 asset_management.py  # Integrated CRUD operations
+│   │   ├── 📄 damage.py            # Asset issues (damage/lost/disposal)
+│   │   ├── 📄 repair.py            # Asset repair workflow
+│   │   ├── 📄 approvals.py         # Hierarchical approval system
+│   │   ├── 📄 export.py            # Excel export with filters
+│   │   ├── 📄 home.py              # Dashboard analytics
+│   │   └── 📄 user_management.py   # Business unit integration
+│   ├── 📁 static/           # CSS, JS, PWA files
+│   ├── 📁 templates/        # Dual template system
+│   │   ├── 📁 templates_desktop/   # Full-featured desktop UI
+│   │   └── 📁 templates_mobile/    # Optimized mobile UI
+│   ├── 📁 utils/           # Core utilities
+│   │   ├── 📄 database_manager.py  # Supabase operations
+│   │   ├── 📄 auth.py              # Profile protection
+│   │   ├── 📄 device_detector.py   # Template routing
+│   │   └── 📄 photo.py             # Google Drive integration
+│   ├── 📄 config.py        # Environment configuration
+│   └── 📄 main.py          # FastAPI application
+├── 📁 .github/workflows/   # Automated CI/CD
+├── 📄 Dockerfile          # Optimized container
+├── 📄 requirements.txt    # 11 essential packages
+└── 📄 render.yaml         # Production deployment
 ```
 
 </details>
 
 ---
 
-## 🔗 API Integration
+## 🔗 System Architecture
 
 <table>
 <tr>
 <td width="50%" align="center">
 
 ### 🗄️ Supabase PostgreSQL
-- Primary database
-- User authentication
-- Real-time features
-- Row-level security
-- Asset & reference data
-- Comprehensive logging
+- **Primary Database**: Assets, users, approvals
+- **Foreign Key Relationships**: Data integrity
+- **Log Tables**: Complete audit trail
+- **JWT Authentication**: Secure session management
+- **Profile Protection**: Prevents data overwrites
+- **Business Unit Integration**: Organizational structure
 
 </td>
 <td width="50%" align="center">
 
-### 📁 Google Drive
-- Photo storage
-- Organized folders
-- Public previews
-- Asset images
-- Secure file handling
+### 🎯 Core Workflows
+- **Asset Management**: Integrated CRUD operations
+- **Asset Issues**: Damage/Lost/Disposal in main page
+- **Asset Repair**: Separate workflow for damaged assets
+- **Approval System**: Hierarchical Admin ↔ Manager
+- **Export System**: Excel with customizable filters
+- **Dashboard Analytics**: Monthly/Quarterly/Yearly charts
 
 </td>
 </tr>
@@ -297,17 +307,25 @@ asset_management/
 <div align="center">
 
 ### 🚀 Deployment Speed
-- **Minimal Dependencies**: Reduced from 25+ to 8 essential packages
+- **Minimal Dependencies**: Reduced from 25+ to 11 essential packages
 - **Optimized Requirements**: Removed unused SQLAlchemy, PIL, pandas, numpy
 - **Single Worker**: Faster startup with `--workers 1`
 - **Disabled Logs**: `--access-log false` for production
 - **Build Cache**: Skip builds when no changes detected
 
-### 🗄️ Database Migration
-- **Google Sheets → Supabase**: Complete migration for better performance
-- **Direct Queries**: Simplified database queries without complex joins
-- **Caching**: Smart caching for reference data
-- **Connection Pooling**: Optimized Supabase client
+### 🗄️ Database Architecture
+- **Supabase PostgreSQL**: Primary database with foreign key relationships
+- **Direct Queries**: Simplified database operations
+- **Log Tables**: Comprehensive audit trail (damage_log, repair_log, etc.)
+- **Smart Caching**: Reference data caching with 10s TTL
+- **Profile Protection**: Prevents data overwrites during token refresh
+
+### 🎨 UI/UX Enhancements
+- **Compact Design**: Reduced padding and margins for better space usage
+- **Integrated Actions**: Asset issues integrated into main management page
+- **Dual Templates**: Separate desktop and mobile optimized layouts
+- **PWA Features**: Install prompts and offline capability
+- **Confirmation Dialogs**: Detailed change summaries for all actions
 
 ### 📦 Docker Optimization
 - **Multi-stage Build**: Smaller final image

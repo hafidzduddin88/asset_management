@@ -70,7 +70,7 @@
                                 <div>{{ asset.created_at[:10] if asset.created_at else 'Unknown' }}</div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                <button onclick="openRepairModal({{ asset.damage_id }}, '{{ asset.asset_name }}')" 
+                                <button onclick="openRepairModal({{ asset.damage_log_id }}, '{{ asset.asset_name }}')" 
                                         class="text-green-600 hover:text-green-900 bg-green-50 hover:bg-green-100 px-3 py-1 rounded-lg transition-colors">
                                     <i class="fas fa-wrench mr-1"></i>Report Repair
                                 </button>
