@@ -1,5 +1,5 @@
 # app/routes/relocation.py
-from fastapi import APIRouter, Depends, Request, Form, HTTPException, status
+from fastapi import APIRouter, Depends, Request, Form, HTTPException, status, Query
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from datetime import datetime
@@ -16,7 +16,7 @@ templates = Jinja2Templates(directory="app/templates")
 @router.get("/", response_class=HTMLResponse)
 async def relocation_page(
     request: Request,
-    asset_id: int = None,
+    asset_id: int = Query(None),
     current_profile = Depends(get_current_profile)
 ):
     """Handle relocation requests with asset_id parameter."""
