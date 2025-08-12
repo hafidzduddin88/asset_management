@@ -19,23 +19,13 @@ async def repair_page(request: Request, current_profile=Depends(get_current_prof
     try:
         supabase = get_supabase()
         
-        # Get assets with "Under Repair" status from assets table
-        assets_response = supabase.table("assets").select('''
-            asset_id, asset_name, status,
-            ref_categories(category_name),
-            ref_locations(location_name, room_name)
-        ''').eq('status', 'Under Repair').execute()
+        # Get damage records that are approved but not yet repaired
+        damaged_response = supabase.table("damage_log").select('''
+            damage_log_id, asset_id, asset_name, damage_type, severity, description,
+            reported_by_name, created_at, status
+        ''').eq('status', 'approved').execute()
         
-        # Get corresponding damage records for these assets
-        damaged_assets = []
-        if assets_response.data:
-            asset_ids = [asset['asset_id'] for asset in assets_response.data]
-            damaged_response = supabase.table("damage_log").select('''
-                damage_log_id, asset_id, asset_name, damage_type, severity, description,
-                reported_by_name, created_at, status
-            ''').in_('asset_id', asset_ids).eq('status', 'approved').execute()
-            
-            damaged_assets = damaged_response.data or []
+        damaged_assets = damaged_response.data or []
         
         template_path = get_template(request, "repair/index.html")
         return templates.TemplateResponse(template_path, {
