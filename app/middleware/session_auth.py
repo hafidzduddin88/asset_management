@@ -102,13 +102,26 @@ class SessionAuthMiddleware(BaseHTTPMiddleware):
             
             is_secure = not config.APP_URL.startswith("http://localhost")
             
+            # Check if this was a remember me session by looking at existing access token max_age
+            # If access token has long expiry, preserve remember me behavior
+            access_max_age = 3600  # Default 1 hour
+            if access_token:
+                # If we had a valid access token that was refreshed, check its remaining time
+                # If it was set for remember me (7 days), preserve that setting
+                exp = user_info.get("exp")
+                if exp:
+                    remaining_time = exp - datetime.now(tz=timezone.utc).timestamp()
+                    # If remaining time suggests this was a remember me session (> 1 day)
+                    if remaining_time > 86400:
+                        access_max_age = 60 * 60 * 24 * 7  # 7 days for remember me
+            
             response.set_cookie(
                 key="sb_access_token",
                 value=new_tokens["access_token"],
                 httponly=True,
                 secure=is_secure,
                 samesite="lax",
-                max_age=3600
+                max_age=access_max_age
             )
             
             response.set_cookie(
