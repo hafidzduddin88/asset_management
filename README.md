@@ -21,9 +21,10 @@
 <td width="50%">
 
 ### 🎯 Core Features
-- 📝 **Asset Management** - Add/Edit/Relocate with integrated actions
-- 🔧 **Asset Issues** - Damage/Lost/Disposal integrated in main page
+- 📝 **Asset Management** - Add/Edit/Relocate with direct action buttons
+- 🔧 **Asset Issues** - Damage/Lost/Disposal via dedicated pages
 - 🛠️ **Asset Repair** - Separate repair workflow for damaged assets
+- 💰 **Asset Depreciation** - SuperAdmin value recalculation
 - 👥 **Role-based Auth** - Admin/Manager/Staff with JWT
 - ✅ **Approval Workflows** - Hierarchical approvals
 - 👤 **User Management** - Business unit integration
@@ -33,11 +34,12 @@
 
 ### 🚀 Advanced Features
 - 📱 **PWA Support** - Offline-ready with install prompts
-- 📊 **Export Reports** - Excel with customizable filters
+- 📊 **Export Reports** - Excel with optimized column ordering
 - 📈 **Dashboard Analytics** - Monthly/Quarterly/Yearly charts
-- 🔗 **Google Drive** - Asset photo storage
+- 🔗 **Google Drive** - Asset photo storage with zoom view
 - 📋 **Audit Trail** - Comprehensive logging system
-- 🎨 **Compact Design** - Modern responsive UI
+- 🎨 **Direct Actions** - Clean UI with dedicated view pages
+- 💱 **Rupiah Format** - Local currency display throughout
 
 </td>
 </tr>
@@ -243,11 +245,12 @@ asset_management/
 ├── 📁 app/
 │   ├── 📁 middleware/        # JWT session authentication
 │   ├── 📁 routes/           # API endpoints (12+ modules)
-│   │   ├── 📄 asset_management.py  # Integrated CRUD operations
+│   │   ├── 📄 asset_management.py  # CRUD operations with view pages
 │   │   ├── 📄 damage.py            # Asset issues (damage/lost/disposal)
 │   │   ├── 📄 repair.py            # Asset repair workflow
+│   │   ├── 📄 depreciation.py      # SuperAdmin depreciation updates
 │   │   ├── 📄 approvals.py         # Hierarchical approval system
-│   │   ├── 📄 export.py            # Excel export with filters
+│   │   ├── 📄 export.py            # Excel export with optimized ordering
 │   │   ├── 📄 home.py              # Dashboard analytics
 │   │   └── 📄 user_management.py   # Business unit integration
 │   ├── 📁 static/           # CSS, JS, PWA files
@@ -289,11 +292,12 @@ asset_management/
 <td width="50%" align="center">
 
 ### 🎯 Core Workflows
-- **Asset Management**: Integrated CRUD operations
-- **Asset Issues**: Damage/Lost/Disposal in main page
-- **Asset Repair**: Separate workflow for damaged assets
-- **Approval System**: Hierarchical Admin ↔ Manager
-- **Export System**: Excel with customizable filters
+- **Asset Management**: Direct action buttons with dedicated view pages
+- **Asset Issues**: Separate pages for Damage/Lost/Disposal requests
+- **Asset Repair**: Dedicated workflow for damaged assets
+- **Asset Depreciation**: SuperAdmin value recalculation system
+- **Approval System**: Hierarchical Admin ↔ Manager with notes column
+- **Export System**: Excel with optimized column ordering
 - **Dashboard Analytics**: Monthly/Quarterly/Yearly charts
 
 </td>
@@ -321,11 +325,13 @@ asset_management/
 - **Profile Protection**: Prevents data overwrites during token refresh
 
 ### 🎨 UI/UX Enhancements
-- **Compact Design**: Reduced padding and margins for better space usage
-- **Integrated Actions**: Asset issues integrated into main management page
+- **Direct Action Buttons**: Clean interface replacing dropdown menus
+- **Dedicated View Pages**: Comprehensive asset detail pages with image zoom
+- **Modal Cleanup**: Removed unused components for cleaner codebase
 - **Dual Templates**: Separate desktop and mobile optimized layouts
 - **PWA Features**: Install prompts and offline capability
-- **Confirmation Dialogs**: Detailed change summaries for all actions
+- **Rupiah Currency**: Local currency format throughout application
+- **Admin-only Edit**: Role-based UI restrictions for better security
 
 ### 📦 Docker Optimization
 - **Multi-stage Build**: Smaller final image

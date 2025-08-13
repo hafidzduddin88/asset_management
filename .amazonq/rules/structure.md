@@ -18,8 +18,9 @@ ambp/
 │   │   ├── asset_management.py   # Asset CRUD operations
 │   │   ├── assets.py             # Asset listing and search
 │   │   ├── damage.py             # Asset issues (damage/lost/disposal)
+│   │   ├── depreciation.py       # SuperAdmin depreciation updates
 │   │   ├── disposal.py           # Asset disposal (admin only)
-│   │   ├── export.py             # Excel/PDF export functionality
+│   │   ├── export.py             # Excel export with optimized ordering
 │   │   ├── health.py             # Health checks and monitoring
 │   │   ├── home.py               # Dashboard with analytics
 │   │   ├── login.py              # Authentication endpoints
@@ -100,12 +101,14 @@ ambp/
 
 ### Core Features
 - **Asset Registration**: Add/Edit with approval workflow
-- **Asset Issues**: Integrated damage/lost/disposal reporting
+- **Asset Issues**: Separate pages for damage/lost/disposal reporting
 - **Asset Repair**: Separate repair completion workflow
+- **Asset Depreciation**: SuperAdmin value recalculation system
 - **Dashboard Analytics**: Real-time charts and metrics
 - **User Management**: Role-based access with business unit integration
-- **Export System**: Excel/PDF with customizable options
+- **Export System**: Excel with optimized column ordering
 - **Approval Workflows**: Hierarchical approval system (Admin ↔ Manager)
+- **Direct Actions**: Clean UI with dedicated view pages
 
 ### Database Schema
 - **Assets Table**: Core asset data with foreign key relationships

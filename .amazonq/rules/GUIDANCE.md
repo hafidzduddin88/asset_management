@@ -25,8 +25,9 @@ Registration → Active → Issues (Damage/Lost) → Repair → Active/Disposed
 1. **Asset Registration**: Add/Edit assets with approval
 2. **Asset Issues**: Report damage/lost/disposal requests (separate pages with asset_id)
 3. **Asset Repair**: Report repair completion (separate `/repair` route)
-4. **SuperAdmin Disposal**: Actual disposal execution (different from disposal requests)
-5. **Approval System**: Hierarchical approval workflow
+4. **Asset Depreciation**: SuperAdmin value recalculation (`/depreciation` route)
+5. **SuperAdmin Disposal**: Actual disposal execution (different from disposal requests)
+6. **Approval System**: Hierarchical approval workflow
 
 ### 3. Architecture Patterns
 
@@ -38,7 +39,8 @@ Registration → Active → Issues (Damage/Lost) → Repair → Active/Disposed
 │                      # 1. Asset Issue disposal requests (/disposal?asset_id=***)
 │                      # 2. SuperAdmin disposal execution (admin-only)
 ├── repair.py          # Asset Repair completion
-├── asset_management.py # Asset CRUD operations
+├── depreciation.py    # SuperAdmin depreciation updates
+├── asset_management.py # Asset CRUD operations with view pages
 ├── approvals.py       # Approval workflow
 └── ...
 ```
@@ -101,13 +103,18 @@ approval_data = {
 - Asset Registration with approval workflow
 - Asset Issues (damage/lost/disposal) as separate pages with asset_id parameter
 - Asset Repair as separate workflow for damaged assets
+- Asset Depreciation with SuperAdmin value recalculation
 - SuperAdmin Disposal execution (different from user disposal requests)
+- Direct action buttons replacing dropdown menus
+- Dedicated asset view pages with image zoom functionality
+- Modal cleanup for cleaner codebase
 - Compact dashboard with monthly/quarterly/yearly analytics
 - User management with business unit terminology
-- Export to Excel/PDF with role-based access
+- Export to Excel with optimized column ordering
 - PWA support with offline capability
 - Profile protection against overwrites during authentication
 - Mobile-optimized templates with scrollable lists
+- Rupiah currency format throughout application
 
 #### Key Integrations
 - **Supabase**: Primary database with foreign key relationships and log tables
@@ -203,10 +210,15 @@ docker build -t ambp .
 
 ### Recent Optimizations
 - **Requirements**: Reduced from 25+ to 11 essential packages
-- **Dashboard**: Made compact with smaller cards and charts
+- **UI/UX**: Direct action buttons replacing dropdown menus
+- **Asset Views**: Dedicated view pages with comprehensive details
+- **Modal Cleanup**: Removed unused components for cleaner codebase
+- **Currency Format**: Changed to Rupiah (Rp) throughout application
+- **Depreciation**: Added SuperAdmin value recalculation functionality
+- **Export**: Optimized column ordering and data sorting
+- **Approval System**: Fixed role-based filtering and notes column usage
 - **Authentication**: Fixed full_name preservation during login
 - **Mobile**: Added scrollable lists and compact filters
-- **Export**: Available to all users with role-based restrictions
 - **Asset Issues**: Separated into individual pages (/damage, /lost, /disposal) with asset_id parameter
 - **Disposal Workflow**: Clear separation between user requests and SuperAdmin execution
 

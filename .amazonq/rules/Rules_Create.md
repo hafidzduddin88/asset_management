@@ -3,12 +3,13 @@
 ## Core Features
 
 - **Asset Registration** - Add/Edit/Relocate assets with approval workflow
-- **Asset Issues** - Report Damage/Lost/Disposal requests
+- **Asset Issues** - Report Damage/Lost/Disposal requests via dedicated pages
 - **Asset Repair** - Report repair completion for damaged assets
+- **Asset Depreciation** - SuperAdmin value recalculation system
 - **Role-based Authentication** - Admin/Manager/Staff with hierarchical approvals
 - **Dashboard Analytics** - Real-time charts and metrics
 - **PWA Support** - Offline-friendly, mobile-ready application
-- **Export Reports** - Excel and PDF generation
+- **Export Reports** - Excel with optimized column ordering
 - **Google Drive Integration** - Asset photo storage and management
 
 ## Backend Architecture
@@ -51,6 +52,7 @@
 - Asset Issues (Damage/Lost/Disposal)
 - Asset Repair Completion
 - Asset Relocation
+- Asset Depreciation Updates (SuperAdmin only)
 
 **Workflow Process:**
 1. User submits request
@@ -81,9 +83,9 @@
 - Financial summaries (purchase value, book value, depreciation)
 
 **Export Capabilities:**
-- **Excel Export** - Customizable table and column selection
+- **Excel Export** - Optimized column ordering and data sorting
 - **PDF Reports** - Formatted reports with asset details
-- **Role-based Access** - Admin-only for sensitive data
+- **Role-based Access** - Available to all users with restrictions
 - Include asset photos, approval metadata, and audit trails
 
 ---
@@ -134,6 +136,8 @@ feat: add Excel export functionality
 feat: enhance approval workflow with role-based routing
 feat: add mobile template for asset issues
 feat: integrate Google Drive photo storage
+feat: add direct action buttons replacing dropdown menus
+feat: implement dedicated asset view pages with image zoom
 ```
 
 ### Bug Fixes
@@ -147,6 +151,8 @@ fix: prevent duplicate asset registration
 fix: mobile navigation menu not closing
 fix: asset search pagination limit
 fix: template path resolution for mobile devices
+fix: modal cleanup and unused component removal
+fix: currency format display to Rupiah throughout application
 ```
 
 ### Code Quality
@@ -155,6 +161,8 @@ fix: template path resolution for mobile devices
 refactor: optimize database queries for asset listing
 refactor: consolidate template components
 refactor: simplify approval workflow logic
+refactor: replace dropdown menus with direct action buttons
+refactor: clean up unused modal components from templates
 
 # Performance improvements
 perf: implement caching for reference data
