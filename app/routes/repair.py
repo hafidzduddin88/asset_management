@@ -81,25 +81,31 @@ async def report_repair(
         asset_record = asset_response.data[0]
         
         # Create approval request - repair reports go to approval
+        import json
         approval_data = {
             "type": "repair",
             "asset_id": asset_record["asset_id"],
             "asset_name": asset_record["asset_name"],
-            "submitted_by": current_profile.full_name or current_profile.username,
-            "submitted_by_id": current_profile.id,
-            "submitted_date": "now()",
+            "submitted_by": current_profile.id,
             "status": "pending",
             "description": f"Repair Action: {repair_action}\nDescription: {description}",
-            "metadata": {
+            "notes": json.dumps({
                 "asset_id": asset_id,
                 "repair_action": repair_action,
                 "repair_description": description,
                 "return_location": location_name,
                 "return_room": room_name
-            }
+            })
         }
         
-        supabase.table("approvals").insert(approval_data).execute()
+        # Set approver based on requester role
+        if current_profile.role in ["staff", "manager"]:
+            approval_data["requires_admin_approval"] = True
+        elif current_profile.role == "admin":
+            approval_data["requires_manager_approval"] = True
+        
+        from app.utils.database_manager import add_approval_request
+        add_approval_request(approval_data)
         
         response = RedirectResponse(url="/repair", status_code=303)
         set_flash(response, f"Repair completion report submitted for approval: {asset_record['asset_name']}", "success")

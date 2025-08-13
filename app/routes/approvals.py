@@ -312,15 +312,17 @@ async def approve_request(
             # Process repair approval
             import json
             try:
-                metadata = approval.get('metadata', {})
-                if isinstance(metadata, str):
-                    metadata = json.loads(metadata)
+                notes = approval.get('notes', '{}')
+                if isinstance(notes, str):
+                    repair_data = json.loads(notes)
+                else:
+                    repair_data = notes
                 
-                repair_asset_id = metadata.get('asset_id')
-                repair_action = metadata.get('repair_action')
-                repair_description = metadata.get('repair_description')
-                return_location = metadata.get('return_location', '')
-                return_room = metadata.get('return_room', '')
+                repair_asset_id = repair_data.get('asset_id')
+                repair_action = repair_data.get('repair_action')
+                repair_description = repair_data.get('repair_description')
+                return_location = repair_data.get('return_location', '')
+                return_room = repair_data.get('return_room', '')
                 
                 if repair_asset_id:
                     # Insert repair log
@@ -406,14 +408,16 @@ async def approve_request(
             # Process disposal approval
             import json
             try:
-                metadata = approval.get('metadata', '{}')
-                if isinstance(metadata, str):
-                    metadata = json.loads(metadata)
+                notes_data = approval.get('notes', '{}')
+                if isinstance(notes_data, str):
+                    disposal_data = json.loads(notes_data)
+                else:
+                    disposal_data = notes_data
                 
-                disposal_reason = metadata.get('disposal_reason', '')
-                disposal_method = metadata.get('disposal_method', '')
-                description = metadata.get('description', '')
-                notes = metadata.get('notes', '')
+                disposal_reason = disposal_data.get('disposal_reason', '')
+                disposal_method = disposal_data.get('disposal_method', '')
+                description = disposal_data.get('description', '')
+                notes = disposal_data.get('notes', '')
                 
                 supabase = get_supabase()
                 

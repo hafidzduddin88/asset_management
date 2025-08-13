@@ -19,29 +19,29 @@ EXPORT_TABLES = {
         'name': 'Assets',
         'table': 'assets',
         'columns': {
-            'asset_id': 'Asset ID',
             'asset_tag': 'Asset Tag',
             'asset_name': 'Asset Name',
+            'status': 'Status',
             'category_name': 'Category',
             'type_name': 'Asset Type',
             'manufacture': 'Manufacture',
             'model': 'Model',
             'serial_number': 'Serial Number',
-            'status': 'Status',
             'item_condition': 'Condition',
             'company_name': 'Company',
             'business_unit_name': 'Business Unit',
+            'owner_name': 'Owner',
             'location_name': 'Location',
             'room_name': 'Room',
-            'owner_name': 'Owner',
             'purchase_date': 'Purchase Date',
-            'purchase_cost': 'Purchase Cost',
+            'purchase_cost': 'Purchase Cost (Rp)',
+            'book_value': 'Book Value (Rp)',
+            'depreciation_value': 'Depreciation Value (Rp)',
+            'residual_value': 'Residual Value (Rp)',
             'supplier': 'Supplier',
             'warranty': 'Warranty',
-            'book_value': 'Book Value',
-            'depreciation_value': 'Depreciation Value',
-            'residual_value': 'Residual Value',
-            'notes': 'Notes'
+            'notes': 'Notes',
+            'asset_id': 'Asset ID'
         }
     },
     'approvals': {
@@ -90,15 +90,15 @@ EXPORT_TABLES = {
         'name': 'Users',
         'table': 'profiles',
         'columns': {
-            'id': 'User ID',
-            'username': 'Email',
             'full_name': 'Full Name',
+            'username': 'Email',
             'role': 'Role',
             'business_unit_name': 'Business Unit',
             'is_active': 'Active Status',
             'email_verified': 'Email Verified',
+            'last_login_at': 'Last Login',
             'created_at': 'Created Date',
-            'last_login_at': 'Last Login'
+            'id': 'User ID'
         }
     }
 }
@@ -187,7 +187,7 @@ async def export_to_excel(
         
         # Apply sorting
         if table == 'assets':
-            query = query.order('asset_id')
+            query = query.order('asset_tag')
         elif table == 'approvals':
             query = query.order('submitted_date', desc=True)
         elif table == 'damage_log':
@@ -195,7 +195,7 @@ async def export_to_excel(
         elif table == 'repair_log':
             query = query.order('created_at', desc=True)
         elif table == 'users':
-            query = query.order('created_at', desc=True)
+            query = query.order('full_name')
         
         # Execute query
         response = query.execute()
