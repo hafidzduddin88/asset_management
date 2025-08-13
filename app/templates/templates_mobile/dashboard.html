@@ -33,28 +33,26 @@
 </div>
 
 <!-- Quick Stats -->
-<div class="grid grid-cols-2 gap-3 mb-4">
-    <div class="stat-card bg-white rounded-lg shadow p-4">
-        <div class="flex items-center">
-            <div class="bg-blue-100 p-2 rounded-lg">
-                <i class="fas fa-boxes text-blue-600"></i>
-            </div>
-            <div class="ml-3">
-                <div class="text-lg font-bold text-gray-900">{{ total_assets }}</div>
-                <div class="text-xs text-gray-500">Total Assets</div>
-            </div>
+<div class="bg-white rounded-lg shadow p-4 mb-4">
+    <div class="flex items-center justify-between mb-3">
+        <h3 class="font-semibold text-gray-900">Total Assets</h3>
+        <div class="bg-blue-100 p-2 rounded-lg">
+            <i class="fas fa-boxes text-blue-600"></i>
         </div>
     </div>
-    
-    <div class="stat-card bg-white rounded-lg shadow p-4">
-        <div class="flex items-center">
-            <div class="bg-green-100 p-2 rounded-lg">
-                <i class="fas fa-dollar-sign text-green-600"></i>
-            </div>
-            <div class="ml-3">
-                <div class="text-xs font-bold text-gray-900">Rp {{ "{:,.0f}".format(total_book_value) }}</div>
-                <div class="text-xs text-gray-500">Book Value</div>
-            </div>
+    <div class="text-2xl font-bold text-blue-600 mb-3">{{ total_assets }}</div>
+    <div class="space-y-2">
+        <div class="flex justify-between items-center p-2 bg-gray-50 rounded">
+            <span class="text-xs text-gray-600">Purchase Value:</span>
+            <span class="text-xs font-bold text-green-600">Rp {{ "{:,.0f}".format(total_purchase_value) }}</span>
+        </div>
+        <div class="flex justify-between items-center p-2 bg-orange-50 rounded">
+            <span class="text-xs text-gray-600">Depreciation:</span>
+            <span class="text-xs font-bold text-orange-600">Rp {{ "{:,.0f}".format(total_depreciation_value) }}</span>
+        </div>
+        <div class="flex justify-between items-center p-2 bg-blue-50 rounded">
+            <span class="text-xs text-gray-600">Book Value:</span>
+            <span class="text-xs font-bold text-blue-600">Rp {{ "{:,.0f}".format(total_book_value) }}</span>
         </div>
     </div>
 </div>
