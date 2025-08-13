@@ -137,8 +137,9 @@ function updateColumns(tableKey) {
     // Clear existing columns
     columnList.innerHTML = '';
     
-    // Add columns for selected table
+    // Add columns for selected table in defined order
     const columns = tables[tableKey].columns;
+    // Columns are already in correct order from OrderedDict in Python
     Object.entries(columns).forEach(([key, label]) => {
         const div = document.createElement('div');
         div.innerHTML = `

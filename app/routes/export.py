@@ -9,6 +9,7 @@ import io
 import json
 from datetime import datetime
 from typing import List
+from collections import OrderedDict
 
 router = APIRouter(prefix="/export", tags=["export"])
 templates = Jinja2Templates(directory="app/templates")
@@ -18,88 +19,88 @@ EXPORT_TABLES = {
     'assets': {
         'name': 'Assets',
         'table': 'assets',
-        'columns': {
-            'asset_tag': 'Asset Tag',
-            'asset_name': 'Asset Name',
-            'status': 'Status',
-            'category_name': 'Category',
-            'type_name': 'Asset Type',
-            'manufacture': 'Manufacture',
-            'model': 'Model',
-            'serial_number': 'Serial Number',
-            'item_condition': 'Condition',
-            'company_name': 'Company',
-            'business_unit_name': 'Business Unit',
-            'owner_name': 'Owner',
-            'location_name': 'Location',
-            'room_name': 'Room',
-            'purchase_date': 'Purchase Date',
-            'purchase_cost': 'Purchase Cost (Rp)',
-            'book_value': 'Book Value (Rp)',
-            'depreciation_value': 'Depreciation Value (Rp)',
-            'residual_value': 'Residual Value (Rp)',
-            'supplier': 'Supplier',
-            'warranty': 'Warranty',
-            'notes': 'Notes',
-            'asset_id': 'Asset ID'
-        }
+        'columns': OrderedDict([
+            ('asset_tag', 'Asset Tag'),
+            ('asset_name', 'Asset Name'),
+            ('status', 'Status'),
+            ('item_condition', 'Condition'),
+            ('category_name', 'Category'),
+            ('type_name', 'Asset Type'),
+            ('manufacture', 'Manufacture'),
+            ('model', 'Model'),
+            ('serial_number', 'Serial Number'),
+            ('company_name', 'Company'),
+            ('business_unit_name', 'Business Unit'),
+            ('owner_name', 'Owner'),
+            ('location_name', 'Location'),
+            ('room_name', 'Room'),
+            ('purchase_date', 'Purchase Date'),
+            ('purchase_cost', 'Purchase Cost (Rp)'),
+            ('book_value', 'Book Value (Rp)'),
+            ('depreciation_value', 'Depreciation Value (Rp)'),
+            ('residual_value', 'Residual Value (Rp)'),
+            ('supplier', 'Supplier'),
+            ('warranty', 'Warranty'),
+            ('notes', 'Notes'),
+            ('asset_id', 'Asset ID')
+        ])
     },
     'approvals': {
         'name': 'Approvals',
         'table': 'approvals',
-        'columns': {
-            'approval_id': 'Approval ID',
-            'type': 'Type',
-            'asset_name': 'Asset Name',
-            'status': 'Status',
-            'submitted_by': 'Submitted By',
-            'submitted_date': 'Submitted Date',
-            'approved_by': 'Approved By',
-            'approved_date': 'Approved Date',
-            'description': 'Description'
-        }
+        'columns': OrderedDict([
+            ('type', 'Type'),
+            ('asset_name', 'Asset Name'),
+            ('status', 'Status'),
+            ('submitted_by', 'Submitted By'),
+            ('submitted_date', 'Submitted Date'),
+            ('approved_by', 'Approved By'),
+            ('approved_date', 'Approved Date'),
+            ('description', 'Description'),
+            ('approval_id', 'Approval ID')
+        ])
     },
     'damage_log': {
         'name': 'Damage Log',
         'table': 'damage_log',
-        'columns': {
-            'damage_id': 'Damage ID',
-            'asset_name': 'Asset Name',
-            'damage_type': 'Damage Type',
-            'severity': 'Severity',
-            'description': 'Description',
-            'reported_by': 'Reported By',
-            'report_date': 'Report Date',
-            'status': 'Status'
-        }
+        'columns': OrderedDict([
+            ('asset_name', 'Asset Name'),
+            ('damage_type', 'Damage Type'),
+            ('severity', 'Severity'),
+            ('status', 'Status'),
+            ('description', 'Description'),
+            ('reported_by', 'Reported By'),
+            ('report_date', 'Report Date'),
+            ('damage_id', 'Damage ID')
+        ])
     },
     'repair_log': {
         'name': 'Repair Log',
         'table': 'repair_log',
-        'columns': {
-            'repair_id': 'Repair ID',
-            'asset_name': 'Asset Name',
-            'repair_action': 'Repair Action',
-            'description': 'Description',
-            'performed_by': 'Performed By',
-            'repair_date': 'Repair Date',
-            'status': 'Status'
-        }
+        'columns': OrderedDict([
+            ('asset_name', 'Asset Name'),
+            ('repair_action', 'Repair Action'),
+            ('status', 'Status'),
+            ('description', 'Description'),
+            ('performed_by', 'Performed By'),
+            ('repair_date', 'Repair Date'),
+            ('repair_id', 'Repair ID')
+        ])
     },
     'users': {
         'name': 'Users',
         'table': 'profiles',
-        'columns': {
-            'full_name': 'Full Name',
-            'username': 'Email',
-            'role': 'Role',
-            'business_unit_name': 'Business Unit',
-            'is_active': 'Active Status',
-            'email_verified': 'Email Verified',
-            'last_login_at': 'Last Login',
-            'created_at': 'Created Date',
-            'id': 'User ID'
-        }
+        'columns': OrderedDict([
+            ('full_name', 'Full Name'),
+            ('username', 'Email'),
+            ('role', 'Role'),
+            ('business_unit_name', 'Business Unit'),
+            ('is_active', 'Active Status'),
+            ('email_verified', 'Email Verified'),
+            ('created_at', 'Created Date'),
+            ('last_login_at', 'Last Login'),
+            ('id', 'User ID')
+        ])
     }
 }
 
@@ -206,8 +207,9 @@ async def export_to_excel(
         ws = wb.active
         ws.title = table_config['name']
         
-        # Add headers
-        headers = [table_config['columns'][col] for col in columns if col in table_config['columns']]
+        # Add headers in the order they appear in the form
+        ordered_columns = [col for col in table_config['columns'].keys() if col in columns]
+        headers = [table_config['columns'][col] for col in ordered_columns]
         ws.append(headers)
         
         # Style headers
@@ -218,10 +220,10 @@ async def export_to_excel(
             cell.font = header_font
             cell.fill = header_fill
         
-        # Add data rows
+        # Add data rows in correct order
         for row in data:
             row_data = []
-            for col in columns:
+            for col in ordered_columns:
                 value = row.get(col, '')
                 
                 # Handle foreign key relationships
