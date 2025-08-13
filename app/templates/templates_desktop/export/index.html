@@ -33,7 +33,7 @@
                                 <input type="radio" name="table" value="{{ table_key }}" id="table_{{ table_key }}" 
                                        class="peer sr-only" onchange="updateColumns('{{ table_key }}')">
                                 <label for="table_{{ table_key }}" 
-                                       class="flex items-center p-4 bg-gray-50 border-2 border-gray-200 rounded-lg cursor-pointer hover:bg-blue-50 hover:border-blue-300 peer-checked:bg-blue-50 peer-checked:border-blue-500 peer-checked:text-blue-700 transition-all">
+                                       class="flex items-center p-4 bg-gray-50 border-2 border-gray-200 rounded-lg cursor-pointer hover:bg-blue-50 hover:border-blue-300 peer-checked:bg-blue-50 peer-checked:border-blue-500 peer-checked:text-blue-700 transition-all duration-200 active:scale-[0.98] hover:shadow-md">
                                     <div class="flex items-center space-x-3">
                                         <div class="p-2 bg-white rounded-lg shadow-sm">
                                             {% if table_key == 'assets' %}
@@ -63,10 +63,10 @@
                         <label class="block text-sm font-semibold text-gray-700 mb-3">Select Columns</label>
                         <div class="bg-gray-50 rounded-lg p-4">
                             <div class="flex items-center justify-between mb-4">
-                                <button type="button" onclick="selectAllColumns()" 
-                                        class="text-sm text-blue-600 hover:text-blue-800 font-medium">Select All</button>
-                                <button type="button" onclick="deselectAllColumns()" 
-                                        class="text-sm text-gray-600 hover:text-gray-800 font-medium">Deselect All</button>
+                                <button type="button" onclick="selectAllColumns(this)" 
+                                        class="text-sm text-blue-600 hover:text-blue-800 font-medium transition-all duration-200 active:scale-95 hover:bg-blue-50 px-2 py-1 rounded">Select All</button>
+                                <button type="button" onclick="deselectAllColumns(this)" 
+                                        class="text-sm text-gray-600 hover:text-gray-800 font-medium transition-all duration-200 active:scale-95 hover:bg-gray-50 px-2 py-1 rounded">Deselect All</button>
                             </div>
                             <div id="columnList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                                 <!-- Columns will be populated by JavaScript -->
@@ -79,19 +79,19 @@
                         <label class="block text-sm font-semibold text-gray-700 mb-3">Filters</label>
                         <div class="bg-gray-50 rounded-lg p-4">
                             <div id="assetFilters" class="hidden space-y-2">
-                                <label class="flex items-center space-x-2">
+                                <label class="flex items-center space-x-2 p-1 rounded hover:bg-white transition-all duration-150 cursor-pointer">
                                     <input type="checkbox" name="exclude_disposed" value="true" 
-                                           class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                           class="rounded border-gray-300 text-blue-600 focus:ring-blue-500 transition-all duration-150">
                                     <span class="text-sm text-gray-700">Exclude disposed assets</span>
                                 </label>
-                                <label class="flex items-center space-x-2">
+                                <label class="flex items-center space-x-2 p-1 rounded hover:bg-white transition-all duration-150 cursor-pointer">
                                     <input type="checkbox" name="exclude_to_be_disposed" value="true" 
-                                           class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                           class="rounded border-gray-300 text-blue-600 focus:ring-blue-500 transition-all duration-150">
                                     <span class="text-sm text-gray-700">Exclude "To be Disposed" assets</span>
                                 </label>
-                                <label class="flex items-center space-x-2">
+                                <label class="flex items-center space-x-2 p-1 rounded hover:bg-white transition-all duration-150 cursor-pointer">
                                     <input type="checkbox" name="exclude_damaged" value="true" 
-                                           class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                           class="rounded border-gray-300 text-blue-600 focus:ring-blue-500 transition-all duration-150">
                                     <span class="text-sm text-gray-700">Exclude damaged assets</span>
                                 </label>
                             </div>
@@ -100,12 +100,16 @@
 
                     <!-- Export Button -->
                     <div class="flex justify-end">
-                        <button type="submit" id="exportBtn" disabled
-                                class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center space-x-2">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <button type="submit" id="exportBtn" disabled onclick="handleExportClick(this)"
+                                class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all duration-200 active:scale-95 hover:shadow-lg flex items-center space-x-2">
+                            <svg id="exportIcon" class="w-5 h-5 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                             </svg>
-                            <span>Export to Excel</span>
+                            <svg id="loadingIcon" class="w-5 h-5 animate-spin hidden" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            <span id="exportText">Export to Excel</span>
                         </button>
                     </div>
                 </form>
@@ -143,9 +147,9 @@ function updateColumns(tableKey) {
     Object.entries(columns).forEach(([key, label]) => {
         const div = document.createElement('div');
         div.innerHTML = `
-            <label class="flex items-center space-x-2 p-2 hover:bg-white rounded cursor-pointer">
+            <label class="flex items-center space-x-2 p-2 hover:bg-white rounded cursor-pointer transition-all duration-150 active:scale-[0.98] hover:shadow-sm">
                 <input type="checkbox" name="columns" value="${key}" 
-                       class="rounded border-gray-300 text-blue-600 focus:ring-blue-500" 
+                       class="rounded border-gray-300 text-blue-600 focus:ring-blue-500 transition-all duration-150" 
                        onchange="checkExportButton()">
                 <span class="text-sm text-gray-700">${label}</span>
             </label>
@@ -156,16 +160,52 @@ function updateColumns(tableKey) {
     exportBtn.disabled = true;
 }
 
-function selectAllColumns() {
+function selectAllColumns(button) {
+    // Add click feedback
+    button.classList.add('bg-blue-100', 'text-blue-800');
+    setTimeout(() => {
+        button.classList.remove('bg-blue-100', 'text-blue-800');
+    }, 200);
+    
     const checkboxes = document.querySelectorAll('input[name="columns"]');
     checkboxes.forEach(cb => cb.checked = true);
     checkExportButton();
 }
 
-function deselectAllColumns() {
+function deselectAllColumns(button) {
+    // Add click feedback
+    button.classList.add('bg-gray-100', 'text-gray-800');
+    setTimeout(() => {
+        button.classList.remove('bg-gray-100', 'text-gray-800');
+    }, 200);
+    
     const checkboxes = document.querySelectorAll('input[name="columns"]');
     checkboxes.forEach(cb => cb.checked = false);
     checkExportButton();
+}
+
+function handleExportClick(button) {
+    if (button.disabled) return;
+    
+    // Show loading state
+    const exportIcon = document.getElementById('exportIcon');
+    const loadingIcon = document.getElementById('loadingIcon');
+    const exportText = document.getElementById('exportText');
+    
+    exportIcon.classList.add('hidden');
+    loadingIcon.classList.remove('hidden');
+    exportText.textContent = 'Exporting...';
+    button.disabled = true;
+    button.classList.add('cursor-wait');
+    
+    // Reset after 3 seconds (in case of success)
+    setTimeout(() => {
+        exportIcon.classList.remove('hidden');
+        loadingIcon.classList.add('hidden');
+        exportText.textContent = 'Export to Excel';
+        button.disabled = false;
+        button.classList.remove('cursor-wait');
+    }, 3000);
 }
 
 function checkExportButton() {
