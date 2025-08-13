@@ -62,18 +62,20 @@
         </div>
         
         <div class="mt-3 pt-3 border-t border-gray-100">
-            <div class="grid grid-cols-4 gap-1">
-                <a href="/asset_management/edit/{{ asset.asset_id }}" class="flex items-center justify-center px-2 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-xs font-medium" title="Edit Asset">
-                    <i class="fas fa-edit"></i>
-                </a>
-                <a href="/damage?asset_id={{ asset.asset_id }}" class="flex items-center justify-center px-2 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 text-xs font-medium" title="Report Damage">
-                    <i class="fas fa-tools"></i>
-                </a>
-                <a href="/lost?asset_id={{ asset.asset_id }}" class="flex items-center justify-center px-2 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 text-xs font-medium" title="Report Lost">
-                    <i class="fas fa-search"></i>
-                </a>
-                <a href="/disposal?asset_id={{ asset.asset_id }}" class="flex items-center justify-center px-2 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 text-xs font-medium" title="Request Disposal">
-                    <i class="fas fa-trash"></i>
+            <div class="grid grid-cols-3 gap-1">
+                <button onclick="showIssueForm('{{ asset.asset_id }}', '{{ asset.asset_name }}', 'damage')" class="flex items-center justify-center px-2 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 text-xs font-medium" title="Report Damage">
+                    <i class="fas fa-tools mr-1"></i>Damage
+                </button>
+                <button onclick="showIssueForm('{{ asset.asset_id }}', '{{ asset.asset_name }}', 'lost')" class="flex items-center justify-center px-2 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 text-xs font-medium" title="Report Lost">
+                    <i class="fas fa-search mr-1"></i>Lost
+                </button>
+                <button onclick="showIssueForm('{{ asset.asset_id }}', '{{ asset.asset_name }}', 'disposal')" class="flex items-center justify-center px-2 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 text-xs font-medium" title="Request Disposal">
+                    <i class="fas fa-trash mr-1"></i>Disposal
+                </button>
+            </div>
+            <div class="mt-2">
+                <a href="/asset_management/edit/{{ asset.asset_id }}" class="w-full flex items-center justify-center px-2 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-xs font-medium">
+                    <i class="fas fa-edit mr-1"></i>Edit Asset
                 </a>
             </div>
         </div>
