@@ -427,65 +427,18 @@ async def approve_request(
                 return JSONResponse({"status": "error", "message": f"Error processing lost report: {str(e)}"})
         
         elif approval.get('type') == 'disposal_request':
-            # Process disposal approval
-            import json
+            # Process disposal request approval (changes status to 'To be Disposed')
             try:
-                notes_data = approval.get('notes', '{}')
-                if isinstance(notes_data, str):
-                    disposal_data = json.loads(notes_data)
-                else:
-                    disposal_data = notes_data
-                
-                disposal_reason = disposal_data.get('disposal_reason', '')
-                disposal_method = disposal_data.get('disposal_method', '')
-                description = disposal_data.get('description', '')
-                notes = disposal_data.get('notes', '')
-                
-                supabase = get_supabase()
-                
-                # Get storage location ID with fallback
-                storage_response = supabase.table('ref_locations').select('location_id, location_name, room_name').eq('location_name', 'HO-Ciputat').eq('room_name', '1022 - Gudang Support TOG').execute()
-                
-                if storage_response.data:
-                    storage_location_id = storage_response.data[0]['location_id']
-                    storage_room = '1022 - Gudang Support TOG'
-                else:
-                    # Fallback: Use first available location
-                    fallback_response = supabase.table('ref_locations').select('location_id, location_name, room_name').limit(1).execute()
-                    if fallback_response.data:
-                        storage_location_id = fallback_response.data[0]['location_id']
-                        storage_room = fallback_response.data[0]['room_name']
-                    else:
-                        return JSONResponse({"status": "error", "message": "No storage location available"})
-                
-                # Insert disposal log
-                disposal_data = {
-                    "asset_id": approval.get('asset_id'),
-                    "asset_name": approval.get('asset_name'),
-                    "disposal_reason": disposal_reason,
-                    "disposal_method": disposal_method,
-                    "description": description,
-                    "notes": notes,
-                    "disposed_by": current_profile.id,
-                    "disposed_by_name": current_profile.full_name or current_profile.username,
-                    "created_at": "now()",
-                    "status": "Disposed"
-                }
-                
-                supabase.table("disposal_log").insert(disposal_data).execute()
-                
-                # Update asset status to Disposed (final disposal)
+                # Update asset status to 'To be Disposed' (ready for SuperAdmin execution)
                 from app.utils.database_manager import update_asset
                 success = update_asset(approval.get('asset_id'), {
-                    'status': 'Disposed',
-                    'location_id': storage_location_id,
-                    'room_name': storage_room
+                    'status': 'To be Disposed'
                 })
                 if not success:
-                    return JSONResponse({"status": "error", "message": "Failed to update asset status and location"})
+                    return JSONResponse({"status": "error", "message": "Failed to update asset status"})
                 
             except Exception as e:
-                return JSONResponse({"status": "error", "message": f"Error processing disposal: {str(e)}"})
+                return JSONResponse({"status": "error", "message": f"Error processing disposal request: {str(e)}"})
         
         # Update approval status in database
         success = update_approval_status(
@@ -538,7 +491,7 @@ async def reject_request(
             # For repair rejection, keep damage status as reported
             pass
         elif approval.get('type') == 'disposal_request':
-            # For disposal rejection, just update the approval - no disposal log entry needed
+            # For disposal request rejection, asset status remains unchanged
             pass
         elif approval.get('type') == 'relocation':
             # For relocation rejection, no relocation_log entry is created
