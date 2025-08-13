@@ -1,0 +1,252 @@
+{% extends "templates_desktop/layouts/modern_layout.html" %}
+
+{% block title %}Asset Details{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Header -->
+        <div class="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl shadow-lg p-6 mb-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold text-white">Asset Details</h1>
+                    <p class="text-blue-100 mt-1">{{ asset.asset_name }}</p>
+                </div>
+                <a href="/asset_management/list" class="text-white hover:text-blue-200 transition-colors">
+                    <i class="fas fa-arrow-left text-xl"></i>
+                </a>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Asset Photo -->
+            {% if asset.photo_url %}
+            <div class="lg:col-span-1">
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <h3 class="font-semibold text-gray-900 mb-4">Asset Photo</h3>
+                    <div class="text-center">
+                        <img src="{{ asset.photo_url }}" alt="Asset Photo" 
+                             class="w-full h-64 object-cover rounded-lg cursor-pointer hover:opacity-80 transition-opacity shadow-md"
+                             onclick="showImageZoom('{{ asset.photo_url }}')" />
+                        <p class="text-xs text-gray-500 mt-2">Click to enlarge</p>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Asset Information -->
+            <div class="{{ 'lg:col-span-2' if asset.photo_url else 'lg:col-span-3' }}">
+                <div class="space-y-6">
+                    <!-- Basic Information -->
+                    <div class="bg-white rounded-xl shadow-lg p-6">
+                        <h3 class="font-semibold text-gray-900 mb-4 flex items-center">
+                            <i class="fas fa-info-circle text-blue-600 mr-2"></i>Basic Information
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="space-y-3">
+                                <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                                    <span class="text-gray-600">Asset Tag</span>
+                                    <span class="font-medium">{{ asset.asset_tag or 'N/A' }}</span>
+                                </div>
+                                <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                                    <span class="text-gray-600">Asset Name</span>
+                                    <span class="font-medium">{{ asset.asset_name }}</span>
+                                </div>
+                            </div>
+                            <div class="space-y-3">
+                                <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                                    <span class="text-gray-600">Status</span>
+                                    {% set status = asset.status %}
+                                    {% if status == 'Active' %}
+                                        <span class="px-3 py-1 text-sm font-semibold rounded-full bg-green-100 text-green-800">Active</span>
+                                    {% elif status == 'Under Repair' %}
+                                        <span class="px-3 py-1 text-sm font-semibold rounded-full bg-red-100 text-red-800">Under Repair</span>
+                                    {% elif status == 'In Storage' %}
+                                        <span class="px-3 py-1 text-sm font-semibold rounded-full bg-blue-100 text-blue-800">In Storage</span>
+                                    {% else %}
+                                        <span class="px-3 py-1 text-sm font-semibold rounded-full bg-gray-100 text-gray-800">{{ status }}</span>
+                                    {% endif %}
+                                </div>
+                                <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                                    <span class="text-gray-600">Asset ID</span>
+                                    <span class="font-medium">{{ asset.asset_id }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Classification & Specifications -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Classification -->
+                        <div class="bg-white rounded-xl shadow-lg p-6">
+                            <h3 class="font-semibold text-gray-900 mb-4 flex items-center">
+                                <i class="fas fa-tags text-green-600 mr-2"></i>Classification
+                            </h3>
+                            <div class="space-y-3">
+                                <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                                    <span class="text-gray-600">Category</span>
+                                    <span class="font-medium">{{ asset.ref_categories.category_name if asset.ref_categories else 'N/A' }}</span>
+                                </div>
+                                <div class="flex justify-between items-center py-2">
+                                    <span class="text-gray-600">Asset Type</span>
+                                    <span class="font-medium">{{ asset.ref_asset_types.type_name if asset.ref_asset_types else 'N/A' }}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Specifications -->
+                        <div class="bg-white rounded-xl shadow-lg p-6">
+                            <h3 class="font-semibold text-gray-900 mb-4 flex items-center">
+                                <i class="fas fa-cogs text-purple-600 mr-2"></i>Specifications
+                            </h3>
+                            <div class="space-y-3">
+                                <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                                    <span class="text-gray-600">Manufacture</span>
+                                    <span class="font-medium">{{ asset.manufacture or 'N/A' }}</span>
+                                </div>
+                                <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                                    <span class="text-gray-600">Model</span>
+                                    <span class="font-medium">{{ asset.model or 'N/A' }}</span>
+                                </div>
+                                <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                                    <span class="text-gray-600">Serial Number</span>
+                                    <span class="font-medium">{{ asset.serial_number or 'N/A' }}</span>
+                                </div>
+                                <div class="flex justify-between items-center py-2">
+                                    <span class="text-gray-600">Condition</span>
+                                    <span class="font-medium">{{ asset.item_condition or 'N/A' }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Location & Ownership -->
+                    <div class="bg-white rounded-xl shadow-lg p-6">
+                        <h3 class="font-semibold text-gray-900 mb-4 flex items-center">
+                            <i class="fas fa-map-marker-alt text-red-600 mr-2"></i>Location & Ownership
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="space-y-3">
+                                <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                                    <span class="text-gray-600">Company</span>
+                                    <span class="font-medium">{{ asset.ref_companies.company_name if asset.ref_companies else 'N/A' }}</span>
+                                </div>
+                                <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                                    <span class="text-gray-600">Business Unit</span>
+                                    <span class="font-medium">{{ asset.ref_business_units.business_unit_name if asset.ref_business_units else 'N/A' }}</span>
+                                </div>
+                                <div class="flex justify-between items-center py-2">
+                                    <span class="text-gray-600">Owner</span>
+                                    <span class="font-medium">{{ asset.ref_owners.owner_name if asset.ref_owners else 'N/A' }}</span>
+                                </div>
+                            </div>
+                            <div class="space-y-3">
+                                <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                                    <span class="text-gray-600">Location</span>
+                                    <span class="font-medium">{{ asset.ref_locations.location_name if asset.ref_locations else 'N/A' }}</span>
+                                </div>
+                                <div class="flex justify-between items-center py-2">
+                                    <span class="text-gray-600">Room</span>
+                                    <span class="font-medium">{{ asset.ref_locations.room_name if asset.ref_locations else asset.room_name or 'N/A' }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Financial Information -->
+                    <div class="bg-white rounded-xl shadow-lg p-6">
+                        <h3 class="font-semibold text-gray-900 mb-4 flex items-center">
+                            <i class="fas fa-dollar-sign text-yellow-600 mr-2"></i>Financial Information
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="space-y-3">
+                                <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                                    <span class="text-gray-600">Purchase Date</span>
+                                    <span class="font-medium">{{ asset.purchase_date.strftime('%d %b %Y') if asset.purchase_date else 'N/A' }}</span>
+                                </div>
+                                <div class="flex justify-between items-center py-2">
+                                    <span class="text-gray-600">Purchase Cost</span>
+                                    <span class="font-medium">Rp {{ "{:,.0f}".format(asset.purchase_cost) if asset.purchase_cost else 'N/A' }}</span>
+                                </div>
+                            </div>
+                            <div class="space-y-3">
+                                <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                                    <span class="text-gray-600">Book Value</span>
+                                    <span class="font-medium">Rp {{ "{:,.0f}".format(asset.book_value) if asset.book_value else 'N/A' }}</span>
+                                </div>
+                                <div class="flex justify-between items-center py-2">
+                                    <span class="text-gray-600">Depreciation</span>
+                                    <span class="font-medium">Rp {{ "{:,.0f}".format(asset.depreciation_value) if asset.depreciation_value else 'N/A' }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Additional Information -->
+                    <div class="bg-white rounded-xl shadow-lg p-6">
+                        <h3 class="font-semibold text-gray-900 mb-4 flex items-center">
+                            <i class="fas fa-clipboard text-indigo-600 mr-2"></i>Additional Information
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="space-y-3">
+                                <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                                    <span class="text-gray-600">Supplier</span>
+                                    <span class="font-medium">{{ asset.supplier or 'N/A' }}</span>
+                                </div>
+                                <div class="flex justify-between items-center py-2">
+                                    <span class="text-gray-600">Warranty</span>
+                                    <span class="font-medium">{{ asset.warranty or 'N/A' }}</span>
+                                </div>
+                            </div>
+                            <div class="space-y-3">
+                                <div class="flex justify-between items-center py-2">
+                                    <span class="text-gray-600">Journal</span>
+                                    <span class="font-medium">{{ asset.journal or 'N/A' }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        {% if asset.notes %}
+                        <div class="mt-4 pt-4 border-t border-gray-100">
+                            <span class="text-gray-600 block mb-2">Notes</span>
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <p class="text-gray-800">{{ asset.notes }}</p>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="mt-8 flex justify-center space-x-4">
+            {% if user.role == 'admin' %}
+            <a href="/asset_management/edit/{{ asset.asset_id }}" class="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium transition-colors">
+                <i class="fas fa-edit mr-2"></i>Edit Asset
+            </a>
+            {% endif %}
+            <a href="/asset_management/list" class="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium transition-colors">
+                <i class="fas fa-arrow-left mr-2"></i>Back to List
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Image Zoom Modal -->
+<div id="imageZoomModal" class="fixed inset-0 bg-black bg-opacity-90 hidden z-50" onclick="hideImageZoom()">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <img id="zoomedImage" class="max-w-full max-h-full object-contain" />
+    </div>
+</div>
+
+<script>
+function showImageZoom(imageUrl) {
+    document.getElementById('zoomedImage').src = imageUrl;
+    document.getElementById('imageZoomModal').classList.remove('hidden');
+}
+
+function hideImageZoom() {
+    document.getElementById('imageZoomModal').classList.add('hidden');
+}
+</script>
+{% endblock %}

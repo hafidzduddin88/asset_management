@@ -69,27 +69,23 @@
                         </td>
                         <td class="px-4 py-3">
                             <div class="flex space-x-2">
-                                <a href="/asset_management/edit/{{ asset.asset_id }}" class="text-blue-600 hover:text-blue-900 p-1 hover:bg-blue-50 rounded" title="Edit Asset">
+                                <a href="/asset_management/view/{{ asset.asset_id }}" class="text-blue-600 hover:text-blue-900 p-1 hover:bg-blue-50 rounded" title="View Asset">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                {% if user.role == 'admin' %}
+                                <a href="/asset_management/edit/{{ asset.asset_id }}" class="text-green-600 hover:text-green-900 p-1 hover:bg-green-50 rounded" title="Edit Asset">
                                     <i class="fas fa-edit"></i>
                                 </a>
-                                <div class="relative" x-data="{ open: false }">
-                                    <button @click="open = !open" class="text-orange-600 hover:text-orange-900 p-1 hover:bg-orange-50 rounded" title="Asset Issue">
-                                        <i class="fas fa-exclamation-triangle"></i>
-                                    </button>
-                                    <div x-show="open" @click.away="open = false" x-transition class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10 border">
-                                        <div class="py-2 space-y-1">
-                                            <a href="/damage?asset_id={{ asset.asset_id }}" class="block w-full mx-2 px-3 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 text-sm font-medium text-center">
-                                                <i class="fas fa-tools mr-2"></i>Damage
-                                            </a>
-                                            <a href="/lost?asset_id={{ asset.asset_id }}" class="block w-full mx-2 px-3 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 text-sm font-medium text-center">
-                                                <i class="fas fa-search mr-2"></i>Lost
-                                            </a>
-                                            <a href="/disposal?asset_id={{ asset.asset_id }}" class="block w-full mx-2 px-3 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 text-sm font-medium text-center">
-                                                <i class="fas fa-trash mr-2"></i>Disposal
-                                            </a>
-                                        </div>
-                                    </div>
-                                </div>
+                                {% endif %}
+                                <button onclick="showIssueForm('{{ asset.asset_id }}', '{{ asset.asset_name }}', 'damage')" class="text-orange-600 hover:text-orange-900 p-1 hover:bg-orange-50 rounded" title="Report Damage">
+                                    <i class="fas fa-tools"></i>
+                                </button>
+                                <button onclick="showIssueForm('{{ asset.asset_id }}', '{{ asset.asset_name }}', 'lost')" class="text-red-600 hover:text-red-900 p-1 hover:bg-red-50 rounded" title="Report Lost">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                                <button onclick="showIssueForm('{{ asset.asset_id }}', '{{ asset.asset_name }}', 'disposal')" class="text-gray-600 hover:text-gray-900 p-1 hover:bg-gray-50 rounded" title="Request Disposal">
+                                    <i class="fas fa-trash"></i>
+                                </button>
                             </div>
                         </td>
                     </tr>

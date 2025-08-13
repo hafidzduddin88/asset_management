@@ -73,10 +73,15 @@
                     <i class="fas fa-trash mr-1"></i>Disposal
                 </button>
             </div>
-            <div class="mt-2">
-                <a href="/asset_management/edit/{{ asset.asset_id }}" class="w-full flex items-center justify-center px-2 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-xs font-medium">
-                    <i class="fas fa-edit mr-1"></i>Edit Asset
+            <div class="grid grid-cols-2 gap-1 mt-2">
+                <a href="/asset_management/view/{{ asset.asset_id }}" class="flex items-center justify-center px-2 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-xs font-medium">
+                    <i class="fas fa-eye mr-1"></i>View
                 </a>
+                {% if user.role == 'admin' %}
+                <a href="/asset_management/edit/{{ asset.asset_id }}" class="flex items-center justify-center px-2 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 text-xs font-medium">
+                    <i class="fas fa-edit mr-1"></i>Edit
+                </a>
+                {% endif %}
             </div>
         </div>
     </div>
@@ -183,6 +188,8 @@
         </div>
     </div>
 </div>
+
+
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
@@ -383,5 +390,7 @@ function showErrorMessage(title, message) {
     `;
     document.body.appendChild(modal);
 }
+
+
 </script>
 {% endblock %}

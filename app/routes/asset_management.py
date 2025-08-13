@@ -73,6 +73,27 @@ async def asset_list(
     )
 
 
+@router.get("/view/{asset_id}", response_class=HTMLResponse)
+async def view_asset(
+    asset_id: str,
+    request: Request,
+    current_profile = Depends(get_current_profile)
+):
+    """View asset details."""
+    asset = get_asset_by_id(asset_id)
+    if not asset:
+        raise HTTPException(status_code=404, detail="Asset not found")
+    
+    template_path = get_template(request, "asset_management/view.html")
+    return templates.TemplateResponse(
+        template_path,
+        {
+            "request": request,
+            "user": current_profile,
+            "asset": asset
+        }
+    )
+
 @router.get("/edit/{asset_id}", response_class=HTMLResponse)
 async def edit_asset_form(
     asset_id: str,
