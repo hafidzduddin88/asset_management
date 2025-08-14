@@ -188,7 +188,8 @@ async def export_to_excel(
         
         # Apply sorting
         if table == 'assets':
-            query = query.order('asset_tag')
+            # Sort by location and room for better organization
+            query = query.order('ref_locations(location_name)', 'ref_locations(room_name)', 'asset_tag')
         elif table == 'approvals':
             query = query.order('submitted_date', desc=True)
         elif table == 'damage_log':
