@@ -141,7 +141,7 @@
         <div class="space-y-3">
             <div class="flex justify-between items-center py-2 border-b border-gray-100">
                 <span class="text-gray-600 text-sm">Purchase Date</span>
-                <span class="font-medium text-sm">{{ asset.purchase_date.strftime('%d %b %Y') if asset.purchase_date else 'N/A' }}</span>
+                <span class="font-medium text-sm">{{ asset.purchase_date if asset.purchase_date else 'N/A' }}</span>
             </div>
             <div class="flex justify-between items-center py-2 border-b border-gray-100">
                 <span class="text-gray-600 text-sm">Purchase Cost</span>
