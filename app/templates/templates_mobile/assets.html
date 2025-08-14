@@ -409,20 +409,7 @@ function changePage(page) {
 }
 
 function viewAssetDetails(assetId) {
-    const asset = allAssets.find(a => a.id === assetId);
-    if (!asset) return;
-    
-    // Mobile-friendly alert with key info
-    const details = [
-        `📦 ${asset.name}`,
-        `🆔 ID: ${asset.id}`,
-        `🏷️ ${asset.category}`,
-        `📍 ${asset.location}`,
-        `💰 Rp ${asset.book_value.toLocaleString()}`,
-        `📊 Status: ${asset.status}`
-    ].join('\n');
-    
-    alert(details);
+    window.location.href = `/asset_management/view/${assetId}`;
 }
 
 function editAsset(assetId) {

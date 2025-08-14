@@ -461,10 +461,7 @@ function changePage(page) {
 }
 
 function viewAssetDetails(assetId) {
-    const asset = allAssets.find(a => a.id === assetId);
-    if (!asset) return;
-    
-    alert(`Asset Details:\n\nName: ${asset.name}\nID: ${asset.id}\nTag: ${asset.asset_tag}\nCategory: ${asset.category}\nLocation: ${asset.location} - ${asset.room}\nStatus: ${asset.status}\nBook Value: Rp ${asset.book_value.toLocaleString()}`);
+    window.location.href = `/asset_management/view/${assetId}`;
 }
 
 function editAsset(assetId) {
