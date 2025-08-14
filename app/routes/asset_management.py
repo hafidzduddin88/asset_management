@@ -40,25 +40,9 @@ async def asset_list(
     request: Request,
     current_profile = Depends(get_current_profile)
 ):
-    """List assets for editing (admin and manager only)."""
-    if current_profile.role not in [UserRole.ADMIN, UserRole.MANAGER]:
-        raise HTTPException(status_code=403, detail="Access denied")
-    
+    """List assets with advanced filtering and management features."""
     assets = get_all_assets()
-    
-    locations = list(set(asset.get('ref_locations', {}).get('location_name', '') for asset in assets if asset.get('ref_locations')))
-    location_rooms = {}
-    for asset in assets:
-        location_data = asset.get('ref_locations', {})
-        location = location_data.get('location_name', '') if isinstance(location_data, dict) else ''
-        room = location_data.get('room_name', '') if isinstance(location_data, dict) else ''
-        if location and room:
-            if location not in location_rooms:
-                location_rooms[location] = set()
-            location_rooms[location].add(room)
-    
-    for location in location_rooms:
-        location_rooms[location] = list(location_rooms[location])
+    dropdown_options = get_dropdown_options()
     
     template_path = get_template(request, "asset_management/list.html")
     return templates.TemplateResponse(
@@ -66,9 +50,9 @@ async def asset_list(
         {
             "request": request,
             "user": current_profile,
+            "current_user": current_profile,
             "assets": assets,
-            "locations": sorted(locations),
-            "location_rooms": location_rooms
+            "dropdown_options": dropdown_options
         }
     )
 

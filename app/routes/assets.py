@@ -1,8 +1,7 @@
 # app/routes/asset.py
 from fastapi import APIRouter, Request, Depends, Query
-from fastapi.templating import Jinja2Templates
+from fastapi.responses import RedirectResponse
 from app.utils.auth import get_current_profile
-from app.utils.device_detector import get_template
 
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
@@ -21,18 +20,5 @@ async def assets_page(
     request: Request, 
     current_profile=Depends(get_current_profile)
 ):
-    """Assets listing page with filtering"""
-    from app.utils.database_manager import get_all_assets, get_dropdown_options
-    
-    # Get all assets and dropdown options for filtering
-    all_assets = get_all_assets()
-    dropdown_options = get_dropdown_options()
-    
-    template_path = get_template(request, "assets.html")
-    return templates.TemplateResponse(template_path, {
-        "request": request,
-        "user": current_profile,
-        "current_user": current_profile,
-        "assets": all_assets,
-        "dropdown_options": dropdown_options
-    })
+    """Redirect to asset management list"""
+    return RedirectResponse(url="/asset_management/list", status_code=301)
