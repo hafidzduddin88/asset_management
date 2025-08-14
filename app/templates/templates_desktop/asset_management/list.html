@@ -375,6 +375,11 @@ function displayAssets() {
                         <button onclick="requestDisposal(${asset.id}, '${asset.name}')" class="text-gray-600 hover:text-gray-900 p-1 hover:bg-gray-50 rounded transition-all duration-150 active:scale-95" title="Request Disposal">
                             <i class="fas fa-trash"></i>
                         </button>
+                        ${asset.status === 'Under Repair' ? `
+                        <button onclick="reportRepair(${asset.id}, '${asset.name}')" class="text-green-600 hover:text-green-900 p-1 hover:bg-green-50 rounded transition-all duration-150 active:scale-95" title="Report Repair">
+                            <i class="fas fa-wrench"></i>
+                        </button>
+                        ` : ''}
                         ${window.userRole === 'admin' ? `
                         <button onclick="editAsset(${asset.id})" class="text-green-600 hover:text-green-900 p-1 hover:bg-green-50 rounded" title="Edit Asset">
                             <i class="fas fa-edit"></i>
@@ -486,6 +491,12 @@ function reportLost(assetId, assetName) {
 function requestDisposal(assetId, assetName) {
     if (confirm(`Request disposal for ${assetName}?\n\nThis will create a disposal request requiring approval.`)) {
         window.location.href = `/disposal?asset_id=${assetId}`;
+    }
+}
+
+function reportRepair(assetId, assetName) {
+    if (confirm(`Report repair completion for ${assetName}?\n\nThis will mark the asset as repaired and submit for approval.`)) {
+        window.location.href = `/repair?asset_id=${assetId}`;
     }
 }
 

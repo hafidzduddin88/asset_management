@@ -14,12 +14,32 @@ templates = Jinja2Templates(directory="app/templates")
 
 @router.get("/", response_class=HTMLResponse)
 @router.get("", response_class=HTMLResponse)
-async def repair_page(request: Request, current_profile=Depends(get_current_profile)):
+async def repair_page(request: Request, asset_id: int = None, current_profile=Depends(get_current_profile)):
     """Repair asset page - accessible by all users"""
     try:
         supabase = get_supabase()
         
-        # Get assets with Under Repair status directly
+        # If asset_id is provided, show repair form for that specific asset
+        if asset_id:
+            asset_response = supabase.table("assets").select('''
+                asset_id, asset_name, asset_tag, status
+            ''').eq('asset_id', asset_id).eq('status', 'Under Repair').execute()
+            
+            if not asset_response.data:
+                # Asset not found or not under repair
+                response = RedirectResponse(url="/asset_management/list", status_code=303)
+                set_flash(response, "Asset not found or not under repair", "error")
+                return response
+            
+            asset = asset_response.data[0]
+            template_path = get_template(request, "repair/form.html")
+            return templates.TemplateResponse(template_path, {
+                "request": request,
+                "user": current_profile,
+                "asset": asset
+            })
+        
+        # Otherwise show repair list page
         assets_response = supabase.table("assets").select('''
             asset_id, asset_name, asset_tag, manufacture, model, serial_number,
             purchase_date, purchase_cost, book_value, status, updated_at,
