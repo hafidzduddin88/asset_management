@@ -138,7 +138,7 @@
                             <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
                             <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
                             <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Book Value</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Purchase Cost</th>
                             <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
                             <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                         </tr>
@@ -354,7 +354,7 @@ function displayAssets() {
                     ${getStatusBadge(asset.status)}
                 </td>
                 <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
-                    Rp ${asset.book_value.toLocaleString()}
+                    Rp ${asset.purchase_cost.toLocaleString()}
                 </td>
                 <td class="px-4 py-3 whitespace-nowrap text-xs text-gray-500">
                     ${asset.purchase_date || 'N/A'}
