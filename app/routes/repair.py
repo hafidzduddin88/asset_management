@@ -98,11 +98,7 @@ async def report_repair(
             })
         }
         
-        # Set approver based on requester role
-        if current_profile.role in ["staff", "manager"]:
-            approval_data["requires_admin_approval"] = True
-        elif current_profile.role == "admin":
-            approval_data["requires_manager_approval"] = True
+        # Role-based approval will be handled in approvals page filtering
         
         from app.utils.database_manager import add_approval_request
         add_approval_request(approval_data)

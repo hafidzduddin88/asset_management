@@ -148,7 +148,7 @@ async def approve_request(
         if approval.get('type') == 'damage_report':
             # Get storage location ID with fallback
             supabase = get_supabase()
-            storage_response = supabase.table('ref_locations').select('location_id, location_name, room_name').eq('location_name', 'HO-Ciputat').eq('room_name', '1022 - Gudang Support TOG').execute()
+            storage_response = supabase.table('ref_locations').select('location_id, location_name, room_name').eq('location_name', 'HO - Ciputat').eq('room_name', '1022 - Gudang Support TOG').execute()
             
             if storage_response.data:
                 storage_location_id = storage_response.data[0]['location_id']
@@ -365,7 +365,7 @@ async def approve_request(
                             return JSONResponse({"status": "error", "message": "Return location not found"})
                     else:
                         # No return location specified, keep in storage
-                        storage_response = supabase.table('ref_locations').select('location_id, location_name, room_name').eq('location_name', 'HO-Ciputat').eq('room_name', '1022 - Gudang Support TOG').execute()
+                        storage_response = supabase.table('ref_locations').select('location_id, location_name, room_name').eq('location_name', 'HO - Ciputat').eq('room_name', '1022 - Gudang Support TOG').execute()
                         if storage_response.data:
                             storage_location_id = storage_response.data[0]['location_id']
                             storage_room = '1022 - Gudang Support TOG'
@@ -392,7 +392,7 @@ async def approve_request(
             try:
                 # Get storage location ID with fallback
                 supabase = get_supabase()
-                storage_response = supabase.table('ref_locations').select('location_id, location_name, room_name').eq('location_name', 'HO-Ciputat').eq('room_name', '1022 - Gudang Support TOG').execute()
+                storage_response = supabase.table('ref_locations').select('location_id, location_name, room_name').eq('location_name', 'HO - Ciputat').eq('room_name', '1022 - Gudang Support TOG').execute()
                 
                 if storage_response.data:
                     storage_location_id = storage_response.data[0]['location_id']
