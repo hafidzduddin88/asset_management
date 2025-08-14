@@ -100,7 +100,7 @@
 
                     <!-- Export Button -->
                     <div class="flex justify-end">
-                        <button type="submit" id="exportBtn" disabled onclick="handleExportClick(this)"
+                        <button type="button" id="exportBtn" disabled onclick="handleExportClick()"
                                 class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all duration-200 active:scale-95 hover:shadow-lg flex items-center space-x-2">
                             <svg id="exportIcon" class="w-5 h-5 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
@@ -184,8 +184,9 @@ function deselectAllColumns(button) {
     checkExportButton();
 }
 
-function handleExportClick(button) {
-    if (button.disabled) return;
+async function handleExportClick() {
+    const exportBtn = document.getElementById('exportBtn');
+    if (exportBtn.disabled) return;
     
     // Show loading state
     const exportIcon = document.getElementById('exportIcon');
@@ -195,23 +196,61 @@ function handleExportClick(button) {
     exportIcon.classList.add('hidden');
     loadingIcon.classList.remove('hidden');
     exportText.textContent = 'Exporting...';
-    button.disabled = true;
-    button.classList.add('cursor-wait');
+    exportBtn.disabled = true;
+    exportBtn.classList.add('cursor-wait');
     
-    // Reset after 3 seconds (in case of success)
-    setTimeout(() => {
+    try {
+        // Get form data
+        const formData = new FormData(document.getElementById('exportForm'));
+        
+        // Make request
+        const response = await fetch('/export/excel', {
+            method: 'POST',
+            body: formData
+        });
+        
+        if (response.ok) {
+            // Get filename from response headers
+            const contentDisposition = response.headers.get('Content-Disposition');
+            let filename = 'export.xlsx';
+            if (contentDisposition) {
+                const filenameMatch = contentDisposition.match(/filename=(.+)/);
+                if (filenameMatch) {
+                    filename = filenameMatch[1];
+                }
+            }
+            
+            // Create blob and download
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+        } else {
+            const errorData = await response.json();
+            alert('Export failed: ' + (errorData.error || 'Unknown error'));
+        }
+    } catch (error) {
+        alert('Export failed: ' + error.message);
+    } finally {
+        // Reset button state
         exportIcon.classList.remove('hidden');
         loadingIcon.classList.add('hidden');
         exportText.textContent = 'Export to Excel';
-        button.disabled = false;
-        button.classList.remove('cursor-wait');
-    }, 3000);
+        exportBtn.disabled = false;
+        exportBtn.classList.remove('cursor-wait');
+    }
 }
 
 function checkExportButton() {
+    const selectedTable = document.querySelector('input[name="table"]:checked');
     const selectedColumns = document.querySelectorAll('input[name="columns"]:checked');
     const exportBtn = document.getElementById('exportBtn');
-    exportBtn.disabled = selectedColumns.length === 0;
+    exportBtn.disabled = !selectedTable || selectedColumns.length === 0;
 }
 </script>
 {% endblock %}

@@ -290,6 +290,8 @@ async def export_to_excel(
         )
         
     except ImportError:
-        return {"error": "Excel export not available - openpyxl not installed"}
+        from fastapi.responses import JSONResponse
+        return JSONResponse({"error": "Excel export not available - openpyxl not installed"}, status_code=500)
     except Exception as e:
-        return {"error": f"Export failed: {str(e)}"}
+        from fastapi.responses import JSONResponse
+        return JSONResponse({"error": f"Export failed: {str(e)}"}, status_code=500)
