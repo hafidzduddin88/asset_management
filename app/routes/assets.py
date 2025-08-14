@@ -4,7 +4,6 @@ from fastapi.responses import RedirectResponse
 from app.utils.auth import get_current_profile
 
 router = APIRouter()
-templates = Jinja2Templates(directory="app/templates")
 
 
 @router.get("/assets/debug")
