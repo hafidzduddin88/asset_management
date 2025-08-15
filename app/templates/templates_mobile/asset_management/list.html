@@ -57,7 +57,9 @@
                 <option value="Active">Active</option>
                 <option value="Under Repair">Under Repair</option>
                 <option value="In Storage">In Storage</option>
+                <option value="To be Disposed">To be Disposed</option>
                 <option value="Disposed">Disposed</option>
+                <option value="Lost">Lost</option>
             </select>
         </div>
         <div class="flex justify-between items-center">
@@ -299,9 +301,11 @@ function displayAssets() {
                     <button onclick="event.stopPropagation(); relocateAsset(${asset.id})" class="text-purple-600 hover:text-purple-800 text-xs font-medium">
                         <i class="fas fa-arrows-alt mr-1"></i>Move
                     </button>
+                    ${asset.status !== 'Under Repair' ? `
                     <button onclick="event.stopPropagation(); reportDamage(${asset.id}, '${asset.name}')" class="text-orange-600 hover:text-orange-800 text-xs font-medium" title="Report Damage">
                         <i class="fas fa-tools"></i>
                     </button>
+                    ` : ''}
                     <button onclick="event.stopPropagation(); reportLost(${asset.id}, '${asset.name}')" class="text-red-600 hover:text-red-800 text-xs font-medium" title="Report Lost">
                         <i class="fas fa-search"></i>
                     </button>
@@ -332,7 +336,9 @@ function getStatusBadge(status) {
         'Active': 'bg-green-100 text-green-800',
         'Under Repair': 'bg-red-100 text-red-800',
         'In Storage': 'bg-blue-100 text-blue-800',
-        'Disposed': 'bg-gray-100 text-gray-800'
+        'To be Disposed': 'bg-yellow-100 text-yellow-800',
+        'Disposed': 'bg-gray-100 text-gray-800',
+        'Lost': 'bg-red-100 text-red-800'
     };
     const badgeClass = badges[status] || 'bg-gray-100 text-gray-800';
     return `<span class="px-2 py-1 text-xs font-semibold rounded-full ${badgeClass}">${status}</span>`;
