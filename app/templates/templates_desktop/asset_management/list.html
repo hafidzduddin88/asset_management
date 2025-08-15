@@ -369,10 +369,12 @@ function displayAssets() {
                         <button onclick="viewAssetDetails(${asset.id})" class="text-blue-600 hover:text-blue-900 p-1 hover:bg-blue-50 rounded" title="View Details">
                             <i class="fas fa-eye"></i>
                         </button>
+                        ${!['Disposed', 'Lost'].includes(asset.status) ? `
                         ${['Active', 'In Storage'].includes(asset.status) ? `
                         <button onclick="relocateAsset(${asset.id})" class="text-purple-600 hover:text-purple-900 p-1 hover:bg-purple-50 rounded" title="Relocate Asset">
                             <i class="fas fa-arrows-alt"></i>
                         </button>
+                        ` : ''}
                         ${asset.status !== 'Under Repair' ? `
                         <button onclick="reportDamage(${asset.id}, '${asset.name}')" class="text-orange-600 hover:text-orange-900 p-1 hover:bg-orange-50 rounded transition-all duration-150 active:scale-95" title="Report Damage">
                             <i class="fas fa-tools"></i>
