@@ -1,0 +1,104 @@
+{% extends "templates_mobile/layouts/modern_layout.html" %}
+
+{% block title %}Asset Repair{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="bg-green-600 rounded-lg p-4 mb-4">
+    <h1 class="text-xl font-bold text-white">Asset Repair</h1>
+    <p class="text-green-100 text-sm">Report repair completion</p>
+</div>
+
+{% if assets %}
+<div class="space-y-3">
+    {% for asset in assets %}
+    <div class="bg-white rounded-lg shadow p-4">
+        <div class="mb-3">
+            <h4 class="font-semibold text-gray-900">{{ asset.asset_name }}</h4>
+            <div class="mt-2 space-y-1 text-sm text-gray-600">
+                <div><strong>ID:</strong> {{ asset.asset_id }}</div>
+                <div><strong>Category:</strong> {{ asset.ref_categories.category_name if asset.ref_categories else 'N/A' }}</div>
+                <div><strong>Location:</strong> {{ asset.ref_locations.location_name if asset.ref_locations else 'N/A' }}</div>
+            </div>
+        </div>
+        <button onclick="openRepairModal({{ asset.asset_id }}, '{{ asset.asset_name }}')" 
+                class="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium">
+            <i class="fas fa-wrench mr-2"></i>Report Repair
+        </button>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="bg-white rounded-lg shadow p-8 text-center">
+    <i class="fas fa-tools text-4xl text-gray-300 mb-4"></i>
+    <h3 class="text-lg font-semibold text-gray-900 mb-2">No Assets Under Repair</h3>
+    <p class="text-gray-600 text-sm">No assets currently need repair completion.</p>
+</div>
+{% endif %}
+
+<!-- Repair Modal -->
+<div id="repairModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden z-50">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-white rounded-lg shadow-xl max-w-sm w-full">
+            <form id="repairForm" method="POST" action="/repair/submit">
+                <div class="px-4 py-3 border-b border-gray-200">
+                    <h3 class="text-lg font-semibold text-gray-900">Report Repair</h3>
+                    <p class="text-sm text-gray-600 mt-1">Asset: <span id="modalAssetName"></span></p>
+                </div>
+                
+                <div class="px-4 py-4 space-y-4">
+                    <input type="hidden" id="modalAssetId" name="asset_id">
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">New Location</label>
+                        <select id="locationSelect" name="location_id" required class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                            <option value="">Select Location</option>
+                            {% for location in locations %}
+                            <option value="{{ location.location_id }}">{{ location.location_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Room</label>
+                        <input type="text" id="roomInput" name="room_name" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" placeholder="Enter room name">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Repair Notes</label>
+                        <textarea name="repair_notes" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" placeholder="Repair details..."></textarea>
+                    </div>
+                </div>
+                
+                <div class="px-4 py-3 border-t border-gray-200 flex space-x-3">
+                    <button type="button" onclick="closeRepairModal()" class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg text-sm">
+                        Cancel
+                    </button>
+                    <button type="submit" class="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg text-sm">
+                        Submit
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function openRepairModal(assetId, assetName) {
+    document.getElementById('modalAssetId').value = assetId;
+    document.getElementById('modalAssetName').textContent = assetName;
+    document.getElementById('repairModal').classList.remove('hidden');
+}
+
+function closeRepairModal() {
+    document.getElementById('repairModal').classList.add('hidden');
+    document.getElementById('repairForm').reset();
+}
+
+document.getElementById('repairModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeRepairModal();
+    }
+});
+</script>
+{% endblock %}
