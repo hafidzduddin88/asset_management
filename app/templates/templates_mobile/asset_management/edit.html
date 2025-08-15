@@ -62,7 +62,9 @@
                     <option value="Active" {{ 'selected' if asset.status == 'Active' }}>Active</option>
                     <option value="Under Repair" {{ 'selected' if asset.status == 'Under Repair' }}>Under Repair</option>
                     <option value="In Storage" {{ 'selected' if asset.status == 'In Storage' }}>In Storage</option>
-                    <option value="To Be Disposed" {{ 'selected' if asset.status == 'To Be Disposed' }}>To Be Disposed</option>
+                    <option value="To be Disposed" {{ 'selected' if asset.status == 'To be Disposed' }}>To be Disposed</option>
+                    <option value="Disposed" {{ 'selected' if asset.status == 'Disposed' }}>Disposed</option>
+                    <option value="Lost" {{ 'selected' if asset.status == 'Lost' }}>Lost</option>
                 </select>
             </div>
 
