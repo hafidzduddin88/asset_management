@@ -369,7 +369,7 @@ function displayAssets() {
                         <button onclick="viewAssetDetails(${asset.id})" class="text-blue-600 hover:text-blue-900 p-1 hover:bg-blue-50 rounded" title="View Details">
                             <i class="fas fa-eye"></i>
                         </button>
-                        ${asset.status !== 'Disposed' ? `
+                        ${['Active', 'In Storage'].includes(asset.status) ? `
                         <button onclick="relocateAsset(${asset.id})" class="text-purple-600 hover:text-purple-900 p-1 hover:bg-purple-50 rounded" title="Relocate Asset">
                             <i class="fas fa-arrows-alt"></i>
                         </button>
