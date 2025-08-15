@@ -52,8 +52,9 @@ async def repair_page(request: Request, asset_id: int = None, current_profile = 
         
     except Exception as e:
         logger.error(f"Error loading repair page: {str(e)}")
-        flash_message(request, f"Error loading repair page: {str(e)}", "error")
-        return RedirectResponse(url="/", status_code=302)
+        response = RedirectResponse(url="/", status_code=302)
+        set_flash(response, f"Error loading repair page: {str(e)}", "error")
+        return response
 
 @router.post("/repair/submit")
 async def submit_repair(
@@ -98,24 +99,20 @@ async def submit_repair(
             }
         }
         
-        # Determine approval requirements based on submitter role
-        if current_profile.role in ['staff', 'manager']:
-            approval_data["requires_admin_approval"] = True
-            approval_data["requires_manager_approval"] = False
-        elif current_profile.role == 'admin':
-            approval_data["requires_admin_approval"] = False
-            approval_data["requires_manager_approval"] = True
+        # Role-based approval will be handled in approvals page filtering
         
         # Insert approval request
         supabase.table('approvals').insert(approval_data).execute()
         
-        flash_message(request, f"Repair completion for {asset_name} submitted for approval", "success")
-        return RedirectResponse(url="/repair", status_code=302)
+        response = RedirectResponse(url="/repair", status_code=302)
+        set_flash(response, f"Repair completion for {asset_name} submitted for approval", "success")
+        return response
         
     except Exception as e:
         logger.error(f"Error submitting repair: {str(e)}")
-        flash_message(request, f"Error submitting repair: {str(e)}", "error")
-        return RedirectResponse(url="/repair", status_code=302)
+        response = RedirectResponse(url="/repair", status_code=302)
+        set_flash(response, f"Error submitting repair: {str(e)}", "error")
+        return response
 
 @router.get("/repair/locations/{location_id}")
 async def get_location_rooms(location_id: int):
