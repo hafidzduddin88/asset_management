@@ -30,6 +30,10 @@
                     <p class="text-gray-600 mt-1">Manage and monitor all organizational assets with comprehensive tracking</p>
                 </div>
                 <div class="flex items-center space-x-4">
+                    <button onclick="refreshData()" class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors shadow-lg">
+                        <i class="fas fa-sync-alt mr-2"></i>
+                        Refresh
+                    </button>
                     <a href="/asset_management/add" class="inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors shadow-lg">
                         <i class="fas fa-plus mr-2"></i>
                         Add Asset
@@ -365,6 +369,7 @@ function displayAssets() {
                         <button onclick="viewAssetDetails(${asset.id})" class="text-blue-600 hover:text-blue-900 p-1 hover:bg-blue-50 rounded" title="View Details">
                             <i class="fas fa-eye"></i>
                         </button>
+                        ${asset.status !== 'Disposed' ? `
                         <button onclick="relocateAsset(${asset.id})" class="text-purple-600 hover:text-purple-900 p-1 hover:bg-purple-50 rounded" title="Relocate Asset">
                             <i class="fas fa-arrows-alt"></i>
                         </button>
@@ -388,6 +393,7 @@ function displayAssets() {
                         <button onclick="editAsset(${asset.id})" class="text-green-600 hover:text-green-900 p-1 hover:bg-green-50 rounded" title="Edit Asset">
                             <i class="fas fa-edit"></i>
                         </button>
+                        ` : ''}
                         ` : ''}
                     </div>
                 </td>
@@ -508,5 +514,19 @@ function reportRepair(assetId, assetName) {
 
 // Set user role from backend
 window.userRole = '{{ user.role if user else "staff" }}';
+
+function refreshData() {
+    const refreshBtn = document.querySelector('button[onclick="refreshData()"]');
+    const icon = refreshBtn.querySelector('i');
+    
+    // Add spinning animation
+    icon.classList.add('fa-spin');
+    refreshBtn.disabled = true;
+    
+    // Reload the page
+    setTimeout(() => {
+        window.location.reload();
+    }, 500);
+}
 </script>
 {% endblock %}
