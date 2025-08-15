@@ -3,7 +3,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from app.utils.database_manager import get_supabase
 from app.utils.device_detector import get_template
 from app.utils.auth import get_current_profile
-from app.utils.flash import flash_message
+from app.utils.flash import set_flash
 from starlette.templating import Jinja2Templates
 import logging
 
