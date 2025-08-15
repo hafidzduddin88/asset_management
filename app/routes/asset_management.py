@@ -116,7 +116,7 @@ async def update_asset(
     serial_number: str = Form(""),
     purchase_cost: float = Form(...),
     journal: str = Form(""),
-    photo_url: str = Form(""),
+    photo: UploadFile = File(None),
     status: str = Form(...),
     company: str = Form(...),
     location: str = Form(...),
@@ -130,6 +130,17 @@ async def update_asset(
         raise HTTPException(status_code=403, detail="Access denied")
     
     asset = get_asset_by_id(asset_id)
+
+    # Handle photo upload
+    photo_url = asset.get('photo_url', '')  # Keep existing photo by default
+    if photo and photo.filename:
+        try:
+            contents = await photo.read()
+            new_photo_url = upload_to_drive(contents, photo.filename, asset_id)
+            if new_photo_url:
+                photo_url = new_photo_url
+        except Exception as e:
+            logging.error(f"Error uploading photo: {str(e)}")
 
     update_data = {
         "asset_name": asset_name,
