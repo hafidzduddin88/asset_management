@@ -368,33 +368,33 @@ function displayAssets() {
                 </td>
                 <td class="px-4 py-3 whitespace-nowrap text-sm font-medium">
                     <div class="flex items-center space-x-1">
-                        <button onclick="viewAssetDetails(${asset.id})" class="text-blue-600 hover:text-blue-900 p-1 hover:bg-blue-50 rounded" title="View Details">
+                        <button onclick="viewAssetDetails(${asset.id})" class="text-blue-600 hover:text-blue-900 p-1 hover:bg-blue-50 rounded transition-all duration-150 active:scale-95 transform" title="View Details">
                             <i class="fas fa-eye"></i>
                         </button>
                         ${!['Disposed', 'Lost', 'To be Disposed'].includes(asset.status) ? `
                         ${['Active', 'In Storage'].includes(asset.status) ? `
-                        <button onclick="relocateAsset(${asset.id})" class="text-purple-600 hover:text-purple-900 p-1 hover:bg-purple-50 rounded" title="Relocate Asset">
+                        <button onclick="relocateAsset(${asset.id})" class="text-purple-600 hover:text-purple-900 p-1 hover:bg-purple-50 rounded transition-all duration-150 active:scale-95 transform" title="Relocate Asset">
                             <i class="fas fa-arrows-alt"></i>
                         </button>
                         ` : ''}
                         ${asset.status !== 'Under Repair' ? `
-                        <button onclick="reportDamage(${asset.id}, '${asset.name}')" class="text-orange-600 hover:text-orange-900 p-1 hover:bg-orange-50 rounded transition-all duration-150 active:scale-95" title="Report Damage">
+                        <button onclick="reportDamage(${asset.id}, '${asset.name}')" class="text-orange-600 hover:text-orange-900 p-1 hover:bg-orange-50 rounded transition-all duration-150 active:scale-95 transform" title="Report Damage">
                             <i class="fas fa-tools"></i>
                         </button>
                         ` : ''}
-                        <button onclick="reportLost(${asset.id}, '${asset.name}')" class="text-red-600 hover:text-red-900 p-1 hover:bg-red-50 rounded transition-all duration-150 active:scale-95" title="Report Lost">
+                        <button onclick="reportLost(${asset.id}, '${asset.name}')" class="text-red-600 hover:text-red-900 p-1 hover:bg-red-50 rounded transition-all duration-150 active:scale-95 transform" title="Report Lost">
                             <i class="fas fa-search"></i>
                         </button>
-                        <button onclick="requestDisposal(${asset.id}, '${asset.name}')" class="text-gray-600 hover:text-gray-900 p-1 hover:bg-gray-50 rounded transition-all duration-150 active:scale-95" title="Request Disposal">
+                        <button onclick="requestDisposal(${asset.id}, '${asset.name}')" class="text-gray-600 hover:text-gray-900 p-1 hover:bg-gray-50 rounded transition-all duration-150 active:scale-95 transform" title="Request Disposal">
                             <i class="fas fa-trash"></i>
                         </button>
                         ${asset.status === 'Under Repair' ? `
-                        <button onclick="reportRepair(${asset.id}, '${asset.name}')" class="text-green-600 hover:text-green-900 p-1 hover:bg-green-50 rounded transition-all duration-150 active:scale-95" title="Report Repair">
+                        <button onclick="reportRepair(${asset.id}, '${asset.name}')" class="text-green-600 hover:text-green-900 p-1 hover:bg-green-50 rounded transition-all duration-150 active:scale-95 transform" title="Report Repair">
                             <i class="fas fa-wrench"></i>
                         </button>
                         ` : ''}
                         ${window.userRole === 'admin' ? `
-                        <button onclick="editAsset(${asset.id})" class="text-green-600 hover:text-green-900 p-1 hover:bg-green-50 rounded" title="Edit Asset">
+                        <button onclick="editAsset(${asset.id})" class="text-green-600 hover:text-green-900 p-1 hover:bg-green-50 rounded transition-all duration-150 active:scale-95 transform" title="Edit Asset">
                             <i class="fas fa-edit"></i>
                         </button>
                         ` : ''}
@@ -493,9 +493,7 @@ function relocateAsset(assetId) {
 }
 
 function reportDamage(assetId, assetName) {
-    if (confirm(`Report damage for ${assetName}?\n\nThis will create a damage report requiring approval.`)) {
-        window.location.href = `/damage?asset_id=${assetId}`;
-    }
+    window.location.href = `/damage?asset_id=${assetId}`;
 }
 
 function reportLost(assetId, assetName) {
@@ -507,9 +505,7 @@ function requestDisposal(assetId, assetName) {
 }
 
 function reportRepair(assetId, assetName) {
-    if (confirm(`Report repair completion for ${assetName}?\n\nThis will mark the asset as repaired and submit for approval.`)) {
-        window.location.href = `/repair?asset_id=${assetId}`;
-    }
+    window.location.href = `/repair?asset_id=${assetId}`;
 }
 
 // Set user role from backend
