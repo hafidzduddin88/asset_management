@@ -31,65 +31,9 @@ async def damage_page(request: Request, asset_id: int = None, current_profile = 
     })
 
 
-@router.get("/lost")
-async def lost_page(request: Request, asset_id: int = None, current_profile = Depends(get_current_profile)):
-    """Lost reporting page"""
-    from app.utils.database_manager import get_supabase
-    
-    supabase = get_supabase()
-    asset_data = None
-    
-    if asset_id:
-        # Get specific asset
-        response = supabase.table('assets').select('*').eq('asset_id', asset_id).execute()
-        if response.data:
-            asset_data = response.data[0]
-    
-    template_path = get_template(request, "lost/form.html")
-    return templates.TemplateResponse(template_path, {
-        "request": request,
-        "current_profile": current_profile,
-        "asset": asset_data
-    })
 
-@router.post("/damage/lost")
-async def submit_lost_report(request: Request, current_profile = Depends(get_current_profile)):
-    """Submit lost report - syncs to Supabase"""
-    from app.utils.database_manager import add_approval_request, get_supabase
-    from datetime import datetime
 
-    try:
-        data = await request.json()
-        supabase = get_supabase()
-        asset_ids = data.get('asset_ids', [])
-        
-        success_count = 0
-        for asset_id in asset_ids:
-            try:
-                # Add to lost_log table
-                lost_data = {
-                    'asset_id': int(asset_id),
-                    'date_lost': data.get('date_lost'),
-                    'description': data.get('description'),
-                    'reported_by': current_profile.id,
-                    'reported_by_name': current_profile.full_name or current_profile.username,
-                    'status': 'pending'
-                }
-                supabase.table('lost_log').insert(lost_data).execute()
-                success_count += 1
-                
-            except Exception as e:
-                logging.error(f"Error processing lost report for asset {asset_id}: {e}")
-                continue
-        
-        if success_count > 0:
-            return {"status": "success", "message": f"Lost report submitted for {success_count} asset(s)"}
-        else:
-            return {"status": "error", "message": "Failed to submit lost reports"}
 
-    except Exception as e:
-        logging.error(f"Error submitting lost report: {e}")
-        return {"status": "error", "message": str(e)}
 
 
 @router.post("/disposal")

@@ -19,7 +19,7 @@ app.mount("/static", StaticFiles(directory="app/static"), name="static")
 from app.routes import (
     login, health, offline, home, assets, asset_management,
     damage, profile, repair, approvals, disposal, user_management,
-    logs, relocation, export, depreciation
+    logs, relocation, export, depreciation, lost
 )
 
 # Include all routers
@@ -30,6 +30,7 @@ app.include_router(home.router)
 app.include_router(assets.router)
 app.include_router(asset_management.router)
 app.include_router(damage.router)
+app.include_router(lost.router)
 app.include_router(profile.router)
 app.include_router(repair.router)
 app.include_router(approvals.router)
