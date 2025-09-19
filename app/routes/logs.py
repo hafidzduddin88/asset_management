@@ -64,9 +64,11 @@ async def logs_page(
         # Manager and admin can see all approvals
         approvals = all_approvals
     
-    # Separate pending and completed
-    pending_approvals = [a for a in approvals if a.get('status') == 'pending']
-    completed_approvals = [a for a in approvals if a.get('status') in ['approved', 'rejected']]
+    # Separate pending and completed, sort by date (newest first)
+    pending_approvals = sorted([a for a in approvals if a.get('status') == 'pending'], 
+                              key=lambda x: x.get('created_at', ''), reverse=True)
+    completed_approvals = sorted([a for a in approvals if a.get('status') in ['approved', 'rejected']], 
+                                key=lambda x: x.get('updated_at', x.get('created_at', '')), reverse=True)
     
     template_path = get_template(request, "logs/index.html")
     return templates.TemplateResponse(
