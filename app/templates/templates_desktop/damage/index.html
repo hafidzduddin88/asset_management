@@ -1,494 +1,267 @@
 {% extends "templates_desktop/layouts/modern_layout.html" %}
 
-{% block title %}Asset Issues{% endblock %}
+{% block title %}Report Damage - AMBP{% endblock %}
 
 {% block content %}
-<!-- Header -->
-<div class="bg-red-600 rounded-lg p-4 mb-4">
-    <h1 class="text-xl font-bold text-white">Asset Issues</h1>
-    <p class="text-red-100 text-sm">Report damage, loss, or disposal</p>
-</div>
-
-<!-- Quick Actions -->
-<div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
-    <button onclick="openModal('damage')" class="bg-red-600 text-white rounded-lg p-4 text-center">
-        <i class="fas fa-exclamation-triangle text-2xl mb-2"></i>
-        <div class="text-sm font-medium">Damage</div>
-    </button>
-    <button onclick="openModal('lost')" class="bg-orange-600 text-white rounded-lg p-4 text-center">
-        <i class="fas fa-search text-2xl mb-2"></i>
-        <div class="text-sm font-medium">Lost</div>
-    </button>
-    <button onclick="openModal('disposal')" class="bg-gray-600 text-white rounded-lg p-4 text-center">
-        <i class="fas fa-trash text-2xl mb-2"></i>
-        <div class="text-sm font-medium">Disposal</div>
-    </button>
-</div>
-
-<!-- Asset Search -->
-<div class="bg-white rounded-lg shadow p-4 mb-4">
-    <h3 class="font-semibold text-gray-900 mb-3">Search Asset</h3>
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
-        <input type="text" id="assetSearch" placeholder="Search by name or ID..." 
-               class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500">
-        <select id="locationFilter" class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500">
-            <option value="">All Locations</option>
-        </select>
-        <select id="roomFilter" class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500" disabled>
-            <option value="">All Rooms</option>
-        </select>
-    </div>
-    <div id="searchResults" class="mt-3 space-y-2">
-        <!-- Search results will appear here -->
-    </div>
-    
-    <!-- Selected Assets List -->
-    <div id="selectedAssetsList" class="mt-4" style="display: none;">
-        <h4 class="font-medium text-gray-900 mb-2">Selected Assets (<span id="selectedCount">0</span>)</h4>
-        <div id="selectedAssetsContainer" class="space-y-2 max-h-40 overflow-y-auto">
-            <!-- Selected assets will appear here -->
-        </div>
-        <button onclick="clearSelectedAssets()" class="mt-2 text-sm text-red-600 hover:text-red-800">Clear All</button>
-    </div>
-</div>
-
-
-
-<!-- Damage Report Modal -->
-<div id="damageModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" style="display: none;">
-    <div class="relative top-4 mx-4 p-4 border shadow-lg rounded-lg bg-white">
-        <div class="flex justify-between items-center mb-4">
-            <h3 class="text-lg font-medium text-gray-900">Report Damage</h3>
-            <button onclick="closeModal('damage')" class="text-gray-400 hover:text-gray-600">
-                <i class="fas fa-times text-xl"></i>
-            </button>
-        </div>
-        <form id="damageForm" class="space-y-4">
-            <input type="hidden" id="damageAssetId">
+<div x-data="damageAssets()" class="space-y-6">
+    <!-- Header -->
+    <div class="bg-gradient-to-r from-orange-500 to-orange-600 rounded-xl p-6 text-white shadow-lg">
+        <div class="flex items-center justify-between">
             <div>
-                <label class="block text-sm font-medium text-gray-700">Asset Name</label>
-                <input type="text" id="damageAssetName" readonly class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50">
+                <h1 class="text-2xl font-bold flex items-center">
+                    <i class="fas fa-tools mr-3"></i>Report Asset Damage
+                </h1>
+                <p class="text-orange-100 mt-1">Report asset damage for repair workflow</p>
+            </div>
+            <div class="text-right">
+                <div class="text-3xl font-bold" x-text="filteredAssets.length"></div>
+                <div class="text-orange-100 text-sm">Available Assets</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search and Filters -->
+    <div class="bg-white rounded-xl shadow-sm p-6">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Search Assets</label>
+                <div class="relative">
+                    <input type="text" x-model="searchTerm" placeholder="Search by name, tag, or serial..."
+                           class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500">
+                    <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                </div>
             </div>
             <div>
-                <label class="block text-sm font-medium text-gray-700">Damage Type</label>
-                <select id="damageType" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg">
-                    <option value="">Select Type</option>
-                    <option value="Physical">Physical</option>
-                    <option value="Electrical">Electrical</option>
-                    <option value="Software">Software</option>
-                    <option value="Other">Other</option>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Location</label>
+                <select x-model="locationFilter" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500">
+                    <option value="">All Locations</option>
+                    <template x-for="location in uniqueLocations" :key="location">
+                        <option :value="location" x-text="location"></option>
+                    </template>
                 </select>
             </div>
             <div>
-                <label class="block text-sm font-medium text-gray-700">Severity</label>
-                <select id="damageSeverity" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg">
-                    <option value="">Select Severity</option>
-                    <option value="Low">Low</option>
-                    <option value="Medium">Medium</option>
-                    <option value="High">High</option>
-                    <option value="Critical">Critical</option>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Category</label>
+                <select x-model="categoryFilter" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500">
+                    <option value="">All Categories</option>
+                    <template x-for="category in uniqueCategories" :key="category">
+                        <option :value="category" x-text="category"></option>
+                    </template>
                 </select>
             </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700">Description</label>
-                <textarea id="damageDescription" required rows="3" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg"></textarea>
+            <div class="flex items-end">
+                <button @click="resetFilters()" class="w-full px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
+                    <i class="fas fa-undo mr-2"></i>Reset
+                </button>
             </div>
-            <div class="flex space-x-3">
-                <button type="button" onclick="closeModal('damage')" class="flex-1 bg-gray-300 py-2 px-4 rounded-lg text-gray-700 font-medium">Cancel</button>
-                <button type="submit" class="flex-1 bg-red-600 hover:bg-red-700 py-2 px-4 rounded-lg text-white font-medium">Submit Report</button>
-            </div>
-        </form>
-    </div>
-</div>
-
-<!-- Lost Report Modal -->
-<div id="lostModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" style="display: none;">
-    <div class="relative top-4 mx-4 p-4 border shadow-lg rounded-lg bg-white">
-        <div class="flex justify-between items-center mb-4">
-            <h3 class="text-lg font-medium text-gray-900">Report Lost Asset</h3>
-            <button onclick="closeModal('lost')" class="text-gray-400 hover:text-gray-600">
-                <i class="fas fa-times text-xl"></i>
-            </button>
         </div>
-        <form id="lostForm" class="space-y-4">
-            <input type="hidden" id="lostAssetId">
-            <div>
-                <label class="block text-sm font-medium text-gray-700">Asset Name</label>
-                <input type="text" id="lostAssetName" readonly class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50">
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700">Date Lost</label>
-                <input type="date" id="dateLost" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg">
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700">Description</label>
-                <textarea id="lostDescription" required rows="3" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg"></textarea>
-            </div>
-            <div class="flex space-x-3">
-                <button type="button" onclick="closeModal('lost')" class="flex-1 bg-gray-300 py-2 px-4 rounded-lg text-gray-700 font-medium">Cancel</button>
-                <button type="submit" class="flex-1 bg-orange-600 hover:bg-orange-700 py-2 px-4 rounded-lg text-white font-medium">Submit Report</button>
-            </div>
-        </form>
     </div>
-</div>
 
-<!-- Disposal Request Modal -->
-<div id="disposalModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" style="display: none;">
-    <div class="relative top-4 mx-4 p-4 border shadow-lg rounded-lg bg-white">
-        <div class="flex justify-between items-center mb-4">
-            <h3 class="text-lg font-medium text-gray-900">Request Disposal</h3>
-            <button onclick="closeModal('disposal')" class="text-gray-400 hover:text-gray-600">
-                <i class="fas fa-times text-xl"></i>
-            </button>
+    <!-- Assets Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <template x-for="asset in filteredAssets" :key="asset.asset_id">
+            <div class="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow border border-gray-200">
+                <div class="p-6">
+                    <div class="flex items-start justify-between mb-4">
+                        <div class="flex-1">
+                            <h3 class="font-semibold text-gray-900 mb-1" x-text="asset.asset_name"></h3>
+                            <p class="text-sm text-gray-500" x-text="asset.asset_tag"></p>
+                        </div>
+                        <span class="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
+                            <span x-text="asset.status"></span>
+                        </span>
+                    </div>
+                    
+                    <div class="space-y-2 mb-4">
+                        <div class="flex items-center text-sm text-gray-600">
+                            <i class="fas fa-map-marker-alt w-4 mr-2"></i>
+                            <span x-text="asset.ref_locations?.location_name || 'N/A'"></span>
+                        </div>
+                        <div class="flex items-center text-sm text-gray-600">
+                            <i class="fas fa-door-open w-4 mr-2"></i>
+                            <span x-text="asset.room_name || 'N/A'"></span>
+                        </div>
+                        <div class="flex items-center text-sm text-gray-600">
+                            <i class="fas fa-tag w-4 mr-2"></i>
+                            <span x-text="asset.ref_categories?.category_name || 'N/A'"></span>
+                        </div>
+                    </div>
+                    
+                    <button @click="openDamageModal(asset)" 
+                            class="w-full px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors">
+                        <i class="fas fa-tools mr-2"></i>Report Damage
+                    </button>
+                </div>
+            </div>
+        </template>
+    </div>
+
+    <!-- Empty State -->
+    <div x-show="filteredAssets.length === 0" class="text-center py-12">
+        <i class="fas fa-search text-gray-300 text-6xl mb-4"></i>
+        <h3 class="text-lg font-medium text-gray-900 mb-2">No assets found</h3>
+        <p class="text-gray-500">Try adjusting your search criteria</p>
+    </div>
+
+    <!-- Damage Report Modal -->
+    <div x-show="showDamageModal" x-cloak class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-xl p-6 w-full max-w-md mx-4">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold text-gray-900">Report Asset Damage</h3>
+                <button @click="closeDamageModal()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <form @submit.prevent="submitDamageReport()">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Asset</label>
+                        <p class="text-sm text-gray-900 bg-gray-50 p-2 rounded" x-text="selectedAsset?.asset_name"></p>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Damage Type *</label>
+                        <select x-model="damageForm.damage_type" required
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500">
+                            <option value="">Select Type</option>
+                            <option value="Physical Damage">Physical Damage</option>
+                            <option value="Software Issue">Software Issue</option>
+                            <option value="Hardware Failure">Hardware Failure</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Severity *</label>
+                        <select x-model="damageForm.severity" required
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500">
+                            <option value="">Select Severity</option>
+                            <option value="Low">Low</option>
+                            <option value="Medium">Medium</option>
+                            <option value="High">High</option>
+                            <option value="Critical">Critical</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Description *</label>
+                        <textarea x-model="damageForm.description" required rows="3" placeholder="Describe the damage in detail..."
+                                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"></textarea>
+                    </div>
+                </div>
+                
+                <div class="flex space-x-3 mt-6">
+                    <button type="button" @click="closeDamageModal()" 
+                            class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
+                        Cancel
+                    </button>
+                    <button type="submit" :disabled="submitting"
+                            class="flex-1 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50">
+                        <span x-show="!submitting">Submit Report</span>
+                        <span x-show="submitting">Submitting...</span>
+                    </button>
+                </div>
+            </form>
         </div>
-        <form id="disposalForm" class="space-y-4">
-            <input type="hidden" id="disposalAssetId">
-            <div>
-                <label class="block text-sm font-medium text-gray-700">Asset Name</label>
-                <input type="text" id="disposalAssetName" readonly class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50">
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700">Disposal Reason</label>
-                <select id="disposalReason" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg">
-                    <option value="">Select Reason</option>
-                    <option value="End of Life">End of Life</option>
-                    <option value="Irreparable">Irreparable</option>
-                    <option value="Obsolete">Obsolete</option>
-                    <option value="Other">Other</option>
-                </select>
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700">Description</label>
-                <textarea id="disposalDescription" required rows="3" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg"></textarea>
-            </div>
-            <div class="flex space-x-3">
-                <button type="button" onclick="closeModal('disposal')" class="flex-1 bg-gray-300 py-2 px-4 rounded-lg text-gray-700 font-medium">Cancel</button>
-                <button type="submit" class="flex-1 bg-gray-600 hover:bg-gray-700 py-2 px-4 rounded-lg text-white font-medium">Submit Request</button>
-            </div>
-        </form>
     </div>
 </div>
 
 <script>
-const assetsData = {{ assets_data | tojson }};
-let selectedAssets = [];
-let roomsData = {};
-
-// Initialize location and room data
-document.addEventListener('DOMContentLoaded', function() {
-    initializeFilters();
-    setupEventListeners();
-
-});
-
-
-
-function confirmSubmission(type) {
-    const assetNames = selectedAssets.map(asset => `• ${asset.name} (ID: ${asset.id})`).join('\n');
-    
-    let details = '';
-    let actionText = '';
-    
-    switch(type) {
-        case 'damage':
-            actionText = 'Report Damage';
-            const damageType = document.getElementById('damageType').value;
-            const severity = document.getElementById('damageSeverity').value;
-            const description = document.getElementById('damageDescription').value;
-            details = `\nDamage Details:\n• Type: ${damageType}\n• Severity: ${severity}\n• Description: ${description}`;
-            break;
-        case 'lost':
-            actionText = 'Report as Lost';
-            const dateLost = document.getElementById('dateLost').value;
-            const lostDesc = document.getElementById('lostDescription').value;
-            details = `\nLost Details:\n• Date Lost: ${dateLost}\n• Description: ${lostDesc}`;
-            break;
-        case 'disposal':
-            actionText = 'Request Disposal';
-            const reason = document.getElementById('disposalReason').value;
-            const dispDesc = document.getElementById('disposalDescription').value;
-            details = `\nDisposal Details:\n• Reason: ${reason}\n• Description: ${dispDesc}`;
-            break;
-    }
-    
-    const message = `${actionText} Confirmation\n\nAssets (${selectedAssets.length}):\n${assetNames}${details}\n\n⚠️ This action will create a request that requires approval.\n\nProceed with submission?`;
-    
-    return confirm(message);
-}
-
-function initializeFilters() {
-    const locationFilter = document.getElementById('locationFilter');
-    
-    // Build rooms data and populate locations
-    const locations = new Set();
-    assetsData.forEach(asset => {
-        const location = asset.ref_locations?.location_name || '';
-        const room = asset.ref_locations?.room_name || asset.room_name || '';
+function damageAssets() {
+    return {
+        assets: {{ assets | tojson }},
+        searchTerm: '',
+        locationFilter: '',
+        categoryFilter: '',
+        showDamageModal: false,
+        selectedAsset: null,
+        submitting: false,
+        damageForm: {
+            damage_type: '',
+            severity: '',
+            description: ''
+        },
         
-        if (location) {
-            locations.add(location);
-            if (!roomsData[location]) roomsData[location] = new Set();
-            if (room) roomsData[location].add(room);
-        }
-    });
-    
-    // Convert sets to arrays
-    Object.keys(roomsData).forEach(location => {
-        roomsData[location] = Array.from(roomsData[location]).sort();
-    });
-    
-    // Populate location dropdown
-    Array.from(locations).sort().forEach(location => {
-        const option = document.createElement('option');
-        option.value = location;
-        option.textContent = location;
-        locationFilter.appendChild(option);
-    });
-}
-
-function setupEventListeners() {
-    const locationFilter = document.getElementById('locationFilter');
-    const roomFilter = document.getElementById('roomFilter');
-    const assetSearch = document.getElementById('assetSearch');
-    
-    locationFilter.addEventListener('change', function() {
-        const selectedLocation = this.value;
-        roomFilter.innerHTML = '<option value="">All Rooms</option>';
-        roomFilter.disabled = !selectedLocation;
-        
-        if (selectedLocation && roomsData[selectedLocation]) {
-            roomsData[selectedLocation].forEach(room => {
-                const option = document.createElement('option');
-                option.value = room;
-                option.textContent = room;
-                roomFilter.appendChild(option);
+        get filteredAssets() {
+            return this.assets.filter(asset => {
+                const matchesSearch = !this.searchTerm || 
+                    asset.asset_name?.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
+                    asset.asset_tag?.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
+                    asset.serial_number?.toLowerCase().includes(this.searchTerm.toLowerCase());
+                
+                const matchesLocation = !this.locationFilter || 
+                    asset.ref_locations?.location_name === this.locationFilter;
+                
+                const matchesCategory = !this.categoryFilter || 
+                    asset.ref_categories?.category_name === this.categoryFilter;
+                
+                return matchesSearch && matchesLocation && matchesCategory;
             });
-            roomFilter.disabled = false;
+        },
+        
+        get uniqueLocations() {
+            return [...new Set(this.assets.map(asset => asset.ref_locations?.location_name).filter(Boolean))];
+        },
+        
+        get uniqueCategories() {
+            return [...new Set(this.assets.map(asset => asset.ref_categories?.category_name).filter(Boolean))];
+        },
+        
+        resetFilters() {
+            this.searchTerm = '';
+            this.locationFilter = '';
+            this.categoryFilter = '';
+        },
+        
+        openDamageModal(asset) {
+            this.selectedAsset = asset;
+            this.damageForm = {
+                damage_type: '',
+                severity: '',
+                description: ''
+            };
+            this.showDamageModal = true;
+        },
+        
+        closeDamageModal() {
+            this.showDamageModal = false;
+            this.selectedAsset = null;
+        },
+        
+        async submitDamageReport() {
+            if (!this.selectedAsset) return;
+            
+            this.submitting = true;
+            
+            try {
+                const formData = new FormData();
+                formData.append('damage_type', this.damageForm.damage_type);
+                formData.append('severity', this.damageForm.severity);
+                formData.append('description', this.damageForm.description);
+                
+                const response = await fetch(`/damage/report/${this.selectedAsset.asset_id}`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    this.closeDamageModal();
+                    window.showToast(result.message, 'success');
+                    // Remove asset from list
+                    this.assets = this.assets.filter(a => a.asset_id !== this.selectedAsset.asset_id);
+                } else {
+                    window.showToast(result.message, 'error');
+                }
+            } catch (error) {
+                window.showToast('Error submitting damage report', 'error');
+            } finally {
+                this.submitting = false;
+            }
         }
-        performSearch();
-    });
-    
-    roomFilter.addEventListener('change', performSearch);
-    assetSearch.addEventListener('input', performSearch);
-}
-
-function performSearch() {
-    const searchTerm = document.getElementById('assetSearch').value.toLowerCase();
-    const selectedLocation = document.getElementById('locationFilter').value;
-    const selectedRoom = document.getElementById('roomFilter').value;
-    const resultsDiv = document.getElementById('searchResults');
-    
-    if (searchTerm.length < 2 && !selectedLocation && !selectedRoom) {
-        resultsDiv.innerHTML = '';
-        return;
     }
-    
-    const filteredAssets = assetsData.filter(asset => {
-        const matchesSearch = !searchTerm || searchTerm.length < 2 || 
-            asset.asset_name?.toLowerCase().includes(searchTerm) ||
-            asset.asset_id?.toString().includes(searchTerm);
-        
-        const assetLocation = asset.ref_locations?.location_name || '';
-        const assetRoom = asset.ref_locations?.room_name || asset.room_name || '';
-        
-        const matchesLocation = !selectedLocation || assetLocation === selectedLocation;
-        const matchesRoom = !selectedRoom || assetRoom === selectedRoom;
-        
-        return matchesSearch && matchesLocation && matchesRoom;
-    });
-    
-    resultsDiv.innerHTML = filteredAssets.map(asset => {
-        const location = asset.ref_locations?.location_name || '';
-        const room = asset.ref_locations?.room_name || asset.room_name || '';
-        
-        const isSelected = selectedAssets.some(a => a.id === asset.asset_id);
-        
-        return `
-            <div class="p-3 border border-gray-200 rounded-lg hover:bg-gray-50 flex justify-between items-center">
-                <div>
-                    <div class="font-medium text-gray-900">${asset.asset_name}</div>
-                    <div class="text-sm text-gray-500">ID: ${asset.asset_id}</div>
-                    <div class="text-xs text-gray-400">${location}${room ? ' - ' + room : ''}</div>
-                </div>
-                <button onclick="addAssetToList(${asset.asset_id}, '${asset.asset_name}', '${location}', '${room}')" 
-                        class="px-3 py-1 text-sm rounded-lg transition-colors ${
-                            isSelected ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-blue-600 text-white hover:bg-blue-700'
-                        }" ${isSelected ? 'disabled' : ''}>
-                    ${isSelected ? 'Added' : 'Add'}
-                </button>
-            </div>
-        `;
-    }).join('');
 }
-
-function addAssetToList(assetId, assetName, location, room) {
-    if (selectedAssets.some(a => a.id === assetId)) return;
-    
-    selectedAssets.push({
-        id: assetId,
-        name: assetName,
-        location: location,
-        room: room
-    });
-    
-    updateSelectedAssetsList();
-    performSearch(); // Refresh search results to update button states
-}
-
-function removeAssetFromList(assetId) {
-    selectedAssets = selectedAssets.filter(a => a.id !== assetId);
-    updateSelectedAssetsList();
-    performSearch(); // Refresh search results to update button states
-}
-
-function clearSelectedAssets() {
-    selectedAssets = [];
-    updateSelectedAssetsList();
-    performSearch();
-}
-
-function updateSelectedAssetsList() {
-    const listDiv = document.getElementById('selectedAssetsList');
-    const containerDiv = document.getElementById('selectedAssetsContainer');
-    const countSpan = document.getElementById('selectedCount');
-    
-    if (selectedAssets.length === 0) {
-        listDiv.style.display = 'none';
-        return;
-    }
-    
-    listDiv.style.display = 'block';
-    countSpan.textContent = selectedAssets.length;
-    
-    containerDiv.innerHTML = selectedAssets.map(asset => `
-        <div class="flex justify-between items-center p-2 bg-gray-50 rounded-lg">
-            <div>
-                <div class="font-medium text-sm text-gray-900">${asset.name}</div>
-                <div class="text-xs text-gray-500">ID: ${asset.id} • ${asset.location}${asset.room ? ' - ' + asset.room : ''}</div>
-            </div>
-            <button onclick="removeAssetFromList(${asset.id})" class="text-red-600 hover:text-red-800 p-1">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-    `).join('');
-}
-
-function openModal(type) {
-    if (selectedAssets.length === 0) {
-        alert('Please add assets to the list first');
-        return;
-    }
-    
-    // For multi-asset, we'll use the first asset's info in the form but process all selected assets
-    const firstAsset = selectedAssets[0];
-    document.getElementById(`${type}AssetId`).value = JSON.stringify(selectedAssets.map(a => a.id));
-    document.getElementById(`${type}AssetName`).value = selectedAssets.length === 1 ? 
-        firstAsset.name : `${selectedAssets.length} assets selected`;
-    document.getElementById(`${type}Modal`).style.display = 'block';
-}
-
-function closeModal(type) {
-    document.getElementById(`${type}Modal`).style.display = 'none';
-}
-
-// Form submissions
-document.getElementById('damageForm').addEventListener('submit', async function(e) {
-    e.preventDefault();
-    
-    if (!confirmSubmission('damage')) return;
-    
-    const assetIds = JSON.parse(document.getElementById('damageAssetId').value);
-    const formData = {
-        asset_ids: assetIds,
-        damage_type: document.getElementById('damageType').value,
-        severity: document.getElementById('damageSeverity').value,
-        damage_description: document.getElementById('damageDescription').value
-    };
-    
-    try {
-        const response = await fetch('/damage/report', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(formData)
-        });
-        
-        const result = await response.json();
-        alert(result.message);
-        
-        if (result.status === 'success') {
-            closeModal('damage');
-            document.getElementById('damageForm').reset();
-            clearSelectedAssets();
-        }
-    } catch (error) {
-        alert('Error submitting damage report');
-    }
-});
-
-document.getElementById('lostForm').addEventListener('submit', async function(e) {
-    e.preventDefault();
-    
-    if (!confirmSubmission('lost')) return;
-    
-    const assetIds = JSON.parse(document.getElementById('lostAssetId').value);
-    const formData = {
-        asset_ids: assetIds,
-        date_lost: document.getElementById('dateLost').value,
-        description: document.getElementById('lostDescription').value
-    };
-    
-    try {
-        const response = await fetch('/damage/lost', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(formData)
-        });
-        
-        const result = await response.json();
-        alert(result.message);
-        
-        if (result.status === 'success') {
-            closeModal('lost');
-            document.getElementById('lostForm').reset();
-            clearSelectedAssets();
-        }
-    } catch (error) {
-        alert('Error submitting lost report');
-    }
-});
-
-
-
-document.getElementById('disposalForm').addEventListener('submit', async function(e) {
-    e.preventDefault();
-    
-    if (!confirmSubmission('disposal')) return;
-    
-    const assetIds = JSON.parse(document.getElementById('disposalAssetId').value);
-    const formData = {
-        asset_ids: assetIds,
-        disposal_reason: document.getElementById('disposalReason').value,
-        description: document.getElementById('disposalDescription').value
-    };
-    
-    try {
-        const response = await fetch('/disposal', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(formData)
-        });
-        
-        const result = await response.json();
-        alert(result.message);
-        
-        if (result.status === 'success') {
-            closeModal('disposal');
-            document.getElementById('disposalForm').reset();
-            clearSelectedAssets();
-        }
-    } catch (error) {
-        alert('Error submitting disposal request');
-    }
-});
 </script>
 {% endblock %}

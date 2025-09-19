@@ -12,119 +12,42 @@ templates = Jinja2Templates(directory="app/templates")
 @router.get("/damage")
 async def damage_page(request: Request, asset_id: int = None, current_profile = Depends(get_current_profile)):
     """Damage reporting page"""
-    from app.utils.database_manager import get_supabase
-    
-    supabase = get_supabase()
-    asset_data = None
+    from app.utils.database_manager import get_supabase, get_all_assets
     
     if asset_id:
-        # Get specific asset
+        # Individual asset damage form
+        supabase = get_supabase()
         response = supabase.table('assets').select('*').eq('asset_id', asset_id).execute()
-        if response.data:
-            asset_data = response.data[0]
-    
-    template_path = get_template(request, "damage/form.html")
-    return templates.TemplateResponse(template_path, {
-        "request": request,
-        "current_profile": current_profile,
-        "asset": asset_data
-    })
-
-
-
-
-
-
-
-@router.post("/disposal")
-async def submit_disposal_request(request: Request, current_profile = Depends(get_current_profile)):
-    """Submit disposal request - syncs to Supabase"""
-    from app.utils.database_manager import add_approval_request, get_supabase
-    from datetime import datetime
-
-    try:
-        data = await request.json()
-        supabase = get_supabase()
-        asset_ids = data.get('asset_ids', [])
+        asset_data = response.data[0] if response.data else None
         
-        success_count = 0
-        for asset_id in asset_ids:
-            try:
-                # Add to disposal_log table
-                disposal_data = {
-                    'asset_id': int(asset_id),
-                    'disposal_reason': data.get('disposal_reason', 'User request'),
-                    'description': data.get('description'),
-                    'requested_by': current_profile.id,
-                    'requested_by_name': current_profile.full_name or current_profile.username,
-                    'status': 'pending'
-                }
-                supabase.table('disposal_log').insert(disposal_data).execute()
-                success_count += 1
-                
-            except Exception as e:
-                logging.error(f"Error processing disposal request for asset {asset_id}: {e}")
-                continue
+        template_path = get_template(request, "damage/form.html")
+        return templates.TemplateResponse(template_path, {
+            "request": request,
+            "current_profile": current_profile,
+            "asset": asset_data
+        })
+    else:
+        # Asset selection page
+        all_assets = get_all_assets()
+        active_assets = [asset for asset in all_assets if asset.get('status') not in ['Disposed', 'Lost', 'Under Repair']]
         
-        if success_count > 0:
-            return {"status": "success", "message": f"Disposal request submitted for {success_count} asset(s)"}
-        else:
-            return {"status": "error", "message": "Failed to submit disposal requests"}
-
-    except Exception as e:
-        logging.error(f"Error submitting disposal request: {e}")
-        return {"status": "error", "message": str(e)}
+        template_path = get_template(request, "damage/index.html")
+        return templates.TemplateResponse(template_path, {
+            "request": request,
+            "user": current_profile,
+            "assets": active_assets
+        })
 
 
-@router.post("/repair")
-async def submit_repair_report(request: Request, current_profile = Depends(get_current_profile)):
-    """Submit repair report - syncs to Supabase"""
-    from app.utils.database_manager import add_approval_request, get_supabase
-    from datetime import datetime
 
-    try:
-        data = await request.json()
-        supabase = get_supabase()
-        asset_ids = data.get('asset_ids', [])
-        
-        success_count = 0
-        for asset_id in asset_ids:
-            try:
-                # Add to repair_log table
-                repair_data = {
-                    'asset_id': int(asset_id),
-                    'repair_action': data.get('repair_action'),
-                    'action_type': 'repair',
-                    'description': data.get('description'),
-                    'performed_by': current_profile.id,
-                    'performed_by_name': current_profile.full_name or current_profile.username,
-                    'status': 'completed'
-                }
-                
-                # Add new location if specified
-                if data.get('new_location'):
-                    location_parts = data.get('new_location').split(' - ')
-                    if len(location_parts) == 2:
-                        location_name, room_name = location_parts
-                        loc_response = supabase.table('ref_locations').select('location_id').eq('location_name', location_name).eq('room_name', room_name).execute()
-                        if loc_response.data:
-                            repair_data['new_location_id'] = loc_response.data[0]['location_id']
-                
-                supabase.table('repair_log').insert(repair_data).execute()
-                success_count += 1
-                
-            except Exception as e:
-                logging.error(f"Error processing repair for asset {asset_id}: {e}")
-                continue
-        
-        if success_count > 0:
-            return {"status": "success", "message": f"Repair report submitted for {success_count} asset(s)"}
-        else:
-            return {"status": "error", "message": "Failed to submit repair reports"}
 
-    except Exception as e:
-        logging.error(f"Error submitting repair report: {e}")
-        return {"status": "error", "message": str(e)}
+
+
+
+
+
+
+
 
 
 @router.post("/damage/report/{asset_id}")
