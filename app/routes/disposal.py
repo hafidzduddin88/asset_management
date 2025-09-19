@@ -4,7 +4,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from datetime import datetime
 
-from app.utils.auth import get_admin_user, get_current_profile, get_current_profile
+from app.utils.auth import get_admin_user, get_current_profile
 from app.utils.database_manager import get_all_assets, update_asset
 from app.utils.flash import set_flash
 from app.utils.device_detector import get_template
@@ -40,7 +40,7 @@ async def disposal_page(
         )
     else:
         # SuperAdmin disposal execution list
-        if current_profile.role != 'admin':
+        if current_profile.role.value != 'admin':
             raise HTTPException(status_code=403, detail="Access denied")
         
         # Get assets marked "To be Disposed"
@@ -89,8 +89,7 @@ async def request_disposal(
         'submitted_date': datetime.now().isoformat(),
         'description': f"Disposal request: {disposal_reason} - {disposal_method}",
         'notes': f'{{"disposal_reason": "{disposal_reason}", "disposal_method": "{disposal_method}", "description": "{description or ""}", "notes": "{notes or ""}"}}',
-        'requires_admin_approval': True if current_profile.role in ['staff', 'manager'] else False,
-        'requires_manager_approval': True if current_profile.role == 'admin' else False,
+
         'status': 'pending'
     }
     

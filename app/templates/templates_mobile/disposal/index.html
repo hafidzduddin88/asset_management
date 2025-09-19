@@ -110,19 +110,6 @@
                 </div>
                 
                 <div class="mb-3">
-                    <label for="disposal_reason" class="block text-xs font-medium text-gray-700 mb-1">Disposal Reason *</label>
-                    <select name="disposal_reason" id="disposal_reason" required class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm">
-                        <option value="">Select Reason</option>
-                        <option value="End of Life">End of Life</option>
-                        <option value="Damaged Beyond Repair">Damaged Beyond Repair</option>
-                        <option value="Obsolete">Obsolete</option>
-                        <option value="Lost">Lost</option>
-                        <option value="Stolen">Stolen</option>
-                        <option value="Other">Other</option>
-                    </select>
-                </div>
-                
-                <div class="mb-3">
                     <label for="disposal_method" class="block text-xs font-medium text-gray-700 mb-1">Disposal Method *</label>
                     <select name="disposal_method" id="disposal_method" required class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm">
                         <option value="">Select Method</option>
@@ -134,19 +121,14 @@
                     </select>
                 </div>
                 
-                <div class="mb-3">
-                    <label for="description" class="block text-xs font-medium text-gray-700 mb-1">Description</label>
-                    <textarea name="description" id="description" rows="2" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"></textarea>
-                </div>
-                
                 <div class="mb-4">
                     <label for="notes" class="block text-xs font-medium text-gray-700 mb-1">Notes</label>
                     <textarea name="notes" id="notes" rows="2" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"></textarea>
                 </div>
                 
                 <div class="flex flex-col space-y-2">
-                    <button type="submit" onclick="return confirm('Are you sure you want to submit this disposal request for manager approval?')" class="w-full bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white px-4 py-3 rounded-lg font-semibold transition-all duration-200 touch-manipulation">
-                        <i class="fas fa-paper-plane mr-2"></i>Submit for Approval
+                    <button type="submit" onclick="return confirm('Are you sure you want to permanently dispose this asset?')" class="w-full bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white px-4 py-3 rounded-lg font-semibold transition-all duration-200 touch-manipulation">
+                        <i class="fas fa-trash mr-2"></i>Dispose Asset
                     </button>
                     <button type="button" onclick="closeDisposalModal()" class="w-full bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 font-semibold transition-colors duration-200 touch-manipulation">
                         Cancel
@@ -161,7 +143,7 @@
 <script>
 function openDisposalModal(assetId, assetName) {
     document.getElementById('assetName').textContent = assetName;
-    document.getElementById('disposalForm').action = `/disposal/dispose/${assetId}`;
+    document.getElementById('disposalForm').action = `/disposal/execute/${assetId}`;
     document.getElementById('disposalModal').classList.remove('hidden');
 }
 

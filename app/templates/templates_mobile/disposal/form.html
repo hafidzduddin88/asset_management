@@ -24,8 +24,10 @@
             <select id="disposalReason" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500">
                 <option value="">Select reason</option>
                 <option value="End of Life">End of Life</option>
+                <option value="Damaged Beyond Repair">Damaged Beyond Repair</option>
                 <option value="Obsolete">Obsolete</option>
-                <option value="Beyond Repair">Beyond Repair</option>
+                <option value="Lost">Lost</option>
+                <option value="Stolen">Stolen</option>
                 <option value="Other">Other</option>
             </select>
         </div>
@@ -46,25 +48,24 @@
 document.getElementById('disposalForm').addEventListener('submit', async function(e) {
     e.preventDefault();
     
-    const formData = {
-        asset_ids: [document.getElementById('assetId').value],
-        disposal_reason: document.getElementById('disposalReason').value,
-        description: document.getElementById('description').value
-    };
+    const assetId = document.getElementById('assetId').value;
+    const formData = new FormData();
+    formData.append('disposal_reason', document.getElementById('disposalReason').value);
+    formData.append('disposal_method', 'To be determined');
+    formData.append('description', document.getElementById('description').value);
+    formData.append('notes', '');
     
     try {
-        const response = await fetch('/disposal', {
+        const response = await fetch(`/disposal/request/${assetId}`, {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify(formData)
+            body: formData
         });
-        const result = await response.json();
         
-        if (result.status === 'success') {
-            showSuccessMessage('Disposal Request Submitted', `Asset "${document.getElementById('assetName').value}" disposal request has been submitted.`);
-            setTimeout(() => window.location.href = '/asset_management/list', 2000);
+        if (response.ok) {
+            showSuccessMessage('Disposal Request Submitted', `Asset "${document.getElementById('assetName').value}" disposal request has been submitted for approval.`);
+            setTimeout(() => window.location.href = '/asset_management', 2000);
         } else {
-            showErrorMessage('Submission Failed', result.message);
+            showErrorMessage('Submission Failed', 'Failed to submit disposal request.');
         }
     } catch (error) {
         showErrorMessage('Network Error', 'Failed to submit request. Please try again.');
