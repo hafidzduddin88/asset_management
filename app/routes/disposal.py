@@ -12,32 +12,67 @@ from app.utils.device_detector import get_template
 router = APIRouter(prefix="/disposal", tags=["disposal"])
 templates = Jinja2Templates(directory="app/templates")
 
-@router.get("/request", response_class=HTMLResponse)
-async def disposal_request_page(
+@router.get("/form", response_class=HTMLResponse)
+async def disposal_form_page(
     request: Request,
+    asset_id: str,
     current_profile = Depends(get_current_profile)
 ):
-    """Halaman request disposal - pilih asset untuk request disposal (status → To be Disposed)."""
-    from app.utils.database_manager import get_supabase
+    """Disposal request form page for specific asset."""
+    from app.utils.database_manager import get_asset_by_id
     
-    supabase = get_supabase()
+    # Get asset data
+    asset = get_asset_by_id(asset_id)
+    if not asset:
+        raise HTTPException(status_code=404, detail="Asset not found")
     
-    # Get all active assets that can be disposed
-    response = supabase.table('assets').select('''
-        asset_id, asset_tag, asset_name, status,
-        ref_categories(category_name),
-        ref_locations(location_name, room_name)
-    ''').not_.in_('status', ['Disposed', 'Lost', 'To be Disposed']).execute()
-    
-    active_assets = response.data or []
-    
-    template_path = get_template(request, "disposal/request.html")
+    template_path = get_template(request, "disposal/form.html")
     return templates.TemplateResponse(
         template_path,
         {
             "request": request,
             "current_profile": current_profile,
-            "assets": active_assets
+            "asset": asset
+        }
+    )
+
+@router.get("/success", response_class=HTMLResponse)
+async def disposal_success_page(
+    request: Request,
+    asset_id: str,
+    asset_name: str = None,
+    current_profile = Depends(get_current_profile)
+):
+    """Disposal request success page."""
+    template_path = get_template(request, "disposal/success.html")
+    return templates.TemplateResponse(
+        template_path,
+        {
+            "request": request,
+            "current_profile": current_profile,
+            "asset_id": asset_id,
+            "asset_name": asset_name or "Asset"
+        }
+    )
+
+@router.get("/error", response_class=HTMLResponse)
+async def disposal_error_page(
+    request: Request,
+    asset_id: str,
+    asset_name: str = None,
+    error_message: str = None,
+    current_profile = Depends(get_current_profile)
+):
+    """Disposal request error page."""
+    template_path = get_template(request, "disposal/error.html")
+    return templates.TemplateResponse(
+        template_path,
+        {
+            "request": request,
+            "current_profile": current_profile,
+            "asset_id": asset_id,
+            "asset_name": asset_name or "Asset",
+            "error_message": error_message or "An error occurred while submitting your disposal request."
         }
     )
 
@@ -83,36 +118,48 @@ async def submit_disposal_request(
     notes: str = Form(None),
     current_profile = Depends(get_current_profile)
 ):
-    """Submit request disposal - akan mengubah status asset menjadi 'To be Disposed' setelah approval."""
+    """Submit disposal request."""
     from app.utils.database_manager import get_asset_by_id, add_approval_request
     
-    # Get asset data
-    asset = get_asset_by_id(asset_id)
-    if not asset:
-        raise HTTPException(status_code=404, detail="Asset not found")
+    try:
+        # Get asset data
+        asset = get_asset_by_id(asset_id)
+        if not asset:
+            return RedirectResponse(
+                url=f"/disposal/error?asset_id={asset_id}&error_message=Asset not found",
+                status_code=status.HTTP_303_SEE_OTHER
+            )
+        
+        # Create disposal request approval
+        approval_data = {
+            'type': 'disposal_request',
+            'asset_id': asset_id,
+            'asset_name': asset.get('asset_name', ''),
+            'submitted_by': current_profile.id,
+            'submitted_date': datetime.now().isoformat(),
+            'description': f"Disposal request: {disposal_reason} - {disposal_method}",
+            'notes': f'{{"disposal_reason": "{disposal_reason}", "disposal_method": "{disposal_method}", "description": "{description or ""}", "notes": "{notes or ""}"}}',
+            'status': 'pending'
+        }
+        
+        approval_success = add_approval_request(approval_data)
+        
+        if approval_success:
+            return RedirectResponse(
+                url=f"/disposal/success?asset_id={asset_id}&asset_name={asset.get('asset_name', '')}",
+                status_code=status.HTTP_303_SEE_OTHER
+            )
+        else:
+            return RedirectResponse(
+                url=f"/disposal/error?asset_id={asset_id}&asset_name={asset.get('asset_name', '')}&error_message=Failed to submit disposal request",
+                status_code=status.HTTP_303_SEE_OTHER
+            )
     
-    # Create disposal request approval
-    approval_data = {
-        'type': 'disposal_request',
-        'asset_id': asset_id,
-        'asset_name': asset.get('asset_name', ''),
-        'submitted_by': current_profile.id,
-        'submitted_date': datetime.now().isoformat(),
-        'description': f"Disposal request: {disposal_reason} - {disposal_method}",
-        'notes': f'{{"disposal_reason": "{disposal_reason}", "disposal_method": "{disposal_method}", "description": "{description or ""}", "notes": "{notes or ""}"}}',
-        'status': 'pending'
-    }
-    
-    approval_success = add_approval_request(approval_data)
-    
-    if approval_success:
-        response = RedirectResponse(url="/asset_management", status_code=status.HTTP_303_SEE_OTHER)
-        set_flash(response, f"Disposal request for {asset.get('asset_name', '')} submitted for approval", "success")
-        return response
-    else:
-        response = RedirectResponse(url="/asset_management", status_code=status.HTTP_303_SEE_OTHER)
-        set_flash(response, "Error submitting disposal request", "error")
-        return response
+    except Exception as e:
+        return RedirectResponse(
+            url=f"/disposal/error?asset_id={asset_id}&error_message=An unexpected error occurred",
+            status_code=status.HTTP_303_SEE_OTHER
+        )
 
 @router.post("/execute/{asset_id}")
 async def execute_disposal(

@@ -1,0 +1,59 @@
+{% extends "templates_mobile/layouts/modern_layout.html" %}
+
+{% block title %}Disposal Request Submitted{% endblock %}
+
+{% block content %}
+<!-- Success Card -->
+<div class="bg-white rounded-lg shadow p-6 text-center">
+    <div class="bg-green-600 rounded-full p-4 inline-block mb-4">
+        <i class="fas fa-check-circle text-3xl text-white"></i>
+    </div>
+    
+    <h1 class="text-xl font-bold text-gray-900 mb-2">Request Submitted</h1>
+    <p class="text-gray-600 mb-6">Disposal request submitted successfully</p>
+    
+    <div class="mb-6">
+        <h3 class="font-semibold text-gray-900 mb-2">{{ asset_name }}</h3>
+        <p class="text-sm text-gray-600">Your disposal request has been submitted and is pending approval from the administrator.</p>
+    </div>
+    
+    <div class="bg-blue-50 rounded-lg p-4 mb-6">
+        <div class="flex items-center justify-center mb-2">
+            <i class="fas fa-info-circle text-blue-600 mr-2"></i>
+            <span class="text-sm font-medium text-blue-800">What happens next</span>
+        </div>
+        <p class="text-xs text-blue-700">An administrator will review your disposal request and either approve or reject it. You will be notified of the decision.</p>
+    </div>
+    
+    <div class="space-y-3">
+        <a href="/asset_management/list" class="w-full bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors duration-200 block text-base">
+            <i class="fas fa-arrow-left mr-2"></i>Back to Assets
+        </a>
+        <a href="/approvals" class="w-full bg-gray-100 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-200 font-semibold transition-colors duration-200 block text-base">
+            <i class="fas fa-clock mr-2"></i>View Pending Requests
+        </a>
+    </div>
+</div>
+
+<script>
+// Auto redirect after 5 seconds
+setTimeout(function() {
+    window.location.href = '/asset_management/list';
+}, 5000);
+
+// Show countdown
+let countdown = 5;
+const countdownElement = document.createElement('div');
+countdownElement.className = 'text-xs text-gray-500 mt-4';
+countdownElement.innerHTML = `Redirecting to assets in <span id="countdown">${countdown}</span> seconds...`;
+document.querySelector('.space-y-3').appendChild(countdownElement);
+
+const countdownInterval = setInterval(function() {
+    countdown--;
+    document.getElementById('countdown').textContent = countdown;
+    if (countdown <= 0) {
+        clearInterval(countdownInterval);
+    }
+}, 1000);
+</script>
+{% endblock %}
