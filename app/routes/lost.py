@@ -41,6 +41,7 @@ async def lost_form_page(
         {
             "request": request,
             "current_profile": current_profile,
+            "user": current_profile,
             "asset": asset
         }
     )
@@ -58,6 +59,7 @@ async def lost_success_page(
         {
             "request": request,
             "current_profile": current_profile,
+            "user": current_profile,
             "asset_name": asset_name or "Asset"
         }
     )
@@ -77,6 +79,7 @@ async def lost_error_page(
         {
             "request": request,
             "current_profile": current_profile,
+            "user": current_profile,
             "asset_id": asset_id,
             "asset_name": asset_name or "Asset",
             "error_message": error_message

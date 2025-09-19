@@ -24,6 +24,7 @@ async def damage_page(request: Request, asset_id: int = None, current_profile = 
         return templates.TemplateResponse(template_path, {
             "request": request,
             "current_profile": current_profile,
+            "user": current_profile,
             "asset": asset_data
         })
     else:
