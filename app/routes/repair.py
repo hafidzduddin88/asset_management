@@ -14,45 +14,50 @@ router = APIRouter()
 
 @router.get("/repair", response_class=HTMLResponse)
 async def repair_page(request: Request, asset_id: int = None, current_profile = Depends(get_current_profile)):
-    """Display repair form for assets with Under Repair status"""
+    """Display repair completion form for specific asset with Under Repair status"""
+    from fastapi import HTTPException
+    
+    if not asset_id:
+        raise HTTPException(status_code=400, detail="Asset ID is required")
+    
     try:
         supabase = get_supabase()
         
-        # Get assets with "Under Repair" status
-        assets_response = supabase.table('assets').select('''
+        # Get specific asset with Under Repair status
+        asset_response = supabase.table('assets').select('''
             asset_id, asset_name, asset_tag, status,
             ref_categories(category_name),
-            ref_locations(location_name, room_name),
-            ref_companies(company_name),
-            ref_business_units(business_unit_name)
-        ''').eq('status', 'Under Repair').execute()
+            ref_locations(location_name, room_name)
+        ''').eq('asset_id', asset_id).eq('status', 'Under Repair').execute()
         
-        assets = assets_response.data if assets_response.data else []
+        if not asset_response.data:
+            raise HTTPException(status_code=404, detail="Asset not found or not under repair")
         
-        # Get damage information for the asset if asset_id is provided
+        asset = asset_response.data[0]
+        
+        # Get damage information for the asset
         damage_info = None
-        if asset_id:
-            damage_response = supabase.table('damage_log').select('*').eq('asset_id', asset_id).order('created_at', desc=True).limit(1).execute()
-            if damage_response.data:
-                damage_info = damage_response.data[0]
+        damage_response = supabase.table('damage_log').select('*').eq('asset_id', asset_id).order('created_at', desc=True).limit(1).execute()
+        if damage_response.data:
+            damage_info = damage_response.data[0]
         
         # Get locations for dropdown
         locations_response = supabase.table('ref_locations').select('*').execute()
         locations = locations_response.data if locations_response.data else []
         
-        template_path = get_template(request, "repair/index.html")
+        template_path = get_template(request, "repair/form.html")
         return templates.TemplateResponse(template_path, {
             "request": request,
             "user": current_profile,
-            "assets": assets,
-            "selected_asset_id": asset_id,
+            "current_profile": current_profile,
+            "asset": asset,
             "damage_info": damage_info,
             "locations": locations
         })
         
     except Exception as e:
         logger.error(f"Error loading repair page: {str(e)}")
-        response = RedirectResponse(url="/", status_code=302)
+        response = RedirectResponse(url="/asset_management/list", status_code=302)
         set_flash(response, f"Error loading repair page: {str(e)}", "error")
         return response
 

@@ -1,0 +1,86 @@
+{% extends "templates_desktop/layouts/modern_layout.html" %}
+
+{% block title %}Report Repair Completion{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto px-6 py-8">
+    <!-- Header -->
+    <div class="bg-green-600 rounded-lg p-4 mb-6">
+        <h1 class="text-xl font-bold text-white">Report Repair Completion</h1>
+        <p class="text-green-100 text-sm">Mark asset as repaired and ready for use</p>
+    </div>
+
+    <!-- Form -->
+    <div class="bg-white rounded-lg shadow p-6">
+        <form action="/repair/submit" method="POST" class="space-y-4">
+            <input type="hidden" name="asset_id" value="{{ asset.asset_id }}">
+            
+            <!-- Asset Info -->
+            <div class="mb-6 p-4 bg-gray-50 rounded-lg">
+                <h3 class="font-semibold text-gray-900 mb-2">Asset Information</h3>
+                <div class="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                        <span class="text-gray-600">Name:</span>
+                        <span class="font-medium">{{ asset.asset_name }}</span>
+                    </div>
+                    <div>
+                        <span class="text-gray-600">ID:</span>
+                        <span class="font-medium">{{ asset.asset_id }}</span>
+                    </div>
+                    <div>
+                        <span class="text-gray-600">Category:</span>
+                        <span class="font-medium">{{ asset.ref_categories.category_name if asset.ref_categories else 'N/A' }}</span>
+                    </div>
+                    <div>
+                        <span class="text-gray-600">Current Location:</span>
+                        <span class="font-medium">{{ asset.ref_locations.location_name if asset.ref_locations else 'N/A' }}</span>
+                    </div>
+                </div>
+            </div>
+
+            {% if damage_info %}
+            <!-- Damage Info -->
+            <div class="mb-6 p-4 bg-orange-50 rounded-lg border border-orange-200">
+                <h3 class="font-semibold text-orange-900 mb-2">Original Damage Report</h3>
+                <div class="text-sm text-orange-800">
+                    <div><strong>Type:</strong> {{ damage_info.damage_type }}</div>
+                    <div><strong>Severity:</strong> {{ damage_info.severity }}</div>
+                    <div><strong>Description:</strong> {{ damage_info.description }}</div>
+                </div>
+            </div>
+            {% endif %}
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">New Location *</label>
+                    <select name="location_id" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
+                        <option value="">Select location</option>
+                        {% for location in locations %}
+                        <option value="{{ location.location_id }}">{{ location.location_name }} - {{ location.room_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Room Name</label>
+                    <input type="text" name="room_name" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500" placeholder="Optional room specification">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Repair Notes</label>
+                    <textarea name="repair_notes" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500" placeholder="Describe the repair work completed..."></textarea>
+                </div>
+            </div>
+            
+            <div class="flex space-x-4 mt-6">
+                <a href="/asset_management/list" class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 text-center">
+                    <i class="fas fa-times mr-2"></i>Cancel
+                </a>
+                <button type="submit" class="flex-1 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">
+                    <i class="fas fa-paper-plane mr-2"></i>Submit Repair
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
