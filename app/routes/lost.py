@@ -85,8 +85,7 @@ async def report_lost_asset(
                 "circumstances": circumstances,
                 "description": description
             }),
-            "requires_admin_approval": True if current_profile.role.value in ['staff', 'manager'] else False,
-            "requires_manager_approval": True if current_profile.role.value == 'admin' else False,
+
             "status": "pending"
         }
         

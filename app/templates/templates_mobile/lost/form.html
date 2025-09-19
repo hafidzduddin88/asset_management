@@ -25,8 +25,18 @@
         </div>
         
         <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
-            <textarea id="description" required rows="4" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500" placeholder="Describe the circumstances..."></textarea>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Last Known Location</label>
+            <input type="text" id="lostLocation" required placeholder="Where was it last seen?" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500">
+        </div>
+        
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Circumstances</label>
+            <textarea id="circumstances" required rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500" placeholder="How did the asset get lost?"></textarea>
+        </div>
+        
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Additional Details</label>
+            <textarea id="description" rows="2" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500" placeholder="Any additional information..."></textarea>
         </div>
         
         <div class="grid grid-cols-2 gap-3 pt-4">
@@ -42,23 +52,25 @@ document.getElementById('dateLost').value = new Date().toISOString().split('T')[
 document.getElementById('lostForm').addEventListener('submit', async function(e) {
     e.preventDefault();
     
-    const formData = {
-        asset_ids: [document.getElementById('assetId').value],
-        date_lost: document.getElementById('dateLost').value,
-        description: document.getElementById('description').value
-    };
+
     
     try {
-        const response = await fetch('/damage/lost', {
+        const assetId = document.getElementById('assetId').value;
+        const formData = new FormData();
+        formData.append('lost_date', document.getElementById('dateLost').value);
+        formData.append('lost_location', document.getElementById('lostLocation').value);
+        formData.append('circumstances', document.getElementById('circumstances').value);
+        formData.append('description', '');
+        
+        const response = await fetch(`/lost/report/${assetId}`, {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify(formData)
+            body: formData
         });
         const result = await response.json();
         
         if (result.status === 'success') {
             showSuccessMessage('Lost Report Submitted', `Asset "${document.getElementById('assetName').value}" has been reported as lost.`);
-            setTimeout(() => window.location.href = '/asset_management/list', 2000);
+            setTimeout(() => window.location.href = '/asset_management', 2000);
         } else {
             showErrorMessage('Submission Failed', result.message);
         }
