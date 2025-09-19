@@ -100,12 +100,12 @@ async def submit_lost_report(
     # Get asset data
     asset = get_asset_by_id(asset_id)
     if not asset:
-        response = RedirectResponse(url="/asset_management", status_code=302)
+        response = RedirectResponse(url="/asset_management/list", status_code=302)
         set_flash(response, "Asset not found", "error")
         return response
     
     if asset.get('status') in ['Disposed', 'Lost']:
-        response = RedirectResponse(url="/asset_management", status_code=302)
+        response = RedirectResponse(url="/asset_management/list", status_code=302)
         set_flash(response, "Asset is already disposed or lost", "error")
         return response
     
