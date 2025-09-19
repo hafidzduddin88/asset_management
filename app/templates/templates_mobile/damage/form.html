@@ -89,8 +89,8 @@ document.getElementById('damageForm').addEventListener('submit', async function(
         const result = await response.json();
         
         if (result.status === 'success') {
-            showSuccessMessage('Damage Report Submitted', `Asset "${document.getElementById('assetName').value}" has been reported as damaged and submitted for approval.`);
-            setTimeout(() => window.location.href = '/asset_management', 2000);
+            showSuccessMessage('Damage Report Submitted', `Asset "{{ asset.asset_name if asset else 'Asset' }}" has been reported as damaged and submitted for approval.`);
+            setTimeout(() => window.location.href = '/asset_management/list', 2000);
         } else {
             showErrorMessage('Submission Failed', result.message);
         }
