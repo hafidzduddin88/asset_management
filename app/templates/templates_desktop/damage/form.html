@@ -48,7 +48,7 @@
             </div>
             
             <div class="flex space-x-3 pt-4">
-                <a href="/asset_management/list" class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 text-center">Cancel</a>
+                <a href="/asset_management" class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 text-center">Cancel</a>
                 <button type="submit" class="flex-1 px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700">Submit Report</button>
             </div>
         </form>
@@ -59,24 +59,22 @@
 document.getElementById('damageForm').addEventListener('submit', async function(e) {
     e.preventDefault();
     
-    const formData = {
-        asset_ids: [document.getElementById('assetId').value],
-        damage_type: document.getElementById('damageType').value,
-        severity: document.getElementById('severity').value,
-        damage_description: document.getElementById('description').value
-    };
+    const assetId = document.getElementById('assetId').value;
+    const formData = new FormData();
+    formData.append('damage_type', document.getElementById('damageType').value);
+    formData.append('severity', document.getElementById('severity').value);
+    formData.append('description', document.getElementById('description').value);
     
     try {
-        const response = await fetch('/damage/report', {
+        const response = await fetch(`/damage/report/${assetId}`, {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify(formData)
+            body: formData
         });
         const result = await response.json();
         
         if (result.status === 'success') {
             showSuccessMessage('Damage Report Submitted', `Asset "${document.getElementById('assetName').value}" has been reported as damaged and submitted for approval.`);
-            setTimeout(() => window.location.href = '/asset_management/list', 2000);
+            setTimeout(() => window.location.href = '/asset_management', 2000);
         } else {
             showErrorMessage('Submission Failed', result.message);
         }

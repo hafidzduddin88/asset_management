@@ -1,6 +1,6 @@
 # app/routes/damage.py
 import logging
-from fastapi import APIRouter, Request, Depends
+from fastapi import APIRouter, Request, Depends, Form
 from fastapi.templating import Jinja2Templates
 from app.utils.auth import get_current_profile
 from app.utils.device_detector import get_template
@@ -183,67 +183,63 @@ async def submit_repair_report(request: Request, current_profile = Depends(get_c
         return {"status": "error", "message": str(e)}
 
 
-@router.post("/damage/report")
-async def submit_damage_report(request: Request, current_profile = Depends(get_current_profile)):
-    """Submit damage report - creates approval request"""
-    from app.utils.database_manager import add_approval_request, get_supabase
+@router.post("/damage/report/{asset_id}")
+async def submit_damage_report(
+    asset_id: str,
+    request: Request,
+    damage_type: str = Form(...),
+    severity: str = Form(...),
+    description: str = Form(...),
+    current_profile = Depends(get_current_profile)
+):
+    """Submit damage report for individual asset - creates approval request"""
+    from app.utils.database_manager import get_asset_by_id, get_supabase
     from datetime import datetime
     import json
 
     try:
-        data = await request.json()
+        # Get asset data
+        asset = get_asset_by_id(asset_id)
+        if not asset:
+            return {"status": "error", "message": "Asset not found"}
+        
+        if asset.get('status') in ['Disposed', 'Lost']:
+            return {"status": "error", "message": "Asset is already disposed or lost"}
+        
         supabase = get_supabase()
-        asset_ids = data.get('asset_ids', [])
         
-        success_count = 0
-        for asset_id in asset_ids:
-            try:
-                # Get asset name
-                asset_response = supabase.table('assets').select('asset_name').eq('asset_id', asset_id).execute()
-                asset_name = asset_response.data[0]['asset_name'] if asset_response.data else f"Asset {asset_id}"
-                
-                # Add to damage_log table first
-                damage_data = {
-                    'asset_id': int(asset_id),
-                    'asset_name': asset_name,
-                    'damage_type': data.get('damage_type'),
-                    'severity': data.get('severity'),
-                    'description': data.get('damage_description'),
-                    'reported_by': current_profile.id,
-                    'reported_by_name': current_profile.full_name or current_profile.username,
-                    'status': 'pending'
-                }
-                supabase.table('damage_log').insert(damage_data).execute()
-                
-                # Create approval request
-                approval_data = {
-                    'type': 'damage_report',
-                    'asset_id': int(asset_id),
-                    'asset_name': asset_name,
-                    'submitted_by': current_profile.id,
-                    'status': 'pending',
-                    'description': f"Damage Report: {data.get('damage_type')} - {data.get('severity')}",
-                    'notes': json.dumps({
-                        'damage_type': data.get('damage_type'),
-                        'severity': data.get('severity'),
-                        'description': data.get('damage_description')
-                    })
-                }
-                
-                # Role-based approval will be handled in approvals page filtering
-                
-                supabase.table('approvals').insert(approval_data).execute()
-                success_count += 1
-                
-            except Exception as e:
-                logging.error(f"Error processing damage report for asset {asset_id}: {e}")
-                continue
+        # Add to damage_log table first
+        damage_data = {
+            'asset_id': int(asset_id),
+            'asset_name': asset.get('asset_name', ''),
+            'damage_type': damage_type,
+            'severity': severity,
+            'description': description,
+            'reported_by': current_profile.id,
+            'reported_by_name': current_profile.full_name or current_profile.username,
+            'status': 'pending'
+        }
+        supabase.table('damage_log').insert(damage_data).execute()
         
-        if success_count > 0:
-            return {"status": "success", "message": f"Damage report submitted for approval: {success_count} asset(s)"}
-        else:
-            return {"status": "error", "message": "Failed to submit damage reports"}
-
+        # Create approval request
+        approval_data = {
+            'type': 'damage_report',
+            'asset_id': int(asset_id),
+            'asset_name': asset.get('asset_name', ''),
+            'submitted_by': current_profile.id,
+            'status': 'pending',
+            'description': f"Damage Report: {damage_type} - {severity}",
+            'notes': json.dumps({
+                'damage_type': damage_type,
+                'severity': severity,
+                'description': description
+            })
+        }
+        
+        supabase.table('approvals').insert(approval_data).execute()
+        
+        return {"status": "success", "message": "Damage report submitted for approval"}
+        
     except Exception as e:
         logging.error(f"Error submitting damage report: {e}")
         return {"status": "error", "message": str(e)}
