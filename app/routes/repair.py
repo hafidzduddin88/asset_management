@@ -41,9 +41,12 @@ async def repair_page(request: Request, asset_id: int = None, current_profile = 
         if damage_response.data:
             damage_info = damage_response.data[0]
         
-        # Get locations for dropdown
-        locations_response = supabase.table('ref_locations').select('*').execute()
-        locations = locations_response.data if locations_response.data else []
+        # Get unique locations for dropdown
+        locations_response = supabase.table('ref_locations').select('location_id, location_name').execute()
+        unique_locations = {}
+        for loc in locations_response.data if locations_response.data else []:
+            unique_locations[loc['location_id']] = loc['location_name']
+        locations = [{'location_id': k, 'location_name': v} for k, v in unique_locations.items()]
         
         template_path = get_template(request, "repair/form.html")
         return templates.TemplateResponse(template_path, {
@@ -65,8 +68,8 @@ async def repair_page(request: Request, asset_id: int = None, current_profile = 
 async def submit_repair(
     request: Request,
     asset_id: int = Form(...),
-    location_id: int = Form(...),
-    room_name: str = Form(""),
+    new_location_id: int = Form(...),
+    new_room_name: str = Form(""),
     repair_notes: str = Form(""),
     current_profile = Depends(get_current_profile)
 ):
@@ -82,7 +85,7 @@ async def submit_repair(
         asset_name = asset_response.data[0]['asset_name']
         
         # Get location details
-        location_response = supabase.table('ref_locations').select('location_name').eq('location_id', location_id).execute()
+        location_response = supabase.table('ref_locations').select('location_name').eq('location_id', new_location_id).execute()
         location_name = location_response.data[0]['location_name'] if location_response.data else "Unknown"
         
         # Create approval request
@@ -97,9 +100,9 @@ async def submit_repair(
             "details": {
                 "asset_id": asset_id,
                 "asset_name": asset_name,
-                "new_location_id": location_id,
+                "new_location_id": new_location_id,
                 "new_location_name": location_name,
-                "new_room_name": room_name,
+                "new_room_name": new_room_name,
                 "repair_notes": repair_notes
             }
         }
