@@ -32,6 +32,7 @@ async def disposal_form_page(
         {
             "request": request,
             "current_profile": current_profile,
+            "user": current_profile,
             "asset": asset
         }
     )
@@ -50,6 +51,7 @@ async def disposal_success_page(
         {
             "request": request,
             "current_profile": current_profile,
+            "user": current_profile,
             "asset_id": asset_id,
             "asset_name": asset_name or "Asset"
         }
@@ -70,6 +72,7 @@ async def disposal_error_page(
         {
             "request": request,
             "current_profile": current_profile,
+            "user": current_profile,
             "asset_id": asset_id,
             "asset_name": asset_name or "Asset",
             "error_message": error_message or "An error occurred while submitting your disposal request."
@@ -102,6 +105,7 @@ async def disposal_execution_page(
         {
             "request": request,
             "current_profile": current_profile,
+            "user": current_profile,
             "assets": assets_to_dispose
         }
     )
