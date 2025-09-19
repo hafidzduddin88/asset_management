@@ -101,6 +101,8 @@
     <!-- Pagination buttons will be populated here -->
 </div>
 
+
+
 {% endblock %}
 
 {% block scripts %}
@@ -449,9 +451,7 @@ function reportDamage(assetId, assetName) {
 }
 
 function reportLost(assetId, assetName) {
-    if (confirm(`Report ${assetName} as lost?\n\nThis will create a lost asset report requiring approval.`)) {
-        window.location.href = `/lost?asset_id=${assetId}`;
-    }
+    window.location.href = `/lost/form?asset_id=${assetId}`;
 }
 
 function requestDisposal(assetId, assetName) {

@@ -1,0 +1,66 @@
+{% extends "templates_mobile/layouts/modern_layout.html" %}
+
+{% block title %}Lost Report Submitted{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-green-50 via-white to-blue-50 flex items-center justify-center px-4">
+    <div class="w-full max-w-sm">
+        <!-- Success Card -->
+        <div class="bg-white rounded-xl shadow-2xl overflow-hidden">
+            <div class="bg-gradient-to-r from-green-600 to-green-700 px-6 py-6 text-center">
+                <div class="bg-white bg-opacity-20 p-3 rounded-full inline-block mb-3">
+                    <i class="fas fa-check text-2xl text-white"></i>
+                </div>
+                <h1 class="text-lg font-bold text-white">Report Submitted</h1>
+                <p class="text-green-100 text-xs mt-2">Lost asset report submitted successfully</p>
+            </div>
+            
+            <div class="p-6 text-center">
+                <div class="mb-4">
+                    <h3 class="text-base font-semibold text-gray-900 mb-2">{{ asset_name }}</h3>
+                    <p class="text-sm text-gray-600">Your lost asset report is now pending approval from the administrator.</p>
+                </div>
+                
+                <div class="bg-blue-50 rounded-lg p-3 mb-4">
+                    <div class="flex items-center justify-center mb-1">
+                        <i class="fas fa-clock text-blue-600 mr-2 text-sm"></i>
+                        <span class="text-xs font-medium text-blue-800">Pending Approval</span>
+                    </div>
+                    <p class="text-xs text-blue-700">You will be notified once reviewed.</p>
+                </div>
+                
+                <div class="space-y-2">
+                    <a href="/asset_management" class="w-full bg-green-600 hover:bg-green-700 text-white px-4 py-3 rounded-lg font-semibold transition-colors duration-200 touch-manipulation inline-block">
+                        <i class="fas fa-arrow-left mr-2"></i>Back to Assets
+                    </a>
+                    <a href="/approvals" class="w-full bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 font-semibold transition-colors duration-200 touch-manipulation inline-block">
+                        View Approvals
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Auto redirect after 5 seconds
+setTimeout(function() {
+    window.location.href = '/asset_management';
+}, 5000);
+
+// Show countdown
+let countdown = 5;
+const countdownElement = document.createElement('div');
+countdownElement.className = 'text-xs text-gray-500 mt-3 text-center';
+countdownElement.innerHTML = `Redirecting in <span id="countdown">${countdown}</span>s...`;
+document.querySelector('.space-y-2').appendChild(countdownElement);
+
+const countdownInterval = setInterval(function() {
+    countdown--;
+    document.getElementById('countdown').textContent = countdown;
+    if (countdown <= 0) {
+        clearInterval(countdownInterval);
+    }
+}, 1000);
+</script>
+{% endblock %}

@@ -3,128 +3,76 @@
 {% block title %}Report Lost Asset{% endblock %}
 
 {% block content %}
-<!-- Header -->
-<div class="bg-red-600 rounded-lg p-4 mb-4">
-    <h1 class="text-xl font-bold text-white">Report Lost Asset</h1>
-    <p class="text-red-100 text-sm">Report missing or lost asset</p>
-</div>
+<div class="min-h-screen bg-gradient-to-br from-red-50 via-white to-orange-50">
+    <div class="px-4 py-4">
+        <!-- Header -->
+        <div class="bg-gradient-to-r from-red-600 to-red-700 rounded-xl shadow-lg p-4 mb-4">
+            <div class="text-center">
+                <div class="bg-white bg-opacity-20 p-2 rounded-lg inline-block mb-2">
+                    <i class="fas fa-search text-xl text-white"></i>
+                </div>
+                <h1 class="text-lg font-bold text-white">Report Lost Asset</h1>
+                <p class="text-red-100 text-xs mt-1">Submit for approval</p>
+            </div>
+        </div>
 
-<!-- Form -->
-<div class="bg-white rounded-lg shadow p-4">
-    <form id="lostForm" class="space-y-4">
-        <input type="hidden" id="assetId" value="{{ asset.asset_id if asset else '' }}">
-        
-        <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Asset Name</label>
-            <input type="text" id="assetName" value="{{ asset.asset_name if asset else '' }}" readonly class="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50">
-        </div>
-        
-        <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Date Lost</label>
-            <input type="date" id="dateLost" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500">
-        </div>
-        
-        <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Last Known Location</label>
-            <input type="text" id="lostLocation" required placeholder="Where was it last seen?" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500">
-        </div>
-        
-        <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Circumstances</label>
-            <textarea id="circumstances" required rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500" placeholder="How did the asset get lost?"></textarea>
-        </div>
-        
-        <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Additional Details</label>
-            <textarea id="description" rows="2" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500" placeholder="Any additional information..."></textarea>
-        </div>
-        
-        <div class="grid grid-cols-2 gap-3 pt-4">
-            <a href="/asset_management/list" class="flex items-center justify-center px-4 py-3 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 text-center">Cancel</a>
-            <button type="submit" class="px-4 py-3 bg-red-600 text-white rounded-md hover:bg-red-700">Submit Report</button>
-        </div>
-    </form>
-</div>
-
-<script>
-document.getElementById('dateLost').value = new Date().toISOString().split('T')[0];
-
-document.getElementById('lostForm').addEventListener('submit', async function(e) {
-    e.preventDefault();
-    
-
-    
-    try {
-        const assetId = document.getElementById('assetId').value;
-        const formData = new FormData();
-        formData.append('lost_date', document.getElementById('dateLost').value);
-        formData.append('lost_location', document.getElementById('lostLocation').value);
-        formData.append('circumstances', document.getElementById('circumstances').value);
-        formData.append('description', '');
-        
-        const response = await fetch(`/lost/report/${assetId}`, {
-            method: 'POST',
-            body: formData
-        });
-        const result = await response.json();
-        
-        if (result.status === 'success') {
-            showSuccessMessage('Lost Report Submitted', `Asset "${document.getElementById('assetName').value}" has been reported as lost.`);
-            setTimeout(() => window.location.href = '/asset_management', 2000);
-        } else {
-            showErrorMessage('Submission Failed', result.message);
-        }
-    } catch (error) {
-        showErrorMessage('Network Error', 'Failed to submit report. Please try again.');
-    }
-});
-
-function showSuccessMessage(title, message) {
-    const modal = document.createElement('div');
-    modal.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4';
-    modal.innerHTML = `
-        <div class="bg-white rounded-lg shadow-xl w-full max-w-sm p-4">
-            <div class="flex items-center mb-3">
-                <div class="flex-shrink-0">
-                    <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                        <i class="fas fa-check text-green-600 text-sm"></i>
+        <!-- Asset Info -->
+        <div class="bg-white rounded-lg shadow-md p-4 mb-4">
+            <div class="flex items-center space-x-3">
+                <div class="bg-gradient-to-br from-red-400 to-red-600 p-2 rounded-lg">
+                    <i class="fas fa-box text-white text-sm"></i>
+                </div>
+                <div class="flex-1">
+                    <h3 class="text-sm font-semibold text-gray-900">{{ asset.get('asset_name', 'Unknown Asset') }}</h3>
+                    <div class="text-xs text-gray-600 mt-1">
+                        <div>ID: {{ asset.get('asset_id', 'N/A') }}</div>
+                        <div>{{ asset.ref_categories.category_name if asset.ref_categories else 'N/A' }} - {{ asset.ref_locations.location_name if asset.ref_locations else 'N/A' }}</div>
                     </div>
                 </div>
-                <div class="ml-3">
-                    <h3 class="text-base font-medium text-gray-900">${title}</h3>
-                </div>
-            </div>
-            <p class="text-sm text-gray-600 mb-4">${message}</p>
-            <div class="flex justify-end">
-                <button onclick="this.closest('.fixed').remove()" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 text-sm">OK</button>
             </div>
         </div>
-    `;
-    document.body.appendChild(modal);
-}
 
-function showErrorMessage(title, message) {
-    const modal = document.createElement('div');
-    modal.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4';
-    modal.innerHTML = `
-        <div class="bg-white rounded-lg shadow-xl w-full max-w-sm p-4">
-            <div class="flex items-center mb-3">
-                <div class="flex-shrink-0">
-                    <div class="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
-                        <i class="fas fa-exclamation-triangle text-red-600 text-sm"></i>
-                    </div>
+        <!-- Form -->
+        <div class="bg-white rounded-lg shadow-md p-4">
+            <form method="POST" action="/lost/submit" class="space-y-4">
+                <input type="hidden" name="asset_id" value="{{ asset.get('asset_id', '') }}">
+                
+                <div>
+                    <label for="lost_reason" class="block text-xs font-medium text-gray-700 mb-2">Lost Reason *</label>
+                    <select name="lost_reason" id="lost_reason" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                        <option value="">Select reason</option>
+                        <option value="Missing">Missing</option>
+                        <option value="Stolen">Stolen</option>
+                        <option value="Misplaced">Misplaced</option>
+                        <option value="Unknown Location">Unknown Location</option>
+                        <option value="Other">Other</option>
+                    </select>
                 </div>
-                <div class="ml-3">
-                    <h3 class="text-base font-medium text-gray-900">${title}</h3>
+                
+                <div>
+                    <label for="description" class="block text-xs font-medium text-gray-700 mb-2">Description *</label>
+                    <textarea name="description" id="description" required rows="4" 
+                        class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" 
+                        placeholder="Describe the circumstances of the loss..."></textarea>
                 </div>
-            </div>
-            <p class="text-sm text-gray-600 mb-4">${message}</p>
-            <div class="flex justify-end">
-                <button onclick="this.closest('.fixed').remove()" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 text-sm">OK</button>
-            </div>
+                
+                <div>
+                    <label for="notes" class="block text-xs font-medium text-gray-700 mb-2">Additional Notes</label>
+                    <textarea name="notes" id="notes" rows="3" 
+                        class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" 
+                        placeholder="Any additional information..."></textarea>
+                </div>
+                
+                <div class="flex flex-col space-y-3 pt-4">
+                    <button type="submit" class="w-full bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white px-4 py-3 rounded-lg font-semibold transition-all duration-200 touch-manipulation">
+                        <i class="fas fa-paper-plane mr-2"></i>Submit Report
+                    </button>
+                    <a href="/asset_management" class="w-full bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 font-semibold transition-colors duration-200 text-center touch-manipulation">
+                        Cancel
+                    </a>
+                </div>
+            </form>
         </div>
-    `;
-    document.body.appendChild(modal);
-}
-</script>
+    </div>
+</div>
 {% endblock %}
