@@ -456,7 +456,7 @@ function reportLost(assetId, assetName) {
 
 function requestDisposal(assetId, assetName) {
     if (confirm(`Request disposal for ${assetName}?\n\nThis will create a disposal request requiring approval.`)) {
-        window.location.href = `/disposal?asset_id=${assetId}`;
+        window.location.href = `/disposal/request`;
     }
 }
 

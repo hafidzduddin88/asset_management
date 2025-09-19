@@ -1,0 +1,247 @@
+{% extends "templates_mobile/layouts/modern_layout.html" %}
+
+{% block title %}Request Asset Disposal{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-red-50 via-white to-orange-50">
+    <div class="px-4 py-4">
+        <!-- Header -->
+        <div class="bg-gradient-to-r from-red-600 via-red-700 to-orange-600 rounded-xl shadow-lg p-4 mb-4">
+            <div class="text-center">
+                <div class="bg-white bg-opacity-20 p-2 rounded-lg inline-block mb-2">
+                    <i class="fas fa-trash-alt text-xl text-white"></i>
+                </div>
+                <h1 class="text-lg font-bold text-white">Request Disposal</h1>
+                <p class="text-red-100 text-xs mt-1">Submit for approval</p>
+                <div class="bg-white bg-opacity-20 px-2 py-1 rounded-full inline-block mt-2">
+                    <span class="text-xs font-semibold text-white">{{ assets|length }} assets</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Search -->
+        <div class="bg-white rounded-lg shadow-md p-4 mb-4">
+            <div class="relative mb-3">
+                <input type="text" id="searchAsset" placeholder="Search assets..." 
+                    class="w-full pl-8 pr-4 py-2 border border-gray-300 rounded-lg text-sm">
+                <i class="fas fa-search absolute left-3 top-3 text-gray-400 text-xs"></i>
+            </div>
+            <div class="flex space-x-2">
+                <select id="categoryFilter" class="flex-1 border border-gray-300 rounded-lg px-2 py-2 text-xs">
+                    <option value="">All Categories</option>
+                </select>
+                <select id="locationFilter" class="flex-1 border border-gray-300 rounded-lg px-2 py-2 text-xs">
+                    <option value="">All Locations</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Assets List -->
+        <div class="bg-white rounded-lg shadow-md overflow-hidden">
+            <div class="bg-gray-50 px-4 py-3 border-b border-gray-200">
+                <h3 class="text-sm font-semibold text-gray-900">Select Asset</h3>
+                <p class="text-xs text-gray-600">Choose asset for disposal request</p>
+            </div>
+            
+            {% if assets %}
+            <div id="assetList" class="divide-y divide-gray-100 max-h-96 overflow-y-auto">
+                {% for asset in assets %}
+                <div class="asset-item p-4" 
+                     data-category="{{ asset.ref_categories.category_name if asset.ref_categories else '' }}"
+                     data-location="{{ asset.ref_locations.location_name if asset.ref_locations else '' }}">
+                    <div class="flex items-start space-x-3">
+                        <div class="bg-gradient-to-br from-red-400 to-red-600 p-2 rounded-lg flex-shrink-0">
+                            <i class="fas fa-box text-white text-sm"></i>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center space-x-2 mb-1">
+                                <h4 class="text-sm font-semibold text-gray-900 truncate">{{ asset.get('asset_name', 'Unknown Asset') }}</h4>
+                                <span class="px-2 py-1 bg-green-100 text-green-800 text-xs font-semibold rounded-full">
+                                    {{ asset.get('status', 'Unknown') }}
+                                </span>
+                            </div>
+                            <div class="space-y-1 text-xs text-gray-600">
+                                <div class="flex items-center space-x-1">
+                                    <i class="fas fa-hashtag text-gray-400"></i>
+                                    <span>{{ asset.get('asset_tag', 'N/A') }}</span>
+                                </div>
+                                <div class="flex items-center space-x-1">
+                                    <i class="fas fa-tag text-gray-400"></i>
+                                    <span>{{ asset.ref_categories.category_name if asset.ref_categories else 'N/A' }}</span>
+                                </div>
+                                <div class="flex items-center space-x-1">
+                                    <i class="fas fa-map-marker-alt text-gray-400"></i>
+                                    <span>{{ asset.ref_locations.location_name if asset.ref_locations else 'N/A' }}</span>
+                                </div>
+                            </div>
+                            <div class="mt-3">
+                                <button onclick="openDisposalForm('{{ asset.get('asset_id', '') }}', '{{ asset.get('asset_name', '') }}')" 
+                                    class="w-full bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white px-3 py-2 rounded-lg text-xs font-semibold transition-all duration-200 touch-manipulation">
+                                    <i class="fas fa-trash mr-1"></i>Request Disposal
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-12">
+                <div class="bg-gray-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <i class="fas fa-check-circle text-2xl text-gray-400"></i>
+                </div>
+                <h3 class="text-base font-semibold text-gray-900 mb-1">No Assets Available</h3>
+                <p class="text-sm text-gray-500">All assets are already disposed</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Mobile Disposal Request Modal -->
+<div id="disposalModal" class="fixed inset-0 bg-black bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+    <div class="relative top-4 mx-auto p-4 w-full max-w-sm">
+        <div class="bg-white rounded-xl shadow-2xl overflow-hidden">
+            <div class="bg-gradient-to-r from-red-600 to-red-700 px-4 py-3">
+                <div class="flex justify-between items-center">
+                    <div class="flex items-center space-x-2">
+                        <div class="bg-white bg-opacity-20 p-1 rounded">
+                            <i class="fas fa-trash-alt text-white text-sm"></i>
+                        </div>
+                        <h3 class="text-base font-semibold text-white">Request Disposal</h3>
+                    </div>
+                    <button onclick="closeDisposalModal()" class="text-white hover:text-gray-200">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="p-4">
+                <form id="disposalForm" method="POST" action="/disposal/submit">
+                    <input type="hidden" name="asset_id" id="assetId">
+                    
+                    <div class="mb-3">
+                        <label class="block text-xs font-medium text-gray-700 mb-1">Asset Name</label>
+                        <p id="assetName" class="text-xs text-gray-900 bg-gray-50 p-2 rounded"></p>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="disposal_reason" class="block text-xs font-medium text-gray-700 mb-1">Disposal Reason *</label>
+                        <select name="disposal_reason" id="disposal_reason" required class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm">
+                            <option value="">Select Reason</option>
+                            <option value="End of Life">End of Life</option>
+                            <option value="Damaged Beyond Repair">Damaged Beyond Repair</option>
+                            <option value="Obsolete">Obsolete</option>
+                            <option value="Upgrade">Upgrade</option>
+                            <option value="Cost of Repair">Cost of Repair</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="disposal_method" class="block text-xs font-medium text-gray-700 mb-1">Disposal Method *</label>
+                        <select name="disposal_method" id="disposal_method" required class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm">
+                            <option value="">Select Method</option>
+                            <option value="Sell">Sell</option>
+                            <option value="Donate">Donate</option>
+                            <option value="Recycle">Recycle</option>
+                            <option value="Destroy">Destroy</option>
+                            <option value="Return to Vendor">Return to Vendor</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="description" class="block text-xs font-medium text-gray-700 mb-1">Description</label>
+                        <textarea name="description" id="description" rows="2" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm" placeholder="Additional details..."></textarea>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="notes" class="block text-xs font-medium text-gray-700 mb-1">Notes</label>
+                        <textarea name="notes" id="notes" rows="2" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm" placeholder="Internal notes..."></textarea>
+                    </div>
+                    
+                    <div class="flex flex-col space-y-2">
+                        <button type="submit" class="w-full bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white px-4 py-3 rounded-lg font-semibold transition-all duration-200 touch-manipulation">
+                            <i class="fas fa-paper-plane mr-2"></i>Submit Request
+                        </button>
+                        <button type="button" onclick="closeDisposalModal()" class="w-full bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 font-semibold transition-colors duration-200 touch-manipulation">
+                            Cancel
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function openDisposalForm(assetId, assetName) {
+    document.getElementById('assetId').value = assetId;
+    document.getElementById('assetName').textContent = assetName;
+    document.getElementById('disposalModal').classList.remove('hidden');
+}
+
+function closeDisposalModal() {
+    document.getElementById('disposalModal').classList.add('hidden');
+    document.getElementById('disposalForm').reset();
+}
+
+// Search and filter functionality
+document.getElementById('searchAsset').addEventListener('input', filterAssets);
+document.getElementById('categoryFilter').addEventListener('change', filterAssets);
+document.getElementById('locationFilter').addEventListener('change', filterAssets);
+
+function filterAssets() {
+    const searchTerm = document.getElementById('searchAsset').value.toLowerCase();
+    const categoryFilter = document.getElementById('categoryFilter').value;
+    const locationFilter = document.getElementById('locationFilter').value;
+    
+    const assetItems = document.querySelectorAll('.asset-item');
+    
+    assetItems.forEach(item => {
+        const assetName = item.querySelector('h4').textContent.toLowerCase();
+        const category = item.dataset.category;
+        const location = item.dataset.location;
+        
+        const matchesSearch = assetName.includes(searchTerm);
+        const matchesCategory = !categoryFilter || category === categoryFilter;
+        const matchesLocation = !locationFilter || location === locationFilter;
+        
+        if (matchesSearch && matchesCategory && matchesLocation) {
+            item.style.display = 'block';
+        } else {
+            item.style.display = 'none';
+        }
+    });
+}
+
+// Populate filter options
+document.addEventListener('DOMContentLoaded', function() {
+    const categories = new Set();
+    const locations = new Set();
+    
+    document.querySelectorAll('.asset-item').forEach(item => {
+        const category = item.dataset.category;
+        const location = item.dataset.location;
+        
+        if (category) categories.add(category);
+        if (location) locations.add(location);
+    });
+    
+    const categorySelect = document.getElementById('categoryFilter');
+    const locationSelect = document.getElementById('locationFilter');
+    
+    categories.forEach(category => {
+        const option = document.createElement('option');
+        option.value = category;
+        option.textContent = category;
+        categorySelect.appendChild(option);
+    });
+    
+    locations.forEach(location => {
+        const option = document.createElement('option');
+        option.value = location;
+        option.textContent = location;
+        locationSelect.appendChild(option);
+    });
+});
+</script>
+{% endblock %}
