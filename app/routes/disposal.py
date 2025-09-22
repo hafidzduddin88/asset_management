@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, Request, Form, HTTPException, status
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from datetime import datetime
+import json
 
 from app.utils.auth import get_admin_user, get_current_profile
 from app.utils.database_manager import get_asset_by_id, add_approval_request, get_supabase, update_asset
@@ -120,7 +121,7 @@ async def submit_disposal_request(
             'submitted_by': current_profile.id,
             'submitted_date': datetime.now().isoformat(),
             'description': f"Disposal request: {disposal_reason} - {disposal_method}",
-            'notes': f'{{"disposal_reason": "{disposal_reason}", "disposal_method": "{disposal_method}", "description": "{description or ""}", "notes": "{notes or ""}"}}',
+            'notes': json.dumps({"disposal_reason": disposal_reason, "disposal_method": disposal_method, "description": description or "", "notes": notes or ""}),
             'status': 'pending'
         }
         
@@ -186,7 +187,7 @@ async def execute_disposal(
         'submitted_by': current_profile.id,
         'submitted_date': datetime.now().isoformat(),
         'description': f"Disposal execution: {disposal_method}",
-        'notes': f'{{"disposal_method": "{disposal_method}", "notes": "{notes or ""}"}}}',
+        'notes': json.dumps({"disposal_method": disposal_method, "notes": notes or ""}),
         'status': 'pending'
     }
     
