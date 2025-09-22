@@ -137,7 +137,7 @@ async def submit_disposal_request(
             "condition_description": description or '',
             "disposal_method": disposal_method,
             "notes": notes or '',
-            "requested_by_id": current_profile.user_id,
+            "requested_by_id": current_profile.id,
             "requested_by_name": current_profile.full_name or current_profile.username,
             "requested_by_role": current_profile.role,
             "status": "pending"
@@ -200,7 +200,7 @@ async def execute_disposal(
         "asset_name": asset.get('asset_name'),
         "disposal_method": disposal_method,
         "notes": notes or '',
-        "disposed_by": current_profile.user_id,
+        "disposed_by": current_profile.id,
         "disposal_date": "now()",
         "status": "Disposed"
     }
