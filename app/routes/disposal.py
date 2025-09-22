@@ -196,13 +196,12 @@ async def execute_disposal(
     
     # Insert disposal log
     disposal_data = {
-        "asset_id": asset_id,
+        "asset_id": int(asset_id),
         "asset_name": asset.get('asset_name'),
         "disposal_method": disposal_method,
         "notes": notes or '',
-        "disposed_by": current_profile.id,
-        "disposed_by_name": current_profile.full_name or current_profile.username,
-        "created_at": "now()",
+        "disposed_by": current_profile.user_id,
+        "disposal_date": "now()",
         "status": "Disposed"
     }
     
