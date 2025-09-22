@@ -439,6 +439,16 @@ async def approve_request(
                 if not success:
                     return JSONResponse({"status": "error", "message": "Failed to update asset status"})
                 
+                # Update request_disposal_log with approver info
+                supabase = get_supabase()
+                supabase.table('request_disposal_log').update({
+                    'status': 'approved',
+                    'approved_by_id': current_profile.user_id,
+                    'approved_by_name': current_profile.full_name or current_profile.username,
+                    'approved_by_role': current_profile.role,
+                    'approved_at': 'now()'
+                }).eq('asset_id', approval.get('asset_id')).eq('status', 'pending').execute()
+                
             except Exception as e:
                 return JSONResponse({"status": "error", "message": f"Error processing disposal request: {str(e)}"})
         
@@ -493,8 +503,14 @@ async def reject_request(
             # For repair rejection, keep damage status as reported
             pass
         elif approval.get('type') == 'disposal_request':
-            # For disposal request rejection, asset status remains unchanged
-            pass
+            # For disposal request rejection, update request_disposal_log
+            supabase.table('request_disposal_log').update({
+                'status': 'rejected',
+                'approved_by_id': current_profile.user_id,
+                'approved_by_name': approver_name,
+                'approved_by_role': current_profile.role,
+                'approved_at': 'now()'
+            }).eq('asset_id', approval.get('asset_id')).eq('status', 'pending').execute()
         elif approval.get('type') == 'relocation':
             # For relocation rejection, no relocation_log entry is created
             # Only the approval record is updated

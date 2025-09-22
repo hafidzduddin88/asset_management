@@ -1,11 +1,10 @@
-# app/routes/disposal.py
 from fastapi import APIRouter, Depends, Request, Form, HTTPException, status
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from datetime import datetime
 
 from app.utils.auth import get_admin_user, get_current_profile
-from app.utils.database_manager import get_all_assets, update_asset
+from app.utils.database_manager import get_asset_by_id, add_approval_request, get_supabase, update_asset
 from app.utils.flash import set_flash
 from app.utils.device_detector import get_template
 
@@ -19,23 +18,17 @@ async def disposal_form_page(
     current_profile = Depends(get_current_profile)
 ):
     """Disposal request form page for specific asset."""
-    from app.utils.database_manager import get_asset_by_id
-    
-    # Get asset data
     asset = get_asset_by_id(asset_id)
     if not asset:
         raise HTTPException(status_code=404, detail="Asset not found")
     
     template_path = get_template(request, "disposal/form.html")
-    return templates.TemplateResponse(
-        template_path,
-        {
-            "request": request,
-            "current_profile": current_profile,
-            "user": current_profile,
-            "asset": asset
-        }
-    )
+    return templates.TemplateResponse(template_path, {
+        "request": request,
+        "current_profile": current_profile,
+        "user": current_profile,
+        "asset": asset
+    })
 
 @router.get("/success", response_class=HTMLResponse)
 async def disposal_success_page(
@@ -46,16 +39,13 @@ async def disposal_success_page(
 ):
     """Disposal request success page."""
     template_path = get_template(request, "disposal/success.html")
-    return templates.TemplateResponse(
-        template_path,
-        {
-            "request": request,
-            "current_profile": current_profile,
-            "user": current_profile,
-            "asset_id": asset_id,
-            "asset_name": asset_name or "Asset"
-        }
-    )
+    return templates.TemplateResponse(template_path, {
+        "request": request,
+        "current_profile": current_profile,
+        "user": current_profile,
+        "asset_id": asset_id,
+        "asset_name": asset_name or "Asset"
+    })
 
 @router.get("/error", response_class=HTMLResponse)
 async def disposal_error_page(
@@ -67,17 +57,14 @@ async def disposal_error_page(
 ):
     """Disposal request error page."""
     template_path = get_template(request, "disposal/error.html")
-    return templates.TemplateResponse(
-        template_path,
-        {
-            "request": request,
-            "current_profile": current_profile,
-            "user": current_profile,
-            "asset_id": asset_id,
-            "asset_name": asset_name or "Asset",
-            "error_message": error_message or "An error occurred while submitting your disposal request."
-        }
-    )
+    return templates.TemplateResponse(template_path, {
+        "request": request,
+        "current_profile": current_profile,
+        "user": current_profile,
+        "asset_id": asset_id,
+        "asset_name": asset_name or "Asset",
+        "error_message": error_message or "An error occurred while submitting your disposal request."
+    })
 
 @router.get("", response_class=HTMLResponse)
 @router.get("/", response_class=HTMLResponse)
@@ -85,12 +72,9 @@ async def disposal_execution_page(
     request: Request,
     current_profile = Depends(get_admin_user)
 ):
-    """Halaman admin untuk eksekusi disposal (To be Disposed → Disposed)."""
-    from app.utils.database_manager import get_supabase
-    
+    """Admin page for disposal execution (To be Disposed → Disposed)."""
     supabase = get_supabase()
     
-    # Get assets dengan status "To be Disposed" untuk di-dispose
     response = supabase.table('assets').select('''
         asset_id, asset_tag, asset_name, status,
         ref_categories(category_name),
@@ -100,15 +84,12 @@ async def disposal_execution_page(
     assets_to_dispose = response.data or []
     
     template_path = get_template(request, "disposal/index.html")
-    return templates.TemplateResponse(
-        template_path,
-        {
-            "request": request,
-            "current_profile": current_profile,
-            "user": current_profile,
-            "assets": assets_to_dispose
-        }
-    )
+    return templates.TemplateResponse(template_path, {
+        "request": request,
+        "current_profile": current_profile,
+        "user": current_profile,
+        "assets": assets_to_dispose
+    })
 
 
 
@@ -123,10 +104,7 @@ async def submit_disposal_request(
     current_profile = Depends(get_current_profile)
 ):
     """Submit disposal request."""
-    from app.utils.database_manager import get_asset_by_id, add_approval_request
-    
     try:
-        # Get asset data
         asset = get_asset_by_id(asset_id)
         if not asset:
             return RedirectResponse(
@@ -134,7 +112,7 @@ async def submit_disposal_request(
                 status_code=status.HTTP_303_SEE_OTHER
             )
         
-        # Create disposal request approval
+        # Create approval request
         approval_data = {
             'type': 'disposal_request',
             'asset_id': asset_id,
@@ -147,6 +125,25 @@ async def submit_disposal_request(
         }
         
         approval_success = add_approval_request(approval_data)
+        
+        # Log disposal request
+        supabase = get_supabase()
+        disposal_log_data = {
+            "asset_id": int(asset_id),
+            "asset_name": asset.get('asset_name', ''),
+            "asset_tag": asset.get('asset_tag', ''),
+            "disposal_reason": disposal_reason,
+            "disposal_type": "Request",
+            "condition_description": description or '',
+            "disposal_method": disposal_method,
+            "notes": notes or '',
+            "requested_by_id": current_profile.user_id,
+            "requested_by_name": current_profile.full_name or current_profile.username,
+            "requested_by_role": current_profile.role,
+            "status": "pending"
+        }
+        
+        supabase.table('request_disposal_log').insert(disposal_log_data).execute()
         
         if approval_success:
             return RedirectResponse(
@@ -173,10 +170,7 @@ async def execute_disposal(
     notes: str = Form(None),
     current_profile = Depends(get_admin_user)
 ):
-    """Eksekusi disposal oleh Admin - mengubah status dari 'To be Disposed' menjadi 'Disposed'."""
-    from app.utils.database_manager import get_asset_by_id, get_supabase
-    
-    # Get asset data
+    """Execute disposal by Admin - change status from 'To be Disposed' to 'Disposed'."""
     asset = get_asset_by_id(asset_id)
     if not asset:
         raise HTTPException(status_code=404, detail="Asset not found")
@@ -186,14 +180,13 @@ async def execute_disposal(
     
     supabase = get_supabase()
     
-    # Get storage location with fallback
+    # Get storage location
     storage_response = supabase.table('ref_locations').select('location_id, location_name, room_name').eq('location_name', 'HO-Ciputat').eq('room_name', '1022 - Gudang Support TOG').execute()
     
     if storage_response.data:
         storage_location_id = storage_response.data[0]['location_id']
         storage_room = '1022 - Gudang Support TOG'
     else:
-        # Fallback: Use first available location
         fallback_response = supabase.table('ref_locations').select('location_id, location_name, room_name').limit(1).execute()
         if fallback_response.data:
             storage_location_id = fallback_response.data[0]['location_id']
@@ -214,6 +207,12 @@ async def execute_disposal(
     }
     
     supabase.table("disposal_log").insert(disposal_data).execute()
+    
+    # Update request_disposal_log to completed
+    supabase.table('request_disposal_log').update({
+        'status': 'completed',
+        'completed_at': 'now()'
+    }).eq('asset_id', int(asset_id)).eq('status', 'approved').execute()
     
     # Update asset status to Disposed
     success = update_asset(asset_id, {
