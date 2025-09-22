@@ -186,7 +186,7 @@ async def execute_disposal(
         'submitted_by': current_profile.id,
         'submitted_date': datetime.now().isoformat(),
         'description': f"Disposal execution: {disposal_method}",
-        'notes': f'{{"disposal_method": "{disposal_method}", "notes": "{notes or ""}"}}'',
+        'notes': f'{{"disposal_method": "{disposal_method}", "notes": "{notes or ""}"}}'
         'status': 'pending'
     }
     
