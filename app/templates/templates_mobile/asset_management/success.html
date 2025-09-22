@@ -1,0 +1,56 @@
+{% extends "layouts/mobile_layout.html" %}
+
+{% block title %}Registration Success{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-b from-green-50 to-emerald-100 p-4">
+    <div class="max-w-sm mx-auto pt-8">
+        <!-- Success Card -->
+        <div class="bg-white rounded-xl shadow-lg p-6 text-center">
+            <!-- Success Icon -->
+            <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-check-circle text-3xl text-green-500"></i>
+            </div>
+            
+            <!-- Success Message -->
+            <h1 class="text-xl font-bold text-gray-800 mb-3">Registration Submitted!</h1>
+            <p class="text-gray-600 text-sm mb-4">Your asset registration has been successfully submitted for approval.</p>
+            
+            <!-- Info Box -->
+            <div class="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
+                <p class="text-xs text-green-700">
+                    <i class="fas fa-info-circle mr-1"></i>
+                    You will be notified once reviewed.
+                </p>
+            </div>
+            
+            <!-- Auto Redirect Info -->
+            <div class="text-xs text-gray-500 mb-4">
+                <p>Redirecting in <span id="countdown" class="font-semibold text-green-600">5</span>s...</p>
+            </div>
+            
+            <!-- Action Button -->
+            <a href="/asset_management/list" 
+               class="block w-full py-3 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors duration-200">
+                <i class="fas fa-list mr-2"></i>
+                Back to Asset List
+            </a>
+        </div>
+    </div>
+</div>
+
+<script>
+let countdown = 5;
+const countdownElement = document.getElementById('countdown');
+
+const timer = setInterval(() => {
+    countdown--;
+    countdownElement.textContent = countdown;
+    
+    if (countdown <= 0) {
+        clearInterval(timer);
+        window.location.href = '/asset_management/list';
+    }
+}, 1000);
+</script>
+{% endblock %}

@@ -195,6 +195,40 @@ async def update_asset(
         )
 
 
+@router.get("/success", response_class=HTMLResponse)
+async def add_asset_success(
+    request: Request,
+    current_profile = Depends(get_current_profile)
+):
+    """Success page for asset registration."""
+    template_path = get_template(request, "asset_management/success.html")
+    return templates.TemplateResponse(
+        template_path,
+        {
+            "request": request,
+            "user": current_profile,
+            "current_profile": current_profile
+        }
+    )
+
+
+@router.get("/error", response_class=HTMLResponse)
+async def add_asset_error(
+    request: Request,
+    current_profile = Depends(get_current_profile)
+):
+    """Error page for asset registration."""
+    template_path = get_template(request, "asset_management/error.html")
+    return templates.TemplateResponse(
+        template_path,
+        {
+            "request": request,
+            "user": current_profile,
+            "current_profile": current_profile
+        }
+    )
+
+
 @router.post("/add")
 async def add_asset(
     request: Request,
@@ -272,25 +306,6 @@ async def add_asset(
     # Role-based approval will be handled in approvals page filtering
     
     if add_approval_request(approval_data):
-        template_path = get_template(request, "asset_management/confirmation.html")
-        return templates.TemplateResponse(
-            template_path,
-            {
-                "request": request,
-                "user": current_profile,
-                "asset_name": asset_name,
-                "message": "Asset registration submitted for approval"
-            }
-        )
+        return RedirectResponse(url="/asset_management/success", status_code=status.HTTP_303_SEE_OTHER)
     else:
-        dropdown_options = get_dropdown_options()
-        template_path = get_template(request, "asset_management/add.html")
-        return templates.TemplateResponse(
-            template_path,
-            {
-                "request": request,
-                "user": current_profile,
-                "dropdown_options": dropdown_options,
-                "error": "Failed to submit asset registration"
-            }
-        )
+        return RedirectResponse(url="/asset_management/error", status_code=status.HTTP_303_SEE_OTHER)

@@ -1,0 +1,63 @@
+{% extends "layouts/mobile_layout.html" %}
+
+{% block title %}Registration Error{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-b from-red-50 to-rose-100 p-4">
+    <div class="max-w-sm mx-auto pt-8">
+        <!-- Error Card -->
+        <div class="bg-white rounded-xl shadow-lg p-6 text-center">
+            <!-- Error Icon -->
+            <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-exclamation-triangle text-3xl text-red-500"></i>
+            </div>
+            
+            <!-- Error Message -->
+            <h1 class="text-xl font-bold text-gray-800 mb-3">Registration Failed</h1>
+            <p class="text-gray-600 text-sm mb-4">There was an error submitting your asset registration. Please try again.</p>
+            
+            <!-- Error Info Box -->
+            <div class="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
+                <p class="text-xs text-red-700">
+                    <i class="fas fa-exclamation-circle mr-1"></i>
+                    Contact admin if problem persists.
+                </p>
+            </div>
+            
+            <!-- Auto Redirect Info -->
+            <div class="text-xs text-gray-500 mb-4">
+                <p>Redirecting in <span id="countdown" class="font-semibold text-red-600">8</span>s...</p>
+            </div>
+            
+            <!-- Action Buttons -->
+            <div class="space-y-2">
+                <a href="/asset_management/add" 
+                   class="block w-full py-3 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 transition-colors duration-200">
+                    <i class="fas fa-redo mr-2"></i>
+                    Try Again
+                </a>
+                <a href="/asset_management/list" 
+                   class="block w-full py-3 bg-gray-600 text-white font-medium rounded-lg hover:bg-gray-700 transition-colors duration-200">
+                    <i class="fas fa-list mr-2"></i>
+                    Back to List
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let countdown = 8;
+const countdownElement = document.getElementById('countdown');
+
+const timer = setInterval(() => {
+    countdown--;
+    countdownElement.textContent = countdown;
+    
+    if (countdown <= 0) {
+        clearInterval(timer);
+        window.location.href = '/asset_management/list';
+    }
+}, 1000);
+</script>
+{% endblock %}
