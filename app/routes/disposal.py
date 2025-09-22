@@ -205,7 +205,15 @@ async def execute_disposal(
         "status": "Disposed"
     }
     
-    supabase.table("disposal_log").insert(disposal_data).execute()
+    # Try insert without disposed_by_name first, if fails add it
+    try:
+        supabase.table("disposal_log").insert(disposal_data).execute()
+    except Exception as e:
+        if "disposed_by_name" in str(e):
+            disposal_data["disposed_by_name"] = current_profile.full_name or current_profile.username
+            supabase.table("disposal_log").insert(disposal_data).execute()
+        else:
+            raise e
     
     # Update request_disposal_log to completed
     supabase.table('request_disposal_log').update({
