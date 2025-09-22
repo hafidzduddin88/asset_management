@@ -170,7 +170,7 @@ async def execute_disposal(
     notes: str = Form(None),
     current_profile = Depends(get_admin_user)
 ):
-    """Execute disposal by Admin - change status from 'To be Disposed' to 'Disposed'."""
+    """Execute disposal by Admin - requires manager approval first."""
     asset = get_asset_by_id(asset_id)
     if not asset:
         raise HTTPException(status_code=404, detail="Asset not found")
@@ -178,61 +178,63 @@ async def execute_disposal(
     if asset.get('status') != 'To be Disposed':
         raise HTTPException(status_code=400, detail="Asset must be 'To be Disposed' status")
     
-    supabase = get_supabase()
-    
-    # Get storage location
-    storage_response = supabase.table('ref_locations').select('location_id, location_name, room_name').eq('location_name', 'HO-Ciputat').eq('room_name', '1022 - Gudang Support TOG').execute()
-    
-    if storage_response.data:
-        storage_location_id = storage_response.data[0]['location_id']
-        storage_room = '1022 - Gudang Support TOG'
-    else:
-        fallback_response = supabase.table('ref_locations').select('location_id, location_name, room_name').limit(1).execute()
-        if fallback_response.data:
-            storage_location_id = fallback_response.data[0]['location_id']
-            storage_room = fallback_response.data[0]['room_name']
-        else:
-            raise HTTPException(status_code=500, detail="No storage location available")
-    
-    # Insert disposal log
-    disposal_data = {
-        "asset_id": int(asset_id),
-        "asset_name": asset.get('asset_name'),
-        "disposal_method": disposal_method,
-        "notes": notes or '',
-        "disposed_by": current_profile.id,
-        "disposal_date": "now()",
-        "status": "Disposed"
+    # Create approval request for disposal execution
+    approval_data = {
+        'type': 'disposal_execution',
+        'asset_id': asset_id,
+        'asset_name': asset.get('asset_name', ''),
+        'submitted_by': current_profile.id,
+        'submitted_date': datetime.now().isoformat(),
+        'description': f"Disposal execution: {disposal_method}",
+        'notes': f'{{"disposal_method": "{disposal_method}", "notes": "{notes or ""}"}}'',
+        'status': 'pending'
     }
     
-    # Try insert without disposed_by_name first, if fails add it
-    try:
-        supabase.table("disposal_log").insert(disposal_data).execute()
-    except Exception as e:
-        if "disposed_by_name" in str(e):
-            disposal_data["disposed_by_name"] = current_profile.full_name or current_profile.username
-            supabase.table("disposal_log").insert(disposal_data).execute()
-        else:
-            raise e
+    approval_success = add_approval_request(approval_data)
     
-    # Update request_disposal_log to completed
-    supabase.table('request_disposal_log').update({
-        'status': 'completed',
-        'completed_at': 'now()'
-    }).eq('asset_id', int(asset_id)).eq('status', 'approved').execute()
-    
-    # Update asset status to Disposed
-    success = update_asset(asset_id, {
-        'status': 'Disposed',
-        'location_id': storage_location_id,
-        'room_name': storage_room
-    })
-    
-    if success:
-        response = RedirectResponse(url="/disposal", status_code=status.HTTP_303_SEE_OTHER)
-        set_flash(response, f"Asset {asset.get('asset_name', '')} disposed successfully", "success")
-        return response
+    if approval_success:
+        return RedirectResponse(
+            url=f"/disposal/execution/success?asset_id={asset_id}&asset_name={asset.get('asset_name', '')}",
+            status_code=status.HTTP_303_SEE_OTHER
+        )
     else:
-        response = RedirectResponse(url="/disposal", status_code=status.HTTP_303_SEE_OTHER)
-        set_flash(response, "Error disposing asset", "error")
-        return response
+        return RedirectResponse(
+            url=f"/disposal/execution/error?asset_id={asset_id}&asset_name={asset.get('asset_name', '')}&error_message=Failed to submit disposal execution for approval",
+            status_code=status.HTTP_303_SEE_OTHER
+        )
+
+@router.get("/execution/success", response_class=HTMLResponse)
+async def disposal_execution_success_page(
+    request: Request,
+    asset_id: str,
+    asset_name: str = None,
+    current_profile = Depends(get_current_profile)
+):
+    """Disposal execution success page."""
+    template_path = get_template(request, "disposal/execution_success.html")
+    return templates.TemplateResponse(template_path, {
+        "request": request,
+        "current_profile": current_profile,
+        "user": current_profile,
+        "asset_id": asset_id,
+        "asset_name": asset_name or "Asset"
+    })
+
+@router.get("/execution/error", response_class=HTMLResponse)
+async def disposal_execution_error_page(
+    request: Request,
+    asset_id: str,
+    asset_name: str = None,
+    error_message: str = None,
+    current_profile = Depends(get_current_profile)
+):
+    """Disposal execution error page."""
+    template_path = get_template(request, "disposal/execution_error.html")
+    return templates.TemplateResponse(template_path, {
+        "request": request,
+        "current_profile": current_profile,
+        "user": current_profile,
+        "asset_id": asset_id,
+        "asset_name": asset_name or "Asset",
+        "error_message": error_message or "An error occurred while submitting disposal execution for approval."
+    })

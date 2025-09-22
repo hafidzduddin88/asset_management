@@ -1,0 +1,60 @@
+{% extends "templates_desktop/layouts/modern_layout.html" %}
+
+{% block title %}Disposal Execution Error{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto px-6 py-8">
+    <!-- Header -->
+    <div class="bg-red-600 rounded-lg p-4 mb-6">
+        <h1 class="text-xl font-bold text-white">Disposal Execution Error</h1>
+        <p class="text-red-100 text-sm">There was an error submitting your disposal execution request</p>
+    </div>
+
+    <!-- Error Message -->
+    <div class="bg-white rounded-lg shadow p-6 text-center">
+        <div class="bg-red-100 p-4 rounded-full inline-block mb-4">
+            <i class="fas fa-exclamation-triangle text-3xl text-red-600"></i>
+        </div>
+        
+        <h2 class="text-xl font-semibold text-gray-900 mb-2">Request Failed</h2>
+        <p class="text-gray-600 mb-4">
+            Failed to submit disposal execution for <strong>{{ asset_name }}</strong> (ID: {{ asset_id }}).
+        </p>
+        
+        <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+            <p class="text-red-800 text-sm">
+                <i class="fas fa-exclamation-circle mr-2"></i>
+                {{ error_message }}
+            </p>
+        </div>
+        
+        <div class="text-center">
+            <p class="text-gray-500 text-sm mb-4">Redirecting to disposal page in <span id="countdown">8</span> seconds...</p>
+            <div class="space-y-3">
+                <a href="/disposal" class="inline-block bg-red-600 text-white px-6 py-2 rounded-md hover:bg-red-700 transition-colors">
+                    <i class="fas fa-arrow-left mr-2"></i>Back to Disposal
+                </a>
+                <br>
+                <a href="/disposal/execute/{{ asset_id }}" class="inline-block bg-gray-600 text-white px-6 py-2 rounded-md hover:bg-gray-700 transition-colors">
+                    <i class="fas fa-redo mr-2"></i>Try Again
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let countdown = 8;
+const countdownElement = document.getElementById('countdown');
+
+const timer = setInterval(() => {
+    countdown--;
+    countdownElement.textContent = countdown;
+    
+    if (countdown <= 0) {
+        clearInterval(timer);
+        window.location.href = '/disposal';
+    }
+}, 1000);
+</script>
+{% endblock %}

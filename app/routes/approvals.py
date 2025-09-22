@@ -452,6 +452,68 @@ async def approve_request(
             except Exception as e:
                 return JSONResponse({"status": "error", "message": f"Error processing disposal request: {str(e)}"})
         
+        elif approval.get('type') == 'disposal_execution':
+            # Process disposal execution approval (actually dispose the asset)
+            try:
+                import json
+                notes = approval.get('notes', '{}')
+                if isinstance(notes, str):
+                    execution_data = json.loads(notes)
+                else:
+                    execution_data = notes
+                
+                disposal_method = execution_data.get('disposal_method', 'Unknown')
+                execution_notes = execution_data.get('notes', '')
+                
+                supabase = get_supabase()
+                
+                # Get storage location
+                storage_response = supabase.table('ref_locations').select('location_id, location_name, room_name').eq('location_name', 'HO-Ciputat').eq('room_name', '1022 - Gudang Support TOG').execute()
+                
+                if storage_response.data:
+                    storage_location_id = storage_response.data[0]['location_id']
+                    storage_room = '1022 - Gudang Support TOG'
+                else:
+                    fallback_response = supabase.table('ref_locations').select('location_id, location_name, room_name').limit(1).execute()
+                    if fallback_response.data:
+                        storage_location_id = fallback_response.data[0]['location_id']
+                        storage_room = fallback_response.data[0]['room_name']
+                    else:
+                        return JSONResponse({"status": "error", "message": "No storage location available"})
+                
+                # Insert disposal log
+                disposal_data = {
+                    "asset_id": int(approval.get('asset_id')),
+                    "asset_name": approval.get('asset_name'),
+                    "disposal_method": disposal_method,
+                    "notes": execution_notes,
+                    "disposed_by": approval.get('submitted_by'),
+                    "disposal_date": "now()",
+                    "status": "Disposed"
+                }
+                
+                supabase.table("disposal_log").insert(disposal_data).execute()
+                
+                # Update request_disposal_log to completed
+                supabase.table('request_disposal_log').update({
+                    'status': 'completed',
+                    'completed_at': 'now()'
+                }).eq('asset_id', int(approval.get('asset_id'))).eq('status', 'approved').execute()
+                
+                # Update asset status to Disposed
+                from app.utils.database_manager import update_asset
+                success = update_asset(approval.get('asset_id'), {
+                    'status': 'Disposed',
+                    'location_id': storage_location_id,
+                    'room_name': storage_room
+                })
+                
+                if not success:
+                    return JSONResponse({"status": "error", "message": "Failed to update asset status to Disposed"})
+                
+            except Exception as e:
+                return JSONResponse({"status": "error", "message": f"Error processing disposal execution: {str(e)}"})
+        
         # Update approval status in database
         success = update_approval_status(
             approval_id, 
@@ -511,6 +573,9 @@ async def reject_request(
                 'approved_by_role': current_profile.role,
                 'approved_at': 'now()'
             }).eq('asset_id', approval.get('asset_id')).eq('status', 'pending').execute()
+        elif approval.get('type') == 'disposal_execution':
+            # For disposal execution rejection, no additional action needed
+            pass
         elif approval.get('type') == 'relocation':
             # For relocation rejection, no relocation_log entry is created
             # Only the approval record is updated

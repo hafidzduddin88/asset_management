@@ -1,0 +1,56 @@
+{% extends "templates_mobile/layouts/modern_layout.html" %}
+
+{% block title %}Disposal Execution Error{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="bg-red-600 rounded-lg p-4 mb-4 text-center">
+    <div class="bg-white bg-opacity-20 p-3 rounded-full inline-block mb-3">
+        <i class="fas fa-exclamation-triangle text-2xl text-white"></i>
+    </div>
+    <h1 class="text-lg font-bold text-white">Disposal Execution Error</h1>
+    <p class="text-red-100 text-sm">Error submitting request</p>
+</div>
+
+<!-- Error Message -->
+<div class="bg-white rounded-lg shadow p-4 text-center">
+    <h2 class="text-lg font-semibold text-gray-900 mb-2">Request Failed</h2>
+    <p class="text-gray-600 text-sm mb-4">
+        Failed to submit disposal execution for <strong>{{ asset_name }}</strong> (ID: {{ asset_id }}).
+    </p>
+    
+    <div class="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
+        <p class="text-red-800 text-xs">
+            <i class="fas fa-exclamation-circle mr-1"></i>
+            {{ error_message }}
+        </p>
+    </div>
+    
+    <div class="text-center">
+        <p class="text-gray-500 text-xs mb-4">Redirecting in <span id="countdown">8</span> seconds...</p>
+        <div class="space-y-3">
+            <a href="/disposal" class="w-full bg-red-600 text-white px-4 py-3 rounded-lg font-semibold transition-colors duration-200 block">
+                <i class="fas fa-arrow-left mr-2"></i>Back to Disposal
+            </a>
+            <a href="/disposal/execute/{{ asset_id }}" class="w-full bg-gray-600 text-white px-4 py-2 rounded-lg font-semibold transition-colors duration-200 block">
+                <i class="fas fa-redo mr-2"></i>Try Again
+            </a>
+        </div>
+    </div>
+</div>
+
+<script>
+let countdown = 8;
+const countdownElement = document.getElementById('countdown');
+
+const timer = setInterval(() => {
+    countdown--;
+    countdownElement.textContent = countdown;
+    
+    if (countdown <= 0) {
+        clearInterval(timer);
+        window.location.href = '/disposal';
+    }
+}, 1000);
+</script>
+{% endblock %}
