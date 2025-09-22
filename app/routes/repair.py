@@ -41,12 +41,19 @@ async def repair_page(request: Request, asset_id: int = None, current_profile = 
         if damage_response.data:
             damage_info = damage_response.data[0]
         
-        # Get unique locations for dropdown
-        locations_response = supabase.table('ref_locations').select('location_id, location_name').execute()
-        unique_locations = {}
-        for loc in locations_response.data if locations_response.data else []:
-            unique_locations[loc['location_id']] = loc['location_name']
-        locations = [{'location_id': k, 'location_name': v} for k, v in unique_locations.items()]
+        # Get locations and rooms for dropdown (same format as relocation)
+        locations_response = supabase.table('ref_locations').select('location_name, room_name').execute()
+        dropdown_options = {'locations': {}}
+        
+        for location in locations_response.data if locations_response.data else []:
+            location_name = location['location_name']
+            room_name = location['room_name']
+            
+            if location_name not in dropdown_options['locations']:
+                dropdown_options['locations'][location_name] = []
+            
+            if room_name and room_name not in dropdown_options['locations'][location_name]:
+                dropdown_options['locations'][location_name].append(room_name)
         
         template_path = get_template(request, "repair/form.html")
         return templates.TemplateResponse(template_path, {
@@ -55,7 +62,7 @@ async def repair_page(request: Request, asset_id: int = None, current_profile = 
             "current_profile": current_profile,
             "asset": asset,
             "damage_info": damage_info,
-            "locations": locations
+            "dropdown_options": dropdown_options
         })
         
     except Exception as e:
@@ -68,8 +75,8 @@ async def repair_page(request: Request, asset_id: int = None, current_profile = 
 async def submit_repair(
     request: Request,
     asset_id: int = Form(...),
-    new_location_id: int = Form(...),
-    new_room_name: str = Form(""),
+    new_location: str = Form(...),
+    new_room: str = Form(...),
     repair_notes: str = Form(""),
     current_profile = Depends(get_current_profile)
 ):
@@ -84,9 +91,9 @@ async def submit_repair(
         
         asset_name = asset_response.data[0]['asset_name']
         
-        # Get location details
-        location_response = supabase.table('ref_locations').select('location_name').eq('location_id', new_location_id).execute()
-        location_name = location_response.data[0]['location_name'] if location_response.data else "Unknown"
+        # Use location and room names directly
+        location_name = new_location
+        room_name = new_room
         
         # Create approval request
         approval_data = {
@@ -100,9 +107,8 @@ async def submit_repair(
             "details": {
                 "asset_id": asset_id,
                 "asset_name": asset_name,
-                "new_location_id": new_location_id,
-                "new_location_name": location_name,
-                "new_room_name": new_room_name,
+                "new_location": location_name,
+                "new_room": room_name,
                 "repair_notes": repair_notes
             }
         }
