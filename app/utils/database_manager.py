@@ -206,7 +206,9 @@ def add_asset(asset_data):
         # Convert name fields to IDs for foreign keys
         processed_data = {}
         
-        # Don't set asset_id - let database auto-generate it
+        # Ensure asset_id is not included in processed_data
+        if 'asset_id' in asset_data:
+            del asset_data['asset_id']
         
         # Get foreign key IDs
         if asset_data.get('category_name'):
@@ -302,7 +304,7 @@ def add_asset(asset_data):
             )
             processed_data.update(financials)
         
-        # Copy other fields (only fields that exist in assets table)
+        # Copy other fields (only fields that exist in assets table, excluding asset_id)
         valid_fields = ['asset_name', 'manufacture', 'model', 'serial_number', 'room_name', 'notes', 'item_condition', 'purchase_date', 'purchase_cost', 'warranty', 'supplier', 'journal', 'status', 'photo_url']
         for field in valid_fields:
             if field in asset_data:
