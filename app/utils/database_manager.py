@@ -310,10 +310,15 @@ def add_asset(asset_data):
             if field in asset_data:
                 processed_data[field] = asset_data[field]
         
+        # Debug: Log what we're trying to insert
+        logging.info(f"Inserting asset data: {processed_data}")
+        
+        # Insert without asset_id - let database auto-generate
         response = supabase.table(TABLES['ASSETS']).insert(processed_data).execute()
         invalidate_cache()
+        
         # Return the generated asset_id
-        if response.data:
+        if response.data and len(response.data) > 0:
             return response.data[0]['asset_id']
         return None
     except Exception as e:
