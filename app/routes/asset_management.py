@@ -255,7 +255,7 @@ async def add_asset(
 ):
     """Process add asset form."""
     asset_data = {
-        "asset_id": str(uuid.uuid4()),
+
         "asset_name": asset_name,
         "category_name": category_name,
         "type_name": type_name,
