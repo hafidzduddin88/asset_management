@@ -301,9 +301,10 @@ async def approve_request(
                     if not generated_asset_id:
                         return JSONResponse({"status": "error", "message": "Failed to add asset to database"})
                     
-                    # Update approval record with generated asset_id
+                    # Update approval record with generated asset_id from assets table
                     supabase = get_supabase()
                     supabase.table('approvals').update({'asset_id': generated_asset_id}).eq('approval_id', approval_id).execute()
+                    logging.info(f"Updated approval {approval_id} with generated asset_id: {generated_asset_id}")
             except Exception as e:
                 logging.error(f"Error processing admin_add_asset approval: {str(e)}")
                 return JSONResponse({"status": "error", "message": f"Error processing asset addition: {str(e)}"})
@@ -320,9 +321,10 @@ async def approve_request(
                     if not generated_asset_id:
                         return JSONResponse({"status": "error", "message": "Failed to add asset to database"})
                     
-                    # Update approval record with generated asset_id
+                    # Update approval record with generated asset_id from assets table
                     supabase = get_supabase()
                     supabase.table('approvals').update({'asset_id': generated_asset_id}).eq('approval_id', approval_id).execute()
+                    logging.info(f"Updated approval {approval_id} with generated asset_id: {generated_asset_id}")
             except Exception as e:
                 logging.error(f"Error processing add_asset approval: {str(e)}")
                 return JSONResponse({"status": "error", "message": f"Error processing asset addition: {str(e)}"})

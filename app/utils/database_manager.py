@@ -313,7 +313,7 @@ def add_asset(asset_data):
         # Debug: Log what we're trying to insert
         logging.info(f"Inserting asset data: {processed_data}")
         
-        # Insert without asset_id - let database auto-generate
+        # Insert without asset_id - let database auto-generate completely
         response = supabase.table(TABLES['ASSETS']).insert(processed_data).execute()
         invalidate_cache()
         
