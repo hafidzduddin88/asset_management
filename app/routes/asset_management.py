@@ -281,7 +281,8 @@ async def add_asset(
     if photo and photo.filename:
         try:
             contents = await photo.read()
-            photo_url = upload_to_drive(contents, photo.filename, asset_data["asset_id"])
+            # Use asset_name as identifier since asset_id doesn't exist yet
+            photo_url = upload_to_drive(contents, photo.filename, asset_name.replace(" ", "_"))
             if photo_url:
                 asset_data["photo_url"] = photo_url
         except Exception as e:
