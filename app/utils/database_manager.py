@@ -199,52 +199,49 @@ def get_next_asset_id():
         logging.error(f"Error getting next asset ID: {str(e)}")
         return 1  # Fallback to 1
 
-def add_asset(asset_data):
+def prepare_asset_data(asset_data):
+    """Takes raw asset data and prepares it for insertion by resolving foreign keys and calculating values."""
     try:
         supabase = get_supabase()
         
-        # Convert name fields to IDs for foreign keys
         processed_data = {}
         
-        # Ensure asset_id is not included in processed_data
-        if 'asset_id' in asset_data:
-            del asset_data['asset_id']
-        
-        # Get foreign key IDs
+        # Get foreign key IDs and related financial data in one go
         if asset_data.get('category_name'):
-            cat_response = supabase.table('ref_categories').select('category_id').eq('category_name', asset_data['category_name']).execute()
+            cat_response = supabase.table('ref_categories').select('category_id, residual_percent, useful_life').eq('category_name', asset_data['category_name']).execute()
             if cat_response.data:
                 processed_data['category_id'] = cat_response.data[0]['category_id']
-        
+                asset_data['residual_percent'] = cat_response.data[0]['residual_percent'] # Store for financial calculation
+                asset_data['useful_life'] = cat_response.data[0]['useful_life'] # Store for financial calculation
+
         if asset_data.get('type_name'):
             type_response = supabase.table('ref_asset_types').select('asset_type_id').eq('type_name', asset_data['type_name']).execute()
             if type_response.data:
                 processed_data['asset_type_id'] = type_response.data[0]['asset_type_id']
-        
+
         if asset_data.get('company_name'):
             comp_response = supabase.table('ref_companies').select('company_id').eq('company_name', asset_data['company_name']).execute()
             if comp_response.data:
                 processed_data['company_id'] = comp_response.data[0]['company_id']
-        
+
         if asset_data.get('business_unit_name'):
             unit_response = supabase.table('ref_business_units').select('business_unit_id').eq('business_unit_name', asset_data['business_unit_name']).execute()
             if unit_response.data:
                 processed_data['business_unit_id'] = unit_response.data[0]['business_unit_id']
-        
+
         if asset_data.get('location_name') and asset_data.get('room_name'):
             loc_response = supabase.table('ref_locations').select('location_id').eq('location_name', asset_data['location_name']).eq('room_name', asset_data['room_name']).execute()
             if loc_response.data:
                 processed_data['location_id'] = loc_response.data[0]['location_id']
-        
+
         if asset_data.get('owner_name'):
             owner_response = supabase.table('ref_owners').select('owner_id').eq('owner_name', asset_data['owner_name']).execute()
             if owner_response.data:
                 processed_data['owner_id'] = owner_response.data[0]['owner_id']
-        
-        # Generate asset_tag using existing format
+
+        # Generate asset_tag
         def generate_asset_tag(company_name, category_name, type_name, owner_name, purchase_date):
             try:
-                # Get codes from reference tables
                 code_company = get_reference_value('ref_companies', 'company_name', company_name, 'company_code')
                 code_category = get_reference_value('ref_categories', 'category_name', category_name, 'category_code')
                 code_type = get_reference_value('ref_asset_types', 'type_name', type_name, 'type_code')
@@ -254,35 +251,44 @@ def add_asset(asset_data):
                 year_2digit = str(year)[-2:]
                 
                 if all([code_company, code_category, code_type, code_owner]):
-                    # Get sequence number for this combination
                     pattern = f"{code_company}-{code_category}{code_type}.{code_owner}{year_2digit}.%"
-                    existing = supabase.table(TABLES['ASSETS']).select('asset_tag').like('asset_tag', pattern).execute()
-                    seq_num = str(len(existing.data) + 1).zfill(3)
+                    # Use count='exact' for better performance and accuracy
+                    existing = supabase.table(TABLES['ASSETS']).select('asset_tag', count='exact').like('asset_tag', pattern).execute()
+                    seq_num = str(existing.count + 1).zfill(3)
                     return f"{code_company}-{code_category}{code_type}.{code_owner}{year_2digit}.{seq_num}"
             except Exception as e:
                 logging.error(f"Error generating asset tag: {str(e)}")
             return None
-        
+
         processed_data['asset_tag'] = generate_asset_tag(
-            asset_data.get('company_name'),
-            asset_data.get('category_name'), 
-            asset_data.get('type_name'),
-            asset_data.get('owner_name'),
+            asset_data.get('company_name'), asset_data.get('category_name'), 
+            asset_data.get('type_name'), asset_data.get('owner_name'),
             asset_data.get('purchase_date')
         )
-        
+
         # Calculate financial values
         def calculate_asset_financials(purchase_cost, purchase_date, category_name):
             try:
-                residual_percent = float(get_reference_value('ref_categories', 'category_name', category_name, 'residual_percent') or 0)
-                useful_life = int(get_reference_value('ref_categories', 'category_name', category_name, 'useful_life') or 0)
+                residual_percent = float(asset_data.get('residual_percent') or 0)
+                useful_life = int(asset_data.get('useful_life') or 0)
+                
                 purchase_year = datetime.strptime(purchase_date, "%Y-%m-%d").year if isinstance(purchase_date, str) else purchase_date.year
                 current_year = datetime.now().year
                 years_used = current_year - purchase_year
+                
                 purchase_cost = float(purchase_cost)
                 residual_value = purchase_cost * (residual_percent / 100)
-                depreciation = ((purchase_cost - residual_value) / useful_life) * years_used if years_used < useful_life else (purchase_cost - residual_value)
+                
+                depreciation = 0
+                if useful_life > 0:
+                    depreciation = ((purchase_cost - residual_value) / useful_life) * years_used
+                
+                # Cap depreciation at the depreciable amount
+                if depreciation > (purchase_cost - residual_value):
+                    depreciation = purchase_cost - residual_value
+
                 book_value = purchase_cost - depreciation
+                
                 return {
                     'residual_percent': residual_percent,
                     'residual_value': round(residual_value, 2),
@@ -294,8 +300,7 @@ def add_asset(asset_data):
             except Exception as e:
                 logging.error(f"Error calculating financials: {str(e)}")
                 return {}
-        
-        # Add financial calculations
+
         if asset_data.get('purchase_cost') and asset_data.get('purchase_date') and asset_data.get('category_name'):
             financials = calculate_asset_financials(
                 asset_data.get('purchase_cost'),
@@ -303,27 +308,34 @@ def add_asset(asset_data):
                 asset_data.get('category_name')
             )
             processed_data.update(financials)
-        
-        # Copy other fields (only fields that exist in assets table, excluding asset_id)
-        valid_fields = ['asset_name', 'manufacture', 'model', 'serial_number', 'room_name', 'notes', 'item_condition', 'purchase_date', 'purchase_cost', 'warranty', 'supplier', 'journal', 'status', 'photo_url']
+
+        # Copy other fields
+        valid_fields = [
+            'asset_name', 'manufacture', 'model', 'serial_number', 'room_name', 'notes', 
+            'item_condition', 'purchase_date', 'purchase_cost', 'warranty', 'supplier', 
+            'journal', 'status', 'photo_url'
+        ]
         for field in valid_fields:
             if field in asset_data:
                 processed_data[field] = asset_data[field]
         
-        # Debug: Log what we're trying to insert
-        logging.info(f"Inserting asset data: {processed_data}")
-        
-        # Insert without asset_id - let database auto-generate completely
-        response = supabase.table(TABLES['ASSETS']).insert(processed_data).execute()
-        invalidate_cache()
-        
-        # Return the generated asset_id
-        if response.data and len(response.data) > 0:
-            return response.data[0]['asset_id']
-        return None
+        # Ensure all keys that the SQL function expects are present, even if None
+        all_expected_keys = [
+            'asset_name', 'category_id', 'asset_type_id', 'manufacture', 'model', 'serial_number',
+            'company_id', 'business_unit_id', 'location_id', 'room_name', 'notes', 'item_condition',
+            'purchase_date', 'purchase_cost', 'warranty', 'supplier', 'journal', 'owner_id', 'status',
+            'photo_url', 'asset_tag', 'residual_percent', 'residual_value', 'useful_life',
+            'depreciation_value', 'book_value', 'year'
+        ]
+        for key in all_expected_keys:
+            if key not in processed_data:
+                processed_data[key] = None
+
+        return processed_data
+
     except Exception as e:
-        logging.error(f"Error adding asset: {str(e)}")
-        return False
+        logging.error(f"Error preparing asset data: {str(e)}")
+        return None
 
 def update_asset(asset_id, update_data):
     try:
@@ -353,20 +365,7 @@ def add_approval_request(approval_data):
         logging.error(f"Error adding approval request: {str(e)}")
         return False
 
-def update_approval_status(approval_id, status, approved_by, approved_by_name='', notes=''):
-    try:
-        supabase = get_supabase()
-        update_data = {
-            'status': status,
-            'approved_by': approved_by,
-            'approved_date': datetime.now(timezone.utc).isoformat(),
-            'notes': notes
-        }
-        response = supabase.table(TABLES['APPROVALS']).update(update_data).eq('approval_id', approval_id).execute()
-        return True
-    except Exception as e:
-        logging.error(f"Error updating approval status: {str(e)}")
-        return False
+
 
 def add_damage_log(damage_data):
     try:
