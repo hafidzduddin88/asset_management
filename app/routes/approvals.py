@@ -299,8 +299,9 @@ async def approve_request(
                     from app.utils.database_manager import add_asset
                     success = add_asset(asset_data)
                     if not success:
-                        return JSONResponse({"status": "error", "message": "Failed to add asset"})
+                        return JSONResponse({"status": "error", "message": "Failed to add asset to database"})
             except Exception as e:
+                logging.error(f"Error processing admin_add_asset approval: {str(e)}")
                 return JSONResponse({"status": "error", "message": f"Error processing asset addition: {str(e)}"})
         
         elif approval.get('type') == 'add_asset':
@@ -313,8 +314,9 @@ async def approve_request(
                     from app.utils.database_manager import add_asset
                     success = add_asset(asset_data)
                     if not success:
-                        return JSONResponse({"status": "error", "message": "Failed to add asset"})
+                        return JSONResponse({"status": "error", "message": "Failed to add asset to database"})
             except Exception as e:
+                logging.error(f"Error processing add_asset approval: {str(e)}")
                 return JSONResponse({"status": "error", "message": f"Error processing asset addition: {str(e)}"})
         
         elif approval.get('type') == 'repair':

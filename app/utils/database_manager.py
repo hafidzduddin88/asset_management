@@ -185,12 +185,32 @@ def get_reference_value(table_name, lookup_column, lookup_value, return_column):
         logging.error(f"Error getting reference value: {str(e)}")
         return None
 
+def get_next_asset_id():
+    """Get the next available asset_id by finding the maximum existing ID"""
+    try:
+        supabase = get_supabase()
+        response = supabase.table(TABLES['ASSETS']).select('asset_id').order('asset_id', desc=True).limit(1).execute()
+        if response.data:
+            max_id = response.data[0]['asset_id']
+            return max_id + 1
+        else:
+            return 1  # Start from 1 if no assets exist
+    except Exception as e:
+        logging.error(f"Error getting next asset ID: {str(e)}")
+        return 1  # Fallback to 1
+
 def add_asset(asset_data):
     try:
         supabase = get_supabase()
         
         # Convert name fields to IDs for foreign keys
         processed_data = {}
+        
+        # Use provided asset_id or generate next available ID
+        if 'asset_id' in asset_data and asset_data['asset_id']:
+            processed_data['asset_id'] = asset_data['asset_id']
+        else:
+            processed_data['asset_id'] = get_next_asset_id()
         
         # Get foreign key IDs
         if asset_data.get('category_name'):

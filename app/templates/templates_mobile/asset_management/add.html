@@ -30,6 +30,14 @@
 
 <form method="POST" enctype="multipart/form-data" class="space-y-4 bg-white shadow rounded-lg p-4">
     <div>
+        <!-- Asset ID -->
+        <div>
+            <label for="asset_id" class="block text-sm font-medium text-gray-700">Asset ID</label>
+            <input type="number" name="asset_id" id="asset_id" value="{{ next_asset_id }}" readonly
+                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-600">
+            <p class="mt-1 text-xs text-gray-500">Auto-generated sequential ID</p>
+        </div>
+        
         <!-- Asset Name -->
         <div>
             <label for="asset_name" class="block text-sm font-medium text-gray-700 required-field">Asset Name</label>

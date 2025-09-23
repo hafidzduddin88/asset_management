@@ -24,13 +24,17 @@ async def add_asset_form(
 ):
     """Form to add a new asset."""
     dropdown_options = get_dropdown_options()
+    from app.utils.database_manager import get_next_asset_id
+    next_asset_id = get_next_asset_id()
+    
     template_path = get_template(request, "asset_management/add.html")
     return templates.TemplateResponse(
         template_path,
         {
             "request": request,
             "user": current_profile,
-            "dropdown_options": dropdown_options
+            "dropdown_options": dropdown_options,
+            "next_asset_id": next_asset_id
         }
     )
 
@@ -198,6 +202,8 @@ async def update_asset(
 @router.get("/success", response_class=HTMLResponse)
 async def add_asset_success(
     request: Request,
+    asset_id: str = None,
+    asset_name: str = None,
     current_profile = Depends(get_current_profile)
 ):
     """Success page for asset registration."""
@@ -207,7 +213,9 @@ async def add_asset_success(
         {
             "request": request,
             "user": current_profile,
-            "current_profile": current_profile
+            "current_profile": current_profile,
+            "asset_id": asset_id,
+            "asset_name": asset_name
         }
     )
 
@@ -215,6 +223,8 @@ async def add_asset_success(
 @router.get("/error", response_class=HTMLResponse)
 async def add_asset_error(
     request: Request,
+    asset_id: str = None,
+    asset_name: str = None,
     current_profile = Depends(get_current_profile)
 ):
     """Error page for asset registration."""
@@ -224,7 +234,9 @@ async def add_asset_error(
         {
             "request": request,
             "user": current_profile,
-            "current_profile": current_profile
+            "current_profile": current_profile,
+            "asset_id": asset_id,
+            "asset_name": asset_name
         }
     )
 
@@ -232,6 +244,7 @@ async def add_asset_error(
 @router.post("/add")
 async def add_asset(
     request: Request,
+    asset_id: int = Form(...),
     asset_name: str = Form(...),
     category_name: str = Form(...),
     type_name: str = Form(...),
@@ -255,7 +268,7 @@ async def add_asset(
 ):
     """Process add asset form."""
     asset_data = {
-
+        "asset_id": asset_id,
         "asset_name": asset_name,
         "category_name": category_name,
         "type_name": type_name,
@@ -304,9 +317,7 @@ async def add_asset(
         "notes": json.dumps(asset_data)
     }
     
-    # Role-based approval will be handled in approvals page filtering
-    
     if add_approval_request(approval_data):
-        return RedirectResponse(url="/asset_management/success", status_code=status.HTTP_303_SEE_OTHER)
+        return RedirectResponse(url=f"/asset_management/success?asset_id={asset_id}&asset_name={asset_name}", status_code=status.HTTP_303_SEE_OTHER)
     else:
-        return RedirectResponse(url="/asset_management/error", status_code=status.HTTP_303_SEE_OTHER)
+        return RedirectResponse(url=f"/asset_management/error?asset_id={asset_id}&asset_name={asset_name}", status_code=status.HTTP_303_SEE_OTHER)
