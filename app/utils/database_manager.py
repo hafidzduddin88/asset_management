@@ -206,11 +206,7 @@ def add_asset(asset_data):
         # Convert name fields to IDs for foreign keys
         processed_data = {}
         
-        # Use provided asset_id or generate next available ID
-        if 'asset_id' in asset_data and asset_data['asset_id']:
-            processed_data['asset_id'] = asset_data['asset_id']
-        else:
-            processed_data['asset_id'] = get_next_asset_id()
+        # Don't set asset_id - let database auto-generate it
         
         # Get foreign key IDs
         if asset_data.get('category_name'):
@@ -314,7 +310,10 @@ def add_asset(asset_data):
         
         response = supabase.table(TABLES['ASSETS']).insert(processed_data).execute()
         invalidate_cache()
-        return True
+        # Return the generated asset_id
+        if response.data:
+            return response.data[0]['asset_id']
+        return None
     except Exception as e:
         logging.error(f"Error adding asset: {str(e)}")
         return False

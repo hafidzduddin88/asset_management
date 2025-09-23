@@ -297,9 +297,13 @@ async def approve_request(
                 if request_data_str:
                     asset_data = json.loads(request_data_str)
                     from app.utils.database_manager import add_asset
-                    success = add_asset(asset_data)
-                    if not success:
+                    generated_asset_id = add_asset(asset_data)
+                    if not generated_asset_id:
                         return JSONResponse({"status": "error", "message": "Failed to add asset to database"})
+                    
+                    # Update approval record with generated asset_id
+                    supabase = get_supabase()
+                    supabase.table('approvals').update({'asset_id': generated_asset_id}).eq('approval_id', approval_id).execute()
             except Exception as e:
                 logging.error(f"Error processing admin_add_asset approval: {str(e)}")
                 return JSONResponse({"status": "error", "message": f"Error processing asset addition: {str(e)}"})
@@ -312,9 +316,13 @@ async def approve_request(
                 if request_data_str:
                     asset_data = json.loads(request_data_str)
                     from app.utils.database_manager import add_asset
-                    success = add_asset(asset_data)
-                    if not success:
+                    generated_asset_id = add_asset(asset_data)
+                    if not generated_asset_id:
                         return JSONResponse({"status": "error", "message": "Failed to add asset to database"})
+                    
+                    # Update approval record with generated asset_id
+                    supabase = get_supabase()
+                    supabase.table('approvals').update({'asset_id': generated_asset_id}).eq('approval_id', approval_id).execute()
             except Exception as e:
                 logging.error(f"Error processing add_asset approval: {str(e)}")
                 return JSONResponse({"status": "error", "message": f"Error processing asset addition: {str(e)}"})
