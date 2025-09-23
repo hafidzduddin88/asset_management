@@ -365,6 +365,26 @@ def add_approval_request(approval_data):
         logging.error(f"Error adding approval request: {str(e)}")
         return False
 
+def update_approval_status(approval_id, status, approved_by, approved_by_name='', notes=''):
+    try:
+        supabase = get_supabase()
+        update_data = {
+            'status': status,
+            'approved_by': approved_by,
+            'approved_date': datetime.now(timezone.utc).isoformat(),
+            'notes': notes
+        }
+        logging.info(f"Updating approval ID {approval_id} with data: {update_data}")
+        response = supabase.table(TABLES['APPROVALS']).update(update_data).eq('approval_id', approval_id).execute()
+        logging.info(f"Approval update response for ID {approval_id}: {response.data}")
+        if response.data:
+            return True
+        else:
+            logging.warning(f"Approval update for ID {approval_id} did not return data. Update may have failed silently.")
+            return False
+    except Exception as e:
+        logging.error(f"Error updating approval status: {str(e)}")
+        return False
 
 
 def add_damage_log(damage_data):
@@ -637,3 +657,24 @@ def test_database_connection():
 def invalidate_cache():
     cache.invalidate_all()
     logging.info("Cache invalidated, data will be refreshed from database")
+
+def update_approval_status(approval_id, status, approved_by, approved_by_name='', notes=''):
+    try:
+        supabase = get_supabase()
+        update_data = {
+            'status': status,
+            'approved_by': approved_by,
+            'approved_date': datetime.now(timezone.utc).isoformat(),
+            'notes': notes
+        }
+        logging.info(f"Updating approval ID {approval_id} with data: {update_data}")
+        response = supabase.table(TABLES['APPROVALS']).update(update_data).eq('approval_id', approval_id).execute()
+        logging.info(f"Approval update response for ID {approval_id}: {response.data}")
+        if response.data:
+            return True
+        else:
+            logging.warning(f"Approval update for ID {approval_id} did not return data. Update may have failed silently.")
+            return False
+    except Exception as e:
+        logging.error(f"Error updating approval status: {str(e)}")
+        return False

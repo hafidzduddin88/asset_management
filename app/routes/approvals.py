@@ -72,7 +72,7 @@ async def approve_request(
 
     try:
         approval_type = approval.get('type')
-        
+
         if approval_type in ['add_asset', 'admin_add_asset']:
             asset_data = json.loads(approval.get('notes', '{}'))
             
@@ -96,26 +96,36 @@ async def approve_request(
                 logging.error(f"RPC call failed for approval {approval_id}: {error_info}")
                 return JSONResponse({"status": "error", "message": f"Database transaction failed: {error_info}"})
 
+        # --- Handle all other approval types below ---
+
+        elif approval_type == 'damage_report':
+            # (Your original logic for damage_report)
+            pass
+
+        elif approval_type == 'relocation':
+            # (Your original logic for relocation)
+            pass
+
+        # ... other elif blocks for other approval types ...
+
+        # If the approval type was not for adding an asset, it falls through to here.
+        # Update the status for all other approval types.
+        success = update_approval_status(
+            approval_id, 
+            'approved',
+            current_profile.id
+        )
+
+        if success:
+            invalidate_cache()
+            return JSONResponse({"status": "success", "message": "Request approved successfully"})
         else:
-            # Handle other approval types that are not transactional
-            # This part of the logic remains the same as before
-            # (Your existing logic for damage, relocation, etc. would go here)
-            
-            # For now, we assume other types just need a status update
-            success = update_approval_status(
-                approval_id, 
-                'approved',
-                current_profile.id
-            )
-            if success:
-                invalidate_cache()
-                return JSONResponse({"status": "success", "message": "Request approved successfully"})
-            else:
-                return JSONResponse({"status": "error", "message": "Failed to update approval status."})
-            
+            return JSONResponse({"status": "error", "message": "Failed to update approval status for non-asset request."})
+
     except Exception as e:
         logging.error(f"Critical error processing approval {approval_id}: {str(e)}")
         return JSONResponse({"status": "error", "message": f"An unexpected error occurred: {str(e)}"}, status_code=500)
+
 
 @router.post("/{approval_id}/rejected")
 async def reject_request(
@@ -127,7 +137,6 @@ async def reject_request(
     if current_profile.role not in ['admin', 'manager']:
         raise HTTPException(status_code=403, detail="Access denied")
     
-    # We still need the non-transactional update for rejections
     success = update_approval_status(approval_id, 'rejected', current_profile.id)
     
     if success:
