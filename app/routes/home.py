@@ -23,13 +23,15 @@ async def home(request: Request, current_profile = Depends(get_current_profile),
         chart_data = get_chart_data()
         all_assets = get_all_assets()
 
-        # Filter out disposed assets for dashboard counts
-        active_assets = [asset for asset in all_assets if asset.get("status", "") != "Disposed"]
+        # Filter out disposed and lost assets for dashboard counts
+        active_assets = [asset for asset in all_assets if asset.get("status", "") not in ["Disposed", "Lost"]]
         disposed_assets = [asset for asset in all_assets if asset.get("status", "") == "Disposed"]
+        lost_assets = [asset for asset in all_assets if asset.get("status", "") == "Lost"]
         
         # Count assets by status and activity
         total_assets = len(active_assets)
         disposed_count = len(disposed_assets)
+        lost_count = len(lost_assets)
         damaged_count = len([a for a in all_assets if a.get("status", "") == "Under Repair"])
         
         # Count assets by activity type
@@ -152,6 +154,7 @@ async def home(request: Request, current_profile = Depends(get_current_profile),
             "total_book_value": total_book_value,
             "total_depreciation_value": total_depreciation_value,
             "disposed_count": disposed_count,
+            "lost_count": lost_count,
             "damaged_count": damaged_count,
             "relocated_count": relocated_count,
             "repaired_count": repaired_count,
@@ -184,6 +187,7 @@ async def home(request: Request, current_profile = Depends(get_current_profile),
             "total_book_value": 0,
             "total_depreciation_value": 0,
             "disposed_count": 0,
+            "lost_count": 0,
             "damaged_count": 0,
             "relocated_count": 0,
             "repaired_count": 0,
