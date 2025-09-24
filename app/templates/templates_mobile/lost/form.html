@@ -22,8 +22,8 @@
             <h3 class="font-semibold text-gray-900">{{ asset.get('asset_name', 'Unknown Asset') }}</h3>
             <div class="text-sm text-gray-600 mt-1">
                 <div>ID: {{ asset.get('asset_id', 'Unknown') }}</div>
-                <div>{{ asset.ref_categories[0].category_name if asset.ref_categories else 'Uncategorized' }}</div>
-                <div>📍 {{ asset.ref_locations[0].location_name if asset.ref_locations else 'Unknown Location' }} - {{ asset.ref_locations[0].room_name if asset.ref_locations else 'Unknown Room' }}</div>
+                <div>{{ asset.ref_categories.category_name if asset.ref_categories else 'Uncategorized' }}</div>
+                <div>📍 {{ asset.ref_locations.location_name if asset.ref_locations else 'Unknown Location' }} - {{ asset.ref_locations.room_name if asset.ref_locations else 'Unknown Room' }}</div>
                 <div>Status: {{ asset.get('status', 'Unknown') }}</div>
             </div>
         </div>
