@@ -65,6 +65,21 @@
     </div>
 </div>
 
+<!-- Chart Section -->
+<div class="bg-white rounded-lg shadow p-4 mb-4">
+    <div class="flex items-center justify-between mb-4">
+        <h3 class="font-semibold text-gray-900">Asset Additions</h3>
+        <select id="chartPeriod" class="text-xs px-2 py-1 border border-gray-300 rounded">
+            <option value="month">Monthly</option>
+            <option value="quarter">Quarterly</option>
+            <option value="year">Yearly</option>
+        </select>
+    </div>
+    <div class="chart-container">
+        <canvas id="mobileChart"></canvas>
+    </div>
+</div>
+
 <!-- Categories -->
 <div class="bg-white rounded-lg shadow p-4 mb-4">
     <div class="flex items-center justify-between mb-3">
@@ -94,21 +109,6 @@
             <span class="bg-purple-100 text-purple-800 px-2 py-1 rounded-full text-xs font-medium">{{ count }}</span>
         </div>
         {% endfor %}
-    </div>
-</div>
-
-<!-- Chart Section -->
-<div class="bg-white rounded-lg shadow p-4 mb-4">
-    <div class="flex items-center justify-between mb-4">
-        <h3 class="font-semibold text-gray-900">Asset Additions</h3>
-        <select id="chartPeriod" class="text-xs px-2 py-1 border border-gray-300 rounded">
-            <option value="month">Monthly</option>
-            <option value="quarter">Quarterly</option>
-            <option value="year">Yearly</option>
-        </select>
-    </div>
-    <div class="chart-container">
-        <canvas id="mobileChart"></canvas>
     </div>
 </div>
 

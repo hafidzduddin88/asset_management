@@ -194,6 +194,25 @@
         </div>
     </div>
     
+    <!-- Main Chart Section -->
+    <div class="mb-4">
+        <div class="bg-white rounded-xl shadow-xl overflow-hidden">
+            <div class="p-4">
+                <div class="flex justify-between items-center mb-3">
+                    <h3 class="text-base font-semibold text-gray-900 chart-title">Monthly Asset Additions (Last 12 Months)</h3>
+                    <div class="flex space-x-1">
+                        <button class="text-xs px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded text-gray-600 chart-period-btn active" data-period="month">Monthly</button>
+                        <button class="text-xs px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded text-gray-600 chart-period-btn" data-period="quarter">Quarterly</button>
+                        <button class="text-xs px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded text-gray-600 chart-period-btn" data-period="year">Yearly</button>
+                    </div>
+                </div>
+                <div class="chart-container" style="height: 250px;">
+                    <canvas id="monthlyChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
     <!-- Asset Activity Charts -->
     <div class="grid grid-cols-1 xl:grid-cols-2 gap-4 mb-4">
         <!-- Damaged Assets Chart -->
@@ -275,25 +294,6 @@
             </div>
         </div>
         {% endif %}
-    </div>
-    
-    <!-- Main Chart Section -->
-    <div class="mb-4">
-        <div class="bg-white rounded-xl shadow-xl overflow-hidden">
-            <div class="p-4">
-                <div class="flex justify-between items-center mb-3">
-                    <h3 class="text-base font-semibold text-gray-900 chart-title">Monthly Asset Additions (Last 12 Months)</h3>
-                    <div class="flex space-x-1">
-                        <button class="text-xs px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded text-gray-600 chart-period-btn active" data-period="month">Monthly</button>
-                        <button class="text-xs px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded text-gray-600 chart-period-btn" data-period="quarter">Quarterly</button>
-                        <button class="text-xs px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded text-gray-600 chart-period-btn" data-period="year">Yearly</button>
-                    </div>
-                </div>
-                <div class="chart-container" style="height: 250px;">
-                    <canvas id="monthlyChart"></canvas>
-                </div>
-            </div>
-        </div>
     </div>
     
     <!-- Latest Assets Table -->
