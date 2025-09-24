@@ -4,16 +4,24 @@
 
 {% block content %}
 <!-- Header -->
-<div class="bg-purple-600 rounded-lg p-4 mb-4">
-    <h1 class="text-xl font-bold text-white">Approval Logs</h1>
-    <p class="text-purple-100 text-sm">Track your requests</p>
+<div class="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-lg p-4 mb-4 text-white">
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-xl font-bold">Approval Logs</h1>
+            <p class="text-purple-100 text-sm">Track your requests</p>
+        </div>
+        <div class="text-right">
+            <div class="text-lg font-bold">{{ pending_approvals|length }}</div>
+            <div class="text-xs text-purple-100">Pending</div>
+        </div>
+    </div>
 </div>
 
 <!-- Tabs -->
 <div class="bg-white rounded-lg shadow p-1 mb-4">
     <nav class="flex space-x-1">
         <button onclick="showTab('pending')" id="pending-tab" 
-            class="tab-button flex-1 flex items-center justify-center px-3 py-2 rounded-lg text-sm font-semibold transition-all bg-purple-600 text-white">
+            class="tab-button flex-1 flex items-center justify-center px-3 py-2 rounded-lg text-sm font-semibold transition-all bg-gradient-to-r from-purple-600 to-indigo-600 text-white">
             <i class="fas fa-hourglass-half mr-2"></i>
             Pending
             <span class="ml-2 bg-white bg-opacity-20 px-2 py-1 rounded-full text-xs">{{ pending_approvals|length }}</span>
@@ -36,20 +44,20 @@
                 <div class="flex items-start space-x-3">
                     <div class="flex-shrink-0">
                         {% if approval.type == 'add_asset' %}
-                            <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                                <i class="fas fa-plus text-green-600"></i>
+                            <div class="w-10 h-10 bg-gradient-to-br from-green-400 to-green-600 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-plus text-white"></i>
                             </div>
                         {% elif approval.type == 'relocation' %}
-                            <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                                <i class="fas fa-arrows-alt text-blue-600"></i>
+                            <div class="w-10 h-10 bg-gradient-to-br from-blue-400 to-blue-600 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-arrows-alt text-white"></i>
                             </div>
                         {% elif approval.type == 'damage_report' %}
-                            <div class="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
-                                <i class="fas fa-exclamation-triangle text-red-600"></i>
+                            <div class="w-10 h-10 bg-gradient-to-br from-red-400 to-red-600 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-exclamation-triangle text-white"></i>
                             </div>
                         {% else %}
-                            <div class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
-                                <i class="fas fa-file text-gray-600"></i>
+                            <div class="w-10 h-10 bg-gradient-to-br from-gray-400 to-gray-600 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-file text-white"></i>
                             </div>
                         {% endif %}
                     </div>
@@ -79,21 +87,23 @@
                         </div>
                     </div>
                 </div>
-                <div class="flex items-center space-x-2">
-                    <button onclick="viewDetail({{ loop.index0 }}, 'pending')" class="text-blue-600 hover:text-blue-800 p-1">
-                        <i class="fas fa-eye"></i>
-                    </button>
-                    <span class="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs font-semibold rounded-full">
-                        Pending
-                    </span>
-                </div>
+                <span class="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs font-semibold rounded-full">
+                    Pending
+                </span>
             </div>
             
             {% if approval.description %}
-            <div class="text-xs text-gray-600 bg-gray-50 p-2 rounded">
+            <div class="text-xs text-gray-600 bg-gray-50 p-2 rounded mb-3">
                 {{ approval.description }}
             </div>
             {% endif %}
+            
+            <div class="flex space-x-2">
+                <button onclick="viewDetail({{ loop.index0 }}, 'pending')" 
+                    class="w-full bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 rounded text-xs font-semibold">
+                    <i class="fas fa-eye mr-1"></i>Detail
+                </button>
+            </div>
         </div>
         {% else %}
         <div class="text-center py-12 text-gray-500">
@@ -174,8 +184,9 @@
                         </div>
                     </div>
                 </div>
-                <button onclick="viewDetail({{ loop.index0 }}, 'complete')" class="text-blue-600 hover:text-blue-800 p-1">
-                    <i class="fas fa-eye"></i>
+                <button onclick="viewDetail({{ loop.index0 }}, 'complete')" 
+                    class="px-3 py-1 border border-gray-300 text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50">
+                    <i class="fas fa-eye mr-1"></i>Detail
                 </button>
             </div>
             {% if approval.description %}
@@ -204,7 +215,7 @@ function showTab(tabName) {
     });
     
     document.querySelectorAll('.tab-button').forEach(button => {
-        button.classList.remove('bg-purple-600', 'text-white');
+        button.classList.remove('bg-gradient-to-r', 'from-purple-600', 'to-indigo-600', 'text-white');
         button.classList.add('text-gray-600', 'hover:bg-gray-50');
     });
     
@@ -212,7 +223,7 @@ function showTab(tabName) {
     
     const activeTab = document.getElementById(tabName + '-tab');
     activeTab.classList.remove('text-gray-600', 'hover:bg-gray-50');
-    activeTab.classList.add('bg-purple-600', 'text-white');
+    activeTab.classList.add('bg-gradient-to-r', 'from-purple-600', 'to-indigo-600', 'text-white');
 }
 
 function viewDetail(index, type) {
