@@ -113,9 +113,10 @@
                     
                     <div class="flex space-x-2">
                         <button onclick="showApprovalDetail('{{ approval.approval_id }}')" 
-                            class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded text-xs font-semibold transition-colors">
+                            class="{% if approval.get('can_approve') %}flex-1{% else %}w-full{% endif %} bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded text-xs font-semibold transition-colors">
                             <i class="fas fa-eye mr-1"></i>View
                         </button>
+                        {% if approval.get('can_approve') %}
                         <button onclick="confirmApproval('{{ approval.approval_id }}', 'approved')" 
                             class="flex-1 bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded text-xs font-semibold transition-colors">
                             <i class="fas fa-check mr-1"></i>Approve
@@ -124,6 +125,7 @@
                             class="flex-1 bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded text-xs font-semibold transition-colors">
                             <i class="fas fa-times mr-1"></i>Reject
                         </button>
+                        {% endif %}
                     </div>
                 </div>
                 {% else %}
@@ -359,7 +361,7 @@ function showApprovalDetail(approvalId) {
             </div>
             ` : ''}
             
-            ${approval.status === 'pending' ? `
+            ${approval.status === 'pending' && approval.can_approve ? `
             <div class="flex space-x-3 pt-4 border-t">
                 <button onclick="confirmApproval('${approval.approval_id}', 'approved')" 
                     class="flex-1 px-6 py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700">
