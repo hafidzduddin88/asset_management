@@ -15,9 +15,13 @@ async def damage_page(request: Request, asset_id: int = None, current_profile = 
     from app.utils.database_manager import get_supabase, get_all_assets
     
     if asset_id:
-        # Individual asset damage form
+        # Individual asset damage form with proper relationships
         supabase = get_supabase()
-        response = supabase.table('assets').select('*').eq('asset_id', asset_id).execute()
+        response = supabase.table('assets').select('''
+            *,
+            ref_categories(category_name),
+            ref_locations(location_name, room_name)
+        ''').eq('asset_id', asset_id).execute()
         asset_data = response.data[0] if response.data else None
         
         template_path = get_template(request, "damage/form.html")

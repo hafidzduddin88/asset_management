@@ -19,10 +19,12 @@
             <i class="fas fa-box text-orange-600"></i>
         </div>
         <div class="flex-1">
-            <h3 class="font-semibold text-gray-900">{{ asset.asset_name if asset else 'Asset' }}</h3>
+            <h3 class="font-semibold text-gray-900">{{ asset.asset_name if asset else 'Unknown Asset' }}</h3>
             <div class="text-sm text-gray-600 mt-1">
-                <div>ID: {{ asset.asset_id if asset else 'N/A' }}</div>
-                <div>{{ asset.ref_categories.category_name if asset and asset.ref_categories else 'N/A' }} - {{ asset.ref_locations.location_name if asset and asset.ref_locations else 'N/A' }}</div>
+                <div>ID: {{ asset.asset_id if asset else 'Unknown' }}</div>
+                <div>{{ asset.ref_categories[0].category_name if asset and asset.ref_categories else 'Uncategorized' }}</div>
+                <div>📍 {{ asset.ref_locations[0].location_name if asset and asset.ref_locations else 'Unknown Location' }} - {{ asset.ref_locations[0].room_name if asset and asset.ref_locations else 'Unknown Room' }}</div>
+                <div>Status: {{ asset.status if asset else 'Unknown' }}</div>
             </div>
         </div>
     </div>
