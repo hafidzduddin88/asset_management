@@ -295,32 +295,69 @@ function showApprovalDetail(approvalId) {
     
     const approvalContent = document.getElementById('approvalContent');
     approvalContent.innerHTML = `
-        <div class="space-y-6">
-            <div>
-                <h4 class="font-semibold text-gray-900 mb-3">Request Information</h4>
-                <div class="space-y-2 text-sm bg-gray-50 p-4 rounded-lg">
-                    <div><strong>Type:</strong> ${approval.type.replace('_', ' ').replace(/\\b\\w/g, l => l.toUpperCase())}</div>
-                    <div><strong>Asset:</strong> ${approval.asset_name || 'N/A'}</div>
-                    <div><strong>ID:</strong> ${approval.asset_id || 'N/A'}</div>
-                    <div><strong>Description:</strong> ${approval.description || 'N/A'}</div>
+        <div class="space-y-4">
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="text-sm font-medium text-gray-500">Type</label>
+                    <p class="text-sm text-gray-900">${approval.type?.replace('_', ' ')?.replace(/\\b\\w/g, l => l.toUpperCase()) || 'N/A'}</p>
+                </div>
+                <div>
+                    <label class="text-sm font-medium text-gray-500">Status</label>
+                    <p class="text-sm text-gray-900">${approval.status || 'Pending'}</p>
                 </div>
             </div>
             
             <div>
-                <h4 class="font-semibold text-gray-900 mb-3">Status & Details</h4>
-                <div class="space-y-2 text-sm bg-gray-50 p-4 rounded-lg">
-                    <div><strong>Status:</strong> 
-                        <span class="px-2 py-1 text-xs rounded-full ${
-                            approval.status === 'approved' ? 'bg-green-100 text-green-800' :
-                            approval.status === 'rejected' ? 'bg-red-100 text-red-800' :
-                            'bg-yellow-100 text-yellow-800'
-                        }">${approval.status.charAt(0).toUpperCase() + approval.status.slice(1)}</span>
-                    </div>
-                    <div><strong>Submitted By:</strong> ${approval.submitted_by_info?.full_name || 'Unknown'}</div>
-                    <div><strong>Date:</strong> ${approval.submitted_date ? approval.submitted_date.substring(0, 10) : 'N/A'}</div>
-                    ${approval.location_name ? `<div><strong>Location:</strong> ${approval.location_name} - ${approval.room_name || ''}</div>` : ''}
+                <label class="text-sm font-medium text-gray-500">Asset Name</label>
+                <p class="text-sm text-gray-900">${approval.asset_name || 'N/A'}</p>
+            </div>
+            
+            <div>
+                <label class="text-sm font-medium text-gray-500">Description</label>
+                <p class="text-sm text-gray-900">${approval.description || 'No description provided'}</p>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="text-sm font-medium text-gray-500">Submitted By</label>
+                    <p class="text-sm text-gray-900">${approval.submitted_by_name || 'N/A'}</p>
+                </div>
+                <div>
+                    <label class="text-sm font-medium text-gray-500">Submitted Date</label>
+                    <p class="text-sm text-gray-900">${approval.submitted_date?.substring(0, 10) || 'N/A'}</p>
                 </div>
             </div>
+            
+            ${approval.approved_date || approval.approved_by_name ? `
+            <div class="grid grid-cols-2 gap-4">
+                ${approval.approved_by_name ? `
+                <div>
+                    <label class="text-sm font-medium text-gray-500">Approved By</label>
+                    <p class="text-sm text-gray-900">${approval.approved_by_name}</p>
+                </div>
+                ` : ''}
+                ${approval.approved_date ? `
+                <div>
+                    <label class="text-sm font-medium text-gray-500">Approved Date</label>
+                    <p class="text-sm text-gray-900">${approval.approved_date.substring(0, 10)}</p>
+                </div>
+                ` : ''}
+            </div>
+            ` : ''}
+            
+            ${approval.notes && approval.status === 'rejected' ? `
+            <div>
+                <label class="text-sm font-medium text-gray-500">Notes</label>
+                <p class="text-sm text-gray-900">${approval.notes}</p>
+            </div>
+            ` : ''}
+            
+            ${approval.asset_id ? `
+            <div>
+                <label class="text-sm font-medium text-gray-500">Asset ID</label>
+                <p class="text-sm text-gray-900">${approval.asset_id}</p>
+            </div>
+            ` : ''}
             
             ${approval.status === 'pending' ? `
             <div class="flex space-x-3 pt-4 border-t">
