@@ -21,27 +21,26 @@ async def approvals_page(
     if current_profile.role not in ['admin', 'manager']:
         raise HTTPException(status_code=403, detail="Access denied")
     
-    all_approvals = get_all_approvals()
-    
     supabase = get_supabase()
-    # Get user roles for filtering
-    user_roles = {}
+    # Get all approvals with submitter full names
+    response = supabase.table('approvals').select('''
+        approval_id, type, asset_id, asset_name, status, submitted_by, submitted_date,
+        description, approved_by, approved_date, notes, created_at,
+        from_location_id, to_location_id,
+        profiles!approvals_submitted_by_fkey(full_name, username, role)
+    ''').order('submitted_date', desc=True).execute()
+    
+    all_approvals = response.data or []
+    
+    # Process approvals to add submitted_by_name and submitted_by_role
     for approval in all_approvals:
-        user_id = approval.get('submitted_by_id') or approval.get('submitted_by')
-        if user_id and user_id not in user_roles:
-            try:
-                user_response = supabase.table('profiles').select('username, full_name, role').eq('id', user_id).execute()
-                if user_response.data:
-                    user = user_response.data[0]
-                    user_roles[user_id] = user.get('role', 'staff')
-                    approval['submitted_by_name'] = user.get('full_name') or user.get('username') or 'Unknown User'
-                    approval['submitted_by_role'] = user.get('role', 'staff')
-            except Exception as e:
-                logging.warning(f"Could not fetch user {user_id}: {e}")
-                approval['submitted_by_name'] = 'Unknown User'
-                approval['submitted_by_role'] = 'staff'
-        elif user_id in user_roles:
-            approval['submitted_by_role'] = user_roles[user_id]
+        profile_data = approval.get('profiles')
+        if profile_data:
+            approval['submitted_by_name'] = profile_data.get('full_name') or profile_data.get('username') or 'Unknown User'
+            approval['submitted_by_role'] = profile_data.get('role', 'staff')
+        else:
+            approval['submitted_by_name'] = 'Unknown User'
+            approval['submitted_by_role'] = 'staff'
     
     # Show all pending approvals but add approval permission flag
     for approval in all_approvals:

@@ -22,44 +22,43 @@ async def logs_page(
         from fastapi import HTTPException
         raise HTTPException(status_code=403, detail="Access denied")
     
-    all_approvals = get_all_approvals()
-    
-    # Get user details for submitted_by and approved_by UUIDs
     supabase = get_supabase()
+    # Get all approvals with submitter and approver full names
+    response = supabase.table('approvals').select('''
+        approval_id, type, asset_id, asset_name, status, submitted_by, submitted_date,
+        description, approved_by, approved_date, notes, created_at,
+        from_location_id, to_location_id,
+        submitted_profile:profiles!approvals_submitted_by_fkey(full_name, username),
+        approved_profile:profiles!approvals_approved_by_fkey(full_name, username)
+    ''').order('submitted_date', desc=True).execute()
+    
+    all_approvals = response.data or []
+    
+    # Process approvals to add name fields
     for approval in all_approvals:
-        if approval.get('submitted_by'):
-            try:
-                user_response = supabase.table('profiles').select('username, full_name').eq('id', approval['submitted_by']).execute()
-                if user_response.data:
-                    user = user_response.data[0]
-                    approval['submitted_by_info'] = {
-                        'full_name': user.get('full_name') or 'Unknown',
-                        'username': user.get('username') or 'Unknown'
-                    }
-                    approval['submitted_by_name'] = user.get('full_name') or user.get('username') or 'Unknown User'
-                else:
-                    approval['submitted_by_info'] = {'full_name': 'Unknown', 'username': 'Unknown'}
-                    approval['submitted_by_name'] = 'Unknown User'
-            except:
-                approval['submitted_by_info'] = {'full_name': 'Unknown', 'username': 'Unknown'}
-                approval['submitted_by_name'] = 'Unknown User'
+        # Submitted by info
+        submitted_profile = approval.get('submitted_profile')
+        if submitted_profile:
+            approval['submitted_by_name'] = submitted_profile.get('full_name') or submitted_profile.get('username') or 'Unknown User'
+            approval['submitted_by_info'] = {
+                'full_name': submitted_profile.get('full_name') or 'Unknown',
+                'username': submitted_profile.get('username') or 'Unknown'
+            }
+        else:
+            approval['submitted_by_name'] = 'Unknown User'
+            approval['submitted_by_info'] = {'full_name': 'Unknown', 'username': 'Unknown'}
         
-        if approval.get('approved_by'):
-            try:
-                user_response = supabase.table('profiles').select('username, full_name').eq('id', approval['approved_by']).execute()
-                if user_response.data:
-                    user = user_response.data[0]
-                    approval['approved_by_info'] = {
-                        'full_name': user.get('full_name') or 'Unknown',
-                        'username': user.get('username') or 'Unknown'
-                    }
-                    approval['approved_by_name'] = user.get('full_name') or user.get('username') or 'Unknown User'
-                else:
-                    approval['approved_by_info'] = {'full_name': 'Unknown', 'username': 'Unknown'}
-                    approval['approved_by_name'] = 'Unknown User'
-            except:
-                approval['approved_by_info'] = {'full_name': 'Unknown', 'username': 'Unknown'}
-                approval['approved_by_name'] = 'Unknown User'
+        # Approved by info
+        approved_profile = approval.get('approved_profile')
+        if approved_profile:
+            approval['approved_by_name'] = approved_profile.get('full_name') or approved_profile.get('username') or 'Unknown User'
+            approval['approved_by_info'] = {
+                'full_name': approved_profile.get('full_name') or 'Unknown',
+                'username': approved_profile.get('username') or 'Unknown'
+            }
+        else:
+            approval['approved_by_name'] = 'Unknown User'
+            approval['approved_by_info'] = {'full_name': 'Unknown', 'username': 'Unknown'}
     
     # Staff can only see their own requests
     approvals = [a for a in all_approvals if a.get('submitted_by') == current_profile.id]
