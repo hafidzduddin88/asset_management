@@ -175,27 +175,30 @@ async def approve_request(
             notes_data = json.loads(approval.get('notes', '{}'))
             asset_id = approval.get('asset_id')
             
-            # Add to relocation_log
+            # Get current asset data for old location info
+            asset_response = supabase.table('assets').select('location_id, ref_locations(location_name, room_name)').eq('asset_id', asset_id).execute()
+            current_asset = asset_response.data[0] if asset_response.data else {}
+            
+            # Add to relocation_log with correct column names
             relocation_log_data = {
                 'asset_id': asset_id,
                 'asset_name': approval.get('asset_name', ''),
-                'from_location': notes_data.get('from_location', ''),
-                'to_location': notes_data.get('to_location', ''),
+                'old_location_id': current_asset.get('location_id'),
+                'old_location_name': notes_data.get('current_location', ''),
+                'old_room_name': notes_data.get('current_room', ''),
+                'new_location_name': notes_data.get('new_location', ''),
+                'new_room_name': notes_data.get('new_room', ''),
                 'reason': notes_data.get('reason', ''),
-                'moved_by': approval.get('submitted_by'),
+                'requested_by': approval.get('submitted_by'),
                 'approved_by': current_profile.id,
                 'status': 'approved'
             }
             supabase.table('relocation_log').insert(relocation_log_data).execute()
             
             # Update asset location
-            location_updates = {}
-            if notes_data.get('new_location_id'):
-                location_updates['location_id'] = notes_data.get('new_location_id')
-            if notes_data.get('new_room_name'):
-                location_updates['room_name'] = notes_data.get('new_room_name')
-            if location_updates:
-                update_asset(asset_id, location_updates)
+            new_location_id = approval.get('to_location_id')
+            if new_location_id:
+                update_asset(asset_id, {'location_id': new_location_id})
 
         # If the approval type was not for adding an asset, it falls through to here.
         # Update the status for all other approval types.
