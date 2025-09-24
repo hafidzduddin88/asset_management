@@ -285,8 +285,38 @@ function viewDetail(index, type) {
                     <!-- Request Details -->
                     ${data.notes ? `
                     <div class="bg-gray-50 p-3 rounded-lg">
-                        <h4 class="font-medium text-gray-900 mb-3">Request Details</h4>
-                        <div class="text-sm text-gray-900">${data.notes}</div>
+                        <h4 class="font-medium text-gray-900 mb-3 flex items-center">
+                            <i class="fas fa-clipboard-list mr-2 text-orange-500"></i>Request Details
+                        </h4>
+                        <div class="space-y-2">
+                            ${(() => {
+                                try {
+                                    const notes = JSON.parse(data.notes);
+                                    let html = '';
+                                    
+                                    // Common fields
+                                    if (notes.damage_type) html += `<div><span class="text-xs font-medium text-gray-500">Damage Type:</span><p class="text-sm text-gray-900">${notes.damage_type}</p></div>`;
+                                    if (notes.severity) html += `<div><span class="text-xs font-medium text-gray-500">Severity:</span><p class="text-sm text-gray-900">${notes.severity}</p></div>`;
+                                    if (notes.lost_reason) html += `<div><span class="text-xs font-medium text-gray-500">Lost Reason:</span><p class="text-sm text-gray-900">${notes.lost_reason}</p></div>`;
+                                    if (notes.circumstances) html += `<div><span class="text-xs font-medium text-gray-500">Circumstances:</span><p class="text-sm text-gray-900">${notes.circumstances}</p></div>`;
+                                    if (notes.lost_date) html += `<div><span class="text-xs font-medium text-gray-500">Lost Date:</span><p class="text-sm text-gray-900">${notes.lost_date}</p></div>`;
+                                    if (notes.lost_location) html += `<div><span class="text-xs font-medium text-gray-500">Lost Location:</span><p class="text-sm text-gray-900">${notes.lost_location}</p></div>`;
+                                    if (notes.reason) html += `<div><span class="text-xs font-medium text-gray-500">Reason:</span><p class="text-sm text-gray-900">${notes.reason}</p></div>`;
+                                    if (notes.new_location) html += `<div><span class="text-xs font-medium text-gray-500">New Location:</span><p class="text-sm text-gray-900">${notes.new_location}</p></div>`;
+                                    if (notes.new_room) html += `<div><span class="text-xs font-medium text-gray-500">New Room:</span><p class="text-sm text-gray-900">${notes.new_room}</p></div>`;
+                                    if (notes.current_location) html += `<div><span class="text-xs font-medium text-gray-500">From Location:</span><p class="text-sm text-gray-900">${notes.current_location}</p></div>`;
+                                    if (notes.current_room) html += `<div><span class="text-xs font-medium text-gray-500">From Room:</span><p class="text-sm text-gray-900">${notes.current_room}</p></div>`;
+                                    if (notes.disposal_reason) html += `<div><span class="text-xs font-medium text-gray-500">Disposal Reason:</span><p class="text-sm text-gray-900">${notes.disposal_reason}</p></div>`;
+                                    if (notes.disposal_method) html += `<div><span class="text-xs font-medium text-gray-500">Disposal Method:</span><p class="text-sm text-gray-900">${notes.disposal_method}</p></div>`;
+                                    if (notes.description) html += `<div><span class="text-xs font-medium text-gray-500">Details:</span><p class="text-sm text-gray-900">${notes.description}</p></div>`;
+                                    if (notes.notes) html += `<div><span class="text-xs font-medium text-gray-500">Notes:</span><p class="text-sm text-gray-900">${notes.notes}</p></div>`;
+                                    
+                                    return html || '<p class="text-sm text-gray-500">No additional details available</p>';
+                                } catch (e) {
+                                    return `<p class="text-sm text-gray-900">${data.notes}</p>`;
+                                }
+                            })()} 
+                        </div>
                     </div>
                     ` : ''}
                     
