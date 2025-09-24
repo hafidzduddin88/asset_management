@@ -29,15 +29,15 @@
                     </div>
                     <div>
                         <span class="text-gray-600">Category:</span>
-                        <span class="font-medium">{{ asset.ref_categories[0].category_name if asset and asset.ref_categories else 'Uncategorized' }}</span>
+                        <span class="font-medium">{{ asset.ref_categories.category_name if asset and asset.ref_categories else 'Uncategorized' }}</span>
                     </div>
                     <div>
                         <span class="text-gray-600">Location:</span>
-                        <span class="font-medium">{{ asset.ref_locations[0].location_name if asset and asset.ref_locations else 'Unknown Location' }}</span>
+                        <span class="font-medium">{{ asset.ref_locations.location_name if asset and asset.ref_locations else 'Unknown Location' }}</span>
                     </div>
                     <div>
                         <span class="text-gray-600">Room:</span>
-                        <span class="font-medium">{{ asset.ref_locations[0].room_name if asset and asset.ref_locations else 'Unknown Room' }}</span>
+                        <span class="font-medium">{{ asset.ref_locations.room_name if asset and asset.ref_locations else 'Unknown Room' }}</span>
                     </div>
                     <div>
                         <span class="text-gray-600">Status:</span>
