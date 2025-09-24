@@ -150,7 +150,7 @@ async def approve_request(
                 'reported_by_name': approval.get('submitted_profile', {}).get('full_name') or approval.get('submitted_profile', {}).get('username') or 'Unknown User',
                 'approved_by': current_profile.id,
                 'approved_by_name': current_profile.full_name or current_profile.username,
-                'approved_at': datetime.now(),
+                'approved_at': datetime.now().isoformat(),
                 'status': 'approved'
             }
             supabase.table('damage_log').insert(damage_log_data).execute()
@@ -168,13 +168,13 @@ async def approve_request(
                 'asset_id': asset_id,
                 'asset_name': approval.get('asset_name', ''),
                 'last_location_id': approval.get('from_location_id'),
-                'date_lost': datetime.now().date(),
+                'date_lost': datetime.now().date().isoformat(),
                 'description': notes_data.get('description', ''),
                 'reported_by': approval.get('submitted_by'),
                 'reported_by_name': approval.get('submitted_profile', {}).get('full_name') or approval.get('submitted_profile', {}).get('username') or 'Unknown User',
                 'approved_by': current_profile.id,
                 'approved_by_name': current_profile.full_name or current_profile.username,
-                'approved_at': datetime.now(),
+                'approved_at': datetime.now().isoformat(),
                 'status': 'approved'
             }
             supabase.table('lost_log').insert(lost_log_data).execute()
@@ -208,8 +208,8 @@ async def approve_request(
                 'approved_by': current_profile.id,
                 'approved_by_name': current_profile.full_name or current_profile.username,
                 'status': 'approved',
-                'relocation_date': datetime.now().date(),
-                'approved_at': datetime.now()
+                'relocation_date': datetime.now().date().isoformat(),
+                'approved_at': datetime.now().isoformat()
             }
             supabase.table('relocation_log').insert(relocation_log_data).execute()
             
