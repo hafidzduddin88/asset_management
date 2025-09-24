@@ -119,6 +119,7 @@ async def relocate_asset(
             'submitted_by': current_profile.id,
             'status': 'pending',
             'description': f"Relocate from {asset.get('ref_locations', {}).get('location_name', '') if asset.get('ref_locations') else ''} - {asset.get('ref_locations', {}).get('room_name', '') if asset.get('ref_locations') else asset.get('room_name', '')} to {new_location} - {new_room}",
+            'from_location_id': current_location_id,
             'to_location_id': new_location_id,
             'notes': json.dumps(relocation_data)
         }

@@ -94,7 +94,13 @@ async def approve_request(
         raise HTTPException(status_code=403, detail="Access denied")
     
     supabase = get_supabase()
-    approval = next((a for a in get_all_approvals() if str(a.get('approval_id')) == str(approval_id)), None)
+    
+    # Get approval with submitter info
+    approval_response = supabase.table('approvals').select('''
+        *, submitted_profile:profiles!approvals_submitted_by_fkey(full_name, username)
+    ''').eq('approval_id', approval_id).execute()
+    
+    approval = approval_response.data[0] if approval_response.data else None
     
     if not approval:
         return JSONResponse({"status": "error", "message": "Approval not found"}, status_code=404)
@@ -140,7 +146,10 @@ async def approve_request(
                 'severity': notes_data.get('severity', ''),
                 'description': notes_data.get('description', ''),
                 'reported_by': approval.get('submitted_by'),
+                'reported_by_name': approval.get('submitted_profile', {}).get('full_name') or approval.get('submitted_profile', {}).get('username') or 'Unknown User',
                 'approved_by': current_profile.id,
+                'approved_by_name': current_profile.full_name or current_profile.username,
+                'approved_at': datetime.now(),
                 'status': 'approved'
             }
             supabase.table('damage_log').insert(damage_log_data).execute()
@@ -157,12 +166,14 @@ async def approve_request(
             lost_log_data = {
                 'asset_id': asset_id,
                 'asset_name': approval.get('asset_name', ''),
-                'lost_reason': notes_data.get('lost_reason', '') or notes_data.get('circumstances', ''),
+                'last_location_id': approval.get('from_location_id'),
+                'date_lost': datetime.now().date(),
                 'description': notes_data.get('description', ''),
-                'lost_date': notes_data.get('lost_date', ''),
-                'lost_location': notes_data.get('lost_location', ''),
                 'reported_by': approval.get('submitted_by'),
+                'reported_by_name': approval.get('submitted_profile', {}).get('full_name') or approval.get('submitted_profile', {}).get('username') or 'Unknown User',
                 'approved_by': current_profile.id,
+                'approved_by_name': current_profile.full_name or current_profile.username,
+                'approved_at': datetime.now(),
                 'status': 'approved'
             }
             supabase.table('lost_log').insert(lost_log_data).execute()
@@ -186,12 +197,18 @@ async def approve_request(
                 'old_location_id': current_asset.get('location_id'),
                 'old_location_name': notes_data.get('current_location', ''),
                 'old_room_name': notes_data.get('current_room', ''),
+                'new_location_id': approval.get('to_location_id'),
                 'new_location_name': notes_data.get('new_location', ''),
                 'new_room_name': notes_data.get('new_room', ''),
                 'reason': notes_data.get('reason', ''),
+                'notes': notes_data.get('notes', ''),
                 'requested_by': approval.get('submitted_by'),
+                'requested_by_name': approval.get('submitted_profile', {}).get('full_name') or approval.get('submitted_profile', {}).get('username') or 'Unknown User',
                 'approved_by': current_profile.id,
-                'status': 'approved'
+                'approved_by_name': current_profile.full_name or current_profile.username,
+                'status': 'approved',
+                'relocation_date': datetime.now().date(),
+                'approved_at': datetime.now()
             }
             supabase.table('relocation_log').insert(relocation_log_data).execute()
             
