@@ -22,25 +22,34 @@ async def approvals_page(
         raise HTTPException(status_code=403, detail="Access denied")
     
     supabase = get_supabase()
-    # Get all approvals with submitter full names
+    # Get all approvals with submitter and approver full names
     response = supabase.table('approvals').select('''
         approval_id, type, asset_id, asset_name, status, submitted_by, submitted_date,
         description, approved_by, approved_date, notes, created_at,
         from_location_id, to_location_id,
-        profiles!approvals_submitted_by_fkey(full_name, username, role)
+        submitted_profile:profiles!approvals_submitted_by_fkey(full_name, username, role),
+        approved_profile:profiles!approvals_approved_by_fkey(full_name, username)
     ''').order('submitted_date', desc=True).execute()
     
     all_approvals = response.data or []
     
-    # Process approvals to add submitted_by_name and submitted_by_role
+    # Process approvals to add name fields
     for approval in all_approvals:
-        profile_data = approval.get('profiles')
-        if profile_data:
-            approval['submitted_by_name'] = profile_data.get('full_name') or profile_data.get('username') or 'Unknown User'
-            approval['submitted_by_role'] = profile_data.get('role', 'staff')
+        # Submitted by info
+        submitted_profile = approval.get('submitted_profile')
+        if submitted_profile:
+            approval['submitted_by_name'] = submitted_profile.get('full_name') or submitted_profile.get('username') or 'Unknown User'
+            approval['submitted_by_role'] = submitted_profile.get('role', 'staff')
         else:
             approval['submitted_by_name'] = 'Unknown User'
             approval['submitted_by_role'] = 'staff'
+        
+        # Approved by info
+        approved_profile = approval.get('approved_profile')
+        if approved_profile:
+            approval['approved_by_name'] = approved_profile.get('full_name') or approved_profile.get('username') or 'Unknown User'
+        else:
+            approval['approved_by_name'] = 'Unknown User'
     
     # Show all pending approvals but add approval permission flag
     for approval in all_approvals:
