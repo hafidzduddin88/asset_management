@@ -1,0 +1,57 @@
+{% extends "templates_desktop/layouts/modern_layout.html" %}
+
+{% block title %}Relocation Success{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-green-50 via-white to-emerald-50 flex items-center justify-center p-4">
+    <div class="max-w-md w-full">
+        <!-- Success Card -->
+        <div class="bg-white rounded-2xl shadow-xl p-8 text-center">
+            <!-- Success Icon -->
+            <div class="mx-auto w-20 h-20 bg-gradient-to-r from-green-500 to-emerald-600 rounded-full flex items-center justify-center mb-6">
+                <i class="fas fa-check text-3xl text-white"></i>
+            </div>
+            
+            <!-- Success Message -->
+            <h1 class="text-2xl font-bold text-gray-900 mb-3">Relocation Request Submitted!</h1>
+            <p class="text-gray-600 mb-6">Your asset relocation request has been successfully submitted and is now pending approval.</p>
+            
+            <!-- Info Box -->
+            <div class="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+                <div class="flex items-center justify-center text-green-700">
+                    <i class="fas fa-info-circle mr-2"></i>
+                    <span class="text-sm font-medium">Request sent for approval</span>
+                </div>
+            </div>
+            
+            <!-- Auto Redirect Info -->
+            <div class="text-sm text-gray-500 mb-6">
+                <i class="fas fa-clock mr-1"></i>
+                Redirecting to asset list in <span id="countdown">5</span> seconds...
+            </div>
+            
+            <!-- Action Button -->
+            <a href="/asset_management/list" 
+               class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white font-semibold rounded-lg hover:from-green-700 hover:to-emerald-700 transition-all duration-200 transform hover:scale-105">
+                <i class="fas fa-list mr-2"></i>
+                Back to Asset List
+            </a>
+        </div>
+    </div>
+</div>
+
+<script>
+let countdown = 5;
+const countdownElement = document.getElementById('countdown');
+
+const timer = setInterval(() => {
+    countdown--;
+    countdownElement.textContent = countdown;
+    
+    if (countdown <= 0) {
+        clearInterval(timer);
+        window.location.href = '/asset_management/list';
+    }
+}, 1000);
+</script>
+{% endblock %}
