@@ -296,6 +296,40 @@ function showApprovalDetail(approvalId) {
     }
     
     const approvalContent = document.getElementById('approvalContent');
+    
+    // Parse notes for detailed information
+    let detailsHtml = '';
+    if (notes && Object.keys(notes).length > 0) {
+        detailsHtml = '<div class="bg-gray-50 p-4 rounded-lg"><h4 class="font-medium text-gray-900 mb-3">Request Details</h4><div class="grid grid-cols-1 gap-3">';
+        
+        // Common fields
+        if (notes.damage_type) detailsHtml += `<div><span class="text-sm font-medium text-gray-500">Damage Type:</span> <span class="text-sm text-gray-900">${notes.damage_type}</span></div>`;
+        if (notes.severity) detailsHtml += `<div><span class="text-sm font-medium text-gray-500">Severity:</span> <span class="text-sm text-gray-900">${notes.severity}</span></div>`;
+        if (notes.lost_reason) detailsHtml += `<div><span class="text-sm font-medium text-gray-500">Lost Reason:</span> <span class="text-sm text-gray-900">${notes.lost_reason}</span></div>`;
+        if (notes.circumstances) detailsHtml += `<div><span class="text-sm font-medium text-gray-500">Circumstances:</span> <span class="text-sm text-gray-900">${notes.circumstances}</span></div>`;
+        if (notes.lost_date) detailsHtml += `<div><span class="text-sm font-medium text-gray-500">Lost Date:</span> <span class="text-sm text-gray-900">${notes.lost_date}</span></div>`;
+        if (notes.lost_location) detailsHtml += `<div><span class="text-sm font-medium text-gray-500">Lost Location:</span> <span class="text-sm text-gray-900">${notes.lost_location}</span></div>`;
+        if (notes.reason) detailsHtml += `<div><span class="text-sm font-medium text-gray-500">Reason:</span> <span class="text-sm text-gray-900">${notes.reason}</span></div>`;
+        if (notes.from_location) detailsHtml += `<div><span class="text-sm font-medium text-gray-500">From Location:</span> <span class="text-sm text-gray-900">${notes.from_location}</span></div>`;
+        if (notes.to_location) detailsHtml += `<div><span class="text-sm font-medium text-gray-500">To Location:</span> <span class="text-sm text-gray-900">${notes.to_location}</span></div>`;
+        if (notes.new_location_name) detailsHtml += `<div><span class="text-sm font-medium text-gray-500">New Location:</span> <span class="text-sm text-gray-900">${notes.new_location_name}</span></div>`;
+        if (notes.new_room_name) detailsHtml += `<div><span class="text-sm font-medium text-gray-500">New Room:</span> <span class="text-sm text-gray-900">${notes.new_room_name}</span></div>`;
+        if (notes.description) detailsHtml += `<div><span class="text-sm font-medium text-gray-500">Description:</span> <span class="text-sm text-gray-900">${notes.description}</span></div>`;
+        
+        // Asset data for add_asset requests
+        if (notes.asset_name) detailsHtml += `<div><span class="text-sm font-medium text-gray-500">Asset Name:</span> <span class="text-sm text-gray-900">${notes.asset_name}</span></div>`;
+        if (notes.category_name) detailsHtml += `<div><span class="text-sm font-medium text-gray-500">Category:</span> <span class="text-sm text-gray-900">${notes.category_name}</span></div>`;
+        if (notes.location_name) detailsHtml += `<div><span class="text-sm font-medium text-gray-500">Location:</span> <span class="text-sm text-gray-900">${notes.location_name}</span></div>`;
+        if (notes.room_name) detailsHtml += `<div><span class="text-sm font-medium text-gray-500">Room:</span> <span class="text-sm text-gray-900">${notes.room_name}</span></div>`;
+        if (notes.purchase_value) detailsHtml += `<div><span class="text-sm font-medium text-gray-500">Purchase Value:</span> <span class="text-sm text-gray-900">Rp ${parseFloat(notes.purchase_value).toLocaleString('id-ID')}</span></div>`;
+        if (notes.purchase_date) detailsHtml += `<div><span class="text-sm font-medium text-gray-500">Purchase Date:</span> <span class="text-sm text-gray-900">${notes.purchase_date}</span></div>`;
+        if (notes.supplier) detailsHtml += `<div><span class="text-sm font-medium text-gray-500">Supplier:</span> <span class="text-sm text-gray-900">${notes.supplier}</span></div>`;
+        if (notes.warranty_period) detailsHtml += `<div><span class="text-sm font-medium text-gray-500">Warranty:</span> <span class="text-sm text-gray-900">${notes.warranty_period} months</span></div>`;
+        
+        detailsHtml += '</div></div>';
+    }
+    
+    const approvalContent = document.getElementById('approvalContent');
     approvalContent.innerHTML = `
         <div class="space-y-4">
             <div class="grid grid-cols-2 gap-4">

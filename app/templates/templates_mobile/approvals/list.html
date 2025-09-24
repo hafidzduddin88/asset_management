@@ -285,63 +285,123 @@ function showApprovalDetail(approvalId) {
     }
     
     const approvalContent = document.getElementById('approvalContent');
+    
+    // Parse notes for detailed information
+    let detailsHtml = '';
+    if (notes && Object.keys(notes).length > 0) {
+        detailsHtml = '<div class="bg-gray-50 p-3 rounded-lg"><h4 class="font-medium text-gray-900 mb-3">Request Details</h4><div class="space-y-2">';
+        
+        // Common fields
+        if (notes.damage_type) detailsHtml += `<div><span class="text-xs font-medium text-gray-500">Damage Type:</span> <span class="text-sm text-gray-900">${notes.damage_type}</span></div>`;
+        if (notes.severity) detailsHtml += `<div><span class="text-xs font-medium text-gray-500">Severity:</span> <span class="text-sm text-gray-900">${notes.severity}</span></div>`;
+        if (notes.lost_reason) detailsHtml += `<div><span class="text-xs font-medium text-gray-500">Lost Reason:</span> <span class="text-sm text-gray-900">${notes.lost_reason}</span></div>`;
+        if (notes.circumstances) detailsHtml += `<div><span class="text-xs font-medium text-gray-500">Circumstances:</span> <span class="text-sm text-gray-900">${notes.circumstances}</span></div>`;
+        if (notes.lost_date) detailsHtml += `<div><span class="text-xs font-medium text-gray-500">Lost Date:</span> <span class="text-sm text-gray-900">${notes.lost_date}</span></div>`;
+        if (notes.lost_location) detailsHtml += `<div><span class="text-xs font-medium text-gray-500">Lost Location:</span> <span class="text-sm text-gray-900">${notes.lost_location}</span></div>`;
+        if (notes.reason) detailsHtml += `<div><span class="text-xs font-medium text-gray-500">Reason:</span> <span class="text-sm text-gray-900">${notes.reason}</span></div>`;
+        if (notes.from_location) detailsHtml += `<div><span class="text-xs font-medium text-gray-500">From Location:</span> <span class="text-sm text-gray-900">${notes.from_location}</span></div>`;
+        if (notes.to_location) detailsHtml += `<div><span class="text-xs font-medium text-gray-500">To Location:</span> <span class="text-sm text-gray-900">${notes.to_location}</span></div>`;
+        if (notes.new_location_name) detailsHtml += `<div><span class="text-xs font-medium text-gray-500">New Location:</span> <span class="text-sm text-gray-900">${notes.new_location_name}</span></div>`;
+        if (notes.new_room_name) detailsHtml += `<div><span class="text-xs font-medium text-gray-500">New Room:</span> <span class="text-sm text-gray-900">${notes.new_room_name}</span></div>`;
+        if (notes.description) detailsHtml += `<div><span class="text-xs font-medium text-gray-500">Description:</span> <span class="text-sm text-gray-900">${notes.description}</span></div>`;
+        
+        // Asset data for add_asset requests
+        if (notes.asset_name) detailsHtml += `<div><span class="text-xs font-medium text-gray-500">Asset Name:</span> <span class="text-sm text-gray-900">${notes.asset_name}</span></div>`;
+        if (notes.category_name) detailsHtml += `<div><span class="text-xs font-medium text-gray-500">Category:</span> <span class="text-sm text-gray-900">${notes.category_name}</span></div>`;
+        if (notes.location_name) detailsHtml += `<div><span class="text-xs font-medium text-gray-500">Location:</span> <span class="text-sm text-gray-900">${notes.location_name}</span></div>`;
+        if (notes.room_name) detailsHtml += `<div><span class="text-xs font-medium text-gray-500">Room:</span> <span class="text-sm text-gray-900">${notes.room_name}</span></div>`;
+        if (notes.purchase_value) detailsHtml += `<div><span class="text-xs font-medium text-gray-500">Purchase Value:</span> <span class="text-sm text-gray-900">Rp ${parseFloat(notes.purchase_value).toLocaleString('id-ID')}</span></div>`;
+        if (notes.purchase_date) detailsHtml += `<div><span class="text-xs font-medium text-gray-500">Purchase Date:</span> <span class="text-sm text-gray-900">${notes.purchase_date}</span></div>`;
+        if (notes.supplier) detailsHtml += `<div><span class="text-xs font-medium text-gray-500">Supplier:</span> <span class="text-sm text-gray-900">${notes.supplier}</span></div>`;
+        if (notes.warranty_period) detailsHtml += `<div><span class="text-xs font-medium text-gray-500">Warranty:</span> <span class="text-sm text-gray-900">${notes.warranty_period} months</span></div>`;
+        
+        detailsHtml += '</div></div>';
+    }
+    
     approvalContent.innerHTML = `
-        <div class="space-y-3">
-            <div>
-                <label class="text-sm font-medium text-gray-500">Type</label>
-                <p class="text-sm text-gray-900">${approval.type?.replace('_', ' ')?.replace(/\\b\\w/g, l => l.toUpperCase()) || 'N/A'}</p>
+        <div class="space-y-4">
+            <!-- Basic Information -->
+            <div class="bg-gray-50 p-3 rounded-lg">
+                <h4 class="font-medium text-gray-900 mb-3 flex items-center">
+                    <i class="fas fa-info-circle mr-2 text-blue-500"></i>Basic Information
+                </h4>
+                <div class="space-y-2">
+                    <div>
+                        <label class="text-xs font-medium text-gray-500">Request Type</label>
+                        <p class="text-sm text-gray-900 font-medium">${approval.type?.replace('_', ' ')?.replace(/\\b\\w/g, l => l.toUpperCase()) || 'N/A'}</p>
+                    </div>
+                    <div>
+                        <label class="text-xs font-medium text-gray-500">Status</label>
+                        <p class="text-sm">
+                            ${approval.status === 'approved' ? '<span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium"><i class="fas fa-check mr-1"></i>Approved</span>' : 
+                              approval.status === 'rejected' ? '<span class="px-2 py-1 bg-red-100 text-red-800 rounded-full text-xs font-medium"><i class="fas fa-times mr-1"></i>Rejected</span>' : 
+                              '<span class="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-medium"><i class="fas fa-clock mr-1"></i>Pending</span>'}
+                        </p>
+                    </div>
+                    ${approval.asset_name ? `
+                    <div>
+                        <label class="text-xs font-medium text-gray-500">Asset Name</label>
+                        <p class="text-sm text-gray-900 font-medium">${approval.asset_name}</p>
+                    </div>
+                    ` : ''}
+                    ${approval.asset_id ? `
+                    <div>
+                        <label class="text-xs font-medium text-gray-500">Asset ID</label>
+                        <p class="text-sm text-gray-900">${approval.asset_id}</p>
+                    </div>
+                    ` : ''}
+                    ${approval.description ? `
+                    <div>
+                        <label class="text-xs font-medium text-gray-500">Description</label>
+                        <p class="text-sm text-gray-900">${approval.description}</p>
+                    </div>
+                    ` : ''}
+                </div>
             </div>
             
-            <div>
-                <label class="text-sm font-medium text-gray-500">Status</label>
-                <p class="text-sm text-gray-900">${approval.status || 'Pending'}</p>
+            <!-- Request Details -->
+            ${detailsHtml}
+            
+            <!-- Submission Information -->
+            <div class="bg-gray-50 p-3 rounded-lg">
+                <h4 class="font-medium text-gray-900 mb-3 flex items-center">
+                    <i class="fas fa-user mr-2 text-green-500"></i>Submission Information
+                </h4>
+                <div class="space-y-2">
+                    <div>
+                        <label class="text-xs font-medium text-gray-500">Submitted By</label>
+                        <p class="text-sm text-gray-900 font-medium">${approval.submitted_by_name || 'N/A'}</p>
+                        ${approval.submitted_by_role ? `<p class="text-xs text-gray-500 capitalize">${approval.submitted_by_role}</p>` : ''}
+                    </div>
+                    <div>
+                        <label class="text-xs font-medium text-gray-500">Submitted Date</label>
+                        <p class="text-sm text-gray-900">${approval.submitted_date ? new Date(approval.submitted_date).toLocaleDateString('id-ID', {year: 'numeric', month: 'long', day: 'numeric'}) : 'N/A'}</p>
+                        ${approval.submitted_date ? `<p class="text-xs text-gray-500">${new Date(approval.submitted_date).toLocaleTimeString('id-ID')}</p>` : ''}
+                    </div>
+                </div>
             </div>
             
-            <div>
-                <label class="text-sm font-medium text-gray-500">Asset Name</label>
-                <p class="text-sm text-gray-900">${approval.asset_name || 'N/A'}</p>
-            </div>
-            
-            <div>
-                <label class="text-sm font-medium text-gray-500">Description</label>
-                <p class="text-sm text-gray-900">${approval.description || 'No description provided'}</p>
-            </div>
-            
-            <div>
-                <label class="text-sm font-medium text-gray-500">Submitted By</label>
-                <p class="text-sm text-gray-900">${approval.submitted_by_name || 'N/A'}</p>
-            </div>
-            
-            <div>
-                <label class="text-sm font-medium text-gray-500">Submitted Date</label>
-                <p class="text-sm text-gray-900">${approval.submitted_date?.substring(0, 10) || 'N/A'}</p>
-            </div>
-            
-            ${approval.approved_date ? `
-            <div>
-                <label class="text-sm font-medium text-gray-500">Approved Date</label>
-                <p class="text-sm text-gray-900">${approval.approved_date.substring(0, 10)}</p>
-            </div>
-            ` : ''}
-            
-            ${approval.approved_by_name ? `
-            <div>
-                <label class="text-sm font-medium text-gray-500">Approved By</label>
-                <p class="text-sm text-gray-900">${approval.approved_by_name}</p>
-            </div>
-            ` : ''}
-            
-            ${approval.asset_id ? `
-            <div>
-                <label class="text-sm font-medium text-gray-500">Asset ID</label>
-                <p class="text-sm text-gray-900">${approval.asset_id}</p>
-            </div>
-            ` : ''}
-            
-            ${approval.notes && approval.status === 'rejected' ? `
-            <div>
-                <label class="text-sm font-medium text-gray-500">Notes</label>
-                <p class="text-sm text-gray-900">${approval.notes}</p>
+            <!-- Approval Information -->
+            ${approval.approved_date || approval.approved_by_name ? `
+            <div class="bg-gray-50 p-3 rounded-lg">
+                <h4 class="font-medium text-gray-900 mb-3 flex items-center">
+                    <i class="fas fa-check-circle mr-2 text-purple-500"></i>Approval Information
+                </h4>
+                <div class="space-y-2">
+                    ${approval.approved_by_name ? `
+                    <div>
+                        <label class="text-xs font-medium text-gray-500">Approved By</label>
+                        <p class="text-sm text-gray-900 font-medium">${approval.approved_by_name}</p>
+                    </div>
+                    ` : ''}
+                    ${approval.approved_date ? `
+                    <div>
+                        <label class="text-xs font-medium text-gray-500">Approved Date</label>
+                        <p class="text-sm text-gray-900">${new Date(approval.approved_date).toLocaleDateString('id-ID', {year: 'numeric', month: 'long', day: 'numeric'})}</p>
+                        <p class="text-xs text-gray-500">${new Date(approval.approved_date).toLocaleTimeString('id-ID')}</p>
+                    </div>
+                    ` : ''}
+                </div>
             </div>
             ` : ''}
             

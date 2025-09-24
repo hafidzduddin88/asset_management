@@ -231,64 +231,93 @@ function viewDetail(index, type) {
                     </button>
                 </div>
                 
-                <div class="space-y-3">
-                    <div>
-                        <label class="text-sm font-medium text-gray-500">Type</label>
-                        <p class="text-sm text-gray-900">${data.type?.replace('_', ' ')?.replace(/\b\w/g, l => l.toUpperCase()) || 'N/A'}</p>
+                <div class="space-y-4">
+                    <!-- Basic Information -->
+                    <div class="bg-gray-50 p-3 rounded-lg">
+                        <h4 class="font-medium text-gray-900 mb-3 flex items-center">
+                            <i class="fas fa-info-circle mr-2 text-blue-500"></i>Basic Information
+                        </h4>
+                        <div class="space-y-2">
+                            <div>
+                                <label class="text-xs font-medium text-gray-500">Request Type</label>
+                                <p class="text-sm text-gray-900 font-medium">${data.type?.replace('_', ' ')?.replace(/\b\w/g, l => l.toUpperCase()) || 'N/A'}</p>
+                            </div>
+                            <div>
+                                <label class="text-xs font-medium text-gray-500">Status</label>
+                                <p class="text-sm">
+                                    ${data.status === 'approved' ? '<span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium"><i class="fas fa-check mr-1"></i>Approved</span>' : 
+                                      data.status === 'rejected' ? '<span class="px-2 py-1 bg-red-100 text-red-800 rounded-full text-xs font-medium"><i class="fas fa-times mr-1"></i>Rejected</span>' : 
+                                      '<span class="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-medium"><i class="fas fa-clock mr-1"></i>Pending</span>'}
+                                </p>
+                            </div>
+                            ${data.asset_name ? `
+                            <div>
+                                <label class="text-xs font-medium text-gray-500">Asset Name</label>
+                                <p class="text-sm text-gray-900 font-medium">${data.asset_name}</p>
+                            </div>
+                            ` : ''}
+                            ${data.asset_id ? `
+                            <div>
+                                <label class="text-xs font-medium text-gray-500">Asset ID</label>
+                                <p class="text-sm text-gray-900">${data.asset_id}</p>
+                            </div>
+                            ` : ''}
+                            ${data.description ? `
+                            <div>
+                                <label class="text-xs font-medium text-gray-500">Description</label>
+                                <p class="text-sm text-gray-900">${data.description}</p>
+                            </div>
+                            ` : ''}
+                        </div>
                     </div>
                     
-                    <div>
-                        <label class="text-sm font-medium text-gray-500">Status</label>
-                        <p class="text-sm text-gray-900">${data.status || 'Pending'}</p>
-                    </div>
-                    
-                    <div>
-                        <label class="text-sm font-medium text-gray-500">Asset Name</label>
-                        <p class="text-sm text-gray-900">${data.asset_name || 'N/A'}</p>
-                    </div>
-                    
-                    <div>
-                        <label class="text-sm font-medium text-gray-500">Description</label>
-                        <p class="text-sm text-gray-900">${data.description || 'No description provided'}</p>
-                    </div>
-                    
-                    <div>
-                        <label class="text-sm font-medium text-gray-500">Submitted Date</label>
-                        <p class="text-sm text-gray-900">${data.submitted_date?.substring(0, 10) || 'N/A'}</p>
-                    </div>
-                    
-                    ${data.approved_date ? `
-                    <div>
-                        <label class="text-sm font-medium text-gray-500">Approved Date</label>
-                        <p class="text-sm text-gray-900">${data.approved_date.substring(0, 10)}</p>
-                    </div>
-                    ` : ''}
-                    
-                    ${data.reporter_name ? `
-                    <div>
-                        <label class="text-sm font-medium text-gray-500">Reported By</label>
-                        <p class="text-sm text-gray-900">${data.reporter_name}</p>
-                    </div>
-                    ` : ''}
-                    
-                    ${data.approved_by ? `
-                    <div>
-                        <label class="text-sm font-medium text-gray-500">Approved By</label>
-                        <p class="text-sm text-gray-900">${data.approved_by}</p>
-                    </div>
-                    ` : ''}
-                    
-                    ${data.asset_id ? `
-                    <div>
-                        <label class="text-sm font-medium text-gray-500">Asset ID</label>
-                        <p class="text-sm text-gray-900">${data.asset_id}</p>
+                    <!-- Request Details -->
+                    ${data.notes ? `
+                    <div class="bg-gray-50 p-3 rounded-lg">
+                        <h4 class="font-medium text-gray-900 mb-3">Request Details</h4>
+                        <div class="text-sm text-gray-900">${data.notes}</div>
                     </div>
                     ` : ''}
                     
-                    ${data.rejection_reason ? `
-                    <div>
-                        <label class="text-sm font-medium text-gray-500">Rejection Reason</label>
-                        <p class="text-sm text-red-600">${data.rejection_reason}</p>
+                    <!-- Submission Information -->
+                    <div class="bg-gray-50 p-3 rounded-lg">
+                        <h4 class="font-medium text-gray-900 mb-3 flex items-center">
+                            <i class="fas fa-user mr-2 text-green-500"></i>Submission Information
+                        </h4>
+                        <div class="space-y-2">
+                            <div>
+                                <label class="text-xs font-medium text-gray-500">Submitted By</label>
+                                <p class="text-sm text-gray-900 font-medium">${data.submitted_by_name || 'N/A'}</p>
+                            </div>
+                            <div>
+                                <label class="text-xs font-medium text-gray-500">Submitted Date</label>
+                                <p class="text-sm text-gray-900">${data.submitted_date ? new Date(data.submitted_date).toLocaleDateString('id-ID', {year: 'numeric', month: 'long', day: 'numeric'}) : 'N/A'}</p>
+                                ${data.submitted_date ? `<p class="text-xs text-gray-500">${new Date(data.submitted_date).toLocaleTimeString('id-ID')}</p>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Approval Information -->
+                    ${data.approved_date || data.approved_by_name ? `
+                    <div class="bg-gray-50 p-3 rounded-lg">
+                        <h4 class="font-medium text-gray-900 mb-3 flex items-center">
+                            <i class="fas fa-check-circle mr-2 text-purple-500"></i>Approval Information
+                        </h4>
+                        <div class="space-y-2">
+                            ${data.approved_by_name ? `
+                            <div>
+                                <label class="text-xs font-medium text-gray-500">Approved By</label>
+                                <p class="text-sm text-gray-900 font-medium">${data.approved_by_name}</p>
+                            </div>
+                            ` : ''}
+                            ${data.approved_date ? `
+                            <div>
+                                <label class="text-xs font-medium text-gray-500">Approved Date</label>
+                                <p class="text-sm text-gray-900">${new Date(data.approved_date).toLocaleDateString('id-ID', {year: 'numeric', month: 'long', day: 'numeric'})}</p>
+                                <p class="text-xs text-gray-500">${new Date(data.approved_date).toLocaleTimeString('id-ID')}</p>
+                            </div>
+                            ` : ''}
+                        </div>
                     </div>
                     ` : ''}
                 </div>
