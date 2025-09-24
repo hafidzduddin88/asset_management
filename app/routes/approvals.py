@@ -99,14 +99,74 @@ async def approve_request(
         # --- Handle all other approval types below ---
 
         elif approval_type == 'damage_report':
-            # (Your original logic for damage_report)
-            pass
+            # Process damage report approval
+            notes_data = json.loads(approval.get('notes', '{}'))
+            asset_id = approval.get('asset_id')
+            
+            # Add to damage_log
+            damage_log_data = {
+                'asset_id': asset_id,
+                'asset_name': approval.get('asset_name', ''),
+                'damage_type': notes_data.get('damage_type', ''),
+                'severity': notes_data.get('severity', ''),
+                'description': notes_data.get('description', ''),
+                'reported_by': approval.get('submitted_by'),
+                'approved_by': current_profile.id,
+                'status': 'approved'
+            }
+            supabase.table('damage_log').insert(damage_log_data).execute()
+            
+            # Update asset status to Under Repair
+            update_asset(asset_id, {'status': 'Under Repair'})
+
+        elif approval_type == 'lost_report':
+            # Process lost report approval
+            notes_data = json.loads(approval.get('notes', '{}'))
+            asset_id = approval.get('asset_id')
+            
+            # Add to lost_log
+            lost_log_data = {
+                'asset_id': asset_id,
+                'asset_name': approval.get('asset_name', ''),
+                'lost_reason': notes_data.get('lost_reason', '') or notes_data.get('circumstances', ''),
+                'description': notes_data.get('description', ''),
+                'lost_date': notes_data.get('lost_date', ''),
+                'lost_location': notes_data.get('lost_location', ''),
+                'reported_by': approval.get('submitted_by'),
+                'approved_by': current_profile.id,
+                'status': 'approved'
+            }
+            supabase.table('lost_log').insert(lost_log_data).execute()
+            
+            # Update asset status to Lost
+            update_asset(asset_id, {'status': 'Lost'})
 
         elif approval_type == 'relocation':
-            # (Your original logic for relocation)
-            pass
-
-        # ... other elif blocks for other approval types ...
+            # Process relocation approval
+            notes_data = json.loads(approval.get('notes', '{}'))
+            asset_id = approval.get('asset_id')
+            
+            # Add to relocation_log
+            relocation_log_data = {
+                'asset_id': asset_id,
+                'asset_name': approval.get('asset_name', ''),
+                'from_location': notes_data.get('from_location', ''),
+                'to_location': notes_data.get('to_location', ''),
+                'reason': notes_data.get('reason', ''),
+                'moved_by': approval.get('submitted_by'),
+                'approved_by': current_profile.id,
+                'status': 'approved'
+            }
+            supabase.table('relocation_log').insert(relocation_log_data).execute()
+            
+            # Update asset location
+            location_updates = {}
+            if notes_data.get('new_location_id'):
+                location_updates['location_id'] = notes_data.get('new_location_id')
+            if notes_data.get('new_room_name'):
+                location_updates['room_name'] = notes_data.get('new_room_name')
+            if location_updates:
+                update_asset(asset_id, location_updates)
 
         # If the approval type was not for adding an asset, it falls through to here.
         # Update the status for all other approval types.
