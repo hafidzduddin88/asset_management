@@ -54,6 +54,14 @@
             <span class="text-xs text-gray-600">Book Value:</span>
             <span class="text-xs font-bold text-blue-600">Rp {{ "{:,.0f}".format(total_book_value) }}</span>
         </div>
+        <div class="flex justify-between items-center p-2 bg-gray-50 rounded border-t border-gray-200 mt-2">
+            <span class="text-xs text-gray-600">Disposed Assets:</span>
+            <span class="text-xs font-bold text-gray-500">{{ disposed_count }}</span>
+        </div>
+        <div class="flex justify-between items-center p-2 bg-gray-50 rounded">
+            <span class="text-xs text-gray-600">Lost Assets:</span>
+            <span class="text-xs font-bold text-gray-500">{{ lost_count }}</span>
+        </div>
     </div>
 </div>
 
