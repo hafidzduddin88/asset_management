@@ -28,10 +28,15 @@ async def lost_form_page(
     current_profile = Depends(get_current_profile)
 ):
     """Lost report form page for specific asset."""
-    from app.utils.database_manager import get_asset_by_id
+    # Get asset data with proper relationships
+    supabase = get_supabase()
+    response = supabase.table('assets').select('''
+        *,
+        ref_categories(category_name),
+        ref_locations(location_name, room_name)
+    ''').eq('asset_id', asset_id).execute()
     
-    # Get asset data
-    asset = get_asset_by_id(asset_id)
+    asset = response.data[0] if response.data else None
     if not asset:
         raise HTTPException(status_code=404, detail="Asset not found")
     
