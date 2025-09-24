@@ -24,20 +24,42 @@ async def approvals_page(
     all_approvals = get_all_approvals()
     
     supabase = get_supabase()
+    # Get user roles for filtering
+    user_roles = {}
     for approval in all_approvals:
         user_id = approval.get('submitted_by_id') or approval.get('submitted_by')
-        if user_id:
+        if user_id and user_id not in user_roles:
             try:
-                user_response = supabase.table('profiles').select('username, full_name').eq('id', user_id).execute()
+                user_response = supabase.table('profiles').select('username, full_name, role').eq('id', user_id).execute()
                 if user_response.data:
                     user = user_response.data[0]
+                    user_roles[user_id] = user.get('role', 'staff')
                     approval['submitted_by_name'] = user.get('full_name') or user.get('username') or 'Unknown User'
+                    approval['submitted_by_role'] = user.get('role', 'staff')
             except Exception as e:
                 logging.warning(f"Could not fetch user {user_id}: {e}")
                 approval['submitted_by_name'] = 'Unknown User'
-
-    pending_approvals = sorted([a for a in all_approvals if a.get('status') == 'pending'], 
-                              key=lambda x: x.get('created_at', ''), reverse=True)
+                approval['submitted_by_role'] = 'staff'
+        elif user_id in user_roles:
+            approval['submitted_by_role'] = user_roles[user_id]
+    
+    # Filter pending approvals based on current user role, but show all completed approvals
+    filtered_pending = []
+    for approval in all_approvals:
+        if approval.get('status') == 'pending':
+            submitted_by_role = approval.get('submitted_by_role', 'staff')
+            
+            if current_profile.role == 'manager':
+                # Manager can only approve requests from admin
+                if submitted_by_role == 'admin':
+                    filtered_pending.append(approval)
+            elif current_profile.role == 'admin':
+                # Admin can approve requests from manager and staff
+                if submitted_by_role in ['manager', 'staff']:
+                    filtered_pending.append(approval)
+    
+    pending_approvals = sorted(filtered_pending, key=lambda x: x.get('created_at', ''), reverse=True)
+    # Show all completed approvals regardless of role
     completed_approvals = sorted([a for a in all_approvals if a.get('status') in ['approved', 'rejected']], 
                                 key=lambda x: x.get('updated_at', x.get('created_at', '')), reverse=True)
     

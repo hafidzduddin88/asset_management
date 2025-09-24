@@ -160,9 +160,11 @@
                     <a href="/asset_management/list" class="mobile-nav-item {% if '/asset_management' in request.url.path or '/assets' in request.url.path %}bg-primary-50 border-primary-500 text-primary-700{% else %}border-transparent text-gray-600{% endif %} block pl-3 pr-4 py-3 border-l-4 text-sm font-medium">
                         <i class="fas fa-database mr-3 w-4"></i>Assets Management
                     </a>
+                    {% if user and user.role == 'staff' %}
                     <a href="/logs" class="mobile-nav-item {% if '/logs' in request.url.path %}bg-primary-50 border-primary-500 text-primary-700{% else %}border-transparent text-gray-600{% endif %} block pl-3 pr-4 py-3 border-l-4 text-sm font-medium">
                         <i class="fas fa-history mr-3 w-4"></i>Logs
                     </a>
+                    {% endif %}
                     {% if user and (user.role == 'admin' or user.role == 'manager') %}
                     <a href="/approvals" class="mobile-nav-item {% if '/approvals' in request.url.path %}bg-primary-50 border-primary-500 text-primary-700{% else %}border-transparent text-gray-600{% endif %} block pl-3 pr-4 py-3 border-l-4 text-sm font-medium">
                         <i class="fas fa-tasks mr-3 w-4"></i>Approvals

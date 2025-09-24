@@ -16,7 +16,12 @@ async def logs_page(
     request: Request,
     current_profile = Depends(get_current_profile)
 ):
-    """View approval logs based on user role."""
+    """View approval logs for staff only."""
+    # Only staff can access logs
+    if current_profile.role != 'staff':
+        from fastapi import HTTPException
+        raise HTTPException(status_code=403, detail="Access denied")
+    
     all_approvals = get_all_approvals()
     
     # Get user details for submitted_by and approved_by UUIDs
@@ -56,13 +61,8 @@ async def logs_page(
                 approval['approved_by_info'] = {'full_name': 'Unknown', 'username': 'Unknown'}
                 approval['approved_by_name'] = 'Unknown User'
     
-    # Filter based on user role
-    if current_profile.role.value == 'staff':
-        # Staff can only see their own requests
-        approvals = [a for a in all_approvals if a.get('submitted_by') == current_profile.id]
-    else:
-        # Manager and admin can see all approvals
-        approvals = all_approvals
+    # Staff can only see their own requests
+    approvals = [a for a in all_approvals if a.get('submitted_by') == current_profile.id]
     
     # Separate pending and completed, sort by date (newest first)
     pending_approvals = sorted([a for a in approvals if a.get('status') == 'pending'], 
