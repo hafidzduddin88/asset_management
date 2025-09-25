@@ -126,6 +126,7 @@ async def submit_lost_report(
             "submitted_by": current_profile.id,
             "submitted_date": datetime.now().isoformat(),
             "description": f"Lost asset report: {lost_reason}",
+            "from_location_id": asset.get('location_id'),
             "notes": json.dumps({
                 "lost_reason": lost_reason,
                 "description": description,
@@ -174,6 +175,7 @@ async def report_lost_asset(
             "submitted_by": current_profile.id,
             "submitted_date": datetime.now().isoformat(),
             "description": f"Lost asset report: {circumstances}",
+            "from_location_id": asset.get('location_id'),
             "notes": json.dumps({
                 "lost_date": lost_date,
                 "lost_location": lost_location,
