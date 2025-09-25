@@ -185,6 +185,35 @@ async def approve_request(
             # Update asset status to Lost
             update_asset(asset_id, {'status': 'Lost'})
 
+        elif approval_type == 'repair':
+            # Process repair approval
+            notes_data = json.loads(approval.get('notes', '{}'))
+            asset_id = approval.get('asset_id')
+            
+            # Add to repair_log
+            repair_log_data = {
+                'asset_id': asset_id,
+                'asset_name': approval.get('asset_name', ''),
+                'repair_action': 'Repair Completed',
+                'action_type': 'completion',
+                'description': notes_data.get('repair_notes', ''),
+                'performed_by': approval.get('submitted_by'),
+                'performed_by_name': approval.get('submitted_profile', {}).get('full_name') or approval.get('submitted_profile', {}).get('username') or 'Unknown User',
+                'approved_by': current_profile.id,
+                'approved_by_name': current_profile.full_name or current_profile.username,
+                'approved_at': datetime.now().isoformat(),
+                'status': 'approved',
+                'new_location_id': approval.get('to_location_id'),
+                'notes': notes_data.get('repair_notes', '')
+            }
+            supabase.table('repair_log').insert(repair_log_data).execute()
+            
+            # Update asset status to Active and location
+            asset_updates = {'status': 'Active'}
+            if approval.get('to_location_id'):
+                asset_updates['location_id'] = approval.get('to_location_id')
+            update_asset(asset_id, asset_updates)
+
         elif approval_type == 'relocation':
             # Process relocation approval
             notes_data = json.loads(approval.get('notes', '{}'))

@@ -200,7 +200,11 @@
             <label for="photo" class="block text-sm font-medium text-gray-700">Asset Photo</label>
             <input type="file" name="photo" id="photo" accept="image/*"
                 class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500">
-            <p class="mt-1 text-xs text-gray-500">Upload a photo of the asset (optional)</p>
+            <p class="mt-1 text-xs text-gray-500">Upload a photo (optional) - Auto-compressed for web</p>
+            <div id="photo-preview" class="mt-2 hidden">
+                <img id="preview-image" class="w-24 h-24 object-cover rounded-lg border mx-auto" alt="Preview">
+                <p class="text-xs text-gray-500 mt-1 text-center">Preview (compressed)</p>
+            </div>
         </div>
         
         <!-- Buttons -->
@@ -275,6 +279,58 @@ function confirmAssetSubmission() {
     
     return confirm(details);
 }
+
+// Image compression function
+function compressImage(file, maxWidth = 600, quality = 0.7) {
+    return new Promise((resolve) => {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        const img = new Image();
+        
+        img.onload = function() {
+            // Calculate new dimensions
+            let { width, height } = img;
+            if (width > maxWidth) {
+                height = (height * maxWidth) / width;
+                width = maxWidth;
+            }
+            
+            canvas.width = width;
+            canvas.height = height;
+            
+            // Draw and compress
+            ctx.drawImage(img, 0, 0, width, height);
+            canvas.toBlob(resolve, 'image/jpeg', quality);
+        };
+        
+        img.src = URL.createObjectURL(file);
+    });
+}
+
+// Handle photo upload and compression
+document.getElementById('photo').addEventListener('change', async function(e) {
+    const file = e.target.files[0];
+    if (!file) {
+        document.getElementById('photo-preview').classList.add('hidden');
+        return;
+    }
+    
+    // Show preview
+    const preview = document.getElementById('preview-image');
+    const previewContainer = document.getElementById('photo-preview');
+    
+    // Compress image (smaller for mobile)
+    const compressedFile = await compressImage(file);
+    
+    // Show preview
+    preview.src = URL.createObjectURL(compressedFile);
+    previewContainer.classList.remove('hidden');
+    
+    // Replace original file with compressed version
+    const dt = new DataTransfer();
+    dt.items.add(new File([compressedFile], file.name, { type: 'image/jpeg' }));
+    e.target.files = dt.files;
+});
 
 document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('category_name').addEventListener('change', updateTypes);
