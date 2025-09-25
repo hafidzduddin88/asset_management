@@ -55,6 +55,7 @@ async def lost_form_page(
 async def lost_success_page(
     request: Request,
     asset_name: str = None,
+    asset_id: int = None,
     current_profile = Depends(get_current_profile)
 ):
     """Lost report success page."""
@@ -65,7 +66,8 @@ async def lost_success_page(
             "request": request,
             "current_profile": current_profile,
             "user": current_profile,
-            "asset_name": asset_name or "Asset"
+            "asset_name": asset_name or "Asset",
+            "asset_id": asset_id
         }
     )
 
@@ -138,7 +140,7 @@ async def submit_lost_report(
         success = add_approval_request(approval_data)
         
         if success:
-            return RedirectResponse(url=f"/lost/success?asset_name={asset.get('asset_name', 'Asset')}", status_code=302)
+            return RedirectResponse(url=f"/lost/success?asset_name={asset.get('asset_name', 'Asset')}&asset_id={asset_id}", status_code=302)
         else:
             return RedirectResponse(url=f"/lost/error?asset_id={asset_id}&asset_name={asset.get('asset_name', 'Asset')}&error_message=Failed to create approval request", status_code=302)
         

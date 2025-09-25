@@ -30,12 +30,25 @@
                 </div>
                 
                 <div class="space-y-3">
+                    {% if asset_id %}
                     <a href="/lost/form?asset_id={{ asset_id }}" class="w-full bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors duration-200 inline-block">
                         <i class="fas fa-redo mr-2"></i>Try Again
                     </a>
-                    <a href="/asset_management/list" class="w-full bg-gray-100 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-200 font-semibold transition-colors duration-200 inline-block">
-                        <i class="fas fa-arrow-left mr-2"></i>Back to Assets
-                    </a>
+                    {% endif %}
+                    <div class="grid grid-cols-2 gap-3">
+                        {% if user.role == 'staff' %}
+                        <a href="/logs" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-semibold transition-colors duration-200 text-center">
+                            <i class="fas fa-history mr-2"></i>View Logs
+                        </a>
+                        {% else %}
+                        <a href="/approvals" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-semibold transition-colors duration-200 text-center">
+                            <i class="fas fa-check-circle mr-2"></i>View Approvals
+                        </a>
+                        {% endif %}
+                        <a href="/asset_management/list" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg font-semibold transition-colors duration-200 text-center">
+                            <i class="fas fa-box mr-2"></i>Back to Assets
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
@@ -43,13 +56,13 @@
 </div>
 
 <script>
-// Auto redirect after 8 seconds
+// Auto redirect after 10 seconds
 setTimeout(function() {
     window.location.href = '/asset_management/list';
-}, 8000);
+}, 10000);
 
 // Show countdown
-let countdown = 8;
+let countdown = 10;
 const countdownElement = document.createElement('div');
 countdownElement.className = 'text-xs text-gray-500 mt-4';
 countdownElement.innerHTML = `Redirecting to assets in <span id="countdown">${countdown}</span> seconds...`;

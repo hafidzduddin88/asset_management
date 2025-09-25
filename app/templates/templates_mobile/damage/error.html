@@ -41,24 +41,37 @@
     </div>
 </div>
 
-<!-- Auto Redirect -->
+<!-- Navigation -->
 <div class="bg-gray-50 rounded-lg p-4 text-center">
     <p class="text-gray-600 text-sm mb-3">
         <i class="fas fa-info-circle text-blue-500 mr-1"></i>
-        Redirecting in <span id="countdown" class="font-semibold text-blue-600">8</span>s
+        Redirecting in <span id="countdown" class="font-semibold text-blue-600">10</span>s
     </p>
     <div class="space-y-2">
-        <a href="/asset_management/list" class="w-full bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors duration-200 text-center block">
-            <i class="fas fa-arrow-left mr-2"></i>Back to Asset List
+        {% if asset_id %}
+        <a href="/damage?asset_id={{ asset_id }}" class="w-full bg-red-600 hover:bg-red-700 text-white px-4 py-3 rounded-lg font-semibold transition-colors duration-200 touch-manipulation inline-block">
+            <i class="fas fa-redo mr-2"></i>Try Again
         </a>
-        <button onclick="history.back()" class="w-full bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors duration-200">
-            <i class="fas fa-undo mr-2"></i>Try Again
-        </button>
+        {% endif %}
+        <div class="grid grid-cols-2 gap-2">
+            {% if user.role == 'staff' %}
+            <a href="/logs" class="bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 rounded-lg font-semibold transition-colors duration-200 text-center text-sm">
+                <i class="fas fa-history mr-1"></i>View Logs
+            </a>
+            {% else %}
+            <a href="/approvals" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 rounded-lg font-semibold transition-colors duration-200 text-center text-sm">
+                <i class="fas fa-check mr-1"></i>View Approvals
+            </a>
+            {% endif %}
+            <a href="/asset_management/list" class="bg-gray-600 hover:bg-gray-700 text-white px-3 py-2 rounded-lg font-semibold transition-colors duration-200 text-center text-sm">
+                <i class="fas fa-box mr-1"></i>Back to Assets
+            </a>
+        </div>
     </div>
 </div>
 
 <script>
-let countdown = 8;
+let countdown = 10;
 const countdownElement = document.getElementById('countdown');
 
 const timer = setInterval(() => {

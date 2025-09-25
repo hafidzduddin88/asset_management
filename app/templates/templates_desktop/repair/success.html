@@ -38,21 +38,34 @@
         </div>
     </div>
 
-    <!-- Auto Redirect -->
+    <!-- Navigation -->
     <div class="bg-gray-50 rounded-lg p-4 text-center">
         <p class="text-gray-600 mb-3">
             <i class="fas fa-info-circle text-blue-500 mr-2"></i>
-            Redirecting to asset list in <span id="countdown" class="font-semibold text-blue-600">5</span> seconds
+            Redirecting to asset list in <span id="countdown" class="font-semibold text-blue-600">10</span> seconds
         </p>
-        <a href="/asset_management/list" class="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors">
-            <i class="fas fa-arrow-left mr-2"></i>
-            Back to Asset List
-        </a>
+        <div class="grid grid-cols-3 gap-2">
+            {% if user.role == 'staff' %}
+            <a href="/logs" class="bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 rounded-lg font-semibold transition-colors duration-200 text-center text-sm">
+                <i class="fas fa-history mr-1"></i>View Logs
+            </a>
+            {% else %}
+            <a href="/approvals" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 rounded-lg font-semibold transition-colors duration-200 text-center text-sm">
+                <i class="fas fa-check-circle mr-1"></i>View Approvals
+            </a>
+            {% endif %}
+            <a href="/asset_management/list" class="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg font-semibold transition-colors duration-200 text-center text-sm">
+                <i class="fas fa-box mr-1"></i>Back to Assets
+            </a>
+            <a href="/repair?asset_id={{ asset_id }}" class="bg-orange-600 hover:bg-orange-700 text-white px-3 py-2 rounded-lg font-semibold transition-colors duration-200 text-center text-sm">
+                <i class="fas fa-redo mr-1"></i>Try Again
+            </a>
+        </div>
     </div>
 </div>
 
 <script>
-let countdown = 5;
+let countdown = 10;
 const countdownElement = document.getElementById('countdown');
 
 const timer = setInterval(() => {

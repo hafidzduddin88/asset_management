@@ -30,30 +30,38 @@
                 </p>
             </div>
             
-            <!-- Auto Redirect Info -->
-            <div class="text-sm text-gray-500 mb-6">
-                <p>Redirecting to asset list in <span id="countdown" class="font-semibold text-red-600">8</span> seconds...</p>
-            </div>
-            
-            <!-- Action Buttons -->
-            <div class="flex flex-col sm:flex-row gap-3 justify-center">
-                <a href="/asset_management/add" 
-                   class="inline-flex items-center px-6 py-3 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 transition-colors duration-200">
-                    <i class="fas fa-redo mr-2"></i>
-                    Try Again
-                </a>
-                <a href="/asset_management/list" 
-                   class="inline-flex items-center px-6 py-3 bg-gray-600 text-white font-medium rounded-lg hover:bg-gray-700 transition-colors duration-200">
-                    <i class="fas fa-list mr-2"></i>
-                    Back to List
-                </a>
+            <!-- Navigation -->
+            <div class="bg-gray-50 rounded-lg p-4 text-center">
+                <p class="text-gray-600 mb-3">
+                    <i class="fas fa-info-circle text-blue-500 mr-2"></i>
+                    Redirecting to asset list in <span id="countdown" class="font-semibold text-blue-600">10</span> seconds
+                </p>
+                <div class="space-y-3">
+                    <a href="/asset_management/add" class="w-full bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors duration-200 inline-block">
+                        <i class="fas fa-redo mr-2"></i>Try Again
+                    </a>
+                    <div class="grid grid-cols-2 gap-3">
+                        {% if user.role == 'staff' %}
+                        <a href="/logs" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-semibold transition-colors duration-200 text-center">
+                            <i class="fas fa-history mr-2"></i>View Logs
+                        </a>
+                        {% else %}
+                        <a href="/approvals" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-semibold transition-colors duration-200 text-center">
+                            <i class="fas fa-check-circle mr-2"></i>View Approvals
+                        </a>
+                        {% endif %}
+                        <a href="/asset_management/list" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg font-semibold transition-colors duration-200 text-center">
+                            <i class="fas fa-box mr-2"></i>Back to Assets
+                        </a>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
 <script>
-let countdown = 8;
+let countdown = 10;
 const countdownElement = document.getElementById('countdown');
 
 const timer = setInterval(() => {

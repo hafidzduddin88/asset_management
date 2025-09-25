@@ -28,23 +28,37 @@
             </p>
         </div>
         
-        <div class="text-center">
-            <p class="text-gray-500 text-sm mb-4">Redirecting to disposal page in <span id="countdown">8</span> seconds...</p>
+        <!-- Navigation -->
+        <div class="bg-gray-50 rounded-lg p-4 text-center">
+            <p class="text-gray-600 mb-3">
+                <i class="fas fa-info-circle text-blue-500 mr-2"></i>
+                Redirecting to disposal page in <span id="countdown" class="font-semibold text-blue-600">10</span> seconds
+            </p>
             <div class="space-y-3">
-                <a href="/disposal" class="inline-block bg-red-600 text-white px-6 py-2 rounded-md hover:bg-red-700 transition-colors">
-                    <i class="fas fa-arrow-left mr-2"></i>Back to Disposal
-                </a>
-                <br>
-                <a href="/disposal/execute/{{ asset_id }}" class="inline-block bg-gray-600 text-white px-6 py-2 rounded-md hover:bg-gray-700 transition-colors">
+                <a href="/disposal" class="w-full bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors duration-200 inline-block">
                     <i class="fas fa-redo mr-2"></i>Try Again
                 </a>
+                <div class="grid grid-cols-2 gap-3">
+                    {% if user.role == 'staff' %}
+                    <a href="/logs" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-semibold transition-colors duration-200 text-center">
+                        <i class="fas fa-history mr-2"></i>View Logs
+                    </a>
+                    {% else %}
+                    <a href="/approvals" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-semibold transition-colors duration-200 text-center">
+                        <i class="fas fa-check-circle mr-2"></i>View Approvals
+                    </a>
+                    {% endif %}
+                    <a href="/disposal" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg font-semibold transition-colors duration-200 text-center">
+                        <i class="fas fa-arrow-left mr-2"></i>Back to Disposal
+                    </a>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
 <script>
-let countdown = 8;
+let countdown = 10;
 const countdownElement = document.getElementById('countdown');
 
 const timer = setInterval(() => {

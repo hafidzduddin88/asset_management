@@ -24,34 +24,43 @@
         <p class="text-xs text-blue-700">You will be notified once reviewed</p>
     </div>
     
-    <div class="space-y-3">
-        <a href="/asset_management/list" class="w-full bg-green-600 hover:bg-green-700 text-white px-4 py-3 rounded-lg font-semibold transition-colors duration-200 block">
-            <i class="fas fa-arrow-left mr-2"></i>Back to Assets
-        </a>
-        <a href="/approvals" class="w-full bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 font-semibold transition-colors duration-200 block">
-            View Approvals
-        </a>
+    <!-- Navigation -->
+    <div class="bg-gray-50 rounded-lg p-4 text-center">
+        <p class="text-gray-600 text-sm mb-3">
+            <i class="fas fa-info-circle text-blue-500 mr-1"></i>
+            Redirecting in <span id="countdown" class="font-semibold text-blue-600">10</span>s
+        </p>
+        <div class="grid grid-cols-3 gap-1">
+            {% if user.role == 'staff' %}
+            <a href="/logs" class="bg-purple-600 hover:bg-purple-700 text-white px-2 py-2 rounded-lg font-semibold transition-colors duration-200 text-center text-xs">
+                <i class="fas fa-history mr-1"></i>Logs
+            </a>
+            {% else %}
+            <a href="/approvals" class="bg-indigo-600 hover:bg-indigo-700 text-white px-2 py-2 rounded-lg font-semibold transition-colors duration-200 text-center text-xs">
+                <i class="fas fa-check mr-1"></i>Approvals
+            </a>
+            {% endif %}
+            <a href="/asset_management/list" class="bg-green-600 hover:bg-green-700 text-white px-2 py-2 rounded-lg font-semibold transition-colors duration-200 text-center text-xs">
+                <i class="fas fa-box mr-1"></i>Assets
+            </a>
+            <a href="/disposal?asset_id={{ asset_id }}" class="bg-gray-600 hover:bg-gray-700 text-white px-2 py-2 rounded-lg font-semibold transition-colors duration-200 text-center text-xs">
+                <i class="fas fa-redo mr-1"></i>Try Again
+            </a>
+        </div>
     </div>
 </div>
 
 <script>
-// Auto redirect after 5 seconds
-setTimeout(function() {
-    window.location.href = '/asset_management/list';
-}, 5000);
+let countdown = 10;
+const countdownElement = document.getElementById('countdown');
 
-// Show countdown
-let countdown = 5;
-const countdownElement = document.createElement('div');
-countdownElement.className = 'text-xs text-gray-500 mt-3 text-center';
-countdownElement.innerHTML = `Redirecting in <span id="countdown">${countdown}</span>s...`;
-document.querySelector('.space-y-3').appendChild(countdownElement);
-
-const countdownInterval = setInterval(function() {
+const timer = setInterval(() => {
     countdown--;
-    document.getElementById('countdown').textContent = countdown;
+    countdownElement.textContent = countdown;
+    
     if (countdown <= 0) {
-        clearInterval(countdownInterval);
+        clearInterval(timer);
+        window.location.href = '/asset_management/list';
     }
 }, 1000);
 </script>

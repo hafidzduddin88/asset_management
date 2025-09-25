@@ -104,15 +104,16 @@ async def submit_damage_report(
         
         supabase.table('approvals').insert(approval_data).execute()
         
-        return RedirectResponse(url="/damage/success", status_code=302)
+        return RedirectResponse(url=f"/damage/success?asset_id={asset_id}", status_code=302)
         
     except Exception as e:
         logging.error(f"Error submitting damage report: {e}")
-        return RedirectResponse(url="/damage/error", status_code=302)
+        return RedirectResponse(url=f"/damage/error?asset_id={asset_id}", status_code=302)
 
 @router.get("/damage/success")
 async def damage_success(
     request: Request,
+    asset_id: int = None,
     current_profile = Depends(get_current_profile)
 ):
     """Display damage report success page."""
@@ -122,13 +123,15 @@ async def damage_success(
         {
             "request": request,
             "user": current_profile,
-            "current_profile": current_profile
+            "current_profile": current_profile,
+            "asset_id": asset_id
         }
     )
 
 @router.get("/damage/error")
 async def damage_error(
     request: Request,
+    asset_id: int = None,
     current_profile = Depends(get_current_profile)
 ):
     """Display damage report error page."""
@@ -138,6 +141,7 @@ async def damage_error(
         {
             "request": request,
             "user": current_profile,
-            "current_profile": current_profile
+            "current_profile": current_profile,
+            "asset_id": asset_id
         }
     )

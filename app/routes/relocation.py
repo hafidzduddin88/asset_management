@@ -45,6 +45,7 @@ async def relocation_page(
 @router.get("/success", response_class=HTMLResponse)
 async def relocation_success(
     request: Request,
+    asset_id: int = None,
     current_profile = Depends(get_current_profile)
 ):
     """Display relocation success page."""
@@ -54,13 +55,15 @@ async def relocation_success(
         {
             "request": request,
             "user": current_profile,
-            "current_profile": current_profile
+            "current_profile": current_profile,
+            "asset_id": asset_id
         }
     )
 
 @router.get("/error", response_class=HTMLResponse)
 async def relocation_error(
     request: Request,
+    asset_id: int = None,
     current_profile = Depends(get_current_profile)
 ):
     """Display relocation error page."""
@@ -70,7 +73,8 @@ async def relocation_error(
         {
             "request": request,
             "user": current_profile,
-            "current_profile": current_profile
+            "current_profile": current_profile,
+            "asset_id": asset_id
         }
     )
 
@@ -127,9 +131,9 @@ async def relocate_asset(
         approval_success = add_approval_request(approval_data)
         
         if approval_success:
-            return RedirectResponse(url="/relocation/success", status_code=status.HTTP_303_SEE_OTHER)
+            return RedirectResponse(url=f"/relocation/success?asset_id={asset_id}", status_code=status.HTTP_303_SEE_OTHER)
         else:
-            return RedirectResponse(url="/relocation/error", status_code=status.HTTP_303_SEE_OTHER)
+            return RedirectResponse(url=f"/relocation/error?asset_id={asset_id}", status_code=status.HTTP_303_SEE_OTHER)
     
     except Exception as e:
-        return RedirectResponse(url="/relocation/error", status_code=status.HTTP_303_SEE_OTHER)
+        return RedirectResponse(url=f"/relocation/error?asset_id={asset_id}", status_code=status.HTTP_303_SEE_OTHER)
