@@ -208,10 +208,21 @@ async def approve_request(
             }
             supabase.table('repair_log').insert(repair_log_data).execute()
             
-            # Update asset status to Active and location
-            asset_updates = {'status': 'Active'}
-            if approval.get('to_location_id'):
-                asset_updates['location_id'] = approval.get('to_location_id')
+            # Determine status based on location
+            new_location_id = approval.get('to_location_id')
+            asset_updates = {}
+            
+            if new_location_id:
+                # Check if it's warehouse location (location_id 26)
+                if int(new_location_id) == 26:
+                    asset_updates['status'] = 'In Storage'
+                else:
+                    asset_updates['status'] = 'Active'
+                asset_updates['location_id'] = int(new_location_id)
+            else:
+                # Default to Active if no location specified
+                asset_updates['status'] = 'Active'
+            
             update_asset(asset_id, asset_updates)
 
         elif approval_type == 'relocation':
