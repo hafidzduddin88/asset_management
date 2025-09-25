@@ -80,20 +80,7 @@ async def submit_damage_report(
         
         supabase = get_supabase()
         
-        # Add to damage_log table first
-        damage_data = {
-            'asset_id': int(asset_id),
-            'asset_name': asset.get('asset_name', ''),
-            'damage_type': damage_type,
-            'severity': severity,
-            'description': description,
-            'reported_by': current_profile.id,
-            'reported_by_name': current_profile.full_name or current_profile.username,
-            'status': 'pending'
-        }
-        supabase.table('damage_log').insert(damage_data).execute()
-        
-        # Create approval request
+        # Create approval request only (damage_log will be created when approved)
         approval_data = {
             'type': 'damage_report',
             'asset_id': int(asset_id),
