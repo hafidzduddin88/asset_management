@@ -126,15 +126,43 @@ async def submit_repair(
         # Insert approval request
         supabase.table('approvals').insert(approval_data).execute()
         
-        response = RedirectResponse(url="/asset_management/list", status_code=302)
-        set_flash(response, f"Repair completion for {asset_name} submitted for approval", "success")
-        return response
+        return RedirectResponse(url="/repair/success", status_code=302)
         
     except Exception as e:
         logger.error(f"Error submitting repair: {str(e)}")
-        response = RedirectResponse(url="/asset_management/list", status_code=302)
-        set_flash(response, f"Error submitting repair: {str(e)}", "error")
-        return response
+        return RedirectResponse(url="/repair/error", status_code=302)
+
+@router.get("/repair/success", response_class=HTMLResponse)
+async def repair_success(
+    request: Request,
+    current_profile = Depends(get_current_profile)
+):
+    """Display repair success page."""
+    template_path = get_template(request, "repair/success.html")
+    return templates.TemplateResponse(
+        template_path,
+        {
+            "request": request,
+            "user": current_profile,
+            "current_profile": current_profile
+        }
+    )
+
+@router.get("/repair/error", response_class=HTMLResponse)
+async def repair_error(
+    request: Request,
+    current_profile = Depends(get_current_profile)
+):
+    """Display repair error page."""
+    template_path = get_template(request, "repair/error.html")
+    return templates.TemplateResponse(
+        template_path,
+        {
+            "request": request,
+            "user": current_profile,
+            "current_profile": current_profile
+        }
+    )
 
 @router.get("/repair/locations/{location_id}")
 async def get_location_rooms(location_id: int):
