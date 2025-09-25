@@ -80,6 +80,10 @@ async def submit_damage_report(
         
         supabase = get_supabase()
         
+        # Get warehouse location for damaged assets
+        warehouse_response = supabase.table('ref_locations').select('location_id').eq('location_name', 'HO - Ciputat').eq('room_name', '1022 - Gudang Support TOG').execute()
+        warehouse_location_id = warehouse_response.data[0]['location_id'] if warehouse_response.data else None
+        
         # Create approval request only (damage_log will be created when approved)
         approval_data = {
             'type': 'damage_report',
@@ -88,6 +92,8 @@ async def submit_damage_report(
             'submitted_by': current_profile.id,
             'status': 'pending',
             'description': f"Damage Report: {damage_type} - {severity}",
+            'from_location_id': int(asset.get('location_id')) if asset.get('location_id') else None,
+            'to_location_id': int(warehouse_location_id) if warehouse_location_id else None,
             'notes': json.dumps({
                 'damage_type': damage_type,
                 'severity': severity,

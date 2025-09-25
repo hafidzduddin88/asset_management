@@ -155,8 +155,11 @@ async def approve_request(
             }
             supabase.table('damage_log').insert(damage_log_data).execute()
             
-            # Update asset status to Under Repair
-            update_asset(asset_id, {'status': 'Under Repair'})
+            # Update asset status to Under Repair and move to warehouse if specified
+            asset_updates = {'status': 'Under Repair'}
+            if approval.get('to_location_id'):
+                asset_updates['location_id'] = approval.get('to_location_id')
+            update_asset(asset_id, asset_updates)
 
         elif approval_type == 'lost_report':
             # Process lost report approval
