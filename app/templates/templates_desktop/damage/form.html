@@ -84,31 +84,31 @@
 </div>
 
 <script>
-document.getElementById('damageForm').addEventListener('submit', async function(e) {
+document.getElementById('damageForm').addEventListener('submit', function(e) {
     e.preventDefault();
     
     const assetId = document.getElementById('assetId').value;
-    const formData = new FormData();
-    formData.append('damage_type', document.getElementById('damageType').value);
-    formData.append('severity', document.getElementById('severity').value);
-    formData.append('description', document.getElementById('description').value);
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = `/damage/report/${assetId}`;
     
-    try {
-        const response = await fetch(`/damage/report/${assetId}`, {
-            method: 'POST',
-            body: formData,
-            redirect: 'manual'
-        });
-        
-        if (response.status === 302) {
-            // Follow the redirect
-            window.location.href = response.headers.get('Location') || '/damage/success';
-        } else {
-            showErrorMessage('Submission Failed', 'Please try again.');
-        }
-    } catch (error) {
-        showErrorMessage('Network Error', 'Failed to submit report. Please try again.');
-    }
+    // Add form fields
+    const fields = [
+        {name: 'damage_type', value: document.getElementById('damageType').value},
+        {name: 'severity', value: document.getElementById('severity').value},
+        {name: 'description', value: document.getElementById('description').value}
+    ];
+    
+    fields.forEach(field => {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = field.name;
+        input.value = field.value;
+        form.appendChild(input);
+    });
+    
+    document.body.appendChild(form);
+    form.submit();
 });
 
 function showSuccessMessage(title, message) {
