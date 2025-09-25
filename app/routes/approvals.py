@@ -256,10 +256,56 @@ async def approve_request(
             }
             supabase.table('relocation_log').insert(relocation_log_data).execute()
             
-            # Update asset location
+            # Update asset location and status based on destination
             new_location_id = approval.get('to_location_id')
             if new_location_id:
-                update_asset(asset_id, {'location_id': new_location_id})
+                asset_updates = {'location_id': new_location_id}
+                
+                # Check if destination is warehouse (location_id 26) to set status to In Storage
+                if int(new_location_id) == 26:
+                    asset_updates['status'] = 'In Storage'
+                else:
+                    # If moving from warehouse to other location, set to Active
+                    current_location_id = current_asset.get('location_id')
+                    if current_location_id == 26:
+                        asset_updates['status'] = 'Active'
+                
+                update_asset(asset_id, asset_updates)
+
+        elif approval_type == 'disposal_request':
+            # Process disposal request approval
+            notes_data = json.loads(approval.get('notes', '{}'))
+            asset_id = approval.get('asset_id')
+            
+            # Update asset status to To be Disposed
+            update_asset(asset_id, {'status': 'To be Disposed'})
+
+        elif approval_type == 'disposal_execution':
+            # Process disposal execution approval
+            notes_data = json.loads(approval.get('notes', '{}'))
+            asset_id = approval.get('asset_id')
+            
+            # Update asset status to Disposed
+            update_asset(asset_id, {'status': 'Disposed'})
+
+        elif approval_type == 'edit_asset':
+            # Process edit asset approval
+            notes_data = json.loads(approval.get('notes', '{}'))
+            asset_id = approval.get('asset_id')
+            
+            # Get location info to determine status
+            location_name = notes_data.get('location_name', '')
+            room_name = notes_data.get('room_name', '')
+            
+            # Determine status based on location
+            if location_name == "HO - Ciputat" and room_name == "1022 - Gudang Support TOG":
+                notes_data['status'] = 'In Storage'
+            elif notes_data.get('status') == 'In Storage' and not (location_name == "HO - Ciputat" and room_name == "1022 - Gudang Support TOG"):
+                # If moving from warehouse to other location, set to Active
+                notes_data['status'] = 'Active'
+            
+            # Update asset with all edit data
+            update_asset(asset_id, notes_data)
 
         # If the approval type was not for adding an asset, it falls through to here.
         # Update the status for all other approval types.
