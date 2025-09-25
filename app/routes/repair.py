@@ -6,6 +6,7 @@ from app.utils.auth import get_current_profile
 from app.utils.flash import set_flash
 from starlette.templating import Jinja2Templates
 import logging
+import json
 
 logger = logging.getLogger(__name__)
 templates = Jinja2Templates(directory="app/templates")
@@ -95,22 +96,29 @@ async def submit_repair(
         location_name = new_location
         room_name = new_room
         
+        # Get new location_id
+        location_response = supabase.table('ref_locations').select('location_id').eq('location_name', location_name).eq('room_name', room_name).execute()
+        new_location_id = location_response.data[0]['location_id'] if location_response.data else None
+        
+        # Get current location_id
+        current_asset = supabase.table('assets').select('location_id').eq('asset_id', asset_id).execute()
+        current_location_id = current_asset.data[0]['location_id'] if current_asset.data else None
+        
         # Create approval request
         approval_data = {
             "type": "repair",
             "asset_id": asset_id,
             "asset_name": asset_name,
-            "submitter_id": current_profile.user_id,
-            "submitter_name": current_profile.full_name or current_profile.username,
-            "submitter_role": current_profile.role,
+            "submitted_by": current_profile.id,
             "status": "pending",
-            "details": {
-                "asset_id": asset_id,
-                "asset_name": asset_name,
+            "description": f"Repair completion for {asset_name}",
+            "from_location_id": int(current_location_id) if current_location_id else None,
+            "to_location_id": int(new_location_id) if new_location_id else None,
+            "notes": json.dumps({
                 "new_location": location_name,
                 "new_room": room_name,
                 "repair_notes": repair_notes
-            }
+            })
         }
         
         # Role-based approval will be handled in approvals page filtering
