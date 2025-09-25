@@ -126,13 +126,13 @@ async def submit_repair(
         # Insert approval request
         supabase.table('approvals').insert(approval_data).execute()
         
-        response = RedirectResponse(url="/repair", status_code=302)
+        response = RedirectResponse(url="/asset_management/list", status_code=302)
         set_flash(response, f"Repair completion for {asset_name} submitted for approval", "success")
         return response
         
     except Exception as e:
         logger.error(f"Error submitting repair: {str(e)}")
-        response = RedirectResponse(url="/repair", status_code=302)
+        response = RedirectResponse(url="/asset_management/list", status_code=302)
         set_flash(response, f"Error submitting repair: {str(e)}", "error")
         return response
 
