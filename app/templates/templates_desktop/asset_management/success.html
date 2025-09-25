@@ -36,21 +36,18 @@
                     <i class="fas fa-info-circle text-blue-500 mr-2"></i>
                     Redirecting to asset list in <span id="countdown" class="font-semibold text-blue-600">10</span> seconds
                 </p>
-                <div class="grid grid-cols-3 gap-2">
+                <div class="grid grid-cols-2 gap-3">
                     {% if user.role == 'staff' %}
-                    <a href="/logs" class="bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 rounded-lg font-semibold transition-colors duration-200 text-center text-sm">
-                        <i class="fas fa-history mr-1"></i>View Logs
+                    <a href="/logs" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-semibold transition-colors duration-200 text-center">
+                        <i class="fas fa-history mr-2"></i>View Logs
                     </a>
                     {% else %}
-                    <a href="/approvals" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 rounded-lg font-semibold transition-colors duration-200 text-center text-sm">
-                        <i class="fas fa-check-circle mr-1"></i>View Approvals
+                    <a href="/approvals" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-semibold transition-colors duration-200 text-center">
+                        <i class="fas fa-check-circle mr-2"></i>View Approvals
                     </a>
                     {% endif %}
-                    <a href="/asset_management/list" class="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg font-semibold transition-colors duration-200 text-center text-sm">
-                        <i class="fas fa-box mr-1"></i>Back to Assets
-                    </a>
-                    <a href="/asset_management/add" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg font-semibold transition-colors duration-200 text-center text-sm">
-                        <i class="fas fa-redo mr-1"></i>Try Again
+                    <a href="/asset_management/list" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-semibold transition-colors duration-200 text-center">
+                        <i class="fas fa-box mr-2"></i>Back to Assets
                     </a>
                 </div>
             </div>
