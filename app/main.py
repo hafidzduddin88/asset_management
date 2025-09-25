@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from app.middleware.session_auth import SessionAuthMiddleware
 import logging
 
@@ -14,6 +15,11 @@ app.add_middleware(SessionAuthMiddleware)
 
 # Mount static files
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
+
+# Favicon route
+@app.get("/favicon.ico")
+async def favicon():
+    return FileResponse("app/static/img/favicon.ico")
 
 # Import and register routes immediately
 from app.routes import (
