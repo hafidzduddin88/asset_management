@@ -96,15 +96,15 @@ document.getElementById('damageForm').addEventListener('submit', async function(
     try {
         const response = await fetch(`/damage/report/${assetId}`, {
             method: 'POST',
-            body: formData
+            body: formData,
+            redirect: 'manual'
         });
-        const result = await response.json();
         
-        if (result.status === 'success') {
-            showSuccessMessage('Damage Report Submitted', `Asset "{{ asset.asset_name if asset else 'Asset' }}" has been reported as damaged and submitted for approval.`);
-            setTimeout(() => window.location.href = '/asset_management/list', 2000);
+        if (response.status === 302) {
+            // Follow the redirect
+            window.location.href = response.headers.get('Location') || '/damage/success';
         } else {
-            showErrorMessage('Submission Failed', result.message);
+            showErrorMessage('Submission Failed', 'Please try again.');
         }
     } catch (error) {
         showErrorMessage('Network Error', 'Failed to submit report. Please try again.');
