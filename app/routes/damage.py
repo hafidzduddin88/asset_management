@@ -1,6 +1,7 @@
 # app/routes/damage.py
 import logging
 from fastapi import APIRouter, Request, Depends, Form
+from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 from app.utils.auth import get_current_profile
 from app.utils.device_detector import get_template
@@ -103,8 +104,40 @@ async def submit_damage_report(
         
         supabase.table('approvals').insert(approval_data).execute()
         
-        return {"status": "success", "message": "Damage report submitted for approval"}
+        return RedirectResponse(url="/damage/success", status_code=302)
         
     except Exception as e:
         logging.error(f"Error submitting damage report: {e}")
-        return {"status": "error", "message": str(e)}
+        return RedirectResponse(url="/damage/error", status_code=302)
+
+@router.get("/damage/success")
+async def damage_success(
+    request: Request,
+    current_profile = Depends(get_current_profile)
+):
+    """Display damage report success page."""
+    template_path = get_template(request, "damage/success.html")
+    return templates.TemplateResponse(
+        template_path,
+        {
+            "request": request,
+            "user": current_profile,
+            "current_profile": current_profile
+        }
+    )
+
+@router.get("/damage/error")
+async def damage_error(
+    request: Request,
+    current_profile = Depends(get_current_profile)
+):
+    """Display damage report error page."""
+    template_path = get_template(request, "damage/error.html")
+    return templates.TemplateResponse(
+        template_path,
+        {
+            "request": request,
+            "user": current_profile,
+            "current_profile": current_profile
+        }
+    )
