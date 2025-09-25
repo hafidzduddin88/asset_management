@@ -83,6 +83,9 @@
                         </h4>
                         <p class="text-gray-900 font-medium text-sm">{{ approval.asset_name }}</p>
                         <div class="text-xs text-gray-500 mt-1">
+                            {% if approval.asset_id %}
+                            <div>🏷️ {{ approval.asset_id }}</div>
+                            {% endif %}
                             <div>📅 {{ approval.submitted_date[:10] if approval.submitted_date else '' }}</div>
                         </div>
                     </div>
@@ -176,6 +179,10 @@
                         </div>
                         <p class="text-sm text-gray-600">{{ approval.asset_name }}</p>
                         <div class="text-xs text-gray-500 mt-1">
+                            {% if approval.asset_id %}
+                            <span>🏷️ {{ approval.asset_id }}</span>
+                            <span class="mx-2">•</span>
+                            {% endif %}
                             <span>📅 {{ approval.submitted_date[:10] if approval.submitted_date else '' }}</span>
                             {% if approval.approved_date %}
                             <span class="mx-2">•</span>

@@ -338,16 +338,16 @@ function showApprovalDetail(approvalId) {
                               '<span class="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-medium"><i class="fas fa-clock mr-1"></i>Pending</span>'}
                         </p>
                     </div>
+                    ${approval.asset_id ? `
+                    <div>
+                        <label class="text-xs font-medium text-gray-500">Asset ID</label>
+                        <p class="text-sm text-gray-900 font-medium">${approval.asset_id}</p>
+                    </div>
+                    ` : ''}
                     ${approval.asset_name ? `
                     <div>
                         <label class="text-xs font-medium text-gray-500">Asset Name</label>
                         <p class="text-sm text-gray-900 font-medium">${approval.asset_name}</p>
-                    </div>
-                    ` : ''}
-                    ${approval.asset_id ? `
-                    <div>
-                        <label class="text-xs font-medium text-gray-500">Asset ID</label>
-                        <p class="text-sm text-gray-900">${approval.asset_id}</p>
                     </div>
                     ` : ''}
                     ${approval.description ? `

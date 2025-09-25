@@ -75,6 +75,9 @@
                         </h4>
                         <p class="text-gray-900 font-medium text-sm">{{ approval.asset_name }}</p>
                         <div class="text-xs text-gray-500 mt-1">
+                            {% if approval.asset_id %}
+                            <div>🏷️ {{ approval.asset_id }}</div>
+                            {% endif %}
                             <div>📅 {{ approval.submitted_date[:10] if approval.submitted_date else '' }}</div>
                             {% if approval.submitted_by_name %}
                             <div>👤 Reported by: {{ approval.submitted_by_name }}</div>
@@ -169,6 +172,10 @@
                         </div>
                         <p class="text-sm text-gray-600">{{ approval.asset_name }}</p>
                         <div class="text-xs text-gray-500 mt-1">
+                            {% if approval.asset_id %}
+                            <span>🏷️ {{ approval.asset_id }}</span>
+                            <span class="mx-2">•</span>
+                            {% endif %}
                             <span>📅 {{ approval.submitted_date[:10] if approval.submitted_date else '' }}</span>
                             {% if approval.submitted_by_name %}
                             <span class="mx-2">•</span>
@@ -261,20 +268,20 @@ function viewDetail(index, type) {
                                       '<span class="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full font-medium"><i class="fas fa-clock mr-1"></i>Pending</span>'}
                                 </p>
                             </div>
+                            ${data.asset_id ? `
+                            <div>
+                                <label class="text-sm font-medium text-gray-500">Asset ID</label>
+                                <p class="text-sm text-gray-900 font-medium">${data.asset_id}</p>
+                            </div>
+                            ` : ''}
                             ${data.asset_name ? `
-                            <div class="col-span-2">
+                            <div>
                                 <label class="text-sm font-medium text-gray-500">Asset Name</label>
                                 <p class="text-sm text-gray-900 font-medium">${data.asset_name}</p>
                             </div>
                             ` : ''}
-                            ${data.asset_id ? `
-                            <div>
-                                <label class="text-sm font-medium text-gray-500">Asset ID</label>
-                                <p class="text-sm text-gray-900">${data.asset_id}</p>
-                            </div>
-                            ` : ''}
                             ${data.description ? `
-                            <div class="${data.asset_id ? '' : 'col-span-2'}">
+                            <div class="col-span-2">
                                 <label class="text-sm font-medium text-gray-500">Description</label>
                                 <p class="text-sm text-gray-900">${data.description}</p>
                             </div>

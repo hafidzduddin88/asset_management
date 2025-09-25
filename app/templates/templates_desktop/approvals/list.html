@@ -353,7 +353,11 @@ function showApprovalDetail(approvalId) {
                             </span>
                         </p>
                     </div>
-                    <div class="col-span-2">
+                    <div>
+                        <span class="text-sm font-medium text-gray-500">Asset ID:</span>
+                        <p class="text-sm text-gray-900 mt-1 font-medium">${approval.asset_id || 'N/A'}</p>
+                    </div>
+                    <div>
                         <span class="text-sm font-medium text-gray-500">Asset Name:</span>
                         <p class="text-sm text-gray-900 mt-1 font-medium">${approval.asset_name || 'N/A'}</p>
                     </div>
