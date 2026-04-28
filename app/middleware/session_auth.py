@@ -14,7 +14,7 @@ class SessionAuthMiddleware(BaseHTTPMiddleware):
     
     SKIP_PATHS = {
         "/login", "/signup", "/health", "/favicon.ico",
-        "/auth/callback", "/auth/confirm", "/auth/refresh"
+        "/auth/callback", "/auth/confirm", "/auth/refresh", "/auth/recovery"
     }
     
     SKIP_PREFIXES = {"/static", "/forgot-password", "/auth/forgot-password"}

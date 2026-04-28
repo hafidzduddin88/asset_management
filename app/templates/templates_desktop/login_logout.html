@@ -53,7 +53,7 @@
                     <label class="ml-2 block text-sm text-gray-900">Remember me</label>
                 </div>
                 <div class="text-sm">
-                    <a href="#" @click="currentMode = 'forgot'" class="font-medium text-blue-600 hover:text-blue-500">
+                    <a href="/forgot-password/" class="font-medium text-blue-600 hover:text-blue-500">
                         Forgot password?
                     </a>
                 </div>
@@ -118,27 +118,6 @@
             </div>
         </form>
 
-        <!-- Forgot Password Form -->
-        <form x-show="currentMode === 'forgot'" @submit="handleForgotPassword" class="space-y-4">
-            <div class="rounded-md shadow-sm">
-                <input type="email" x-model="forgotEmail" required
-                       class="appearance-none relative block w-full px-4 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10"
-                       placeholder="Enter your email address">
-            </div>
-
-            <div>
-                <button type="submit"
-                        class="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500">
-                    Send Reset Link
-                </button>
-            </div>
-
-            <div class="text-center">
-                <a href="#" @click="currentMode = 'login'" class="font-medium text-blue-600 hover:text-blue-500">
-                    Back to Sign In
-                </a>
-            </div>
-        </form>
 
         <!-- Messages -->
         {% if error %}
