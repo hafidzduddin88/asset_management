@@ -1,0 +1,23 @@
+{% extends "templates_mobile/layouts/modern_layout.html" %}
+
+{% block title %}Password Reset Successful{% endblock %}
+
+{% block content %}
+<div class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4">
+    <div class="w-full max-w-sm space-y-6">
+        <!-- Success Icon -->
+        <div class="text-center">
+            <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 mb-4">
+                <i class="fas fa-check-circle text-green-600 text-lg"></i>
+            </div>
+            <h2 class="text-xl font-bold text-gray-900">Password Reset Successful</h2>
+            <p class="mt-2 text-sm text-gray-600">Your password has been reset. You can now login.</p>
+        </div>
+
+        <!-- Action -->
+        <a href="/login" class="block w-full text-center py-2 px-4 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700">
+            Go to Login
+        </a>
+    </div>
+</div>
+{% endblock %}

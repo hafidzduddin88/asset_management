@@ -1,0 +1,39 @@
+{% extends "templates_mobile/layouts/modern_layout.html" %}
+
+{% block title %}Check Your Email{% endblock %}
+
+{% block content %}
+<div class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4">
+    <div class="w-full max-w-sm space-y-6">
+        <!-- Success Icon -->
+        <div class="text-center">
+            <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 mb-4">
+                <i class="fas fa-envelope text-blue-600 text-lg"></i>
+            </div>
+            <h2 class="text-xl font-bold text-gray-900">Check Your Email</h2>
+            <p class="mt-2 text-sm text-gray-600">If an account exists, you'll receive a reset link shortly.</p>
+        </div>
+
+        <!-- Instructions -->
+        <div class="bg-blue-50 rounded-lg p-4 space-y-2">
+            <h3 class="text-sm font-medium text-blue-900">Next steps:</h3>
+            <ul class="text-sm text-blue-800 space-y-1">
+                <li>✓ Check your email inbox</li>
+                <li>✓ Click the reset link</li>
+                <li>✓ Enter your new password</li>
+                <li>✓ Login with new password</li>
+            </ul>
+        </div>
+
+        <!-- Actions -->
+        <div class="space-y-2">
+            <a href="/login" class="block w-full text-center py-2 px-4 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700">
+                Back to Login
+            </a>
+            <a href="/forgot-password" class="block w-full text-center py-2 px-4 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50">
+                Try Another Email
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
