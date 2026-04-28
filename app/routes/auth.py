@@ -33,11 +33,12 @@ async def recovery_page(
     if not token or type != "recovery":
         raise HTTPException(status_code=400, detail="Invalid recovery request")
     
-    # Redirect to custom reset page with token
-    return RedirectResponse(
-        url=f"/forgot-password/reset/{token}",
-        status_code=status.HTTP_303_SEE_OTHER
-    )
+    # Show reset password form with token
+    template_path = get_template(request, "forgot_password/reset.html")
+    return templates.TemplateResponse(template_path, {
+        "request": request,
+        "token": token
+    })
 
 @router.post("/reset-password")
 async def reset_password_with_supabase_token(
