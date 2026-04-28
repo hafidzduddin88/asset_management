@@ -3,14 +3,18 @@ from fastapi import APIRouter, Request, Form, HTTPException, status
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 import logging
+import os
 
 from app.utils.database_manager import get_supabase
 from app.utils.device_detector import get_template
 from app.utils.flash import set_flash
+from app.config import load_config
 
 # Create two routers for both paths
 router = APIRouter(tags=["forgot_password"])
 templates = Jinja2Templates(directory="app/templates")
+
+config = load_config()
 
 @router.get("/forgot-password/", response_class=HTMLResponse)
 @router.get("/auth/forgot-password/", response_class=HTMLResponse)
@@ -48,7 +52,17 @@ async def request_password_reset(
         
         # Send password recovery email via Supabase
         try:
-            supabase.auth.admin.reset_password_for_email(email)
+            # Get app URL from config
+            app_url = os.getenv("APP_URL", "http://localhost:8000")
+            redirect_to = f"{app_url}/auth/recovery"
+            
+            # Use correct Supabase method with redirect URL
+            supabase.auth.reset_password_for_email(
+                email,
+                options={
+                    "redirect_to": redirect_to
+                }
+            )
             
             # Log password reset request
             supabase.table("user_management_logs").insert({
@@ -58,7 +72,7 @@ async def request_password_reset(
                 "details": f"Password reset requested for {user_name} ({email})"
             }).execute()
             
-            logging.info(f"Password reset email sent to {email}")
+            logging.info(f"Password reset email sent to {email} with redirect to {redirect_to}")
             
         except Exception as e:
             logging.error(f"Error sending password reset email: {e}")
