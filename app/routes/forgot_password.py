@@ -11,10 +11,16 @@ from app.utils.database_manager import get_supabase
 from app.utils.device_detector import get_template
 from app.utils.flash import set_flash
 
-router = APIRouter(prefix="/forgot-password", tags=["forgot_password"])
+# Create two routers for both paths
+router1 = APIRouter(prefix="/forgot-password", tags=["forgot_password"])
+router2 = APIRouter(prefix="/auth/forgot-password", tags=["forgot_password"])
 templates = Jinja2Templates(directory="app/templates")
 
-@router.get("/", response_class=HTMLResponse)
+# Combine routers
+router = APIRouter(tags=["forgot_password"])
+
+@router.get("/forgot-password/", response_class=HTMLResponse)
+@router.get("/auth/forgot-password/", response_class=HTMLResponse)
 async def forgot_password_page(request: Request):
     """Forgot password page (public - no login required)."""
     template_path = get_template(request, "forgot_password/index.html")
@@ -22,7 +28,8 @@ async def forgot_password_page(request: Request):
         "request": request
     })
 
-@router.post("/request")
+@router.post("/forgot-password/request")
+@router.post("/auth/forgot-password/request")
 async def request_password_reset(
     request: Request,
     email: str = Form(...)
@@ -81,13 +88,14 @@ async def request_password_reset(
     except Exception as e:
         logging.error(f"Error requesting password reset: {e}")
         response = RedirectResponse(
-            url="/forgot-password",
+            url="/forgot-password/",
             status_code=status.HTTP_303_SEE_OTHER
         )
         set_flash(response, "An error occurred. Please try again.", "error")
         return response
 
-@router.get("/check-email", response_class=HTMLResponse)
+@router.get("/forgot-password/check-email", response_class=HTMLResponse)
+@router.get("/auth/forgot-password/check-email", response_class=HTMLResponse)
 async def check_email_page(request: Request):
     """Check email page after requesting reset."""
     template_path = get_template(request, "forgot_password/check_email.html")
@@ -95,7 +103,8 @@ async def check_email_page(request: Request):
         "request": request
     })
 
-@router.get("/reset/{token}", response_class=HTMLResponse)
+@router.get("/forgot-password/reset/{token}", response_class=HTMLResponse)
+@router.get("/auth/forgot-password/reset/{token}", response_class=HTMLResponse)
 async def reset_password_page(
     request: Request,
     token: str
@@ -135,7 +144,8 @@ async def reset_password_page(
         logging.error(f"Error validating reset token: {e}")
         raise HTTPException(status_code=500, detail="An error occurred")
 
-@router.post("/reset/{token}")
+@router.post("/forgot-password/reset/{token}")
+@router.post("/auth/forgot-password/reset/{token}")
 async def reset_password_submit(
     request: Request,
     token: str,
@@ -220,13 +230,14 @@ async def reset_password_submit(
     except Exception as e:
         logging.error(f"Error resetting password: {e}")
         response = RedirectResponse(
-            url="/forgot-password",
+            url="/forgot-password/",
             status_code=status.HTTP_303_SEE_OTHER
         )
         set_flash(response, "An error occurred. Please try again.", "error")
         return response
 
-@router.get("/success", response_class=HTMLResponse)
+@router.get("/forgot-password/success", response_class=HTMLResponse)
+@router.get("/auth/forgot-password/success", response_class=HTMLResponse)
 async def reset_success_page(request: Request):
     """Password reset success page."""
     template_path = get_template(request, "forgot_password/success.html")
