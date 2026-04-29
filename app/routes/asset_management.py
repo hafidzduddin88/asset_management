@@ -11,6 +11,7 @@ from app.utils.database_manager import get_dropdown_options, add_approval_reques
 from app.utils.flash import set_flash
 from app.utils.auth import get_current_profile, UserRole
 from app.utils.device_detector import get_template
+from app.utils.user_utils import get_all_users
 import logging
 
 router = APIRouter(prefix="/asset_management", tags=["asset_management"])
@@ -24,6 +25,7 @@ async def add_asset_form(
 ):
     """Form to add a new asset."""
     dropdown_options = get_dropdown_options()
+    users = get_all_users()
     
     template_path = get_template(request, "asset_management/add.html")
     return templates.TemplateResponse(
@@ -31,7 +33,8 @@ async def add_asset_form(
         {
             "request": request,
             "user": current_profile,
-            "dropdown_options": dropdown_options
+            "dropdown_options": dropdown_options,
+            "users": users
         }
     )
 
@@ -249,8 +252,8 @@ async def add_asset(
     serial_number: str = Form(""),
     company_name: str = Form(...),
     business_unit_name: str = Form(""),
-    location_name: str = Form(...),
-    room_name: str = Form(...),
+    location_name: str = Form(None),
+    room_name: str = Form(None),
     notes: str = Form(""),
     item_condition: str = Form(""),
     purchase_date: str = Form(...),
@@ -259,6 +262,8 @@ async def add_asset(
     supplier: str = Form(""),
     journal: str = Form(""),
     owner_name: str = Form(...),
+    owner_type: str = Form("GA"),
+    assigned_user_name: str = Form(None),
     photo: UploadFile = File(None),
     current_profile = Depends(get_current_profile)
 ):
@@ -272,8 +277,8 @@ async def add_asset(
         "serial_number": serial_number,
         "company_name": company_name,
         "business_unit_name": business_unit_name,
-        "location_name": location_name,
-        "room_name": room_name,
+        "location_name": location_name or "",
+        "room_name": room_name or "",
         "notes": notes,
         "item_condition": item_condition,
         "purchase_date": purchase_date,
@@ -282,6 +287,8 @@ async def add_asset(
         "supplier": supplier,
         "journal": journal,
         "owner_name": owner_name,
+        "owner_type": owner_type,
+        "assigned_user_name": assigned_user_name if owner_type == "IT" else None,
         "status": "In Storage" if location_name == "HO - Ciputat" and room_name == "1022 - Gudang Support TOG" else "Active"
     }
     
@@ -296,11 +303,13 @@ async def add_asset(
         except Exception as e:
             logging.error(f"Error uploading photo: {str(e)}")
     
-    # Get to_location_id for new asset placement
+    # Get to_location_id for new asset placement (only for GA assets)
     from app.utils.database_manager import get_supabase
     supabase = get_supabase()
-    loc_response = supabase.table('ref_locations').select('location_id').eq('location_name', location_name).eq('room_name', room_name).execute()
-    to_location_id = loc_response.data[0]['location_id'] if loc_response.data else None
+    to_location_id = None
+    if owner_type == "GA" and location_name and room_name:
+        loc_response = supabase.table('ref_locations').select('location_id').eq('location_name', location_name).eq('room_name', room_name).execute()
+        to_location_id = loc_response.data[0]['location_id'] if loc_response.data else None
     
     approval_data = {
         "type": "add_asset",
