@@ -2,10 +2,26 @@ from fastapi import APIRouter, Request, Form
 from fastapi.responses import RedirectResponse, HTMLResponse
 from app.utils.database_manager import get_supabase
 from app.utils.device_detector import get_template
+from app.config import load_config
 from starlette.templating import Jinja2Templates
+import httpx
+import logging
+from urllib.parse import urlparse
 
+config = load_config()
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
+
+def get_cookie_settings() -> dict:
+    parsed_url = urlparse(config.APP_URL)
+    is_secure = parsed_url.scheme == "https"
+    domain = parsed_url.hostname if parsed_url.hostname not in ("localhost", "127.0.0.1") else None
+    return {
+        "httponly": True,
+        "secure": is_secure,
+        "samesite": "lax",
+        "domain": domain
+    }
 
 @router.get("/forgot-password")
 async def forgot_password_page(request: Request):
@@ -21,29 +37,45 @@ async def forgot_password_page(request: Request):
 
 @router.post("/forgot-password")
 async def forgot_password_submit(request: Request, email: str = Form(...)):
-    """Send password reset email via Supabase"""
+    """Send password reset email via Supabase Auth API"""
     try:
-        supabase = get_supabase()
-        
         # Get the base URL for redirect
         base_url = str(request.base_url).rstrip('/')
-        redirect_url = f"{base_url}/auth/recovery"
+        redirect_url = f"{base_url}/auth/change-password"
         
-        # Send recovery email using Supabase Auth
-        supabase.auth.reset_password_email(
-            email=email,
-            options={
-                "redirect_to": redirect_url
-            }
-        )
+        # Send recovery email using Supabase Auth REST API
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                f"{config.SUPABASE_URL}/auth/v1/recover",
+                headers={
+                    "apikey": config.SUPABASE_ANON_KEY,
+                    "Content-Type": "application/json",
+                },
+                json={
+                    "email": email,
+                    "redirect_to": redirect_url,
+                },
+                timeout=30,
+            )
+            
+            # Don't expose whether email exists (security best practice)
+            if response.status_code == 429:
+                template_path = get_template(request, "forgot_password/request.html")
+                return templates.TemplateResponse(template_path, {
+                    "request": request,
+                    "email": email,
+                    "error": "Terlalu banyak permintaan. Silakan tunggu beberapa saat."
+                })
         
+        logging.info(f"Password reset email requested for: {email}")
         template_path = get_template(request, "login_logout.html")
         return templates.TemplateResponse(template_path, {
             "request": request,
-            "success": f"Email reset password telah dikirim ke {email}. Silakan cek inbox Anda."
+            "success": f"Jika email {email} terdaftar, link reset password telah dikirim. Silakan cek inbox Anda."
         })
         
     except Exception as e:
+        logging.error(f"Forgot password error: {str(e)}")
         template_path = get_template(request, "forgot_password/request.html")
         return templates.TemplateResponse(template_path, {
             "request": request,
@@ -51,11 +83,20 @@ async def forgot_password_submit(request: Request, email: str = Form(...)):
             "error": "Terjadi kesalahan. Silakan coba lagi."
         })
 
-@router.get("/auth/recovery")
-async def auth_recovery_handler(request: Request):
-    """Handle Supabase recovery callback - convert fragment to query params"""
-    # Return HTML page that will handle fragment conversion via JavaScript
-    html_content = """
+@router.get("/auth/change-password")
+async def change_password_page(request: Request):
+    """Handle Supabase recovery callback and verify token"""
+    # Get token_hash and type from query params (Supabase email link format)
+    token_hash = request.query_params.get("token_hash")
+    type_param = request.query_params.get("type")
+    
+    # Handle old token format
+    if not token_hash:
+        token_hash = request.query_params.get("token")
+    
+    if not token_hash or not type_param:
+        # Return HTML with JavaScript to handle fragment format
+        html_content = """
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -69,85 +110,103 @@ async def auth_recovery_handler(request: Request):
         <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
         <p class="mt-4 text-gray-600">Memproses reset password...</p>
     </div>
-    
     <script>
-        (function() {
-            // Check URL fragment first (new Supabase format)
-            const hash = window.location.hash.substring(1);
-            
-            if (hash) {
-                const params = new URLSearchParams(hash);
-                const error = params.get('error');
-                const errorDescription = params.get('error_description');
-                const accessToken = params.get('access_token');
-                const refreshToken = params.get('refresh_token');
-                
-                if (error) {
-                    window.location.href = '/forgot-password?error=' + encodeURIComponent(errorDescription || error);
-                    return;
-                } else if (accessToken) {
-                    window.location.href = '/reset-password?access_token=' + accessToken + 
-                        (refreshToken ? '&refresh_token=' + refreshToken : '');
-                    return;
-                }
+        const hash = window.location.hash.substring(1);
+        if (hash) {
+            const params = new URLSearchParams(hash);
+            const error = params.get('error');
+            if (error) {
+                window.location.href = '/forgot-password?error=' + encodeURIComponent(params.get('error_description') || error);
+            } else {
+                window.location.href = '/auth/change-password?' + hash;
             }
-            
-            // Check query params (old Supabase format)
-            const urlParams = new URLSearchParams(window.location.search);
-            const token = urlParams.get('token');
-            const type = urlParams.get('type');
-            
-            if (token && type === 'recovery') {
-                // Old format - redirect with message
-                window.location.href = '/forgot-password?error=' + 
-                    encodeURIComponent('Link sudah kadaluarsa. Silakan request link baru.');
-                return;
-            }
-            
-            // No valid params
-            window.location.href = '/forgot-password?error=' + 
-                encodeURIComponent('Link tidak valid. Silakan request link baru.');
-        })();
+        } else {
+            window.location.href = '/forgot-password?error=' + encodeURIComponent('Link tidak valid');
+        }
     </script>
 </body>
 </html>
-    """
-    return HTMLResponse(content=html_content)
-
-@router.get("/reset-password")
-async def reset_password_page(request: Request):
-    """Display reset password form"""
-    access_token = request.query_params.get("access_token")
-    refresh_token = request.query_params.get("refresh_token")
+        """
+        return HTMLResponse(content=html_content)
     
-    if not access_token:
+    try:
+        # Verify token with Supabase Auth API
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                f"{config.SUPABASE_URL}/auth/v1/verify",
+                headers={
+                    "apikey": config.SUPABASE_ANON_KEY,
+                    "Content-Type": "application/json",
+                },
+                json={
+                    "type": type_param,
+                    "token_hash": token_hash,
+                },
+                timeout=30,
+            )
+            
+            if response.status_code >= 400:
+                logging.warning(f"Token verification failed: {response.status_code}")
+                template_path = get_template(request, "login_logout.html")
+                return templates.TemplateResponse(template_path, {
+                    "request": request,
+                    "error": "Link reset password tidak valid atau sudah kadaluarsa."
+                })
+            
+            data = response.json()
+            access_token = data.get("access_token")
+            refresh_token = data.get("refresh_token")
+            
+            if not access_token:
+                raise Exception("No access token received")
+            
+            # Set HTTP-only cookies for session
+            template_path = get_template(request, "forgot_password/reset.html")
+            response_obj = templates.TemplateResponse(template_path, {
+                "request": request,
+                "error": None
+            })
+            
+            settings = get_cookie_settings()
+            response_obj.set_cookie(
+                key="sb_access_token",
+                value=access_token,
+                max_age=3600,  # 1 hour
+                **settings
+            )
+            
+            if refresh_token:
+                response_obj.set_cookie(
+                    key="sb_refresh_token",
+                    value=refresh_token,
+                    max_age=86400 * 30,  # 30 days
+                    **settings
+                )
+            
+            logging.info("Password reset session created successfully")
+            return response_obj
+            
+    except Exception as e:
+        logging.error(f"Change password page error: {str(e)}")
         template_path = get_template(request, "login_logout.html")
         return templates.TemplateResponse(template_path, {
             "request": request,
-            "error": "Link reset password tidak valid atau sudah kadaluarsa."
+            "error": "Terjadi kesalahan saat memproses link reset password."
         })
-    
-    template_path = get_template(request, "forgot_password/reset.html")
-    return templates.TemplateResponse(template_path, {
-        "request": request,
-        "access_token": access_token,
-        "refresh_token": refresh_token
-    })
 
-@router.post("/reset-password")
-async def reset_password_submit(
+@router.post("/auth/change-password")
+async def change_password_submit(
     request: Request,
-    access_token: str = Form(...),
     new_password: str = Form(...),
     confirm_password: str = Form(...)
 ):
-    """Update password using Supabase Auth"""
+    """Update password using authenticated session"""
     try:
+        # Validate passwords
         if new_password != confirm_password:
             template_path = get_template(request, "forgot_password/reset.html")
             return templates.TemplateResponse(template_path, {
                 "request": request,
-                "access_token": access_token,
                 "error": "Password tidak cocok."
             })
         
@@ -155,30 +214,55 @@ async def reset_password_submit(
             template_path = get_template(request, "forgot_password/reset.html")
             return templates.TemplateResponse(template_path, {
                 "request": request,
-                "access_token": access_token,
                 "error": "Password minimal 6 karakter."
             })
         
-        supabase = get_supabase()
+        # Get access token from cookie (set by GET /auth/change-password)
+        access_token = request.cookies.get("sb_access_token")
         
-        # Set session with the access token
-        supabase.auth.set_session(access_token, access_token)
+        if not access_token:
+            template_path = get_template(request, "login_logout.html")
+            return templates.TemplateResponse(template_path, {
+                "request": request,
+                "error": "Session tidak valid. Silakan request link reset password baru."
+            })
         
-        # Update password - Supabase handles encryption
-        supabase.auth.update_user({
-            "password": new_password
-        })
+        # Update password using Supabase Auth API with access token
+        async with httpx.AsyncClient() as client:
+            response = await client.put(
+                f"{config.SUPABASE_URL}/auth/v1/user",
+                headers={
+                    "apikey": config.SUPABASE_ANON_KEY,
+                    "Authorization": f"Bearer {access_token}",
+                    "Content-Type": "application/json",
+                },
+                json={"password": new_password},
+                timeout=30,
+            )
+            
+            if response.status_code >= 400:
+                raise Exception(f"Failed to update password: {response.status_code}")
         
+        logging.info("Password updated successfully")
+        
+        # Clear cookies and redirect to login
         template_path = get_template(request, "login_logout.html")
-        return templates.TemplateResponse(template_path, {
+        response_obj = templates.TemplateResponse(template_path, {
             "request": request,
             "success": "Password berhasil diubah. Silakan login dengan password baru."
         })
         
+        # Clear reset session cookies
+        settings = get_cookie_settings()
+        response_obj.delete_cookie("sb_access_token", **{k: v for k, v in settings.items() if k != "httponly"})
+        response_obj.delete_cookie("sb_refresh_token", **{k: v for k, v in settings.items() if k != "httponly"})
+        
+        return response_obj
+        
     except Exception as e:
+        logging.error(f"Change password error: {str(e)}")
         template_path = get_template(request, "forgot_password/reset.html")
         return templates.TemplateResponse(template_path, {
             "request": request,
-            "access_token": access_token,
-            "error": f"Gagal mengubah password: {str(e)}"
+            "error": "Gagal mengubah password. Silakan coba lagi."
         })
