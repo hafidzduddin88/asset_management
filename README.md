@@ -26,6 +26,7 @@
 - 🛠️ **Asset Repair** - Separate repair workflow for damaged assets
 - 💰 **Asset Depreciation** - SuperAdmin value recalculation
 - 👥 **Role-based Auth** - Admin/Manager/Staff with JWT
+- 🔐 **Password Reset** - Supabase email recovery flow
 - ✅ **Approval Workflows** - Hierarchical approvals
 - 👤 **User Management** - Business unit integration
 
@@ -244,7 +245,7 @@ asset_management/
 ├── 📁 .amazonq/rules/       # Amazon Q AI guidance
 ├── 📁 app/
 │   ├── 📁 middleware/        # JWT session authentication
-│   ├── 📁 routes/           # API endpoints (12+ modules)
+│   ├── 📁 routes/           # API endpoints (13+ modules)
 │   │   ├── 📄 asset_management.py  # CRUD operations with view pages
 │   │   ├── 📄 damage.py            # Asset issues (damage/lost/disposal)
 │   │   ├── 📄 repair.py            # Asset repair workflow
@@ -252,6 +253,7 @@ asset_management/
 │   │   ├── 📄 approvals.py         # Hierarchical approval system
 │   │   ├── 📄 export.py            # Excel export with optimized ordering
 │   │   ├── 📄 home.py              # Dashboard analytics
+│   │   ├── 📄 forgot_password.py   # Password reset via Supabase email
 │   │   └── 📄 user_management.py   # Business unit integration
 │   ├── 📁 static/           # CSS, JS, PWA files
 │   ├── 📁 templates/        # Dual template system
@@ -296,6 +298,7 @@ asset_management/
 - **Asset Issues**: Separate pages for Damage/Lost/Disposal requests
 - **Asset Repair**: Dedicated workflow for damaged assets
 - **Asset Depreciation**: SuperAdmin value recalculation system
+- **Password Reset**: Supabase email recovery with secure token flow
 - **Approval System**: Hierarchical Admin ↔ Manager with notes column
 - **Export System**: Excel with optimized column ordering
 - **Dashboard Analytics**: Monthly/Quarterly/Yearly charts
@@ -316,6 +319,13 @@ asset_management/
 - **Single Worker**: Faster startup with `--workers 1`
 - **Disabled Logs**: `--access-log false` for production
 - **Build Cache**: Skip builds when no changes detected
+
+### 🔐 Authentication & Security
+- **JWT Session Management**: Secure token-based authentication
+- **Password Reset Flow**: Supabase email recovery with one-time tokens
+- **Profile Protection**: Prevents data overwrites during token refresh
+- **Role-based Access**: Admin/Manager/Staff with hierarchical permissions
+- **Secure Password Storage**: Supabase Auth with bcrypt encryption
 
 ### 🗄️ Database Architecture
 - **Supabase PostgreSQL**: Primary database with foreign key relationships
