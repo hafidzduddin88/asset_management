@@ -48,7 +48,7 @@
 
         <!-- Advanced Filters -->
         <div class="filter-bar rounded-xl p-6 mb-6 shadow-lg">
-            <div class="grid grid-cols-1 md:grid-cols-6 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-7 gap-4">
                 <!-- Search -->
                 <div class="md:col-span-2">
                     <label class="block text-sm font-medium mb-2">Search Assets</label>
@@ -80,6 +80,16 @@
                     <label class="block text-sm font-medium mb-2">Room</label>
                     <select id="roomFilter" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500" disabled>
                         <option value="">All Rooms</option>
+                    </select>
+                </div>
+                
+                <!-- Owner Type Filter -->
+                <div>
+                    <label class="block text-sm font-medium mb-2">Owner Type</label>
+                    <select id="ownerTypeFilter" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500">
+                        <option value="">All Types</option>
+                        <option value="GA">GA (Room-based)</option>
+                        <option value="IT">IT (User-based)</option>
                     </select>
                 </div>
                 
@@ -252,6 +262,7 @@ function setupEventListeners() {
     const categoryFilter = document.getElementById('categoryFilter');
     const locationFilter = document.getElementById('locationFilter');
     const roomFilter = document.getElementById('roomFilter');
+    const ownerTypeFilter = document.getElementById('ownerTypeFilter');
     const statusFilter = document.getElementById('statusFilter');
     const searchInput = document.getElementById('searchInput');
     const clearFilters = document.getElementById('clearFilters');
@@ -276,6 +287,7 @@ function setupEventListeners() {
     
     categoryFilter.addEventListener('change', applyFilters);
     roomFilter.addEventListener('change', applyFilters);
+    ownerTypeFilter.addEventListener('change', applyFilters);
     statusFilter.addEventListener('change', applyFilters);
     searchInput.addEventListener('input', applyFilters);
     
@@ -290,6 +302,7 @@ function setupEventListeners() {
         locationFilter.value = '';
         roomFilter.innerHTML = '<option value="">All Rooms</option>';
         roomFilter.disabled = true;
+        ownerTypeFilter.value = '';
         statusFilter.value = '';
         searchInput.value = '';
         applyFilters();
@@ -300,6 +313,7 @@ function applyFilters() {
     const categoryFilter = document.getElementById('categoryFilter').value;
     const locationFilter = document.getElementById('locationFilter').value;
     const roomFilter = document.getElementById('roomFilter').value;
+    const ownerTypeFilter = document.getElementById('ownerTypeFilter').value;
     const statusFilter = document.getElementById('statusFilter').value;
     const searchTerm = document.getElementById('searchInput').value.toLowerCase();
     
@@ -307,6 +321,7 @@ function applyFilters() {
         const matchesCategory = !categoryFilter || asset.category === categoryFilter;
         const matchesLocation = !locationFilter || asset.location === locationFilter;
         const matchesRoom = !roomFilter || asset.room === roomFilter;
+        const matchesOwnerType = !ownerTypeFilter || asset.owner_type === ownerTypeFilter;
         const matchesStatus = !statusFilter || asset.status === statusFilter;
         const matchesSearch = !searchTerm || 
             asset.name.toLowerCase().includes(searchTerm) ||
@@ -314,9 +329,10 @@ function applyFilters() {
             asset.id.toString().includes(searchTerm) ||
             asset.asset_tag.toLowerCase().includes(searchTerm) ||
             asset.manufacture.toLowerCase().includes(searchTerm) ||
-            asset.model.toLowerCase().includes(searchTerm);
+            asset.model.toLowerCase().includes(searchTerm) ||
+            (asset.assigned_user_name && asset.assigned_user_name.toLowerCase().includes(searchTerm));
         
-        return matchesCategory && matchesLocation && matchesRoom && matchesStatus && matchesSearch;
+        return matchesCategory && matchesLocation && matchesRoom && matchesOwnerType && matchesStatus && matchesSearch;
     });
     
     currentPage = 1;
