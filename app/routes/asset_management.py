@@ -97,6 +97,7 @@ async def edit_asset_form(
         raise HTTPException(status_code=404, detail="Asset not found")
     
     dropdown_options = get_dropdown_options()
+    users = get_all_users()
     
     template_path = get_template(request, "asset_management/edit.html")
     return templates.TemplateResponse(
@@ -105,7 +106,8 @@ async def edit_asset_form(
             "request": request,
             "user": current_profile,
             "asset": asset,
-            "dropdown_options": dropdown_options
+            "dropdown_options": dropdown_options,
+            "users": users
         }
     )
 
@@ -123,9 +125,11 @@ async def update_asset(
     photo: UploadFile = File(None),
     status: str = Form(...),
     company: str = Form(...),
-    location: str = Form(...),
-    room: str = Form(...),
+    location: str = Form(None),
+    room: str = Form(None),
     bisnis_unit: str = Form(None),
+    owner_type: str = Form("GA"),
+    assigned_user_name: str = Form(None),
     edit_reason: str = Form(...),
     current_profile = Depends(get_current_profile)
 ):
@@ -156,9 +160,11 @@ async def update_asset(
         "photo_url": photo_url,
         "status": status,
         "company_name": company,
-        "location_name": location,
-        "room_name": room,
-        "business_unit_name": bisnis_unit or ""
+        "location_name": location or "",
+        "room_name": room or "",
+        "business_unit_name": bisnis_unit or "",
+        "owner_type": owner_type,
+        "assigned_user_name": assigned_user_name if owner_type == "IT" else None
     }
     
     # Jika perlu hitung ulang nilai finansial, misalnya setelah perubahan harga

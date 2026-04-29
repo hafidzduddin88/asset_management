@@ -84,30 +84,6 @@
                     </select>
                 </div>
 
-                <!-- Location -->
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Location</label>
-                    <select name="location" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        {% if dropdown_options and dropdown_options.locations %}
-                        {% for location in dropdown_options.locations %}
-                        <option value="{{ location.location_name }}" {{ 'selected' if (asset.ref_locations and asset.ref_locations.location_name == location.location_name) }}>{{ location.location_name }}</option>
-                        {% endfor %}
-                        {% endif %}
-                    </select>
-                </div>
-
-                <!-- Room -->
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Room</label>
-                    <select name="room" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        {% if dropdown_options and dropdown_options.locations %}
-                        {% for location in dropdown_options.locations %}
-                        <option value="{{ location.room_name }}" {{ 'selected' if (asset.ref_locations and asset.ref_locations.room_name == location.room_name) }}>{{ location.room_name }}</option>
-                        {% endfor %}
-                        {% endif %}
-                    </select>
-                </div>
-
                 <!-- Business Unit -->
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Business Unit</label>
@@ -119,6 +95,63 @@
                         {% endfor %}
                         {% endif %}
                     </select>
+                </div>
+
+                <!-- Owner Type -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Owner Type</label>
+                    <select name="owner_type" id="owner_type" required onchange="toggleAssignmentFields()" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="GA" {{ 'selected' if asset.owner_type == 'GA' or not asset.owner_type }}>GA (Room-based)</option>
+                        <option value="IT" {{ 'selected' if asset.owner_type == 'IT' }}>IT (User-based)</option>
+                    </select>
+                    <p class="text-xs text-gray-500 mt-1">GA: Asset assigned to room | IT: Asset assigned to user</p>
+                </div>
+
+                <!-- GA Fields (Location & Room) -->
+                <div id="ga-fields" class="md:col-span-2">
+                    <div class="grid grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Location</label>
+                            <select name="location" id="location_ga" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                {% if dropdown_options and dropdown_options.locations %}
+                                {% for location in dropdown_options.locations %}
+                                <option value="{{ location.location_name }}" {{ 'selected' if (asset.ref_locations and asset.ref_locations.location_name == location.location_name) }}>{{ location.location_name }}</option>
+                                {% endfor %}
+                                {% endif %}
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Room</label>
+                            <select name="room" id="room_ga" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                {% if dropdown_options and dropdown_options.locations %}
+                                {% for location in dropdown_options.locations %}
+                                <option value="{{ location.room_name }}" {{ 'selected' if (asset.ref_locations and asset.ref_locations.room_name == location.room_name) }}>{{ location.room_name }}</option>
+                                {% endfor %}
+                                {% endif %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- IT Fields (User Assignment) -->
+                <div id="it-fields" class="md:col-span-2" style="display: none;">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Assigned To User</label>
+                        <input type="text" name="assigned_user_name" id="assigned_user_name" 
+                               list="users-list"
+                               value="{{ asset.assigned_user_name or '' }}"
+                               placeholder="Type user name or username..."
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <datalist id="users-list">
+                            {% if users %}
+                                {% for user in users %}
+                                <option value="{{ user.full_name }}">{{ user.username }}{% if user.business_unit_name %} - {{ user.business_unit_name }}{% endif %}</option>
+                                {% endfor %}
+                            {% endif %}
+                        </datalist>
+                        <p class="text-xs text-gray-500 mt-1">Type user's full name or username. System will auto-resolve to user ID.</p>
+                    </div>
                 </div>
 
                 <!-- Edit Reason -->
@@ -136,4 +169,31 @@
         </form>
     </div>
 </div>
+
+<script>
+function toggleAssignmentFields() {
+    const ownerType = document.getElementById('owner_type').value;
+    const gaFields = document.getElementById('ga-fields');
+    const itFields = document.getElementById('it-fields');
+    
+    if (ownerType === 'IT') {
+        gaFields.style.display = 'none';
+        itFields.style.display = 'block';
+        document.getElementById('assigned_user_name').required = true;
+        document.getElementById('location_ga').required = false;
+        document.getElementById('room_ga').required = false;
+    } else {
+        gaFields.style.display = 'block';
+        itFields.style.display = 'none';
+        document.getElementById('assigned_user_name').required = false;
+        document.getElementById('location_ga').required = true;
+        document.getElementById('room_ga').required = true;
+    }
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    toggleAssignmentFields();
+});
+</script>
 {% endblock %}

@@ -187,6 +187,8 @@ document.addEventListener('DOMContentLoaded', function() {
             name: asset.asset_name || 'Unnamed Asset',
             location: asset.ref_locations?.location_name || '',
             room: asset.ref_locations?.room_name || asset.room_name || '',
+            owner_type: asset.owner_type || 'GA',
+            assigned_user_name: asset.assigned_user_name || '',
             category: asset.ref_categories?.category_name || '',
             status: asset.status || 'Active',
             purchase_date: asset.purchase_date || '',
@@ -354,8 +356,13 @@ function displayAssets() {
                     <div class="text-sm text-gray-900">${asset.category}</div>
                 </td>
                 <td class="px-4 py-3 whitespace-nowrap">
-                    <div class="text-sm text-gray-900">${asset.location}</div>
-                    <div class="text-xs text-gray-500">${asset.room}</div>
+                    ${asset.owner_type === 'IT' ? `
+                        <div class="text-sm text-gray-900"><i class="fas fa-user text-blue-600 mr-1"></i>${asset.assigned_user_name || 'Not Assigned'}</div>
+                        <div class="text-xs text-gray-500">IT Asset</div>
+                    ` : `
+                        <div class="text-sm text-gray-900">${asset.location}</div>
+                        <div class="text-xs text-gray-500">${asset.room}</div>
+                    `}
                 </td>
                 <td class="px-4 py-3 whitespace-nowrap">
                     ${getStatusBadge(asset.status)}

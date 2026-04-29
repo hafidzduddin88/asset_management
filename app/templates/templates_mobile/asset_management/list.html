@@ -125,6 +125,8 @@ document.addEventListener('DOMContentLoaded', function() {
             name: asset.asset_name || 'Unnamed Asset',
             location: asset.ref_locations?.location_name || '',
             room: asset.ref_locations?.room_name || asset.room_name || '',
+            owner_type: asset.owner_type || 'GA',
+            assigned_user_name: asset.assigned_user_name || '',
             category: asset.ref_categories?.category_name || '',
             status: asset.status || 'Active',
             purchase_date: asset.purchase_date || '',
@@ -294,8 +296,13 @@ function displayAssets() {
                         <span>${asset.category}</span>
                     </div>
                     <div class="flex items-center">
-                        <i class="fas fa-map-marker-alt w-5 text-gray-400"></i>
-                        <span>${asset.location} - ${asset.room}</span>
+                        ${asset.owner_type === 'IT' ? `
+                            <i class="fas fa-user w-5 text-blue-400"></i>
+                            <span>${asset.assigned_user_name || 'Not Assigned'} (IT)</span>
+                        ` : `
+                            <i class="fas fa-map-marker-alt w-5 text-gray-400"></i>
+                            <span>${asset.location} - ${asset.room}</span>
+                        `}
                     </div>
                     <div class="flex items-center">
                         <i class="fas fa-money-bill w-5 text-gray-400"></i>
