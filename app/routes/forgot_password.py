@@ -10,8 +10,14 @@ templates = Jinja2Templates(directory="app/templates")
 @router.get("/forgot-password")
 async def forgot_password_page(request: Request):
     """Display forgot password form"""
+    # Check for error from recovery redirect
+    error = request.query_params.get("error")
+    
     template_path = get_template(request, "forgot_password/request.html")
-    return templates.TemplateResponse(template_path, {"request": request})
+    return templates.TemplateResponse(template_path, {
+        "request": request,
+        "error": error if error else None
+    })
 
 @router.post("/forgot-password")
 async def forgot_password_submit(request: Request, email: str = Form(...)):

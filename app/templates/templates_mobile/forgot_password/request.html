@@ -18,6 +18,12 @@
             </p>
         </div>
         
+        {% if error %}
+        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded text-sm">
+            {{ error }}
+        </div>
+        {% endif %}
+        
         <form class="space-y-4" method="POST" action="/forgot-password">
             <div>
                 <label for="email" class="sr-only">Email</label>
