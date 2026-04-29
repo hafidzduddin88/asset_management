@@ -1,0 +1,159 @@
+{% extends "templates_desktop/layouts/modern_layout.html" %}
+
+{% block title %}Update Complete - AMBP{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 py-8">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Header -->
+        <div class="mb-8">
+            <div class="flex items-center space-x-3 mb-2">
+                <div class="bg-gradient-to-r from-green-600 to-teal-600 p-3 rounded-xl shadow-lg">
+                    <i class="fas fa-check-circle text-white text-2xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900">Update Complete</h1>
+                    <p class="text-gray-600">Proses bulk update telah selesai</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Steps Indicator -->
+        <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+            <div class="flex items-center justify-between">
+                <div class="flex flex-col items-center flex-1">
+                    <div class="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center text-white font-bold mb-2">
+                        <i class="fas fa-check"></i>
+                    </div>
+                    <span class="text-sm font-semibold text-green-600">Export Data</span>
+                </div>
+                <div class="flex-1 h-1 bg-green-500 mx-4"></div>
+                <div class="flex flex-col items-center flex-1">
+                    <div class="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center text-white font-bold mb-2">
+                        <i class="fas fa-check"></i>
+                    </div>
+                    <span class="text-sm font-semibold text-green-600">Import Data</span>
+                </div>
+                <div class="flex-1 h-1 bg-green-500 mx-4"></div>
+                <div class="flex flex-col items-center flex-1">
+                    <div class="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center text-white font-bold mb-2">
+                        <i class="fas fa-check"></i>
+                    </div>
+                    <span class="text-sm font-semibold text-green-600">Selesai</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Success Message -->
+        {% if success_count > 0 %}
+        <div class="bg-green-50 border-2 border-green-200 rounded-xl p-8 mb-8 text-center">
+            <div class="inline-flex items-center justify-center w-20 h-20 bg-green-500 rounded-full mb-4">
+                <i class="fas fa-check text-white text-4xl"></i>
+            </div>
+            <h2 class="text-2xl font-bold text-green-800 mb-2">Update Berhasil!</h2>
+            <p class="text-green-700">{{ success_count }} dari {{ total }} assets berhasil diupdate</p>
+        </div>
+        {% endif %}
+
+        <!-- Summary Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600 mb-1">Total Processed</p>
+                        <p class="text-3xl font-bold text-blue-600">{{ total }}</p>
+                    </div>
+                    <div class="bg-blue-100 p-4 rounded-lg">
+                        <i class="fas fa-database text-blue-600 text-2xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600 mb-1">Success</p>
+                        <p class="text-3xl font-bold text-green-600">{{ success_count }}</p>
+                    </div>
+                    <div class="bg-green-100 p-4 rounded-lg">
+                        <i class="fas fa-check-circle text-green-600 text-2xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600 mb-1">Failed</p>
+                        <p class="text-3xl font-bold text-red-600">{{ error_count }}</p>
+                    </div>
+                    <div class="bg-red-100 p-4 rounded-lg">
+                        <i class="fas fa-times-circle text-red-600 text-2xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Errors Detail -->
+        {% if errors %}
+        <div class="bg-red-50 border border-red-200 rounded-xl p-6 mb-8">
+            <h3 class="text-lg font-bold text-red-800 mb-4">
+                <i class="fas fa-exclamation-circle mr-2"></i>Error Details ({{ error_count }} errors):
+            </h3>
+            <div class="max-h-96 overflow-y-auto">
+                <ul class="space-y-2">
+                    {% for error in errors %}
+                    <li class="text-sm text-red-700 bg-white rounded p-3">
+                        <i class="fas fa-times-circle mr-2"></i>{{ error }}
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Info Box -->
+        <div class="bg-blue-50 border border-blue-200 rounded-xl p-6 mb-8">
+            <div class="flex items-start">
+                <i class="fas fa-info-circle text-blue-600 text-2xl mt-1 mr-4"></i>
+                <div>
+                    <h3 class="text-lg font-bold text-blue-800 mb-2">Informasi</h3>
+                    <ul class="text-sm text-blue-700 space-y-1">
+                        <li>• Data assets telah diupdate di database</li>
+                        <li>• Cache telah di-refresh untuk menampilkan data terbaru</li>
+                        <li>• Perubahan akan terlihat di seluruh sistem</li>
+                        {% if error_count > 0 %}
+                        <li>• Silakan periksa error di atas dan ulangi proses untuk data yang gagal</li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex items-center justify-between">
+            <a href="/bulk-update" class="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+                <i class="fas fa-redo mr-2"></i>Update Lagi
+            </a>
+            
+            <div class="space-x-4">
+                <a href="/assets" class="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all shadow-lg">
+                    <i class="fas fa-list mr-2"></i>Lihat Assets
+                </a>
+                <a href="/" class="px-6 py-3 bg-gradient-to-r from-green-600 to-teal-600 text-white rounded-lg hover:from-green-700 hover:to-teal-700 transition-all shadow-lg">
+                    <i class="fas fa-home mr-2"></i>Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Auto redirect to dashboard after 10 seconds if no errors
+{% if error_count == 0 %}
+setTimeout(function() {
+    window.location.href = '/';
+}, 10000);
+{% endif %}
+</script>
+{% endblock %}

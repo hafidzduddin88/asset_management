@@ -25,7 +25,7 @@ async def favicon():
 from app.routes import (
     login, health, offline, home, assets, asset_management,
     damage, profile, repair, approvals, disposal, user_management,
-    logs, relocation, export, depreciation, lost, forgot_password
+    logs, relocation, export, depreciation, lost, forgot_password, bulk_update
 )
 
 # Include all routers
@@ -47,6 +47,7 @@ app.include_router(logs.router)
 app.include_router(relocation.router)
 app.include_router(export.router)
 app.include_router(depreciation.router)
+app.include_router(bulk_update.router)
 
 
 logger.info("All routes loaded successfully")
