@@ -1,6 +1,5 @@
 from fastapi import APIRouter, Request, Form
 from fastapi.responses import RedirectResponse, HTMLResponse
-from app.utils.database_manager import get_supabase
 from app.utils.device_detector import get_template
 from app.config import load_config
 from starlette.templating import Jinja2Templates
@@ -12,15 +11,13 @@ config = load_config()
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
 
-def get_cookie_settings() -> dict:
-    parsed_url = urlparse(config.APP_URL)
-    is_secure = parsed_url.scheme == "https"
-    domain = parsed_url.hostname if parsed_url.hostname not in ("localhost", "127.0.0.1") else None
+def get_cookie_settings(request: Request) -> dict:
+    """Get cookie settings matching session_auth.py"""
+    is_secure = request.url.scheme == "https"
     return {
         "httponly": True,
         "secure": is_secure,
-        "samesite": "lax",
-        "domain": domain
+        "samesite": "lax"
     }
 
 @router.get("/forgot-password")
@@ -43,12 +40,13 @@ async def forgot_password_submit(request: Request, email: str = Form(...)):
         base_url = str(request.base_url).rstrip('/')
         redirect_url = f"{base_url}/auth/change-password"
         
-        # Send recovery email using Supabase Auth REST API
+        # Send recovery email using Supabase Auth REST API with service role key
         async with httpx.AsyncClient() as client:
             response = await client.post(
                 f"{config.SUPABASE_URL}/auth/v1/recover",
                 headers={
-                    "apikey": config.SUPABASE_ANON_KEY,
+                    "apikey": config.SUPABASE_SERVICE_KEY,
+                    "Authorization": f"Bearer {config.SUPABASE_SERVICE_KEY}",
                     "Content-Type": "application/json",
                 },
                 json={
@@ -58,7 +56,7 @@ async def forgot_password_submit(request: Request, email: str = Form(...)):
                 timeout=30,
             )
             
-            # Don't expose whether email exists (security best practice)
+            # Handle rate limiting
             if response.status_code == 429:
                 template_path = get_template(request, "forgot_password/request.html")
                 return templates.TemplateResponse(template_path, {
@@ -67,6 +65,7 @@ async def forgot_password_submit(request: Request, email: str = Form(...)):
                     "error": "Terlalu banyak permintaan. Silakan tunggu beberapa saat."
                 })
         
+        # Don't expose whether email exists (security best practice)
         logging.info(f"Password reset email requested for: {email}")
         template_path = get_template(request, "login_logout.html")
         return templates.TemplateResponse(template_path, {
@@ -130,12 +129,13 @@ async def change_password_page(request: Request):
         return HTMLResponse(content=html_content)
     
     try:
-        # Verify token with Supabase Auth API
+        # Verify token with Supabase Auth API using service role key
         async with httpx.AsyncClient() as client:
             response = await client.post(
                 f"{config.SUPABASE_URL}/auth/v1/verify",
                 headers={
-                    "apikey": config.SUPABASE_ANON_KEY,
+                    "apikey": config.SUPABASE_SERVICE_KEY,
+                    "Authorization": f"Bearer {config.SUPABASE_SERVICE_KEY}",
                     "Content-Type": "application/json",
                 },
                 json={
@@ -157,17 +157,15 @@ async def change_password_page(request: Request):
             access_token = data.get("access_token")
             refresh_token = data.get("refresh_token")
             
-            if not access_token:
-                raise Exception("No access token received")
+            if not access_token or not refresh_token:
+                raise Exception("No tokens received from verify")
             
-            # Set HTTP-only cookies for session
-            template_path = get_template(request, "forgot_password/reset.html")
-            response_obj = templates.TemplateResponse(template_path, {
-                "request": request,
-                "error": None
-            })
+            # Redirect to form with cookies set (matching session_auth.py pattern)
+            response_obj = RedirectResponse("/auth/change-password/form", status_code=303)
             
-            settings = get_cookie_settings()
+            settings = get_cookie_settings(request)
+            
+            # Set sb_access_token (matching session_auth.py)
             response_obj.set_cookie(
                 key="sb_access_token",
                 value=access_token,
@@ -175,13 +173,13 @@ async def change_password_page(request: Request):
                 **settings
             )
             
-            if refresh_token:
-                response_obj.set_cookie(
-                    key="sb_refresh_token",
-                    value=refresh_token,
-                    max_age=86400 * 30,  # 30 days
-                    **settings
-                )
+            # Set sb_refresh_token (matching session_auth.py)
+            response_obj.set_cookie(
+                key="sb_refresh_token",
+                value=refresh_token,
+                max_age=86400 * 30,  # 30 days (matching session_auth.py)
+                **settings
+            )
             
             logging.info("Password reset session created successfully")
             return response_obj
@@ -194,28 +192,32 @@ async def change_password_page(request: Request):
             "error": "Terjadi kesalahan saat memproses link reset password."
         })
 
+@router.get("/auth/change-password/form")
+async def change_password_form(request: Request):
+    """Display password change form (requires valid session from cookies)"""
+    # Middleware will validate sb_access_token cookie and populate request.state.user
+    # If no valid session, middleware will redirect to login
+    
+    template_path = get_template(request, "forgot_password/reset.html")
+    return templates.TemplateResponse(template_path, {
+        "request": request,
+        "error": request.query_params.get("error")
+    })
+
 @router.post("/auth/change-password")
 async def change_password_submit(
     request: Request,
     new_password: str = Form(...),
     confirm_password: str = Form(...)
 ):
-    """Update password using authenticated session"""
+    """Update password using authenticated session from cookies"""
     try:
         # Validate passwords
         if new_password != confirm_password:
-            template_path = get_template(request, "forgot_password/reset.html")
-            return templates.TemplateResponse(template_path, {
-                "request": request,
-                "error": "Password tidak cocok."
-            })
+            return RedirectResponse("/auth/change-password/form?error=Password+tidak+cocok", status_code=303)
         
         if len(new_password) < 6:
-            template_path = get_template(request, "forgot_password/reset.html")
-            return templates.TemplateResponse(template_path, {
-                "request": request,
-                "error": "Password minimal 6 karakter."
-            })
+            return RedirectResponse("/auth/change-password/form?error=Password+minimal+6+karakter", status_code=303)
         
         # Get access token from cookie (set by GET /auth/change-password)
         access_token = request.cookies.get("sb_access_token")
@@ -227,7 +229,7 @@ async def change_password_submit(
                 "error": "Session tidak valid. Silakan request link reset password baru."
             })
         
-        # Update password using Supabase Auth API with access token
+        # Update password using Supabase Auth API with access token (use ANON_KEY for user operations)
         async with httpx.AsyncClient() as client:
             response = await client.put(
                 f"{config.SUPABASE_URL}/auth/v1/user",
@@ -241,19 +243,20 @@ async def change_password_submit(
             )
             
             if response.status_code >= 400:
-                raise Exception(f"Failed to update password: {response.status_code}")
+                logging.error(f"Failed to update password: {response.status_code}")
+                return RedirectResponse("/auth/change-password/form?error=Gagal+mengubah+password", status_code=303)
         
         logging.info("Password updated successfully")
         
-        # Clear cookies and redirect to login
+        # Clear cookies and redirect to login (matching login.py pattern)
         template_path = get_template(request, "login_logout.html")
         response_obj = templates.TemplateResponse(template_path, {
             "request": request,
             "success": "Password berhasil diubah. Silakan login dengan password baru."
         })
         
-        # Clear reset session cookies
-        settings = get_cookie_settings()
+        # Clear reset session cookies (matching login.py clear_auth_cookies pattern)
+        settings = get_cookie_settings(request)
         response_obj.delete_cookie("sb_access_token", **{k: v for k, v in settings.items() if k != "httponly"})
         response_obj.delete_cookie("sb_refresh_token", **{k: v for k, v in settings.items() if k != "httponly"})
         
@@ -261,8 +264,4 @@ async def change_password_submit(
         
     except Exception as e:
         logging.error(f"Change password error: {str(e)}")
-        template_path = get_template(request, "forgot_password/reset.html")
-        return templates.TemplateResponse(template_path, {
-            "request": request,
-            "error": "Gagal mengubah password. Silakan coba lagi."
-        })
+        return RedirectResponse("/auth/change-password/form?error=Terjadi+kesalahan", status_code=303)
