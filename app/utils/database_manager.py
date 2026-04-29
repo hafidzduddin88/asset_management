@@ -41,13 +41,14 @@ def get_assets_paginated(page=1, per_page=20, status_filter=None):
         supabase = get_supabase()
         logging.info(f"Getting assets page {page}, per_page {per_page}, status_filter {status_filter}")
         
-        # Query with foreign key relationships
+        # Query with foreign key relationships including assigned user
         query = supabase.table(TABLES['ASSETS']).select('''
             asset_id, asset_name, manufacture, model, serial_number, asset_tag,
             room_name, notes, item_condition, purchase_date, purchase_cost,
             warranty, supplier, journal, depreciation_value, residual_percent,
             residual_value, useful_life, book_value, status, year, photo_url,
             category_id, asset_type_id, company_id, business_unit_id, location_id, owner_id,
+            assigned_user_id, owner_type,
             ref_categories(category_name, category_code),
             ref_asset_types(type_name, type_code),
             ref_locations(location_name, room_name),
@@ -86,6 +87,7 @@ def _get_all_assets():
             warranty, supplier, journal, depreciation_value, residual_percent,
             residual_value, useful_life, book_value, status, year, photo_url,
             category_id, asset_type_id, company_id, business_unit_id, location_id, owner_id,
+            assigned_user_id, owner_type,
             ref_categories(category_name, category_code),
             ref_asset_types(type_name, type_code),
             ref_locations(location_name, room_name),
@@ -107,6 +109,7 @@ def get_asset_by_id(asset_id):
             warranty, supplier, journal, depreciation_value, residual_percent,
             residual_value, useful_life, book_value, status, year, photo_url,
             category_id, asset_type_id, company_id, business_unit_id, location_id, owner_id,
+            assigned_user_id, owner_type,
             ref_categories(category_name, category_code),
             ref_asset_types(type_name, type_code),
             ref_locations(location_name, room_name),
@@ -114,6 +117,14 @@ def get_asset_by_id(asset_id):
             ref_companies(company_name, company_code),
             ref_owners(owner_name, owner_code)
         ''').eq('asset_id', asset_id).execute()
+        
+        # If asset has assigned_user_id, fetch user details
+        if response.data and response.data[0].get('assigned_user_id'):
+            user_id = response.data[0]['assigned_user_id']
+            user_response = supabase.table('profiles').select('full_name, username, email').eq('id', user_id).execute()
+            if user_response.data:
+                response.data[0]['assigned_user'] = user_response.data[0]
+        
         return response.data[0] if response.data else None
     except Exception as e:
         logging.error(f"Error getting asset {asset_id}: {type(e).__name__}")
@@ -313,7 +324,7 @@ def prepare_asset_data(asset_data):
         valid_fields = [
             'asset_name', 'manufacture', 'model', 'serial_number', 'room_name', 'notes', 
             'item_condition', 'purchase_date', 'purchase_cost', 'warranty', 'supplier', 
-            'journal', 'status', 'photo_url'
+            'journal', 'status', 'photo_url', 'assigned_user_id', 'owner_type'
         ]
         for field in valid_fields:
             if field in asset_data:
@@ -325,7 +336,7 @@ def prepare_asset_data(asset_data):
             'company_id', 'business_unit_id', 'location_id', 'room_name', 'notes', 'item_condition',
             'purchase_date', 'purchase_cost', 'warranty', 'supplier', 'journal', 'owner_id', 'status',
             'photo_url', 'asset_tag', 'residual_percent', 'residual_value', 'useful_life',
-            'depreciation_value', 'book_value', 'year'
+            'depreciation_value', 'book_value', 'year', 'assigned_user_id', 'owner_type'
         ]
         for key in all_expected_keys:
             if key not in processed_data:
