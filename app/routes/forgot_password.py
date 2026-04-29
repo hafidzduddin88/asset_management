@@ -72,6 +72,7 @@ async def auth_recovery_handler(request: Request):
     
     <script>
         (function() {
+            // Check URL fragment first (new Supabase format)
             const hash = window.location.hash.substring(1);
             
             if (hash) {
@@ -82,18 +83,30 @@ async def auth_recovery_handler(request: Request):
                 const refreshToken = params.get('refresh_token');
                 
                 if (error) {
-                    // Redirect to forgot password with error message
                     window.location.href = '/forgot-password?error=' + encodeURIComponent(errorDescription || error);
+                    return;
                 } else if (accessToken) {
-                    // Redirect to reset password page with token
                     window.location.href = '/reset-password?access_token=' + accessToken + 
                         (refreshToken ? '&refresh_token=' + refreshToken : '');
-                } else {
-                    window.location.href = '/forgot-password';
+                    return;
                 }
-            } else {
-                window.location.href = '/forgot-password';
             }
+            
+            // Check query params (old Supabase format)
+            const urlParams = new URLSearchParams(window.location.search);
+            const token = urlParams.get('token');
+            const type = urlParams.get('type');
+            
+            if (token && type === 'recovery') {
+                // Old format - redirect with message
+                window.location.href = '/forgot-password?error=' + 
+                    encodeURIComponent('Link sudah kadaluarsa. Silakan request link baru.');
+                return;
+            }
+            
+            // No valid params
+            window.location.href = '/forgot-password?error=' + 
+                encodeURIComponent('Link tidak valid. Silakan request link baru.');
         })();
     </script>
 </body>
