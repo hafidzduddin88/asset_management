@@ -3,9 +3,11 @@
 ## Core Features
 
 - **Asset Registration** - Add/Edit/Relocate assets with approval workflow
+- **Owner Type Differentiation** - GA (room-based) vs IT (user-based) asset assignment
 - **Asset Issues** - Report Damage/Lost/Disposal requests via dedicated pages
 - **Asset Repair** - Report repair completion for damaged assets
 - **Asset Depreciation** - SuperAdmin value recalculation system
+- **Bulk Update Assets** - 3-step workflow with filters and Excel import
 - **Role-based Authentication** - Admin/Manager/Staff with hierarchical approvals
 - **Forgot Password** - Email-based password recovery with secure token verification
 - **Dashboard Analytics** - Real-time charts and metrics
@@ -69,6 +71,15 @@
 4. System updates asset status and logs action
 5. Complete audit trail maintained
 
+## Owner Type System
+**GA vs IT Asset Differentiation:**
+- **Owner GA** - Room-based assignment (location + room)
+- **Owner IT** - User-based assignment (assigned_user_name)
+- **Auto-resolution** - User names resolve to UUIDs (full_name → username)
+- **Conditional Fields** - Dynamic form fields based on owner_type
+- **Filter Support** - Owner Type filter in list pages and bulk update
+- **Export Integration** - Owner Type and assigned user in Excel exports
+
 ## Asset Issue Management
 **Integrated Issue Reporting:**
 - **Damage Reports** - Report asset damage with severity levels
@@ -91,7 +102,8 @@
 - Financial summaries (purchase value, book value, depreciation)
 
 **Export Capabilities:**
-- **Excel Export** - Optimized column ordering and data sorting
+- **Excel Export** - Optimized column ordering with owner_type and assigned_user_name
+- **Bulk Update** - 3-step workflow: Export with filters → Import Excel → Confirm update
 - **PDF Reports** - Formatted reports with asset details
 - **Role-based Access** - Available to all users with restrictions
 - Include asset photos, approval metadata, and audit trails
@@ -146,6 +158,8 @@ feat: add mobile template for asset issues
 feat: integrate Google Drive photo storage
 feat: add direct action buttons replacing dropdown menus
 feat: implement dedicated asset view pages with image zoom
+feat: add Owner Type differentiation for GA vs IT assets
+feat: implement bulk update workflow with Excel import
 ```
 
 ### Bug Fixes

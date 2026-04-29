@@ -15,12 +15,13 @@ ambp/
 │   ├── routes/                   # API routes (modular organization)
 │   │   ├── __init__.py
 │   │   ├── approvals.py          # Approval workflow management
-│   │   ├── asset_management.py   # Asset CRUD operations
+│   │   ├── asset_management.py   # Asset CRUD with owner_type support
 │   │   ├── assets.py             # Asset listing and search
+│   │   ├── bulk_update.py        # 3-step bulk update workflow
 │   │   ├── damage.py             # Asset issues (damage/lost/disposal)
 │   │   ├── depreciation.py       # SuperAdmin depreciation updates
 │   │   ├── disposal.py           # Asset disposal (admin only)
-│   │   ├── export.py             # Excel export with optimized ordering
+│   │   ├── export.py             # Excel export with owner_type columns
 │   │   ├── forgot_password.py    # Email-based password recovery
 │   │   ├── health.py             # Health checks and monitoring
 │   │   ├── home.py               # Dashboard with analytics
@@ -61,15 +62,17 @@ ambp/
 │   │
 │   ├── utils/                    # Utility functions
 │   │   ├── __init__.py
+│   │   ├── assigned_user_helper.py # Batch user name fetching
 │   │   ├── auth.py               # Authentication utilities
 │   │   ├── cache.py              # Caching mechanisms
-│   │   ├── database_manager.py   # Supabase database operations
+│   │   ├── database_manager.py   # Supabase operations with owner_type
 │   │   ├── device_detector.py    # Mobile/desktop template routing
 │   │   ├── flash.py              # Flash message handling
 │   │   ├── pagination.py         # Pagination utilities
 │   │   ├── photo.py              # Google Drive photo handling
 │   │   ├── profile_utils.py      # User profile utilities
-│   │   └── supabase_client.py    # Supabase client configuration
+│   │   ├── supabase_client.py    # Supabase client configuration
+│   │   └── user_utils.py         # User management helpers
 │   │
 │   ├── __init__.py
 │   ├── config.py                 # Application configuration
@@ -86,8 +89,9 @@ ambp/
 ## Key Components
 
 ### Backend Architecture
-- **FastAPI Routes**: Modular organization by feature (12+ route modules)
+- **FastAPI Routes**: Modular organization by feature (18+ route modules)
 - **Database**: Supabase PostgreSQL with foreign key relationships
+- **Owner Type System**: GA (room-based) vs IT (user-based) asset assignment
 - **Authentication**: JWT-based session middleware with Argon2 hashing
 - **Google Integration**: Drive API for asset photo storage
 - **Caching**: Smart caching for reference data and performance
@@ -101,23 +105,26 @@ ambp/
 - **Device Detection**: Automatic template routing based on device type
 
 ### Core Features
-- **Asset Registration**: Add/Edit with approval workflow
+- **Asset Registration**: Add/Edit with approval workflow and owner type selection
+- **Owner Type System**: GA (room-based) vs IT (user-based) asset assignment
 - **Asset Issues**: Separate pages for damage/lost/disposal reporting
 - **Asset Repair**: Separate repair completion workflow
 - **Asset Depreciation**: SuperAdmin value recalculation system
+- **Bulk Update**: 3-step workflow with filters and Excel import
 - **Forgot Password**: Email-based password recovery with secure token verification
 - **Dashboard Analytics**: Real-time charts and metrics
 - **User Management**: Role-based access with business unit integration
-- **Export System**: Excel with optimized column ordering
+- **Export System**: Excel with owner_type and assigned_user_name columns
 - **Approval Workflows**: Hierarchical approval system (Admin ↔ Manager)
 - **Direct Actions**: Clean UI with dedicated view pages
 
 ### Database Schema
-- **Assets Table**: Core asset data with foreign key relationships
+- **Assets Table**: Core asset data with owner_type, assigned_user_id, assigned_user_name
 - **Log Tables**: Comprehensive audit trail (damage_log, repair_log, etc.)
 - **Reference Tables**: Categories, locations, business units, companies
 - **Approvals Table**: Workflow management with role-based routing
 - **Profiles Table**: User management with business unit integration
+- **Auto-resolution**: User names resolve to UUIDs (full_name → username)
 
 ### Deployment
 - **Containerized**: Docker with multi-stage builds

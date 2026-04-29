@@ -22,9 +22,11 @@
 
 ### 🎯 Core Features
 - 📝 **Asset Management** - Add/Edit/Relocate with direct action buttons
+- 🏢 **Owner Type System** - GA (room-based) vs IT (user-based) assignment
 - 🔧 **Asset Issues** - Damage/Lost/Disposal via dedicated pages
 - 🛠️ **Asset Repair** - Separate repair workflow for damaged assets
 - 💰 **Asset Depreciation** - SuperAdmin value recalculation
+- 📦 **Bulk Update** - 3-step workflow with filters and Excel import
 - 👥 **Role-based Auth** - Admin/Manager/Staff with JWT
 - 🔐 **Forgot Password** - Email-based password recovery with secure token
 - ✅ **Approval Workflows** - Hierarchical approvals
@@ -35,12 +37,13 @@
 
 ### 🚀 Advanced Features
 - 📱 **PWA Support** - Offline-ready with install prompts
-- 📊 **Export Reports** - Excel with optimized column ordering
+- 📄 **Export Reports** - Excel with owner_type and assigned_user_name
 - 📈 **Dashboard Analytics** - Monthly/Quarterly/Yearly charts
 - 🔗 **Google Drive** - Asset photo storage with zoom view
 - 📋 **Audit Trail** - Comprehensive logging system
 - 🎨 **Direct Actions** - Clean UI with dedicated view pages
 - 💱 **Rupiah Format** - Local currency display throughout
+- 🔍 **Owner Type Filter** - GA/IT filtering in list pages and bulk update
 
 </td>
 </tr>
@@ -181,6 +184,46 @@ docker run -p 8000:8000 --env-file .env -e PYTHONUNBUFFERED=1 -e PYTHONDONTWRITE
 
 ---
 
+## 🏢 Owner Type System
+
+**GA vs IT Asset Differentiation:**
+
+<table>
+<tr>
+<td width="50%">
+
+### 🏢 Owner GA (General Affairs)
+- **Assignment Type**: Room-based
+- **Required Fields**: Location + Room
+- **Use Case**: Fixed assets in specific rooms
+- **Examples**: Furniture, equipment, facilities
+- **Display**: Shows location and room information
+
+</td>
+<td width="50%">
+
+### 💻 Owner IT (Information Technology)
+- **Assignment Type**: User-based
+- **Required Fields**: Assigned User Name
+- **Use Case**: Mobile assets assigned to users
+- **Examples**: Laptops, phones, tablets
+- **Display**: Shows assigned user information
+- **Auto-resolution**: User name → UUID (full_name → username)
+
+</td>
+</tr>
+</table>
+
+**Implementation Features:**
+- ✅ Conditional form fields based on owner_type selection
+- ✅ Auto-resolution of user names to UUIDs in database
+- ✅ Owner Type filter in list pages and bulk update
+- ✅ Excel export includes owner_type and assigned_user_name
+- ✅ Validation ensures correct fields for each type
+- ✅ Both desktop and mobile templates support
+
+---
+
 ## 👥 User Roles & Permissions
 
 <div align="center">
@@ -245,13 +288,14 @@ asset_management/
 ├── 📁 .amazonq/rules/       # Amazon Q AI guidance
 ├── 📁 app/
 │   ├── 📁 middleware/        # JWT session authentication
-│   ├── 📁 routes/           # API endpoints (13+ modules)
-│   │   ├── 📄 asset_management.py  # CRUD operations with view pages
+│   ├── 📁 routes/           # API endpoints (18+ modules)
+│   │   ├── 📄 asset_management.py  # CRUD with owner_type support
+│   │   ├── 📄 bulk_update.py       # 3-step bulk update workflow
 │   │   ├── 📄 damage.py            # Asset issues (damage/lost/disposal)
 │   │   ├── 📄 repair.py            # Asset repair workflow
 │   │   ├── 📄 depreciation.py      # SuperAdmin depreciation updates
 │   │   ├── 📄 approvals.py         # Hierarchical approval system
-│   │   ├── 📄 export.py            # Excel export with optimized ordering
+│   │   ├── 📄 export.py            # Excel export with owner_type columns
 │   │   ├── 📄 home.py              # Dashboard analytics
 │   │   ├── 📄 forgot_password.py   # Email-based password recovery
 │   │   └── 📄 user_management.py   # Business unit integration
@@ -260,7 +304,9 @@ asset_management/
 │   │   ├── 📁 templates_desktop/   # Full-featured desktop UI
 │   │   └── 📁 templates_mobile/    # Optimized mobile UI
 │   ├── 📁 utils/           # Core utilities
-│   │   ├── 📄 database_manager.py  # Supabase operations
+│   │   ├── 📄 database_manager.py  # Supabase with owner_type support
+│   │   ├── 📄 assigned_user_helper.py # Batch user name fetching
+│   │   ├── 📄 user_utils.py        # User management helpers
 │   │   ├── 📄 auth.py              # Profile protection
 │   │   ├── 📄 device_detector.py   # Template routing
 │   │   └── 📄 photo.py             # Google Drive integration
@@ -294,13 +340,15 @@ asset_management/
 <td width="50%" align="center">
 
 ### 🎯 Core Workflows
-- **Asset Management**: Direct action buttons with dedicated view pages
+- **Asset Management**: Direct action buttons with owner type selection
+- **Owner Type System**: GA (room-based) vs IT (user-based) assignment
 - **Asset Issues**: Separate pages for Damage/Lost/Disposal requests
 - **Asset Repair**: Dedicated workflow for damaged assets
 - **Asset Depreciation**: SuperAdmin value recalculation system
+- **Bulk Update**: 3-step workflow with filters and Excel import
 - **Forgot Password**: Email recovery with token verification & session validation
 - **Approval System**: Hierarchical Admin ↔ Manager with notes column
-- **Export System**: Excel with optimized column ordering
+- **Export System**: Excel with owner_type and assigned_user_name columns
 - **Dashboard Analytics**: Monthly/Quarterly/Yearly charts
 
 </td>
@@ -334,12 +382,15 @@ asset_management/
 
 ### 🗄️ Database Architecture
 - **Supabase PostgreSQL**: Primary database with foreign key relationships
+- **Owner Type Fields**: owner_type, assigned_user_id, assigned_user_name
 - **Direct Queries**: Simplified database operations
 - **Log Tables**: Comprehensive audit trail (damage_log, repair_log, etc.)
 - **Smart Caching**: Reference data caching with 10s TTL
+- **Auto-resolution**: User names resolve to UUIDs (full_name → username)
 - **Profile Protection**: Prevents data overwrites during token refresh
 
 ### 🎨 UI/UX Enhancements
+- **Owner Type Selection**: Conditional form fields for GA vs IT assets
 - **Direct Action Buttons**: Clean interface replacing dropdown menus
 - **Dedicated View Pages**: Comprehensive asset detail pages with image zoom
 - **Modal Cleanup**: Removed unused components for cleaner codebase
@@ -347,6 +398,7 @@ asset_management/
 - **PWA Features**: Install prompts and offline capability
 - **Rupiah Currency**: Local currency format throughout application
 - **Admin-only Edit**: Role-based UI restrictions for better security
+- **Owner Type Filter**: GA/IT filtering in list pages and bulk update
 
 ### 📦 Docker Optimization
 - **Multi-stage Build**: Smaller final image

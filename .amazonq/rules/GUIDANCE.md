@@ -6,7 +6,7 @@
 **AMBP (Asset Management Business Platform)** is a modern web-based asset management system built with:
 - **Backend**: FastAPI + Supabase PostgreSQL (11 optimized packages)
 - **Frontend**: Tailwind CSS + Alpine.js + HTMX + Jinja2
-- **Features**: Asset management, issue reporting, repair workflows, compact analytics dashboard
+- **Features**: Asset management with GA/IT differentiation, issue reporting, repair workflows, bulk update, compact analytics dashboard
 - **Authentication**: JWT-based with profile protection system
 
 ### 2. Key System Concepts
@@ -27,27 +27,30 @@ Registration → Active → Issues (Damage/Lost) → Repair → Active/Disposed
 - **Profile Protection**: Prevents data overwrites during token refresh
 
 #### Core Workflows
-1. **Asset Registration**: Add/Edit assets with approval
-2. **Asset Issues**: Report damage/lost/disposal requests (separate pages with asset_id)
-3. **Asset Repair**: Report repair completion (separate `/repair` route)
-4. **Asset Depreciation**: SuperAdmin value recalculation (`/depreciation` route)
-5. **Forgot Password**: Email recovery with secure token verification flow
-6. **SuperAdmin Disposal**: Actual disposal execution (different from disposal requests)
-7. **Approval System**: Hierarchical approval workflow
+1. **Asset Registration**: Add/Edit assets with approval and owner type selection
+2. **Owner Type System**: GA (room-based) vs IT (user-based) asset assignment
+3. **Asset Issues**: Report damage/lost/disposal requests (separate pages with asset_id)
+4. **Asset Repair**: Report repair completion (separate `/repair` route)
+5. **Asset Depreciation**: SuperAdmin value recalculation (`/depreciation` route)
+6. **Bulk Update**: 3-step workflow with filters and Excel import (`/bulk-update` route)
+7. **Forgot Password**: Email recovery with secure token verification flow
+8. **SuperAdmin Disposal**: Actual disposal execution (different from disposal requests)
+9. **Approval System**: Hierarchical approval workflow
 
 ### 3. Architecture Patterns
 
 #### Route Organization
 ```
 /routes/
+├── asset_management.py # Asset CRUD with owner_type support
 ├── damage.py          # Asset Issues (damage/lost pages)
 ├── disposal.py        # TWO DIFFERENT FUNCTIONS:
 │                      # 1. Asset Issue disposal requests (/disposal?asset_id=***)
 │                      # 2. SuperAdmin disposal execution (admin-only)
 ├── repair.py          # Asset Repair completion
 ├── depreciation.py    # SuperAdmin depreciation updates
+├── bulk_update.py     # 3-step bulk update workflow
 ├── forgot_password.py # Email-based password recovery with token verification
-├── asset_management.py # Asset CRUD operations with view pages
 ├── approvals.py       # Approval workflow
 └── ...
 ```
@@ -61,10 +64,29 @@ Registration → Active → Issues (Damage/Lost) → Repair → Active/Disposed
 
 #### Database Integration
 - **Primary DB**: Supabase PostgreSQL with foreign keys
+- **Owner Type Fields**: owner_type, assigned_user_id, assigned_user_name
 - **Log Tables**: Comprehensive audit trail (damage_log, repair_log, etc.)
 - **Reference Tables**: Categories, locations, business units
+- **Auto-resolution**: User names resolve to UUIDs (full_name → username)
 
 ### 4. Development Guidelines
+
+#### Owner Type System (IMPORTANT)
+- **Owner GA**: Room-based assignment (location + room required)
+- **Owner IT**: User-based assignment (assigned_user_name required)
+- **Conditional Fields**: Forms dynamically show GA or IT fields based on owner_type
+- **Auto-resolution**: assigned_user_name resolves to assigned_user_id UUID
+  - Try full_name first, then username
+  - Validation in database_manager.py prepare_asset_data()
+- **Filter Support**: Owner Type filter in list pages and bulk update
+- **Export Integration**: Excel exports include owner_type and assigned_user_name columns
+
+#### Bulk Update Workflow (IMPORTANT)
+- **Step 1**: Export assets with filters (category, type, location, room, owner, owner_type, status)
+- **Step 2**: Import Excel file with modifications
+- **Step 3**: Confirm and apply updates with approval workflow
+- **Auto-resolution**: assigned_user_name in Excel resolves to assigned_user_id
+- **Validation**: Checks for required fields and valid references
 
 #### Disposal Workflow (IMPORTANT)
 - **Asset Issue Disposal**: User requests disposal via `/disposal?asset_id=***` → Creates approval request
@@ -107,10 +129,12 @@ approval_data = {
 ### 5. Current System State
 
 #### Implemented Features ✅
-- Asset Registration with approval workflow
+- Asset Registration with approval workflow and owner type selection
+- Owner Type System: GA (room-based) vs IT (user-based) asset assignment
 - Asset Issues (damage/lost/disposal) as separate pages with asset_id parameter
 - Asset Repair as separate workflow for damaged assets
 - Asset Depreciation with SuperAdmin value recalculation
+- Bulk Update Assets with 3-step workflow and Excel import
 - SuperAdmin Disposal execution (different from user disposal requests)
 - Forgot Password with email recovery and secure token verification
 - Direct action buttons replacing dropdown menus
@@ -118,11 +142,12 @@ approval_data = {
 - Modal cleanup for cleaner codebase
 - Compact dashboard with monthly/quarterly/yearly analytics
 - User management with business unit terminology
-- Export to Excel with optimized column ordering
+- Export to Excel with owner_type and assigned_user_name columns
 - PWA support with offline capability
 - Profile protection against overwrites during authentication
 - Mobile-optimized templates with scrollable lists
 - Rupiah currency format throughout application
+- Owner Type filter in list pages and bulk update
 
 #### Key Integrations
 - **Supabase**: Primary database with foreign key relationships and log tables
@@ -209,6 +234,9 @@ docker build -t ambp .
 - **Forgot Password**: `app/routes/forgot_password.py` - Email recovery flow
 
 ### Key Concepts
+- **Owner Type System**: GA (room-based) vs IT (user-based) asset assignment
+- **Auto-resolution**: User names resolve to UUIDs (full_name → username)
+- **Bulk Update**: 3-step workflow with filters and Excel import
 - **Asset Issues**: Damage/Lost/Disposal integrated in single workflow
 - **Asset Repair**: Separate workflow showing only damaged assets
 - **Forgot Password**: Email recovery → Token verification → Session-based reset
@@ -220,17 +248,20 @@ docker build -t ambp .
 
 ### Recent Optimizations
 - **Requirements**: Reduced from 25+ to 11 essential packages
+- **Owner Type System**: GA (room-based) vs IT (user-based) asset differentiation
+- **Bulk Update**: 3-step workflow with filters and Excel import
 - **UI/UX**: Direct action buttons replacing dropdown menus
 - **Asset Views**: Dedicated view pages with comprehensive details
 - **Modal Cleanup**: Removed unused components for cleaner codebase
 - **Currency Format**: Changed to Rupiah (Rp) throughout application
 - **Depreciation**: Added SuperAdmin value recalculation functionality
-- **Export**: Optimized column ordering and data sorting
+- **Export**: Optimized column ordering with owner_type and assigned_user_name
 - **Approval System**: Fixed role-based filtering and notes column usage
 - **Authentication**: Fixed full_name preservation during login
 - **Forgot Password**: Email recovery with secure token verification flow
 - **Mobile**: Added scrollable lists and compact filters
 - **Asset Issues**: Separated into individual pages (/damage, /lost, /disposal) with asset_id parameter
 - **Disposal Workflow**: Clear separation between user requests and SuperAdmin execution
+- **Owner Type Filter**: Added to list pages and bulk update for GA/IT filtering
 
 This guidance should help you quickly understand and work with the AMBP system effectively.
