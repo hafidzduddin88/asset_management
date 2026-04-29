@@ -103,27 +103,6 @@
             </select>
         </div>
         
-        <!-- Location -->
-        <div>
-            <label for="location_name" class="block text-sm font-medium text-gray-700 required-field">Location</label>
-            <select name="location_name" id="location_name" required
-                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500">
-                <option value="">Select Location</option>
-                {% for location in dropdown_options.locations.keys() %}
-                <option value="{{ location }}">{{ location }}</option>
-                {% endfor %}
-            </select>
-        </div>
-        
-        <!-- Room -->
-        <div>
-            <label for="room_name" class="block text-sm font-medium text-gray-700 required-field">Room</label>
-            <select name="room_name" id="room_name" required
-                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500">
-                <option value="">Select Room</option>
-            </select>
-        </div>
-        
         <!-- Purchase Date & Cost -->
         <div class="grid grid-cols-2 gap-3">
             <div>
@@ -188,6 +167,58 @@
             </select>
         </div>
         
+        <!-- Owner Type Selection -->
+        <div>
+            <label for="owner_type" class="block text-sm font-medium text-gray-700 required-field">Owner Type</label>
+            <select name="owner_type" id="owner_type" required onchange="toggleAssignmentFields()"
+                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500">
+                <option value="GA">GA (Room-based)</option>
+                <option value="IT">IT (User-based)</option>
+            </select>
+            <p class="mt-1 text-xs text-gray-500">GA: Asset assigned to room | IT: Asset assigned to user</p>
+        </div>
+        
+        <!-- GA Fields (Location & Room) - Show by default -->
+        <div id="ga-fields">
+            <div>
+                <label for="location_name_ga" class="block text-sm font-medium text-gray-700 required-field">Location</label>
+                <select name="location_name" id="location_name_ga"
+                    class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500">
+                    <option value="">Select Location</option>
+                    {% for location in dropdown_options.locations.keys() %}
+                    <option value="{{ location }}">{{ location }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div>
+                <label for="room_name_ga" class="block text-sm font-medium text-gray-700 required-field">Room</label>
+                <select name="room_name" id="room_name_ga"
+                    class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500">
+                    <option value="">Select Room</option>
+                </select>
+            </div>
+        </div>
+        
+        <!-- IT Fields (User Assignment) - Hidden by default -->
+        <div id="it-fields" style="display: none;">
+            <div>
+                <label for="assigned_user_name" class="block text-sm font-medium text-gray-700 required-field">Assigned To User</label>
+                <input type="text" name="assigned_user_name" id="assigned_user_name" 
+                       list="users-list"
+                       placeholder="Type user name or username..."
+                       class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500">
+                <datalist id="users-list">
+                    {% if users %}
+                        {% for user in users %}
+                        <option value="{{ user.full_name }}">{{ user.username }}{% if user.business_unit_name %} - {{ user.business_unit_name }}{% endif %}</option>
+                        {% endfor %}
+                    {% endif %}
+                </datalist>
+                <p class="mt-1 text-xs text-gray-500">Type user's full name or username. System will auto-resolve to user ID.</p>
+            </div>
+        </div>
+        
         <!-- Notes -->
         <div>
             <label for="notes" class="block text-sm font-medium text-gray-700">Notes</label>
@@ -246,8 +277,8 @@ function updateTypes() {
 }
 
 function updateRooms() {
-    const locationSelect = document.getElementById('location_name');
-    const roomSelect = document.getElementById('room_name');
+    const locationSelect = document.getElementById('location_name_ga');
+    const roomSelect = document.getElementById('room_name_ga');
     const selectedLocation = locationSelect.value;
     
     // Clear existing options except first
@@ -263,19 +294,51 @@ function updateRooms() {
     }
 }
 
+function toggleAssignmentFields() {
+    const ownerType = document.getElementById('owner_type').value;
+    const gaFields = document.getElementById('ga-fields');
+    const itFields = document.getElementById('it-fields');
+    
+    if (ownerType === 'IT') {
+        gaFields.style.display = 'none';
+        itFields.style.display = 'block';
+        // Make IT field required, GA fields optional
+        document.getElementById('assigned_user_name').required = true;
+        document.getElementById('location_name_ga').required = false;
+        document.getElementById('room_name_ga').required = false;
+    } else {
+        gaFields.style.display = 'block';
+        itFields.style.display = 'none';
+        // Make GA fields required, IT field optional
+        document.getElementById('assigned_user_name').required = false;
+        document.getElementById('location_name_ga').required = true;
+        document.getElementById('room_name_ga').required = true;
+    }
+}
+
 function confirmAssetSubmission() {
+    const ownerType = document.getElementById('owner_type').value;
     const formData = {
         asset_name: document.getElementById('asset_name').value,
         category_name: document.getElementById('category_name').value,
         type_name: document.getElementById('type_name').value,
         company_name: document.getElementById('company_name').value,
-        location_name: document.getElementById('location_name').value,
-        room_name: document.getElementById('room_name').value,
         purchase_cost: document.getElementById('purchase_cost').value,
-        owner_name: document.getElementById('owner_name').value
+        owner_name: document.getElementById('owner_name').value,
+        owner_type: ownerType
     };
     
-    const details = `Asset Registration\n\n• Name: ${formData.asset_name}\n• Category: ${formData.category_name}\n• Type: ${formData.type_name}\n• Company: ${formData.company_name}\n• Location: ${formData.location_name} - ${formData.room_name}\n• Cost: $${formData.purchase_cost}\n• Owner: ${formData.owner_name}\n\n⚠️ This will create a registration request requiring approval.\n\nProceed?`;
+    let locationInfo = '';
+    if (ownerType === 'IT') {
+        const assignedUser = document.getElementById('assigned_user_name').value;
+        locationInfo = `• Assigned To: ${assignedUser || 'Not specified'}`;
+    } else {
+        const location = document.getElementById('location_name_ga').value;
+        const room = document.getElementById('room_name_ga').value;
+        locationInfo = `• Location: ${location} - ${room}`;
+    }
+    
+    const details = `Asset Registration\n\n• Name: ${formData.asset_name}\n• Category: ${formData.category_name}\n• Type: ${formData.type_name}\n• Company: ${formData.company_name}\n${locationInfo}\n• Cost: Rp ${formData.purchase_cost}\n• Owner: ${formData.owner_name}\n• Owner Type: ${formData.owner_type}\n\n⚠️ This will create a registration request requiring approval.\n\nProceed?`;
     
     return confirm(details);
 }
@@ -334,7 +397,8 @@ document.getElementById('photo').addEventListener('change', async function(e) {
 
 document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('category_name').addEventListener('change', updateTypes);
-    document.getElementById('location_name').addEventListener('change', updateRooms);
+    document.getElementById('location_name_ga').addEventListener('change', updateRooms);
+    toggleAssignmentFields(); // Initialize on page load
 });
 </script>
 {% endblock %}

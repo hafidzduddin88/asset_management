@@ -331,6 +331,7 @@ function toggleAssignmentFields() {
 }
 
 function confirmAssetSubmission() {
+    const ownerType = document.getElementById('owner_type').value;
     const formData = {
         asset_name: document.getElementById('asset_name').value,
         category_name: document.getElementById('category_name').value,
@@ -340,14 +341,23 @@ function confirmAssetSubmission() {
         serial_number: document.getElementById('serial_number').value,
         company_name: document.getElementById('company_name').value,
         business_unit_name: document.getElementById('business_unit_name').value,
-        location_name: document.getElementById('location_name').value,
-        room_name: document.getElementById('room_name').value,
         purchase_date: document.getElementById('purchase_date').value,
         purchase_cost: document.getElementById('purchase_cost').value,
-        owner_name: document.getElementById('owner_name').value
+        owner_name: document.getElementById('owner_name').value,
+        owner_type: ownerType
     };
     
-    const details = `Asset Registration Confirmation\n\nAsset Details:\n• Name: ${formData.asset_name}\n• Category: ${formData.category_name}\n• Type: ${formData.type_name}\n• Company: ${formData.company_name}\n• Location: ${formData.location_name} - ${formData.room_name}\n• Purchase Cost: Rp ${formData.purchase_cost}\n• Owner: ${formData.owner_name}\n\n⚠️ This will create a new asset registration request that requires approval.\n\nProceed with submission?`;
+    let locationInfo = '';
+    if (ownerType === 'IT') {
+        const assignedUser = document.getElementById('assigned_user_name').value;
+        locationInfo = `• Assigned To: ${assignedUser || 'Not specified'}`;
+    } else {
+        const location = document.getElementById('location_name_ga').value;
+        const room = document.getElementById('room_name_ga').value;
+        locationInfo = `• Location: ${location} - ${room}`;
+    }
+    
+    const details = `Asset Registration Confirmation\n\nAsset Details:\n• Name: ${formData.asset_name}\n• Category: ${formData.category_name}\n• Type: ${formData.type_name}\n• Company: ${formData.company_name}\n${locationInfo}\n• Purchase Cost: Rp ${formData.purchase_cost}\n• Owner: ${formData.owner_name}\n• Owner Type: ${formData.owner_type}\n\n⚠️ This will create a new asset registration request that requires approval.\n\nProceed with submission?`;
     
     return confirm(details);
 }
