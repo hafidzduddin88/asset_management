@@ -25,13 +25,12 @@ async def favicon():
 from app.routes import (
     login, health, offline, home, assets, asset_management,
     damage, profile, repair, approvals, disposal, user_management,
-    logs, relocation, export, depreciation, lost, forgot_password, auth
+    logs, relocation, export, depreciation, lost, forgot_password
 )
 
 # Include all routers
 app.include_router(health.router)  # Health first for readiness probe
 app.include_router(login.router)
-app.include_router(auth.router)
 app.include_router(forgot_password.router)
 app.include_router(offline.router)
 app.include_router(home.router)

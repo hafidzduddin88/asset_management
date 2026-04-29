@@ -1,113 +1,173 @@
-# app/routes/forgot_password.py
-from fastapi import APIRouter, Request, Form, HTTPException, status
-from fastapi.responses import HTMLResponse, RedirectResponse
-from fastapi.templating import Jinja2Templates
-import logging
-import os
-
-from app.utils.database_manager import get_supabase
+from fastapi import APIRouter, Request, Form
+from fastapi.responses import RedirectResponse, HTMLResponse
+from app.utils.supabase_client import get_supabase
 from app.utils.device_detector import get_template
-from app.utils.flash import set_flash
-from app.config import load_config
+from app.utils.flash import set_flash_message
+from starlette.templating import Jinja2Templates
 
-# Create two routers for both paths
-router = APIRouter(tags=["forgot_password"])
+router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
 
-config = load_config()
-
-@router.get("/forgot-password/", response_class=HTMLResponse)
-@router.get("/auth/forgot-password/", response_class=HTMLResponse)
+@router.get("/forgot-password")
 async def forgot_password_page(request: Request):
-    """Forgot password page (public - no login required)."""
-    template_path = get_template(request, "forgot_password/index.html")
-    return templates.TemplateResponse(template_path, {
-        "request": request
-    })
+    """Display forgot password form"""
+    template_path = get_template(request, "forgot_password/request.html")
+    return templates.TemplateResponse(template_path, {"request": request})
 
-@router.post("/forgot-password/request")
-@router.post("/auth/forgot-password/request")
-async def request_password_reset(
-    request: Request,
-    email: str = Form(...)
-):
-    """Request password reset using Supabase recovery email."""
+@router.post("/forgot-password")
+async def forgot_password_submit(request: Request, email: str = Form(...)):
+    """Send password reset email via Supabase"""
     try:
         supabase = get_supabase()
         
-        # Check if user exists
-        user_response = supabase.table("profiles").select("id, username, full_name").eq("username", email).execute()
+        # Get the base URL for redirect
+        base_url = str(request.base_url).rstrip('/')
+        redirect_url = f"{base_url}/auth/recovery"
         
-        if not user_response.data:
-            # Don't reveal if email exists (security best practice)
-            response = RedirectResponse(
-                url="/forgot-password/check-email",
-                status_code=status.HTTP_303_SEE_OTHER
-            )
-            set_flash(response, "If an account exists with this email, you will receive a password reset link.", "info")
-            return response
-        
-        user_data = user_response.data[0]
-        user_name = user_data.get("full_name") or email
-        
-        # Send password recovery email via Supabase
-        try:
-            # Get app URL from config
-            app_url = os.getenv("APP_URL", "http://localhost:8000")
-            redirect_to = f"{app_url}/auth/recovery"
-            
-            # Use correct Supabase method with redirect URL
-            supabase.auth.reset_password_for_email(
-                email,
-                options={
-                    "redirect_to": redirect_to
-                }
-            )
-            
-            # Log password reset request
-            supabase.table("user_management_logs").insert({
-                "admin_id": None,
-                "target_user_id": user_data["id"],
-                "action": "PASSWORD_RESET_REQUESTED",
-                "details": f"Password reset requested for {user_name} ({email})"
-            }).execute()
-            
-            logging.info(f"Password reset email sent to {email} with redirect to {redirect_to}")
-            
-        except Exception as e:
-            logging.error(f"Error sending password reset email: {e}")
-            # Still show success message for security
-        
-        response = RedirectResponse(
-            url="/forgot-password/check-email",
-            status_code=status.HTTP_303_SEE_OTHER
+        # Send recovery email using Supabase Auth
+        supabase.auth.reset_password_email(
+            email=email,
+            options={
+                "redirect_to": redirect_url
+            }
         )
-        set_flash(response, "If an account exists with this email, you will receive a password reset link.", "info")
-        return response
+        
+        set_flash_message(
+            request,
+            "success",
+            f"Email reset password telah dikirim ke {email}. Silakan cek inbox Anda."
+        )
+        return RedirectResponse(url="/login", status_code=303)
         
     except Exception as e:
-        logging.error(f"Error requesting password reset: {e}")
-        response = RedirectResponse(
-            url="/forgot-password/",
-            status_code=status.HTTP_303_SEE_OTHER
+        set_flash_message(
+            request,
+            "error",
+            "Terjadi kesalahan. Silakan coba lagi."
         )
-        set_flash(response, "An error occurred. Please try again.", "error")
-        return response
+        template_path = get_template(request, "forgot_password/request.html")
+        return templates.TemplateResponse(template_path, {
+            "request": request,
+            "email": email
+        })
 
-@router.get("/forgot-password/check-email", response_class=HTMLResponse)
-@router.get("/auth/forgot-password/check-email", response_class=HTMLResponse)
-async def check_email_page(request: Request):
-    """Check email page after requesting reset."""
-    template_path = get_template(request, "forgot_password/check_email.html")
+@router.get("/auth/recovery")
+async def auth_recovery_handler(request: Request):
+    """Handle Supabase recovery callback - convert fragment to query params"""
+    # Return HTML page that will handle fragment conversion via JavaScript
+    html_content = """
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Processing...</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 min-h-screen flex items-center justify-center">
+    <div class="text-center">
+        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+        <p class="mt-4 text-gray-600">Memproses reset password...</p>
+    </div>
+    
+    <script>
+        (function() {
+            const hash = window.location.hash.substring(1);
+            
+            if (hash) {
+                const params = new URLSearchParams(hash);
+                const error = params.get('error');
+                const errorDescription = params.get('error_description');
+                const accessToken = params.get('access_token');
+                const refreshToken = params.get('refresh_token');
+                
+                if (error) {
+                    // Redirect to forgot password with error message
+                    window.location.href = '/forgot-password?error=' + encodeURIComponent(errorDescription || error);
+                } else if (accessToken) {
+                    // Redirect to reset password page with token
+                    window.location.href = '/reset-password?access_token=' + accessToken + 
+                        (refreshToken ? '&refresh_token=' + refreshToken : '');
+                } else {
+                    window.location.href = '/forgot-password';
+                }
+            } else {
+                window.location.href = '/forgot-password';
+            }
+        })();
+    </script>
+</body>
+</html>
+    """
+    return HTMLResponse(content=html_content)
+
+@router.get("/reset-password")
+async def reset_password_page(request: Request):
+    """Display reset password form"""
+    access_token = request.query_params.get("access_token")
+    refresh_token = request.query_params.get("refresh_token")
+    
+    if not access_token:
+        set_flash_message(request, "error", "Link reset password tidak valid atau sudah kadaluarsa.")
+        return RedirectResponse(url="/forgot-password", status_code=303)
+    
+    template_path = get_template(request, "forgot_password/reset.html")
     return templates.TemplateResponse(template_path, {
-        "request": request
+        "request": request,
+        "access_token": access_token,
+        "refresh_token": refresh_token
     })
 
-@router.get("/forgot-password/success", response_class=HTMLResponse)
-@router.get("/auth/forgot-password/success", response_class=HTMLResponse)
-async def reset_success_page(request: Request):
-    """Password reset success page."""
-    template_path = get_template(request, "forgot_password/success.html")
-    return templates.TemplateResponse(template_path, {
-        "request": request
-    })
+@router.post("/reset-password")
+async def reset_password_submit(
+    request: Request,
+    access_token: str = Form(...),
+    new_password: str = Form(...),
+    confirm_password: str = Form(...)
+):
+    """Update password using Supabase Auth"""
+    try:
+        if new_password != confirm_password:
+            set_flash_message(request, "error", "Password tidak cocok.")
+            template_path = get_template(request, "forgot_password/reset.html")
+            return templates.TemplateResponse(template_path, {
+                "request": request,
+                "access_token": access_token
+            })
+        
+        if len(new_password) < 6:
+            set_flash_message(request, "error", "Password minimal 6 karakter.")
+            template_path = get_template(request, "forgot_password/reset.html")
+            return templates.TemplateResponse(template_path, {
+                "request": request,
+                "access_token": access_token
+            })
+        
+        supabase = get_supabase()
+        
+        # Set session with the access token
+        supabase.auth.set_session(access_token, access_token)
+        
+        # Update password - Supabase handles encryption
+        supabase.auth.update_user({
+            "password": new_password
+        })
+        
+        set_flash_message(
+            request,
+            "success",
+            "Password berhasil diubah. Silakan login dengan password baru."
+        )
+        return RedirectResponse(url="/login", status_code=303)
+        
+    except Exception as e:
+        set_flash_message(
+            request,
+            "error",
+            f"Gagal mengubah password: {str(e)}"
+        )
+        template_path = get_template(request, "forgot_password/reset.html")
+        return templates.TemplateResponse(template_path, {
+            "request": request,
+            "access_token": access_token
+        })

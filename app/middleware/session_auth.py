@@ -14,10 +14,11 @@ class SessionAuthMiddleware(BaseHTTPMiddleware):
     
     SKIP_PATHS = {
         "/login", "/signup", "/health", "/favicon.ico",
-        "/auth/callback", "/auth/confirm", "/auth/refresh", "/auth/recovery"
+        "/auth/callback", "/auth/confirm", "/auth/refresh", "/auth/recovery",
+        "/forgot-password"
     }
     
-    SKIP_PREFIXES = {"/static", "/forgot-password", "/auth/forgot-password"}
+    SKIP_PREFIXES = {"/static", "/reset-password"}
     
     async def dispatch(self, request: Request, call_next):
         # Skip auth for public paths

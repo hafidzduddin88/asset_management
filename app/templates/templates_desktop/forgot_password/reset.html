@@ -1,61 +1,76 @@
-{% extends "templates_desktop/layouts/modern_layout.html" %}
+{% extends "templates_desktop/layouts/auth_layout.html" %}
 
-{% block title %}Reset Password{% endblock %}
+{% block title %}Reset Password - AMBP{% endblock %}
 
 {% block content %}
-<div class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+<div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-4 sm:px-6 lg:px-8">
     <div class="max-w-md w-full space-y-8">
-        <!-- Header -->
-        <div class="text-center">
-            <h2 class="mt-6 text-3xl font-extrabold text-gray-900">Create New Password</h2>
-            <p class="mt-2 text-sm text-gray-600">Enter your new password below</p>
+        <div>
+            <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
+                Reset Password
+            </h2>
+            <p class="mt-2 text-center text-sm text-gray-600">
+                Masukkan password baru Anda
+            </p>
         </div>
-
-        {% if error %}
-        <div class="bg-red-50 border border-red-200 rounded-lg p-4">
-            <p class="text-sm text-red-800">{{ error }}</p>
-        </div>
-        {% endif %}
-
-        <!-- Form -->
-        <form class="mt-8 space-y-6" method="POST" action="/auth/reset-password">
-            {% if access_token %}
+        
+        <form class="mt-8 space-y-6" method="POST" action="/reset-password">
             <input type="hidden" name="access_token" value="{{ access_token }}">
-            {% endif %}
-            {% if token %}
-            <input type="hidden" name="token" value="{{ token }}">
-            {% endif %}
-            {% if type %}
-            <input type="hidden" name="type" value="{{ type }}">
-            {% endif %}
-            <div class="space-y-4">
+            
+            <div class="rounded-md shadow-sm space-y-4">
                 <div>
-                    <label for="password" class="block text-sm font-medium text-gray-700">New Password</label>
-                    <input id="password" name="password" type="password" required 
-                           class="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                           placeholder="Enter new password">
-                    <p class="mt-1 text-xs text-gray-500">At least 6 characters</p>
+                    <label for="new_password" class="sr-only">Password Baru</label>
+                    <input 
+                        id="new_password" 
+                        name="new_password" 
+                        type="password" 
+                        required 
+                        minlength="6"
+                        class="appearance-none rounded-lg relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm" 
+                        placeholder="Password Baru (min. 6 karakter)"
+                    >
                 </div>
-
                 <div>
-                    <label for="password_confirm" class="block text-sm font-medium text-gray-700">Confirm Password</label>
-                    <input id="password_confirm" name="password_confirm" type="password" required 
-                           class="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                           placeholder="Confirm new password">
+                    <label for="confirm_password" class="sr-only">Konfirmasi Password</label>
+                    <input 
+                        id="confirm_password" 
+                        name="confirm_password" 
+                        type="password" 
+                        required 
+                        minlength="6"
+                        class="appearance-none rounded-lg relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm" 
+                        placeholder="Konfirmasi Password Baru"
+                    >
                 </div>
             </div>
 
             <div>
-                <button type="submit" 
-                        class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                <button 
+                    type="submit" 
+                    class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                >
                     Reset Password
                 </button>
             </div>
 
             <div class="text-center">
-                <a href="/login" class="font-medium text-blue-600 hover:text-blue-500">Back to Login</a>
+                <a href="/login" class="font-medium text-indigo-600 hover:text-indigo-500">
+                    Kembali ke Login
+                </a>
             </div>
         </form>
     </div>
 </div>
+
+<script>
+    document.querySelector('form').addEventListener('submit', function(e) {
+        const newPassword = document.getElementById('new_password').value;
+        const confirmPassword = document.getElementById('confirm_password').value;
+        
+        if (newPassword !== confirmPassword) {
+            e.preventDefault();
+            alert('Password tidak cocok!');
+        }
+    });
+</script>
 {% endblock %}
