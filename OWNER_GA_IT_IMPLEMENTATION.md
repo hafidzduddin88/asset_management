@@ -7,11 +7,15 @@ Sistem ini membedakan 2 tipe owner untuk asset:
 
 ## Database Changes
 
-### 1. Migration SQL (002_add_user_assignment.sql)
+### 1. Migration SQL (002_add_user_assignment.sql) ✅ UPDATED
 ```sql
--- Add assigned_user_id column
+-- Add assigned_user_id column (UUID reference)
 ALTER TABLE assets 
 ADD COLUMN IF NOT EXISTS assigned_user_id UUID REFERENCES auth.users(id);
+
+-- Add assigned_user_name column (user input - will auto-resolve to assigned_user_id)
+ALTER TABLE assets 
+ADD COLUMN IF NOT EXISTS assigned_user_name VARCHAR(255);
 
 -- Add owner_type column
 ALTER TABLE assets 
@@ -19,25 +23,43 @@ ADD COLUMN IF NOT EXISTS owner_type VARCHAR(10) DEFAULT 'GA' CHECK (owner_type I
 
 -- Add indexes
 CREATE INDEX IF NOT EXISTS idx_assets_assigned_user ON assets(assigned_user_id);
+CREATE INDEX IF NOT EXISTS idx_assets_assigned_user_name ON assets(assigned_user_name);
 CREATE INDEX IF NOT EXISTS idx_assets_owner_type ON assets(owner_type);
 ```
+
+**Key Points:**
+- `assigned_user_name` = User input (nama user yang diketik)
+- `assigned_user_id` = Auto-generated UUID (resolved dari assigned_user_name)
+- System akan auto-resolve name → ID saat save
 
 ### 2. Run Migration
 Jalankan SQL di Supabase SQL Editor atau via migration tool.
 
 ## Backend Changes
 
-### 1. database_manager.py ✅ DONE
-- Updated `get_assets_paginated()` - include assigned_user_id, owner_type
-- Updated `_get_all_assets()` - include assigned_user_id, owner_type  
-- Updated `get_asset_by_id()` - include assigned_user_id, owner_type, fetch user details
-- Updated `prepare_asset_data()` - include assigned_user_id, owner_type in valid_fields
+### 1. database_manager.py ✅ UPDATED
+- ✅ Updated `get_assets_paginated()` - include assigned_user_id, assigned_user_name, owner_type
+- ✅ Updated `_get_all_assets()` - include assigned_user_id, assigned_user_name, owner_type
+- ✅ Updated `get_asset_by_id()` - include assigned_user_id, assigned_user_name, owner_type
+- ✅ Updated `prepare_asset_data()` - auto-resolve assigned_user_id from assigned_user_name
+- ✅ Auto-resolution logic: Try full_name first, then username
 
-### 2. user_utils.py ✅ DONE
+### 2. user_utils.py ✅ CREATED
 Created new utility file with functions:
 - `get_all_users()` - Get all active users for dropdown
 - `get_user_by_id()` - Get user details
 - `get_user_assets()` - Get assets assigned to user
+
+### 3. assigned_user_helper.py ✅ CREATED
+Helper functions for efficient user name fetching:
+- `get_assigned_user_name()` - Get single user name
+- `enrich_assets_with_user_names()` - Batch fetch user names for multiple assets
+
+### 4. bulk_update.py ✅ UPDATED
+- ✅ Export includes assigned_user_name column
+- ✅ Import parses assigned_user_name from Excel
+- ✅ Auto-resolve assigned_user_id from assigned_user_name on import
+- ✅ Error handling for user not found
 
 ## Frontend Changes Needed
 
@@ -79,13 +101,17 @@ Add after Owner field:
 <!-- IT Fields (User Assignment) - Hidden by default -->
 <div id="it-fields" style="display: none;">
     <div>
-        <label for="assigned_user_id" class="block text-sm font-medium text-gray-700 required-field">Assigned To User</label>
-        <select name="assigned_user_id" id="assigned_user_id" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg">
-            <option value="">Select User</option>
+        <label for="assigned_user_name" class="block text-sm font-medium text-gray-700 required-field">Assigned To User</label>
+        <input type="text" name="assigned_user_name" id="assigned_user_name" 
+               list="users-list"
+               placeholder="Type user name..."
+               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg">
+        <datalist id="users-list">
             {% for user in users %}
-            <option value="{{ user.id }}">{{ user.full_name }} ({{ user.username }}) - {{ user.business_unit_name }}</option>
+            <option value="{{ user.full_name }}">{{ user.username }} - {{ user.business_unit_name }}</option>
             {% endfor %}
-        </select>
+        </datalist>
+        <p class="mt-1 text-xs text-gray-500">Type user's full name or username. System will auto-resolve to user ID.</p>
     </div>
 </div>
 
@@ -99,14 +125,14 @@ function toggleAssignmentFields() {
         gaFields.style.display = 'none';
         itFields.style.display = 'block';
         // Make IT field required, GA fields optional
-        document.getElementById('assigned_user_id').required = true;
+        document.getElementById('assigned_user_name').required = true;
         document.getElementById('location_name').required = false;
         document.getElementById('room_name').required = false;
     } else {
         gaFields.style.display = 'block';
         itFields.style.display = 'none';
         // Make GA fields required, IT field optional
-        document.getElementById('assigned_user_id').required = false;
+        document.getElementById('assigned_user_name').required = false;
         document.getElementById('location_name').required = true;
         document.getElementById('room_name').required = true;
     }

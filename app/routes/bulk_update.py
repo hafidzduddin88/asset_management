@@ -125,9 +125,9 @@ async def bulk_update_export(
         headers = [
             "asset_id", "asset_name", "category_name", "type_name", "manufacture", 
             "model", "serial_number", "asset_tag", "company_name", "business_unit_name",
-            "location_name", "room_name", "owner_name", "item_condition", 
-            "purchase_date", "purchase_cost", "warranty", "supplier", "journal", 
-            "notes", "status", "year"
+            "location_name", "room_name", "owner_name", "owner_type", "assigned_user_name",
+            "item_condition", "purchase_date", "purchase_cost", "warranty", "supplier", 
+            "journal", "notes", "status", "year"
         ]
         
         for col_num, header in enumerate(headers, 1):
@@ -153,15 +153,29 @@ async def bulk_update_export(
             ws.cell(row=row_num, column=11, value=loc_data.get('location_name') if loc_data else '')
             ws.cell(row=row_num, column=12, value=asset.get('room_name'))
             ws.cell(row=row_num, column=13, value=asset.get('ref_owners', {}).get('owner_name') if asset.get('ref_owners') else '')
-            ws.cell(row=row_num, column=14, value=asset.get('item_condition'))
-            ws.cell(row=row_num, column=15, value=asset.get('purchase_date'))
-            ws.cell(row=row_num, column=16, value=asset.get('purchase_cost'))
-            ws.cell(row=row_num, column=17, value=asset.get('warranty'))
-            ws.cell(row=row_num, column=18, value=asset.get('supplier'))
-            ws.cell(row=row_num, column=19, value=asset.get('journal'))
-            ws.cell(row=row_num, column=20, value=asset.get('notes'))
-            ws.cell(row=row_num, column=21, value=asset.get('status'))
-            ws.cell(row=row_num, column=22, value=asset.get('year'))
+            ws.cell(row=row_num, column=14, value=asset.get('owner_type', 'GA'))
+            
+            # Assigned user name for IT assets
+            if asset.get('owner_type') == 'IT':
+                # Use stored assigned_user_name if available, otherwise get from user object
+                assigned_user_name = asset.get('assigned_user_name')
+                if not assigned_user_name:
+                    assigned_user = asset.get('assigned_user', {})
+                    assigned_user_name = assigned_user.get('full_name') if assigned_user else ''
+            else:
+                assigned_user_name = ''
+            
+            ws.cell(row=row_num, column=15, value=assigned_user_name)
+            
+            ws.cell(row=row_num, column=16, value=asset.get('item_condition'))
+            ws.cell(row=row_num, column=17, value=asset.get('purchase_date'))
+            ws.cell(row=row_num, column=18, value=asset.get('purchase_cost'))
+            ws.cell(row=row_num, column=19, value=asset.get('warranty'))
+            ws.cell(row=row_num, column=20, value=asset.get('supplier'))
+            ws.cell(row=row_num, column=21, value=asset.get('journal'))
+            ws.cell(row=row_num, column=22, value=asset.get('notes'))
+            ws.cell(row=row_num, column=23, value=asset.get('status'))
+            ws.cell(row=row_num, column=24, value=asset.get('year'))
         
         # Auto-adjust column widths
         for column in ws.columns:
@@ -230,15 +244,17 @@ async def bulk_update_import(
                     'location_name': row[10],
                     'room_name': row[11],
                     'owner_name': row[12],
-                    'item_condition': row[13],
-                    'purchase_date': str(row[14]) if row[14] else None,
-                    'purchase_cost': float(row[15]) if row[15] else None,
-                    'warranty': row[16],
-                    'supplier': row[17],
-                    'journal': row[18],
-                    'notes': row[19],
-                    'status': row[20],
-                    'year': int(row[21]) if row[21] else None
+                    'owner_type': row[13] if len(row) > 13 else 'GA',
+                    'assigned_user_name': row[14] if len(row) > 14 else None,
+                    'item_condition': row[15] if len(row) > 15 else row[13],
+                    'purchase_date': str(row[16]) if len(row) > 16 and row[16] else str(row[14]) if row[14] else None,
+                    'purchase_cost': float(row[17]) if len(row) > 17 and row[17] else float(row[15]) if row[15] else None,
+                    'warranty': row[18] if len(row) > 18 else row[16],
+                    'supplier': row[19] if len(row) > 19 else row[17],
+                    'journal': row[20] if len(row) > 20 else row[18],
+                    'notes': row[21] if len(row) > 21 else row[19],
+                    'status': row[22] if len(row) > 22 else row[20],
+                    'year': int(row[23]) if len(row) > 23 and row[23] else int(row[21]) if row[21] else None
                 }
                 updates.append(update_data)
             except Exception as e:
@@ -316,10 +332,25 @@ async def bulk_update_confirm(request: Request, current_profile = Depends(get_cu
                     if own.data:
                         payload['owner_id'] = own.data[0]['owner_id']
                 
+                # Handle assigned user for IT assets
+                if update_data.get('owner_type') == 'IT' and update_data.get('assigned_user_name'):
+                    user_name = update_data['assigned_user_name']
+                    # Try to find user by full_name first, then username
+                    user = supabase.table('profiles').select('id').eq('full_name', user_name).execute()
+                    if not user.data:
+                        user = supabase.table('profiles').select('id').eq('username', user_name).execute()
+                    
+                    if user.data:
+                        payload['assigned_user_id'] = user.data[0]['id']
+                        payload['assigned_user_name'] = user_name
+                    else:
+                        errors.append(f"Asset ID {update_data.get('asset_id')}: User '{user_name}' not found")
+                        continue
+                
                 # Direct fields
                 direct_fields = ['asset_name', 'manufacture', 'model', 'serial_number', 'asset_tag',
                                 'room_name', 'item_condition', 'purchase_date', 'purchase_cost',
-                                'warranty', 'supplier', 'journal', 'notes', 'status', 'year']
+                                'warranty', 'supplier', 'journal', 'notes', 'status', 'year', 'owner_type', 'assigned_user_name']
                 
                 for field in direct_fields:
                     if update_data.get(field) is not None:
