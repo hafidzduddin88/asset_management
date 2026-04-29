@@ -111,7 +111,7 @@ async def create_user(
         # Create user in Supabase Auth
         auth_response = supabase.auth.admin.create_user({
             "email": email,
-            "password": os.getenv('DEFAULT_USER_PASSWORD', '54321'),  # Default password
+            "password": os.getenv('DEFAULT_USER_PASSWORD', '654321'),  # Default password
             "email_confirm": True
         })
         
