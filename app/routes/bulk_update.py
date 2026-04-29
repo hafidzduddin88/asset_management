@@ -63,6 +63,7 @@ async def bulk_update_export(
     location: str = Form(None),
     room: str = Form(None),
     owner: str = Form(None),
+    owner_type: str = Form(None),
     status: str = Form(None)
 ):
     """Step 1: Export filtered assets to Excel"""
@@ -105,6 +106,9 @@ async def bulk_update_export(
             owner_response = supabase.table('ref_owners').select('owner_id').eq('owner_name', owner).execute()
             if owner_response.data:
                 query = query.eq('owner_id', owner_response.data[0]['owner_id'])
+        
+        if owner_type:
+            query = query.eq('owner_type', owner_type)
         
         if status:
             query = query.eq('status', status)

@@ -32,8 +32,10 @@ EXPORT_TABLES = {
             ('company_name', 'Company'),
             ('business_unit_name', 'Business Unit'),
             ('owner_name', 'Owner'),
+            ('owner_type', 'Owner Type'),
             ('location_name', 'Location'),
             ('room_name', 'Room'),
+            ('assigned_user_name', 'Assigned To User'),
             ('purchase_date', 'Purchase Date'),
             ('purchase_cost', 'Purchase Cost (Rp)'),
             ('book_value', 'Book Value (Rp)'),
@@ -151,7 +153,7 @@ async def export_to_excel(
             # Include foreign key relationships for proper data display
             select_fields = []
             for col in columns:
-                if col in ['asset_id', 'asset_name', 'asset_tag', 'manufacture', 'model', 'serial_number', 'purchase_date', 'purchase_cost', 'status', 'item_condition', 'room_name', 'notes', 'warranty', 'supplier', 'depreciation_value', 'residual_value', 'book_value']:
+                if col in ['asset_id', 'asset_name', 'asset_tag', 'manufacture', 'model', 'serial_number', 'purchase_date', 'purchase_cost', 'status', 'item_condition', 'room_name', 'notes', 'warranty', 'supplier', 'depreciation_value', 'residual_value', 'book_value', 'owner_type', 'assigned_user_name']:
                     select_fields.append(col)
             
             # Add foreign key relationships
