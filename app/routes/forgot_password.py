@@ -2,7 +2,6 @@ from fastapi import APIRouter, Request, Form
 from fastapi.responses import RedirectResponse, HTMLResponse
 from app.utils.database_manager import get_supabase
 from app.utils.device_detector import get_template
-from app.utils.flash import set_flash_message
 from starlette.templating import Jinja2Templates
 
 router = APIRouter()
@@ -32,23 +31,18 @@ async def forgot_password_submit(request: Request, email: str = Form(...)):
             }
         )
         
-        set_flash_message(
-            request,
-            "success",
-            f"Email reset password telah dikirim ke {email}. Silakan cek inbox Anda."
-        )
-        return RedirectResponse(url="/login", status_code=303)
+        template_path = get_template(request, "login_logout.html")
+        return templates.TemplateResponse(template_path, {
+            "request": request,
+            "success": f"Email reset password telah dikirim ke {email}. Silakan cek inbox Anda."
+        })
         
     except Exception as e:
-        set_flash_message(
-            request,
-            "error",
-            "Terjadi kesalahan. Silakan coba lagi."
-        )
         template_path = get_template(request, "forgot_password/request.html")
         return templates.TemplateResponse(template_path, {
             "request": request,
-            "email": email
+            "email": email,
+            "error": "Terjadi kesalahan. Silakan coba lagi."
         })
 
 @router.get("/auth/recovery")
@@ -108,8 +102,11 @@ async def reset_password_page(request: Request):
     refresh_token = request.query_params.get("refresh_token")
     
     if not access_token:
-        set_flash_message(request, "error", "Link reset password tidak valid atau sudah kadaluarsa.")
-        return RedirectResponse(url="/forgot-password", status_code=303)
+        template_path = get_template(request, "login_logout.html")
+        return templates.TemplateResponse(template_path, {
+            "request": request,
+            "error": "Link reset password tidak valid atau sudah kadaluarsa."
+        })
     
     template_path = get_template(request, "forgot_password/reset.html")
     return templates.TemplateResponse(template_path, {
@@ -128,19 +125,19 @@ async def reset_password_submit(
     """Update password using Supabase Auth"""
     try:
         if new_password != confirm_password:
-            set_flash_message(request, "error", "Password tidak cocok.")
             template_path = get_template(request, "forgot_password/reset.html")
             return templates.TemplateResponse(template_path, {
                 "request": request,
-                "access_token": access_token
+                "access_token": access_token,
+                "error": "Password tidak cocok."
             })
         
         if len(new_password) < 6:
-            set_flash_message(request, "error", "Password minimal 6 karakter.")
             template_path = get_template(request, "forgot_password/reset.html")
             return templates.TemplateResponse(template_path, {
                 "request": request,
-                "access_token": access_token
+                "access_token": access_token,
+                "error": "Password minimal 6 karakter."
             })
         
         supabase = get_supabase()
@@ -153,21 +150,16 @@ async def reset_password_submit(
             "password": new_password
         })
         
-        set_flash_message(
-            request,
-            "success",
-            "Password berhasil diubah. Silakan login dengan password baru."
-        )
-        return RedirectResponse(url="/login", status_code=303)
+        template_path = get_template(request, "login_logout.html")
+        return templates.TemplateResponse(template_path, {
+            "request": request,
+            "success": "Password berhasil diubah. Silakan login dengan password baru."
+        })
         
     except Exception as e:
-        set_flash_message(
-            request,
-            "error",
-            f"Gagal mengubah password: {str(e)}"
-        )
         template_path = get_template(request, "forgot_password/reset.html")
         return templates.TemplateResponse(template_path, {
             "request": request,
-            "access_token": access_token
+            "access_token": access_token,
+            "error": f"Gagal mengubah password: {str(e)}"
         })
