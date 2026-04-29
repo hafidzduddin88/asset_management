@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Request, Form
 from fastapi.responses import RedirectResponse, HTMLResponse
-from app.utils.supabase_client import get_supabase
+from app.utils.database_manager import get_supabase
 from app.utils.device_detector import get_template
 from app.utils.flash import set_flash_message
 from starlette.templating import Jinja2Templates
