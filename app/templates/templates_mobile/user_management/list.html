@@ -31,6 +31,13 @@
         </div>
         {% endif %}
         
+        <!-- Flash Messages -->
+        <div id="flash-message" class="mb-4" style="display: none;">
+            <div class="rounded-md p-3">
+                <div class="text-xs"></div>
+            </div>
+        </div>
+        
         <div class="bg-white rounded-lg shadow-lg overflow-hidden">
             <div class="bg-gradient-to-r from-gray-50 to-gray-100 px-4 py-3 border-b border-gray-200">
                 <div class="flex items-center space-x-2">
@@ -87,7 +94,7 @@
                         
                         <!-- Reset Password -->
                         <form method="POST" action="/user_management/reset_password/{{ user_item.id }}"
-                              onsubmit="return confirm('Are you sure you want to reset password to 54321 for {{ user_item.username }}?')">
+                              onsubmit="return confirm('Are you sure you want to reset password to 654321 for {{ user_item.username }}?')">
                             <button type="submit" class="w-full inline-flex justify-center items-center px-2 py-2 border border-gray-300 text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 touch-manipulation">
                                 Reset Password
                             </button>
@@ -152,14 +159,56 @@
 </div>
 
 <script>
-// Auto-hide flash messages after 5 seconds
-setTimeout(function() {
-    const alerts = document.querySelectorAll('.bg-green-50, .bg-red-50');
-    alerts.forEach(alert => {
-        alert.style.transition = 'opacity 0.5s';
-        alert.style.opacity = '0';
-        setTimeout(() => alert.remove(), 500);
-    });
-}, 5000);
+// Display flash messages from cookie
+function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
+}
+
+function deleteCookie(name) {
+    document.cookie = name + '=; Path=/; Max-Age=0; HttpOnly=false; SameSite=lax';
+}
+
+const flashCookie = getCookie('flash');
+if (flashCookie) {
+    try {
+        const flashData = JSON.parse(decodeURIComponent(flashCookie));
+        const flashDiv = document.getElementById('flash-message');
+        const messageDiv = flashDiv.querySelector('div');
+        const textDiv = flashDiv.querySelector('.text-xs');
+        
+        // Set message
+        textDiv.textContent = flashData.message;
+        
+        // Set color based on category
+        if (flashData.category === 'success') {
+            messageDiv.className = 'rounded-md p-3 bg-green-50';
+            textDiv.className = 'text-xs text-green-800';
+        } else if (flashData.category === 'error') {
+            messageDiv.className = 'rounded-md p-3 bg-red-50';
+            textDiv.className = 'text-xs text-red-800';
+        } else {
+            messageDiv.className = 'rounded-md p-3 bg-blue-50';
+            textDiv.className = 'text-xs text-blue-800';
+        }
+        
+        // Show message
+        flashDiv.style.display = 'block';
+        
+        // Auto-hide after 5 seconds
+        setTimeout(() => {
+            flashDiv.style.transition = 'opacity 0.5s';
+            flashDiv.style.opacity = '0';
+            setTimeout(() => {
+                flashDiv.remove();
+                deleteCookie('flash');
+            }, 500);
+        }, 5000);
+        
+    } catch (e) {
+        console.error('Failed to parse flash message:', e);
+    }
+}
 </script>
 {% endblock %}

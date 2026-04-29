@@ -150,7 +150,7 @@ async def create_user(
             }).execute()
             
             response = RedirectResponse(url="/user_management", status_code=status.HTTP_303_SEE_OTHER)
-            set_flash(response, f"User {full_name} ({email}) created successfully with password: 54321", "success")
+            set_flash(response, f"User {full_name} ({email}) created successfully with password: 654321", "success")
             return response
         else:
             raise Exception("Failed to create user")
@@ -187,7 +187,7 @@ async def reset_password(
         user_name = user_data.get("full_name") or user_email
         
         # Reset password to default
-        default_password = os.getenv('DEFAULT_USER_PASSWORD', '54321')
+        default_password = os.getenv('DEFAULT_USER_PASSWORD', '654321')
         supabase.auth.admin.update_user_by_id(user_id, {"password": default_password})
         
         # Log password reset
@@ -199,7 +199,7 @@ async def reset_password(
         }).execute()
         
         response = RedirectResponse(url="/user_management", status_code=status.HTTP_303_SEE_OTHER)
-        set_flash(response, f"Password reset to 54321 for {user_name}", "success")
+        set_flash(response, f"Password reset to 654321 for {user_name}", "success")
         return response
         
     except Exception as e:
