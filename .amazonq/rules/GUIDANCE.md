@@ -21,13 +21,19 @@ Registration → Active → Issues (Damage/Lost) → Repair → Active/Disposed
 - **Manager**: Asset operations, approves admin requests  
 - **Staff**: Basic operations, submit requests for approval
 
+#### Authentication & Security
+- **JWT Session**: Token-based auth with auto-refresh via middleware
+- **Forgot Password**: Email recovery → Token verification → Session-based reset
+- **Profile Protection**: Prevents data overwrites during token refresh
+
 #### Core Workflows
 1. **Asset Registration**: Add/Edit assets with approval
 2. **Asset Issues**: Report damage/lost/disposal requests (separate pages with asset_id)
 3. **Asset Repair**: Report repair completion (separate `/repair` route)
 4. **Asset Depreciation**: SuperAdmin value recalculation (`/depreciation` route)
-5. **SuperAdmin Disposal**: Actual disposal execution (different from disposal requests)
-6. **Approval System**: Hierarchical approval workflow
+5. **Forgot Password**: Email recovery with secure token verification flow
+6. **SuperAdmin Disposal**: Actual disposal execution (different from disposal requests)
+7. **Approval System**: Hierarchical approval workflow
 
 ### 3. Architecture Patterns
 
@@ -40,6 +46,7 @@ Registration → Active → Issues (Damage/Lost) → Repair → Active/Disposed
 │                      # 2. SuperAdmin disposal execution (admin-only)
 ├── repair.py          # Asset Repair completion
 ├── depreciation.py    # SuperAdmin depreciation updates
+├── forgot_password.py # Email-based password recovery with token verification
 ├── asset_management.py # Asset CRUD operations with view pages
 ├── approvals.py       # Approval workflow
 └── ...
@@ -105,6 +112,7 @@ approval_data = {
 - Asset Repair as separate workflow for damaged assets
 - Asset Depreciation with SuperAdmin value recalculation
 - SuperAdmin Disposal execution (different from user disposal requests)
+- Forgot Password with email recovery and secure token verification
 - Direct action buttons replacing dropdown menus
 - Dedicated asset view pages with image zoom functionality
 - Modal cleanup for cleaner codebase
@@ -198,10 +206,12 @@ docker build -t ambp .
 - **Main App**: `app/main.py` - Entry point
 - **Database**: `app/utils/database_manager.py` - All DB operations
 - **Auth**: `app/middleware/session_auth.py` - Authentication
+- **Forgot Password**: `app/routes/forgot_password.py` - Email recovery flow
 
 ### Key Concepts
 - **Asset Issues**: Damage/Lost/Disposal integrated in single workflow
 - **Asset Repair**: Separate workflow showing only damaged assets
+- **Forgot Password**: Email recovery → Token verification → Session-based reset
 - **Dual Templates**: Desktop and mobile versions (always update both)
 - **Approval Workflow**: Role-based hierarchical approvals
 - **Supabase Integration**: PostgreSQL with foreign keys and comprehensive logging
@@ -218,6 +228,7 @@ docker build -t ambp .
 - **Export**: Optimized column ordering and data sorting
 - **Approval System**: Fixed role-based filtering and notes column usage
 - **Authentication**: Fixed full_name preservation during login
+- **Forgot Password**: Email recovery with secure token verification flow
 - **Mobile**: Added scrollable lists and compact filters
 - **Asset Issues**: Separated into individual pages (/damage, /lost, /disposal) with asset_id parameter
 - **Disposal Workflow**: Clear separation between user requests and SuperAdmin execution

@@ -26,7 +26,7 @@
 - 🛠️ **Asset Repair** - Separate repair workflow for damaged assets
 - 💰 **Asset Depreciation** - SuperAdmin value recalculation
 - 👥 **Role-based Auth** - Admin/Manager/Staff with JWT
-- 🔐 **Password Reset** - Supabase email recovery flow
+- 🔐 **Forgot Password** - Email-based password recovery with secure token
 - ✅ **Approval Workflows** - Hierarchical approvals
 - 👤 **User Management** - Business unit integration
 
@@ -253,7 +253,7 @@ asset_management/
 │   │   ├── 📄 approvals.py         # Hierarchical approval system
 │   │   ├── 📄 export.py            # Excel export with optimized ordering
 │   │   ├── 📄 home.py              # Dashboard analytics
-│   │   ├── 📄 forgot_password.py   # Password reset via Supabase email
+│   │   ├── 📄 forgot_password.py   # Email-based password recovery
 │   │   └── 📄 user_management.py   # Business unit integration
 │   ├── 📁 static/           # CSS, JS, PWA files
 │   ├── 📁 templates/        # Dual template system
@@ -298,7 +298,7 @@ asset_management/
 - **Asset Issues**: Separate pages for Damage/Lost/Disposal requests
 - **Asset Repair**: Dedicated workflow for damaged assets
 - **Asset Depreciation**: SuperAdmin value recalculation system
-- **Password Reset**: Supabase email recovery with secure token flow
+- **Forgot Password**: Email recovery with token verification & session validation
 - **Approval System**: Hierarchical Admin ↔ Manager with notes column
 - **Export System**: Excel with optimized column ordering
 - **Dashboard Analytics**: Monthly/Quarterly/Yearly charts
@@ -321,8 +321,13 @@ asset_management/
 - **Build Cache**: Skip builds when no changes detected
 
 ### 🔐 Authentication & Security
-- **JWT Session Management**: Secure token-based authentication
-- **Password Reset Flow**: Supabase email recovery with one-time tokens
+- **JWT Session Management**: Secure token-based authentication with auto-refresh
+- **Forgot Password Flow**: 
+  - Email-based recovery via Supabase Auth API
+  - Secure one-time token verification (token_hash)
+  - Session-based password reset with cookie validation
+  - Rate limiting protection (429 handling)
+  - Fragment URL handling for email links
 - **Profile Protection**: Prevents data overwrites during token refresh
 - **Role-based Access**: Admin/Manager/Staff with hierarchical permissions
 - **Secure Password Storage**: Supabase Auth with bcrypt encryption

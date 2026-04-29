@@ -7,6 +7,7 @@
 - **Asset Repair** - Report repair completion for damaged assets
 - **Asset Depreciation** - SuperAdmin value recalculation system
 - **Role-based Authentication** - Admin/Manager/Staff with hierarchical approvals
+- **Forgot Password** - Email-based password recovery with secure token verification
 - **Dashboard Analytics** - Real-time charts and metrics
 - **PWA Support** - Offline-friendly, mobile-ready application
 - **Export Reports** - Excel with optimized column ordering
@@ -37,6 +38,13 @@
 ## Authentication & Roles
 - **JWT-based Authentication** with session middleware
 - **Argon2 Password Hashing** for security
+- **Forgot Password Flow:**
+  - Email-based recovery via Supabase Auth API (`/auth/v1/recover`)
+  - Secure one-time token verification using `token_hash` (`/auth/v1/verify`)
+  - Session-based password reset with cookie validation (`sb_access_token`, `sb_refresh_token`)
+  - Rate limiting protection (HTTP 429 handling)
+  - Fragment URL handling for email links with JavaScript redirect
+  - Security best practice: Don't expose whether email exists
 - **Role-Based Access Control:**
   - **Admin:** Full system access, user management, approves staff/manager requests
   - **Manager:** Asset operations, approves admin requests

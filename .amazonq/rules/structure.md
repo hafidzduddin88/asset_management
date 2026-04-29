@@ -21,6 +21,7 @@ ambp/
 │   │   ├── depreciation.py       # SuperAdmin depreciation updates
 │   │   ├── disposal.py           # Asset disposal (admin only)
 │   │   ├── export.py             # Excel export with optimized ordering
+│   │   ├── forgot_password.py    # Email-based password recovery
 │   │   ├── health.py             # Health checks and monitoring
 │   │   ├── home.py               # Dashboard with analytics
 │   │   ├── login.py              # Authentication endpoints
@@ -104,6 +105,7 @@ ambp/
 - **Asset Issues**: Separate pages for damage/lost/disposal reporting
 - **Asset Repair**: Separate repair completion workflow
 - **Asset Depreciation**: SuperAdmin value recalculation system
+- **Forgot Password**: Email-based password recovery with secure token verification
 - **Dashboard Analytics**: Real-time charts and metrics
 - **User Management**: Role-based access with business unit integration
 - **Export System**: Excel with optimized column ordering
