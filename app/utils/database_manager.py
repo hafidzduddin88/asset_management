@@ -187,6 +187,20 @@ def _get_dropdown_options():
         owners = get_reference_data(TABLES['REF_OWNERS'])
         locations = get_reference_data(TABLES['REF_LOCATION'])
         business_units = get_reference_data(TABLES['REF_BISNIS_UNIT'])
+        
+        # Get assigned users from ref_assigned_user
+        assigned_users_response = supabase.table('ref_assigned_user').select('*').execute()
+        assigned_users = assigned_users_response.data or []
+        
+        # Group assigned users by PT (company)
+        assigned_users_dict = {}
+        for user in assigned_users:
+            pt = user.get('pt', '')
+            if pt:
+                assigned_users_dict.setdefault(pt, []).append({
+                    'assigned_user_id': user.get('assigned_user_id'),
+                    'assigned_user_name': user.get('assigned_user_name')
+                })
 
         category_names = [c.get('category_name', '') for c in categories]
         company_names = [c.get('company_name', '') for c in companies]
@@ -203,13 +217,14 @@ def _get_dropdown_options():
             'companies': company_names,
             'owners': owner_names,
             'business_units': business_unit_names,
-            'locations': location_dict
+            'locations': location_dict,
+            'assigned_users': assigned_users_dict
         }
     except Exception as e:
         logging.error(f"Error getting dropdown options: {str(e)}")
         return {
             'categories': [], 'types': [], 'companies': [],
-            'owners': [], 'business_units': [], 'locations': {}
+            'owners': [], 'business_units': [], 'locations': {}, 'assigned_users': {}
         }
 
 def get_reference_value(table_name, lookup_column, lookup_value, return_column):
