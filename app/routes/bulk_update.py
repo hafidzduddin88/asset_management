@@ -17,7 +17,7 @@ templates = Jinja2Templates(directory="app/templates")
 @router.get("/bulk-update")
 async def bulk_update_page(request: Request, current_profile = Depends(get_current_profile)):
     """Step 1: Export data with filters"""
-    if current_profile.get("role") != "admin":
+    if current_profile.role != "admin":
         return RedirectResponse("/", status_code=303)
     
     try:
@@ -67,7 +67,7 @@ async def bulk_update_export(
     status: str = Form(None)
 ):
     """Step 1: Export filtered assets to Excel"""
-    if current_profile.get("role") != "admin":
+    if current_profile.role != "admin":
         return RedirectResponse("/", status_code=303)
     
     try:
@@ -216,7 +216,7 @@ async def bulk_update_import(
     file: UploadFile = File(...)
 ):
     """Step 2: Import Excel and show preview"""
-    if current_profile.get("role") != "admin":
+    if current_profile.role != "admin":
         return RedirectResponse("/", status_code=303)
     
     try:
@@ -286,7 +286,7 @@ async def bulk_update_import(
 @router.post("/bulk-update/confirm")
 async def bulk_update_confirm(request: Request, current_profile = Depends(get_current_profile)):
     """Step 3: Execute bulk update"""
-    if current_profile.get("role") != "admin":
+    if current_profile.role != "admin":
         return RedirectResponse("/", status_code=303)
     
     try:
