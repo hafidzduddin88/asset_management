@@ -103,15 +103,15 @@
             </select>
         </div>
         
-        <!-- Owner Type Selection - MOVED TO TOP -->
+        <!-- Owner (GA or IT) -->
         <div>
-            <label for="owner_type" class="block text-sm font-medium text-gray-700 required-field">Owner Type</label>
+            <label for="owner_type" class="block text-sm font-medium text-gray-700 required-field">Owner</label>
             <select name="owner_type" id="owner_type" required onchange="toggleOwnerTypeFields()"
                 class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500">
-                <option value="GA">GA (Room-based)</option>
-                <option value="IT">IT (User-based)</option>
+                <option value="GA">GA</option>
+                <option value="IT">IT</option>
             </select>
-            <p class="mt-1 text-xs text-gray-500">GA: Asset assigned to room | IT: Asset assigned to user</p>
+            <p class="mt-1 text-xs text-gray-500">GA: Room-based | IT: User-based</p>
         </div>
         
         <!-- Purchase Date & Cost -->
@@ -166,17 +166,6 @@
             </div>
         </div>
         
-        <!-- Owner -->
-        <div>
-            <label for="owner_name" class="block text-sm font-medium text-gray-700 required-field">Owner</label>
-            <select name="owner_name" id="owner_name" required
-                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500">
-                <option value="">Select Owner</option>
-                {% for owner in dropdown_options.owners %}
-                <option value="{{ owner }}">{{ owner }}</option>
-                {% endfor %}
-            </select>
-        </div>
         
         <!-- Dynamic Fields: GA (Location/Room) or IT (PT/Assigned User) -->
         <div id="owner-type-fields">
@@ -370,7 +359,7 @@ function confirmAssetSubmission() {
         locationInfo = `• Location: ${locationField}\n• Room: ${roomField}`;
     }
     
-    const details = `Asset Registration\n\n• Name: ${formData.asset_name}\n• Category: ${formData.category_name}\n• Type: ${formData.type_name}\n• Company: ${formData.company_name}\n${locationInfo}\n• Cost: Rp ${formData.purchase_cost}\n• Owner: ${formData.owner_name}\n• Owner Type: ${formData.owner_type}\n\n⚠️ This will create a registration request requiring approval.\n\nProceed?`;
+    const details = `Asset Registration\n\n• Name: ${formData.asset_name}\n• Category: ${formData.category_name}\n• Type: ${formData.type_name}\n• Company: ${formData.company_name}\n${locationInfo}\n• Cost: Rp ${formData.purchase_cost}\n• Owner: ${formData.owner_type}\n\n⚠️ This will create a registration request requiring approval.\n\nProceed?`;
     
     return confirm(details);
 }
