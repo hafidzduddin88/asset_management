@@ -3,9 +3,9 @@
 ## Core Features
 
 - **Asset Registration** - Add/Edit/Relocate assets with approval workflow
-- **Owner Type Differentiation** - GA (room-based) vs IT (user-based) asset assignment
-- **Asset Issues** - Report Damage/Lost/Disposal requests via dedicated pages
-- **Asset Repair** - Report repair completion for damaged assets
+- **Owner System** - GA (room-based) vs IT (user-based) asset assignment
+- **Asset Issues** - Damage/Lost/Disposal with single approval
+- **Asset Repair** - Workflow for damaged assets
 - **Asset Depreciation** - SuperAdmin value recalculation system
 - **Bulk Update Assets** - 3-step workflow with filters and Excel import
 - **Role-based Authentication** - Admin/Manager/Staff with hierarchical approvals
@@ -59,7 +59,7 @@
 
 **Critical Actions Requiring Approval:**
 - Asset Registration (Add/Edit)
-- Asset Issues (Damage/Lost/Disposal)
+- Asset Issues (Damage/Lost/Disposal) - Single approval
 - Asset Repair Completion
 - Asset Relocation
 - Asset Depreciation Updates (SuperAdmin only)
@@ -71,26 +71,28 @@
 4. System updates asset status and logs action
 5. Complete audit trail maintained
 
-## Owner Type System
+## Owner System
 **GA vs IT Asset Differentiation:**
 - **Owner GA** - Room-based assignment (location + room)
 - **Owner IT** - User-based assignment (assigned_user_name)
 - **Auto-resolution** - User names resolve to UUIDs (full_name → username)
-- **Conditional Fields** - Dynamic form fields based on owner_type
-- **Filter Support** - Owner Type filter in list pages and bulk update
-- **Export Integration** - Owner Type and assigned user in Excel exports
+- **Conditional Fields** - Dynamic form fields based on owner selection
+- **Filter Support** - Owner filter in list pages and bulk update
+- **Export Integration** - Owner and assigned user in Excel exports
+- **UI Labels** - "Owner" field with "GA" or "IT" options (help text: "GA: Room-based | IT: User-based")
 
 ## Asset Issue Management
 **Integrated Issue Reporting:**
-- **Damage Reports** - Report asset damage with severity levels
-- **Lost Assets** - Report missing assets with circumstances
-- **Disposal Requests** - Request asset disposal with reasons
+- **Damage Reports** - Report asset damage (status: "Damaged")
+- **Lost Assets** - Report missing assets
+- **Disposal Requests** - Request asset disposal (single approval)
 
 **Issue Processing:**
-- All issues require approval workflow
+- All issues require single approval workflow
 - Comprehensive logging in dedicated log tables
 - Asset status automatically updated upon approval
 - Complete audit trail with timestamps and approvers
+- Disposal: User → Request → Admin/Manager Approve → Status: Disposed
 
 ---
 
@@ -102,7 +104,7 @@
 - Financial summaries (purchase value, book value, depreciation)
 
 **Export Capabilities:**
-- **Excel Export** - Optimized column ordering with owner_type and assigned_user_name
+- **Excel Export** - Optimized column ordering with owner and assigned_user_name
 - **Bulk Update** - 3-step workflow: Export with filters → Import Excel → Confirm update
 - **PDF Reports** - Formatted reports with asset details
 - **Role-based Access** - Available to all users with restrictions
@@ -187,6 +189,8 @@ refactor: replace dropdown menus with direct action buttons
 refactor: clean up unused modal components from templates
 
 # Performance improvements
+perf: optimize GitHub Actions and Render deployment
+perf: switch Dockerfile from alpine to slim for faster builds
 perf: implement caching for reference data
 perf: optimize chart rendering performance
 perf: reduce database query count in dashboard
@@ -233,4 +237,6 @@ ci: add Docker build optimization
 # Breaking changes (use ! after type)
 feat!: migrate authentication to JWT-based system
 refactor!: restructure template organization
+refactor!: simplify disposal flow to single approval
+refactor!: replace "Under Repair" with "Damaged" status
 ```

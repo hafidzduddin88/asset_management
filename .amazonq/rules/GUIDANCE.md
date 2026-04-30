@@ -13,7 +13,9 @@
 
 #### Asset Lifecycle
 ```
-Registration → Active → Issues (Damage/Lost) → Repair → Active/Disposed
+Registration → Active → Damaged → Repair → Active/Disposed
+                    ↓
+                  Lost/Disposal
 ```
 
 #### User Roles & Permissions
@@ -27,30 +29,27 @@ Registration → Active → Issues (Damage/Lost) → Repair → Active/Disposed
 - **Profile Protection**: Prevents data overwrites during token refresh
 
 #### Core Workflows
-1. **Asset Registration**: Add/Edit assets with approval and owner type selection
-2. **Owner Type System**: GA (room-based) vs IT (user-based) asset assignment
-3. **Asset Issues**: Report damage/lost/disposal requests (separate pages with asset_id)
-4. **Asset Repair**: Report repair completion (separate `/repair` route)
-5. **Asset Depreciation**: SuperAdmin value recalculation (`/depreciation` route)
-6. **Bulk Update**: 3-step workflow with filters and Excel import (`/bulk-update` route)
-7. **Forgot Password**: Email recovery with secure token verification flow
-8. **SuperAdmin Disposal**: Actual disposal execution (different from disposal requests)
-9. **Approval System**: Hierarchical approval workflow
+1. **Asset Registration**: Add/Edit assets with approval and owner selection
+2. **Owner System**: GA (room-based) vs IT (user-based) asset assignment
+3. **Asset Issues**: Report damage/lost/disposal requests (single approval)
+4. **Asset Repair**: Report repair completion for damaged assets
+5. **Asset Depreciation**: SuperAdmin value recalculation
+6. **Bulk Update**: 3-step workflow with filters and Excel import
+7. **Forgot Password**: Email recovery with secure token verification
+8. **Approval System**: Hierarchical approval workflow (single approval for disposal)
 
 ### 3. Architecture Patterns
 
 #### Route Organization
 ```
 /routes/
-├── asset_management.py # Asset CRUD with owner_type support
-├── damage.py          # Asset Issues (damage/lost pages)
-├── disposal.py        # TWO DIFFERENT FUNCTIONS:
-│                      # 1. Asset Issue disposal requests (/disposal?asset_id=***)
-│                      # 2. SuperAdmin disposal execution (admin-only)
+├── asset_management.py # Asset CRUD with owner support
+├── damage.py          # Asset Issues (damage/lost/disposal pages)
+├── disposal.py        # Disposal requests & disposed assets list
 ├── repair.py          # Asset Repair completion
 ├── depreciation.py    # SuperAdmin depreciation updates
 ├── bulk_update.py     # 3-step bulk update workflow
-├── forgot_password.py # Email-based password recovery with token verification
+├── forgot_password.py # Email-based password recovery
 ├── approvals.py       # Approval workflow
 └── ...
 ```
@@ -71,28 +70,30 @@ Registration → Active → Issues (Damage/Lost) → Repair → Active/Disposed
 
 ### 4. Development Guidelines
 
-#### Owner Type System (IMPORTANT)
+#### Owner System (IMPORTANT)
 - **Owner GA**: Room-based assignment (location + room required)
 - **Owner IT**: User-based assignment (assigned_user_name required)
-- **Conditional Fields**: Forms dynamically show GA or IT fields based on owner_type
+- **Conditional Fields**: Forms dynamically show GA or IT fields based on owner selection
 - **Auto-resolution**: assigned_user_name resolves to assigned_user_id UUID
   - Try full_name first, then username
   - Validation in database_manager.py prepare_asset_data()
-- **Filter Support**: Owner Type filter in list pages and bulk update
-- **Export Integration**: Excel exports include owner_type and assigned_user_name columns
+- **Filter Support**: Owner filter in list pages and bulk update
+- **Export Integration**: Excel exports include owner and assigned_user_name columns
+- **UI Labels**: "Owner" field with "GA" or "IT" options (help text: "GA: Room-based | IT: User-based")
 
 #### Bulk Update Workflow (IMPORTANT)
-- **Step 1**: Export assets with filters (category, type, location, room, owner, owner_type, status)
+- **Step 1**: Export assets with filters (category, type, location, room, owner, status)
 - **Step 2**: Import Excel file with modifications
 - **Step 3**: Confirm and apply updates with approval workflow
 - **Auto-resolution**: assigned_user_name in Excel resolves to assigned_user_id
 - **Validation**: Checks for required fields and valid references
 
 #### Disposal Workflow (IMPORTANT)
-- **Asset Issue Disposal**: User requests disposal via `/disposal?asset_id=***` → Creates approval request
-- **SuperAdmin Disposal**: Admin executes actual disposal of approved assets → Updates asset status to disposed
-- **Different Routes**: Same disposal.py file handles both functions with different access levels
-- **Different Templates**: disposal/form.html (requests) vs disposal/index.html (admin execution)
+- **Single Approval Flow**: User → Request Disposal → Admin/Manager Approve → Status: Disposed
+- **Disposal Request**: User requests disposal via `/disposal/form?asset_id=***` → Creates approval request
+- **Disposal Page**: Shows list of disposed assets (view only)
+- **No Execution Step**: Approval directly sets status to "Disposed"
+- **Status**: "Damaged" (not "Under Repair"), no "To be Disposed" status
 
 #### Code Style
 - **Modular**: Each feature in separate route file
@@ -129,25 +130,25 @@ approval_data = {
 ### 5. Current System State
 
 #### Implemented Features ✅
-- Asset Registration with approval workflow and owner type selection
-- Owner Type System: GA (room-based) vs IT (user-based) asset assignment
-- Asset Issues (damage/lost/disposal) as separate pages with asset_id parameter
-- Asset Repair as separate workflow for damaged assets
+- Asset Registration with approval workflow and owner selection
+- Owner System: GA (room-based) vs IT (user-based) asset assignment
+- Asset Issues (damage/lost/disposal) with single approval flow
+- Asset Repair workflow for damaged assets
 - Asset Depreciation with SuperAdmin value recalculation
 - Bulk Update Assets with 3-step workflow and Excel import
-- SuperAdmin Disposal execution (different from user disposal requests)
+- Disposal with single approval (no execution step)
 - Forgot Password with email recovery and secure token verification
 - Direct action buttons replacing dropdown menus
 - Dedicated asset view pages with image zoom functionality
-- Modal cleanup for cleaner codebase
 - Compact dashboard with monthly/quarterly/yearly analytics
 - User management with business unit terminology
-- Export to Excel with owner_type and assigned_user_name columns
+- Export to Excel with owner and assigned_user_name columns
 - PWA support with offline capability
 - Profile protection against overwrites during authentication
 - Mobile-optimized templates with scrollable lists
 - Rupiah currency format throughout application
-- Owner Type filter in list pages and bulk update
+- Owner filter in list pages and bulk update
+- Optimized build: Python 3.12-slim, faster Docker builds (2-4 min)
 
 #### Key Integrations
 - **Supabase**: Primary database with foreign key relationships and log tables
@@ -234,11 +235,12 @@ docker build -t ambp .
 - **Forgot Password**: `app/routes/forgot_password.py` - Email recovery flow
 
 ### Key Concepts
-- **Owner Type System**: GA (room-based) vs IT (user-based) asset assignment
+- **Owner System**: GA (room-based) vs IT (user-based) asset assignment
 - **Auto-resolution**: User names resolve to UUIDs (full_name → username)
 - **Bulk Update**: 3-step workflow with filters and Excel import
-- **Asset Issues**: Damage/Lost/Disposal integrated in single workflow
-- **Asset Repair**: Separate workflow showing only damaged assets
+- **Asset Issues**: Damage/Lost/Disposal with single approval
+- **Asset Repair**: Workflow for damaged assets (status: "Damaged")
+- **Disposal Flow**: Single approval (User → Request → Approve → Disposed)
 - **Forgot Password**: Email recovery → Token verification → Session-based reset
 - **Dual Templates**: Desktop and mobile versions (always update both)
 - **Approval Workflow**: Role-based hierarchical approvals
@@ -247,21 +249,26 @@ docker build -t ambp .
 - **Compact Design**: Optimized spacing and sizing for better UX
 
 ### Recent Optimizations
+- **Build Performance**: Dockerfile alpine → slim (50% faster builds: 2-4 min)
+- **GitHub Actions**: Path-based triggers, simplified cache, streamlined cleanup
+- **Render Deployment**: Docker runtime with auto-deploy enabled
 - **Requirements**: Reduced from 25+ to 11 essential packages
-- **Owner Type System**: GA (room-based) vs IT (user-based) asset differentiation
+- **Owner System**: GA (room-based) vs IT (user-based) asset differentiation
+- **Owner Field**: Simplified labels ("Owner" with "GA"/"IT" options)
+- **Disposal Flow**: Single approval (removed "To be Disposed" status)
+- **Status Update**: "Under Repair" → "Damaged"
 - **Bulk Update**: 3-step workflow with filters and Excel import
 - **UI/UX**: Direct action buttons replacing dropdown menus
 - **Asset Views**: Dedicated view pages with comprehensive details
-- **Modal Cleanup**: Removed unused components for cleaner codebase
 - **Currency Format**: Changed to Rupiah (Rp) throughout application
 - **Depreciation**: Added SuperAdmin value recalculation functionality
-- **Export**: Optimized column ordering with owner_type and assigned_user_name
+- **Export**: Optimized column ordering with owner and assigned_user_name
 - **Approval System**: Fixed role-based filtering and notes column usage
 - **Authentication**: Fixed full_name preservation during login
 - **Forgot Password**: Email recovery with secure token verification flow
 - **Mobile**: Added scrollable lists and compact filters
-- **Asset Issues**: Separated into individual pages (/damage, /lost, /disposal) with asset_id parameter
-- **Disposal Workflow**: Clear separation between user requests and SuperAdmin execution
-- **Owner Type Filter**: Added to list pages and bulk update for GA/IT filtering
+- **Asset Issues**: Separated into individual pages (/damage, /lost, /disposal)
+- **Owner Filter**: Added to list pages and bulk update for GA/IT filtering
+- **README**: Compressed and simplified structure
 
 This guidance should help you quickly understand and work with the AMBP system effectively.
