@@ -35,7 +35,7 @@ async def damage_page(request: Request, asset_id: int = None, current_profile = 
     else:
         # Asset selection page
         all_assets = get_all_assets()
-        active_assets = [asset for asset in all_assets if asset.get('status') not in ['Disposed', 'Lost', 'Under Repair']]
+        active_assets = [asset for asset in all_assets if asset.get('status') not in ['Disposed', 'Lost', 'Damaged']]
         
         template_path = get_template(request, "damage/index.html")
         return templates.TemplateResponse(template_path, {

@@ -24,15 +24,15 @@ async def repair_page(request: Request, asset_id: int = None, current_profile = 
     try:
         supabase = get_supabase()
         
-        # Get specific asset with Under Repair status
+        # Get specific asset with Damaged status
         asset_response = supabase.table('assets').select('''
             asset_id, asset_name, asset_tag, status,
             ref_categories(category_name),
             ref_locations(location_name, room_name)
-        ''').eq('asset_id', asset_id).eq('status', 'Under Repair').execute()
+        ''').eq('asset_id', asset_id).eq('status', 'Damaged').execute()
         
         if not asset_response.data:
-            raise HTTPException(status_code=404, detail="Asset not found or not under repair")
+            raise HTTPException(status_code=404, detail="Asset not found or not damaged")
         
         asset = asset_response.data[0]
         

@@ -77,27 +77,27 @@ async def disposal_error_page(
 
 @router.get("", response_class=HTMLResponse)
 @router.get("/", response_class=HTMLResponse)
-async def disposal_execution_page(
+async def disposal_list_page(
     request: Request,
-    current_profile = Depends(get_admin_user)
+    current_profile = Depends(get_current_profile)
 ):
-    """Admin page for disposal execution (To be Disposed → Disposed)."""
+    """List all disposed assets for viewing."""
     supabase = get_supabase()
     
     response = supabase.table('assets').select('''
         asset_id, asset_tag, asset_name, status,
         ref_categories(category_name),
         ref_locations(location_name, room_name)
-    ''').eq('status', 'To be Disposed').execute()
+    ''').eq('status', 'Disposed').execute()
     
-    assets_to_dispose = response.data or []
+    disposed_assets = response.data or []
     
     template_path = get_template(request, "disposal/index.html")
     return templates.TemplateResponse(template_path, {
         "request": request,
         "current_profile": current_profile,
         "user": current_profile,
-        "assets": assets_to_dispose
+        "assets": disposed_assets
     })
 
 
@@ -142,7 +142,6 @@ async def submit_disposal_request(
             "asset_name": asset.get('asset_name', ''),
             "asset_tag": asset.get('asset_tag', ''),
             "disposal_reason": disposal_reason,
-            "disposal_type": "Request",
             "condition_description": description or '',
             "disposal_method": disposal_method,
             "notes": notes or '',
@@ -152,7 +151,7 @@ async def submit_disposal_request(
             "status": "pending"
         }
         
-        supabase.table('request_disposal_log').insert(disposal_log_data).execute()
+        supabase.table('disposal_request_log').insert(disposal_log_data).execute()
         
         if approval_success:
             return RedirectResponse(
@@ -171,79 +170,3 @@ async def submit_disposal_request(
             status_code=status.HTTP_303_SEE_OTHER
         )
 
-@router.post("/execute/{asset_id}")
-async def execute_disposal(
-    asset_id: str,
-    request: Request,
-    disposal_method: str = Form(...),
-    notes: str = Form(None),
-    current_profile = Depends(get_admin_user)
-):
-    """Execute disposal by Admin - requires manager approval first."""
-    asset = get_asset_by_id(asset_id)
-    if not asset:
-        raise HTTPException(status_code=404, detail="Asset not found")
-    
-    if asset.get('status') != 'To be Disposed':
-        raise HTTPException(status_code=400, detail="Asset must be 'To be Disposed' status")
-    
-    # Create approval request for disposal execution
-    approval_data = {
-        'type': 'disposal_execution',
-        'asset_id': asset_id,
-        'asset_name': asset.get('asset_name', ''),
-        'submitted_by': current_profile.id,
-        'submitted_date': datetime.now().isoformat(),
-        'description': f"Disposal execution: {disposal_method}",
-        'notes': json.dumps({"disposal_method": disposal_method, "notes": notes or ""}),
-        'status': 'pending'
-    }
-    
-    approval_success = add_approval_request(approval_data)
-    
-    if approval_success:
-        return RedirectResponse(
-            url=f"/disposal/execution/success?asset_id={asset_id}&asset_name={asset.get('asset_name', '')}",
-            status_code=status.HTTP_303_SEE_OTHER
-        )
-    else:
-        return RedirectResponse(
-            url=f"/disposal/execution/error?asset_id={asset_id}&asset_name={asset.get('asset_name', '')}&error_message=Failed to submit disposal execution for approval",
-            status_code=status.HTTP_303_SEE_OTHER
-        )
-
-@router.get("/execution/success", response_class=HTMLResponse)
-async def disposal_execution_success_page(
-    request: Request,
-    asset_id: str,
-    asset_name: str = None,
-    current_profile = Depends(get_current_profile)
-):
-    """Disposal execution success page."""
-    template_path = get_template(request, "disposal/execution_success.html")
-    return templates.TemplateResponse(template_path, {
-        "request": request,
-        "current_profile": current_profile,
-        "user": current_profile,
-        "asset_id": asset_id,
-        "asset_name": asset_name or "Asset"
-    })
-
-@router.get("/execution/error", response_class=HTMLResponse)
-async def disposal_execution_error_page(
-    request: Request,
-    asset_id: str,
-    asset_name: str = None,
-    error_message: str = None,
-    current_profile = Depends(get_current_profile)
-):
-    """Disposal execution error page."""
-    template_path = get_template(request, "disposal/execution_error.html")
-    return templates.TemplateResponse(template_path, {
-        "request": request,
-        "current_profile": current_profile,
-        "user": current_profile,
-        "asset_id": asset_id,
-        "asset_name": asset_name or "Asset",
-        "error_message": error_message or "An error occurred while submitting disposal execution for approval."
-    })

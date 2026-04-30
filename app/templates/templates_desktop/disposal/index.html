@@ -13,14 +13,14 @@
                         <i class="fas fa-trash-alt text-3xl text-white"></i>
                     </div>
                     <div>
-                        <h1 class="text-3xl font-bold text-white">Asset Disposal Execution</h1>
-                        <p class="text-red-100 mt-1">Execute disposal for approved assets (Admin Only)</p>
+                        <h1 class="text-3xl font-bold text-white">Disposed Assets</h1>
+                        <p class="text-red-100 mt-1">View all disposed assets</p>
                     </div>
                 </div>
                 <div class="hidden md:flex items-center space-x-6 text-white">
                     <div class="text-center">
                         <div class="text-2xl font-bold">{{ assets|length }}</div>
-                        <div class="text-sm text-red-100">To be Disposed</div>
+                        <div class="text-sm text-red-100">Disposed</div>
                     </div>
                 </div>
             </div>
@@ -35,8 +35,8 @@
                             <i class="fas fa-exclamation-triangle text-red-600"></i>
                         </div>
                         <div>
-                            <h3 class="text-lg font-semibold text-gray-900">Execute Asset Disposal</h3>
-                            <p class="text-sm text-gray-600">Assets approved for disposal - execute final disposal</p>
+                            <h3 class="text-lg font-semibold text-gray-900">Disposed Assets</h3>
+                            <p class="text-sm text-gray-600">Assets that have been disposed</p>
                         </div>
                     </div>
                     <div class="bg-red-100 px-3 py-1 rounded-full">
@@ -58,9 +58,9 @@
                                 <div class="flex items-center space-x-3 mb-2">
                                     <h4 class="text-lg font-semibold text-gray-900">{{ asset.get('asset_name', 'Unknown Asset') }}</h4>
                                     {% set status = asset.get('status', '') %}
-                                    {% if status == 'To Be Disposed' %}
-                                        <span class="px-3 py-1 bg-yellow-100 text-yellow-800 text-xs font-semibold rounded-full">
-                                            <i class="fas fa-exclamation-triangle mr-1"></i>{{ status }}
+                                    {% if status == 'Disposed' %}
+                                        <span class="px-3 py-1 bg-red-100 text-red-800 text-xs font-semibold rounded-full">
+                                            <i class="fas fa-trash mr-1"></i>{{ status }}
                                         </span>
                                     {% else %}
                                         <span class="px-3 py-1 bg-gray-100 text-gray-800 text-xs font-semibold rounded-full">{{ status }}</span>
@@ -83,10 +83,10 @@
                             </div>
                         </div>
                         <div class="flex items-center space-x-3">
-                            <button onclick="openDisposalModal('{{ asset.get('asset_id', '') }}', '{{ asset.get('asset_name', '') }}')" 
-                                class="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 shadow-md hover:shadow-lg">
-                                <i class="fas fa-trash mr-2"></i>Dispose Asset
-                            </button>
+                            <a href="/asset_management/view/{{ asset.get('asset_id', '') }}" 
+                                class="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 shadow-md hover:shadow-lg">
+                                <i class="fas fa-eye mr-2"></i>View Details
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -97,80 +97,12 @@
                 <div class="bg-gray-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
                     <i class="fas fa-check-circle text-3xl text-gray-400"></i>
                 </div>
-                <h3 class="text-lg font-semibold text-gray-900 mb-2">No Assets to Dispose</h3>
-                <p class="text-gray-500">No assets are currently marked 'To be Disposed'</p>
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">No Disposed Assets</h3>
+                <p class="text-gray-500">No assets have been disposed yet</p>
             </div>
             {% endif %}
         </div>
     </div>
 </div>
 
-<!-- Disposal Modal -->
-<div id="disposalModal" class="fixed inset-0 bg-black bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
-    <div class="relative top-10 mx-auto p-6 w-11/12 md:w-1/2 lg:w-1/3 max-w-lg">
-        <div class="bg-white rounded-2xl shadow-2xl overflow-hidden">
-            <div class="bg-gradient-to-r from-red-600 to-red-700 px-6 py-4">
-                <div class="flex justify-between items-center">
-                    <div class="flex items-center space-x-3">
-                        <div class="bg-white bg-opacity-20 p-2 rounded-lg">
-                            <i class="fas fa-trash-alt text-white"></i>
-                        </div>
-                        <h3 class="text-xl font-semibold text-white">Dispose Asset</h3>
-                    </div>
-                    <button onclick="closeDisposalModal()" class="text-white hover:text-gray-200 transition-colors duration-200">
-                        <i class="fas fa-times text-xl"></i>
-                    </button>
-                </div>
-            </div>
-            <div class="p-6">
-            
-            <form id="disposalForm" method="POST">
-                <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Asset Name</label>
-                    <p id="assetName" class="text-sm text-gray-900 bg-gray-50 p-2 rounded"></p>
-                </div>
-                
-                <div class="mb-4">
-                    <label for="disposal_method" class="block text-sm font-medium text-gray-700 mb-2">Disposal Method *</label>
-                    <select name="disposal_method" id="disposal_method" required class="w-full border border-gray-300 rounded-md px-3 py-2">
-                        <option value="">Select Method</option>
-                        <option value="Sold">Sold</option>
-                        <option value="Donated">Donated</option>
-                        <option value="Recycled">Recycled</option>
-                        <option value="Destroyed">Destroyed</option>
-                        <option value="Returned to Vendor">Returned to Vendor</option>
-                    </select>
-                </div>
-                
-                <div class="mb-4">
-                    <label for="notes" class="block text-sm font-medium text-gray-700 mb-2">Notes</label>
-                    <textarea name="notes" id="notes" rows="2" class="w-full border border-gray-300 rounded-md px-3 py-2"></textarea>
-                </div>
-                
-                <div class="flex justify-end space-x-3 pt-4">
-                    <button type="button" onclick="closeDisposalModal()" class="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-semibold transition-colors duration-200">
-                        Cancel
-                    </button>
-                    <button type="submit" onclick="return confirm('Are you sure you want to permanently dispose this asset?')" class="px-6 py-2 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-lg font-semibold transition-all duration-200 shadow-md hover:shadow-lg">
-                        <i class="fas fa-trash mr-2"></i>Dispose Asset
-                    </button>
-                </div>
-            </form>
-            </div>
-        </div>
-    </div>
-</div>
-
-<script>
-function openDisposalModal(assetId, assetName) {
-    document.getElementById('assetName').textContent = assetName;
-    document.getElementById('disposalForm').action = `/disposal/execute/${assetId}`;
-    document.getElementById('disposalModal').classList.remove('hidden');
-}
-
-function closeDisposalModal() {
-    document.getElementById('disposalModal').classList.add('hidden');
-    document.getElementById('disposalForm').reset();
-}
-</script>
 {% endblock %}

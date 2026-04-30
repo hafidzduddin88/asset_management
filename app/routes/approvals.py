@@ -155,8 +155,8 @@ async def approve_request(
             }
             supabase.table('damage_log').insert(damage_log_data).execute()
             
-            # Update asset status to Under Repair and move to warehouse if specified
-            asset_updates = {'status': 'Under Repair'}
+            # Update asset status to Damaged and move to warehouse if specified
+            asset_updates = {'status': 'Damaged'}
             if approval.get('to_location_id'):
                 asset_updates['location_id'] = approval.get('to_location_id')
             update_asset(asset_id, asset_updates)
@@ -273,19 +273,29 @@ async def approve_request(
                 update_asset(asset_id, asset_updates)
 
         elif approval_type == 'disposal_request':
-            # Process disposal request approval
+            # Process disposal request approval - directly dispose
             notes_data = json.loads(approval.get('notes', '{}'))
             asset_id = approval.get('asset_id')
             
-            # Update asset status to To be Disposed
-            update_asset(asset_id, {'status': 'To be Disposed'})
-
-        elif approval_type == 'disposal_execution':
-            # Process disposal execution approval
-            notes_data = json.loads(approval.get('notes', '{}'))
-            asset_id = approval.get('asset_id')
+            # Add to disposal_log
+            disposal_log_data = {
+                'asset_id': asset_id,
+                'asset_name': approval.get('asset_name', ''),
+                'disposal_reason': notes_data.get('disposal_reason', ''),
+                'disposal_method': notes_data.get('disposal_method', ''),
+                'description': notes_data.get('description', ''),
+                'notes': notes_data.get('notes', ''),
+                'requested_by': approval.get('submitted_by'),
+                'requested_by_name': approval.get('submitted_profile', {}).get('full_name') or approval.get('submitted_profile', {}).get('username') or 'Unknown User',
+                'approved_by': current_profile.id,
+                'approved_by_name': current_profile.full_name or current_profile.username,
+                'approved_at': datetime.now().isoformat(),
+                'disposal_date': datetime.now().date().isoformat(),
+                'status': 'approved'
+            }
+            supabase.table('disposal_log').insert(disposal_log_data).execute()
             
-            # Update asset status to Disposed
+            # Update asset status to Disposed (single approval)
             update_asset(asset_id, {'status': 'Disposed'})
 
         elif approval_type == 'edit_asset':
