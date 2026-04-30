@@ -1,9 +1,15 @@
 name: 🚀 Build & Push Docker Image
 
 on:
-  push:  # Build on every commit to any branch
-  pull_request:
-  workflow_dispatch:  # Manual trigger
+  push:
+    branches:
+      - main
+    paths:
+      - 'app/**'
+      - 'Dockerfile'
+      - 'requirements.txt'
+      - '.github/workflows/**'
+  workflow_dispatch:
 
 env:
   REGISTRY: ghcr.io
@@ -34,34 +40,9 @@ jobs:
       id: vars
       run: echo "sha_short=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
 
-    - name: Check for changes
-      id: changes
-      run: |
-        if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
-          echo "changed=true" >> "$GITHUB_OUTPUT"
-          echo "Manual trigger - forcing build"
-        elif git diff --quiet HEAD~1 HEAD -- Dockerfile requirements.txt app/; then
-          echo "changed=false" >> "$GITHUB_OUTPUT"
-          echo "No relevant changes detected - skipping build"
-        else
-          echo "changed=true" >> "$GITHUB_OUTPUT"
-          echo "Changes detected in Dockerfile, requirements.txt, or app/"
-        fi
 
-    - name: Skip build notification
-      if: steps.changes.outputs.changed == 'false'
-      run: |
-        echo "⏭️ Skipping build - no changes in Dockerfile, requirements.txt, or app/ directory"
-        echo "💾 Using existing cached image"
-    
-    - name: Clear Docker cache on corruption
-      if: steps.changes.outputs.changed == 'true'
-      run: |
-        docker builder prune -f --filter until=1h
-        docker system prune -f
 
-    - name: Build and push Docker image (latest and git sha)
-      if: steps.changes.outputs.changed == 'true' || github.event_name == 'workflow_dispatch'
+    - name: Build and push Docker image
       uses: docker/build-push-action@v5
       with:
         context: .
@@ -72,13 +53,12 @@ jobs:
         labels: |
           org.opencontainers.image.description=Asset Management System
           org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
-        cache-from: type=gha,scope=latest
-        cache-to: type=gha,mode=max,scope=latest
-        no-cache: ${{ github.event_name == 'workflow_dispatch' }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
         platforms: linux/amd64
 
     - name: Deploy to Render
-      if: github.ref == 'refs/heads/main' && (steps.changes.outputs.changed == 'true' || github.event_name == 'workflow_dispatch')
+      if: github.ref == 'refs/heads/main'
       run: |
         echo "Triggering Render deployment..."
         RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
@@ -112,59 +92,25 @@ jobs:
   clean:
     needs: build
     runs-on: ubuntu-latest
-    if: always() && github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main'
     permissions:
-      actions: write
-      contents: read
       packages: write
     
     steps:
-    - name: Log in to Container Registry
-      uses: docker/login-action@v3
-      with:
-        registry: ${{ env.REGISTRY }}
-        username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
-    
-    - name: Clean old images and caches
+    - name: Clean old GHCR images
       run: |
-        echo "Cleaning old images and caches..."
+        echo "Cleaning old GHCR images (keep 2 latest)..."
         
-        # Clean ALL GitHub Actions caches except the very latest
-        CACHES=$(curl -s -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
-                      -H "Accept: application/vnd.github+json" \
-                      -H "X-GitHub-Api-Version: 2022-11-28" \
-                      "https://api.github.com/repos/${{ github.repository }}/actions/caches")
-        
-        # Delete ALL caches except the very latest one
-        echo "$CACHES" | jq -r '.actions_caches | sort_by(.created_at) | reverse | .[1:] | .[].id' | while read cache_id; do
-          if [ ! -z "$cache_id" ]; then
-            echo "Deleting cache: $cache_id"
-            curl -X DELETE \
-                 -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
-                 -H "Accept: application/vnd.github+json" \
-                 -H "X-GitHub-Api-Version: 2022-11-28" \
-                 "https://api.github.com/repos/${{ github.repository }}/actions/caches/$cache_id" || true
-          fi
-        done
-        
-        # Clean old GHCR images (keep only 3 latest)
-        echo "Cleaning old GHCR images..."
-        
-        # Get package versions sorted by created date
         VERSIONS=$(curl -s -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
                         -H "Accept: application/vnd.github+json" \
                         "https://api.github.com/users/${{ github.repository_owner }}/packages/container/ambp/versions")
         
-        # Delete all versions except the 3 most recent
-        echo "$VERSIONS" | jq -r 'sort_by(.created_at) | reverse | .[3:] | .[].id' | while read version_id; do
+        echo "$VERSIONS" | jq -r 'sort_by(.created_at) | reverse | .[2:] | .[].id' | while read version_id; do
           if [ ! -z "$version_id" ]; then
-            echo "Deleting GHCR version: $version_id"
+            echo "Deleting version: $version_id"
             curl -X DELETE \
                  -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
                  -H "Accept: application/vnd.github+json" \
                  "https://api.github.com/users/${{ github.repository_owner }}/packages/container/ambp/versions/$version_id" || true
           fi
         done
-        
-        echo "Cleanup completed"
