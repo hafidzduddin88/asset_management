@@ -4,7 +4,7 @@ from starlette.templating import Jinja2Templates
 from app.utils.device_detector import get_template
 from app.utils.auth import get_current_profile
 from app.utils.database_manager import get_supabase, TABLES, invalidate_cache
-from app.utils.flash import set_flash_message
+from app.utils.flash import set_flash
 from openpyxl import Workbook, load_workbook
 from openpyxl.styles import Font, PatternFill, Alignment
 from io import BytesIO
@@ -205,7 +205,8 @@ async def bulk_update_export(
         
     except Exception as e:
         logging.error(f"Error exporting assets: {str(e)}")
-        response = set_flash_message(RedirectResponse("/bulk-update", status_code=303), "error", f"Gagal export data: {str(e)}")
+        response = RedirectResponse("/bulk-update", status_code=303)
+        set_flash(response, f"Gagal export data: {str(e)}", "error")
         return response
 
 @router.post("/bulk-update/import")
@@ -278,7 +279,8 @@ async def bulk_update_import(
         
     except Exception as e:
         logging.error(f"Error importing file: {str(e)}")
-        response = set_flash_message(RedirectResponse("/bulk-update", status_code=303), "error", f"Gagal import file: {str(e)}")
+        response = RedirectResponse("/bulk-update", status_code=303)
+        set_flash(response, f"Gagal import file: {str(e)}", "error")
         return response
 
 @router.post("/bulk-update/confirm")
@@ -290,7 +292,8 @@ async def bulk_update_confirm(request: Request, current_profile = Depends(get_cu
     try:
         updates = request.session.get('bulk_updates', [])
         if not updates:
-            response = set_flash_message(RedirectResponse("/bulk-update", status_code=303), "error", "Tidak ada data untuk diupdate")
+            response = RedirectResponse("/bulk-update", status_code=303)
+            set_flash(response, "Tidak ada data untuk diupdate", "error")
             return response
         
         supabase = get_supabase()
@@ -388,5 +391,6 @@ async def bulk_update_confirm(request: Request, current_profile = Depends(get_cu
         
     except Exception as e:
         logging.error(f"Error confirming bulk update: {str(e)}")
-        response = set_flash_message(RedirectResponse("/bulk-update", status_code=303), "error", f"Gagal update data: {str(e)}")
+        response = RedirectResponse("/bulk-update", status_code=303)
+        set_flash(response, f"Gagal update data: {str(e)}", "error")
         return response
