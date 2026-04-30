@@ -32,12 +32,11 @@ async def home(request: Request, current_profile = Depends(get_current_profile),
         total_assets = len(active_assets)
         disposed_count = len(disposed_assets)
         lost_count = len(lost_assets)
-        damaged_count = len([a for a in all_assets if a.get("status", "") == "Under Repair"])
+        damaged_count = len([a for a in all_assets if a.get("status", "") == "Damaged"])
         
         # Count assets by activity type
         relocated_count = 0  # Will need to get from logs
         repaired_count = 0   # Will need to get from logs
-        to_be_disposed_count = len([a for a in all_assets if a.get("status", "") == "To be Disposed"])
         
         # Helper function to safely convert values to float
         def safe_float(value):
@@ -158,7 +157,6 @@ async def home(request: Request, current_profile = Depends(get_current_profile),
             "damaged_count": damaged_count,
             "relocated_count": relocated_count,
             "repaired_count": repaired_count,
-            "to_be_disposed_count": to_be_disposed_count,
             "category_counts": category_counts,
             "location_counts": location_counts_dict,
             "monthly_chart_labels": monthly_chart_labels,
@@ -191,7 +189,6 @@ async def home(request: Request, current_profile = Depends(get_current_profile),
             "damaged_count": 0,
             "relocated_count": 0,
             "repaired_count": 0,
-            "to_be_disposed_count": 0,
             "category_counts": {},
             "location_counts": {},
             "monthly_chart_labels": [],
