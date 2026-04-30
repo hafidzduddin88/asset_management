@@ -188,18 +188,26 @@ def _get_dropdown_options():
         locations = get_reference_data(TABLES['REF_LOCATION'])
         business_units = get_reference_data(TABLES['REF_BISNIS_UNIT'])
         
-        # Get assigned users from ref_assigned_user
-        assigned_users_response = supabase.table('ref_assigned_user').select('*').execute()
+        # Get assigned users from ref_assigned_user with foreign key relationships
+        assigned_users_response = supabase.table('ref_assigned_user').select('''
+            assigned_user_id,
+            assigned_user_name,
+            company_id,
+            business_unit_id,
+            ref_companies(company_name),
+            ref_business_units(business_unit_name)
+        ''').execute()
         assigned_users = assigned_users_response.data or []
         
-        # Group assigned users by PT (company)
+        # Group assigned users by company_name
         assigned_users_dict = {}
         for user in assigned_users:
-            pt = user.get('pt', '')
-            if pt:
-                assigned_users_dict.setdefault(pt, []).append({
+            company_name = user.get('ref_companies', {}).get('company_name', '') if user.get('ref_companies') else ''
+            if company_name:
+                assigned_users_dict.setdefault(company_name, []).append({
                     'assigned_user_id': user.get('assigned_user_id'),
-                    'assigned_user_name': user.get('assigned_user_name')
+                    'assigned_user_name': user.get('assigned_user_name'),
+                    'business_unit_name': user.get('ref_business_units', {}).get('business_unit_name', '') if user.get('ref_business_units') else ''
                 })
 
         category_names = [c.get('category_name', '') for c in categories]
