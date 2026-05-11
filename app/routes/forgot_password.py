@@ -156,7 +156,7 @@ async def change_password_page(request: Request):
         if (error) {
             const errorMsg = errorDescription || error;
             window.location.href = '/forgot-password?error=' + encodeURIComponent(errorMsg);
-        } else if (hash && (hashParams.get('token_hash') || hashParams.get('token'))) {
+        } else if (hash && (hashParams.get('access_token') || hashParams.get('refresh_token') || hashParams.get('token_hash') || hashParams.get('token'))) {
             window.location.href = '/auth/change-password?' + hash;
         } else {
             window.location.href = '/forgot-password?error=' + encodeURIComponent('Link tidak valid atau sudah kadaluarsa');
@@ -228,6 +228,14 @@ async def change_password_page(request: Request):
 @router.get("/auth/change-password/form")
 async def change_password_form(request: Request):
     """Display password change form (requires valid session from cookies)"""
+    # Check if user has valid reset session cookies
+    access_token = request.cookies.get("sb_access_token")
+    refresh_token = request.cookies.get("sb_refresh_token")
+    
+    if not access_token or not refresh_token:
+        # Redirect to forgot password if no valid session
+        return RedirectResponse("/forgot-password?error=Session+tidak+valid", status_code=303)
+    
     template_path = get_template(request, "forgot_password/reset.html")
     return templates.TemplateResponse(template_path, {
         "request": request,
