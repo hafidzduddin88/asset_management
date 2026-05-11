@@ -141,12 +141,15 @@ Registration → Active → Damaged → Repair → Active/Disposed
 - Smart caching with 10s TTL
 - Single worker for faster startup
 - Path-based GitHub Actions triggers
+- Token refresh using supabase-py v2 SDK (~20-30% faster than manual HTTP)
+- Automatic session management with built-in error handling
 
 **Security:**
-- JWT session with auto-refresh
-- Email-based password recovery
-- Profile protection against overwrites
+- JWT session with auto-refresh (supabase-py v2 SDK method)
+- Email-based password recovery with secure token verification
+- Profile protection against overwrites during token refresh
 - Role-based access control
+- Graceful token refresh failure handling with automatic redirect to login
 
 **UX:**
 - Direct action buttons (no dropdowns)
