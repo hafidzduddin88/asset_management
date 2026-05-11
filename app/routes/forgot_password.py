@@ -38,6 +38,8 @@ async def forgot_password_submit(request: Request, email: str = Form(...)):
     try:
         # Get the base URL for redirect
         base_url = str(request.base_url).rstrip('/')
+        # Redirect ke endpoint kita dengan placeholder token
+        # Supabase akan append token_hash dan type sebagai fragment
         redirect_url = f"{base_url}/auth/change-password"
         
         # Send recovery email using Supabase Auth REST API with service role key
