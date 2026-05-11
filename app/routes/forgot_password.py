@@ -86,13 +86,10 @@ async def change_password_page(request: Request):
     
     # Get token_hash and type from query params (Supabase email link format)
     token_hash = request.query_params.get("token_hash")
+    token = request.query_params.get("token")
     type_param = request.query_params.get("type")
     access_token = request.query_params.get("access_token")
     refresh_token = request.query_params.get("refresh_token")
-    
-    # Handle legacy token format
-    if not token_hash:
-        token_hash = request.query_params.get("token")
     
     # If we have access_token and refresh_token from Supabase redirect, use them directly
     if access_token and refresh_token:
@@ -124,7 +121,7 @@ async def change_password_page(request: Request):
                 "error": "Terjadi kesalahan saat memproses link reset password."
             })
     
-    if not token_hash or not type_param:
+    if not token_hash and not token or not type_param:
         template_path = get_template(request, "forgot_password/processing.html")
         return templates.TemplateResponse(template_path, {"request": request})
     
@@ -134,10 +131,13 @@ async def change_password_page(request: Request):
         
         # Verify recovery token
         try:
-            result = supabase.auth.verify_otp({
-                "type": "recovery",
-                "token_hash": token_hash
-            })
+            payload = {"type": "recovery"}
+            if token_hash:
+                payload["token_hash"] = token_hash
+            else:
+                payload["token"] = token
+            
+            result = supabase.auth.verify_otp(payload)
             
             if not result.session or not result.session.access_token or not result.session.refresh_token:
                 logging.warning(f"Recovery verification returned incomplete session - access_token: {bool(result.session.access_token) if result.session else False}, refresh_token: {bool(result.session.refresh_token) if result.session else False}")
