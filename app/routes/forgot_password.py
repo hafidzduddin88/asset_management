@@ -34,38 +34,33 @@ async def forgot_password_page(request: Request):
 
 @router.post("/forgot-password")
 async def forgot_password_submit(request: Request, email: str = Form(...)):
-    """Send password reset email via Supabase Auth API"""
+    """Send password reset email via Supabase SDK"""
     try:
+        # Import supabase client
+        from supabase import create_client
+        supabase = create_client(config.SUPABASE_URL, config.SUPABASE_ANON_KEY)
+        
         # Get the base URL for redirect
         base_url = str(request.base_url).rstrip('/')
-        # Redirect ke endpoint kita dengan placeholder token
-        # Supabase akan append token_hash dan type sebagai fragment
         redirect_url = f"{base_url}/auth/change-password"
         
-        # Send recovery email using Supabase Auth REST API with service role key
-        async with httpx.AsyncClient() as client:
-            response = await client.post(
-                f"{config.SUPABASE_URL}/auth/v1/recover",
-                headers={
-                    "apikey": config.SUPABASE_SERVICE_KEY,
-                    "Authorization": f"Bearer {config.SUPABASE_SERVICE_KEY}",
-                    "Content-Type": "application/json",
-                },
-                json={
-                    "email": email,
-                    "redirect_to": redirect_url,
-                },
-                timeout=30,
+        # Use SDK method instead of manual HTTP
+        try:
+            result = supabase.auth.reset_password_for_email(
+                email, 
+                {"redirect_to": redirect_url}
             )
             
-            # Handle rate limiting
-            if response.status_code == 429:
+        except Exception as reset_error:
+            # Handle rate limiting and other errors
+            if "429" in str(reset_error) or "rate" in str(reset_error).lower():
                 template_path = get_template(request, "forgot_password/request.html")
                 return templates.TemplateResponse(template_path, {
                     "request": request,
                     "email": email,
                     "error": "Terlalu banyak permintaan. Silakan tunggu beberapa saat."
                 })
+            # For other errors, continue to success message (don't expose errors)
         
         # Don't expose whether email exists (security best practice)
         logging.info(f"Password reset email requested for: {email}")
@@ -232,22 +227,28 @@ async def change_password_submit(
                 "error": "Session tidak valid. Silakan request link reset password baru."
             })
         
-        # Update password using Supabase Auth API with access token (use ANON_KEY for user operations)
-        async with httpx.AsyncClient() as client:
-            response = await client.put(
-                f"{config.SUPABASE_URL}/auth/v1/user",
-                headers={
-                    "apikey": config.SUPABASE_ANON_KEY,
-                    "Authorization": f"Bearer {access_token}",
-                    "Content-Type": "application/json",
-                },
-                json={"password": new_password},
-                timeout=30,
-            )
-            
-            if response.status_code >= 400:
-                logging.error(f"Failed to update password: {response.status_code}")
+        # Import supabase client and use SDK method
+        from supabase import create_client
+        supabase = create_client(config.SUPABASE_URL, config.SUPABASE_ANON_KEY)
+        
+        # Set session with current tokens to use SDK method
+        refresh_token = request.cookies.get("sb_refresh_token")
+        if access_token and refresh_token:
+            try:
+                supabase.auth.set_session(access_token, refresh_token)
+                
+                # Use SDK method to update password
+                result = supabase.auth.update_user({"password": new_password})
+                
+                if not result.user:
+                    logging.error("Failed to update password via SDK")
+                    return RedirectResponse("/auth/change-password/form?error=Gagal+mengubah+password", status_code=303)
+                    
+            except Exception as update_error:
+                logging.error(f"Failed to update password: {update_error}")
                 return RedirectResponse("/auth/change-password/form?error=Gagal+mengubah+password", status_code=303)
+        else:
+            return RedirectResponse("/auth/change-password/form?error=Session+tidak+valid", status_code=303)
         
         logging.info("Password updated successfully")
         
