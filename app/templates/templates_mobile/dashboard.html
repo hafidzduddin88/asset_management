@@ -9,66 +9,96 @@
             position: relative;
             height: 200px;
         }
-        .stat-card {
-            transition: all 0.2s ease;
-        }
-        .stat-card:active {
-            transform: scale(0.98);
-        }
     </style>
 {% endblock %}
 
 {% block content %}
 <!-- Header -->
-<div class="bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg p-4 mb-4 text-white">
-    <div class="flex items-center justify-between">
+<div class="bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg p-4 mb-4 text-white">
+    <div class="flex items-center justify-between mb-3">
         <div>
             <h1 class="text-xl font-bold">Dashboard</h1>
-            <p class="text-blue-100 text-sm">Asset Management</p>
+            <p class="text-blue-100 text-xs">Asset Management</p>
         </div>
-        <button id="refresh-button" class="p-2 bg-white bg-opacity-20 rounded-lg">
+        <button id="refresh-btn" class="p-2 bg-white bg-opacity-20 rounded-lg">
             <i id="refresh-icon" class="fas fa-sync-alt text-white"></i>
         </button>
     </div>
+    
+    <!-- Filter -->
+    <div class="flex space-x-2 text-xs">
+        <a href="/dashboard" class="px-2 py-1 rounded {% if not owner_type_filter %}bg-white text-blue-600{% else %}bg-white bg-opacity-20 text-white{% endif %} font-medium">All</a>
+        <a href="/dashboard?owner_type=GA" class="px-2 py-1 rounded {% if owner_type_filter == 'GA' %}bg-white text-blue-600{% else %}bg-white bg-opacity-20 text-white{% endif %} font-medium">GA</a>
+        <a href="/dashboard?owner_type=IT" class="px-2 py-1 rounded {% if owner_type_filter == 'IT' %}bg-white text-blue-600{% else %}bg-white bg-opacity-20 text-white{% endif %} font-medium">IT</a>
+    </div>
 </div>
 
-<!-- Quick Stats -->
+<!-- Key Metrics -->
+<div class="grid grid-cols-2 gap-3 mb-4">
+    <!-- GA Assets -->
+    <div class="bg-white rounded-lg shadow p-4">
+        <div class="flex items-center justify-between mb-2">
+            <span class="text-xs text-gray-600 font-medium">GA Assets</span>
+            <i class="fas fa-building text-amber-600"></i>
+        </div>
+        <div class="text-2xl font-bold text-amber-600">{{ ga_count }}</div>
+        <p class="text-xs text-gray-500 mt-1">Room-based</p>
+    </div>
+
+    <!-- IT Assets -->
+    <div class="bg-white rounded-lg shadow p-4">
+        <div class="flex items-center justify-between mb-2">
+            <span class="text-xs text-gray-600 font-medium">IT Assets</span>
+            <i class="fas fa-laptop text-cyan-600"></i>
+        </div>
+        <div class="text-2xl font-bold text-cyan-600">{{ it_count }}</div>
+        <p class="text-xs text-gray-500 mt-1">User-based</p>
+    </div>
+
+    <!-- Damaged -->
+    <div class="bg-white rounded-lg shadow p-4">
+        <div class="flex items-center justify-between mb-2">
+            <span class="text-xs text-gray-600 font-medium">Damaged</span>
+            <i class="fas fa-exclamation-triangle text-red-600"></i>
+        </div>
+        <div class="text-2xl font-bold text-red-600">{{ damaged_count }}</div>
+        <p class="text-xs text-gray-500 mt-1">Needs repair</p>
+    </div>
+
+    <!-- Disposed -->
+    <div class="bg-white rounded-lg shadow p-4">
+        <div class="flex items-center justify-between mb-2">
+            <span class="text-xs text-gray-600 font-medium">Disposed</span>
+            <i class="fas fa-trash-alt text-gray-600"></i>
+        </div>
+        <div class="text-2xl font-bold text-gray-600">{{ disposed_count }}</div>
+        <p class="text-xs text-gray-500 mt-1">Removed</p>
+    </div>
+</div>
+
+<!-- Financial Summary -->
+<div class="bg-white rounded-lg shadow p-4 mb-4">
+    <h3 class="text-sm font-semibold text-gray-900 mb-3">Financial Summary</h3>
+    <div class="space-y-2">
+        <div class="flex justify-between items-center">
+            <span class="text-xs text-gray-600">Purchase Value</span>
+            <span class="text-sm font-bold text-green-600">Rp {{ "{:,.0f}".format(total_purchase_value) }}</span>
+        </div>
+        <div class="flex justify-between items-center">
+            <span class="text-xs text-gray-600">Depreciation</span>
+            <span class="text-sm font-bold text-orange-600">Rp {{ "{:,.0f}".format(total_depreciation_value) }}</span>
+        </div>
+        <div class="flex justify-between items-center">
+            <span class="text-xs text-gray-600">Book Value</span>
+            <span class="text-sm font-bold text-blue-600">Rp {{ "{:,.0f}".format(total_book_value) }}</span>
+        </div>
+    </div>
+</div>
+
+<!-- Chart -->
 <div class="bg-white rounded-lg shadow p-4 mb-4">
     <div class="flex items-center justify-between mb-3">
-        <h3 class="font-semibold text-gray-900">Total Assets</h3>
-        <div class="bg-blue-100 p-2 rounded-lg">
-            <i class="fas fa-boxes text-blue-600"></i>
-        </div>
-    </div>
-    <div class="text-2xl font-bold text-blue-600 mb-3">{{ total_assets }}</div>
-    <div class="space-y-2">
-        <div class="flex justify-between items-center p-2 bg-gray-50 rounded">
-            <span class="text-xs text-gray-600">Purchase Value:</span>
-            <span class="text-xs font-bold text-green-600">Rp {{ "{:,.0f}".format(total_purchase_value) }}</span>
-        </div>
-        <div class="flex justify-between items-center p-2 bg-orange-50 rounded">
-            <span class="text-xs text-gray-600">Depreciation:</span>
-            <span class="text-xs font-bold text-orange-600">Rp {{ "{:,.0f}".format(total_depreciation_value) }}</span>
-        </div>
-        <div class="flex justify-between items-center p-2 bg-blue-50 rounded">
-            <span class="text-xs text-gray-600">Book Value:</span>
-            <span class="text-xs font-bold text-blue-600">Rp {{ "{:,.0f}".format(total_book_value) }}</span>
-        </div>
-        <div class="flex justify-between items-center p-2 bg-gray-50 rounded border-t border-gray-200 mt-2">
-            <span class="text-xs text-gray-600">Disposed Assets:</span>
-            <span class="text-xs font-bold text-gray-500">{{ disposed_count }}</span>
-        </div>
-        <div class="flex justify-between items-center p-2 bg-gray-50 rounded">
-            <span class="text-xs text-gray-600">Lost Assets:</span>
-            <span class="text-xs font-bold text-gray-500">{{ lost_count }}</span>
-        </div>
-    </div>
-</div>
-
-<!-- Chart Section -->
-<div class="bg-white rounded-lg shadow p-4 mb-4">
-    <div class="flex items-center justify-between mb-4">
-        <h3 class="font-semibold text-gray-900">Asset Additions</h3>
+        <h3 class="text-sm font-semibold text-gray-900">Asset Additions</h3>
         <select id="chartPeriod" class="text-xs px-2 py-1 border border-gray-300 rounded">
             <option value="month">Monthly</option>
             <option value="quarter">Quarterly</option>
@@ -82,15 +112,12 @@
 
 <!-- Categories -->
 <div class="bg-white rounded-lg shadow p-4 mb-4">
-    <div class="flex items-center justify-between mb-3">
-        <h3 class="font-semibold text-gray-900">Categories</h3>
-        <i class="fas fa-tags text-gray-400"></i>
-    </div>
+    <h3 class="text-sm font-semibold text-gray-900 mb-3">Categories</h3>
     <div class="space-y-2">
         {% for category, count in category_counts.items() %}
-        <div class="flex justify-between items-center py-2">
-            <span class="text-sm text-gray-700 truncate">{{ category }}</span>
-            <span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium">{{ count }}</span>
+        <div class="flex justify-between items-center">
+            <span class="text-xs text-gray-700">{{ category }}</span>
+            <span class="bg-green-100 text-green-800 px-2 py-0.5 rounded text-xs font-medium">{{ count }}</span>
         </div>
         {% endfor %}
     </div>
@@ -98,171 +125,104 @@
 
 <!-- Locations -->
 <div class="bg-white rounded-lg shadow p-4 mb-4">
-    <div class="flex items-center justify-between mb-3">
-        <h3 class="font-semibold text-gray-900">Locations</h3>
-        <i class="fas fa-map-marker-alt text-gray-400"></i>
-    </div>
+    <h3 class="text-sm font-semibold text-gray-900 mb-3">Locations</h3>
     <div class="space-y-2">
         {% for location, count in location_counts.items() %}
-        <div class="flex justify-between items-center py-2">
-            <span class="text-sm text-gray-700 truncate">{{ location }}</span>
-            <span class="bg-purple-100 text-purple-800 px-2 py-1 rounded-full text-xs font-medium">{{ count }}</span>
+        <div class="flex justify-between items-center">
+            <span class="text-xs text-gray-700">{{ location }}</span>
+            <span class="bg-purple-100 text-purple-800 px-2 py-0.5 rounded text-xs font-medium">{{ count }}</span>
         </div>
         {% endfor %}
     </div>
 </div>
 
-<!-- Activity Summary -->
-<div class="grid grid-cols-2 gap-3 mb-4">
-    <div class="bg-white rounded-lg shadow p-4">
-        <div class="text-center">
-            <div class="bg-red-100 p-2 rounded-lg inline-block mb-2">
-                <i class="fas fa-exclamation-triangle text-red-600"></i>
-            </div>
-            <div class="text-lg font-bold text-gray-900">{{ activity_data.get('damaged', {}).get('monthly', {}).values() | sum if activity_data.get('damaged') else 0 }}</div>
-            <div class="text-xs text-gray-500">Damaged</div>
-        </div>
-    </div>
-    
-    <div class="bg-white rounded-lg shadow p-4">
-        <div class="text-center">
-            <div class="bg-green-100 p-2 rounded-lg inline-block mb-2">
-                <i class="fas fa-wrench text-green-600"></i>
-            </div>
-            <div class="text-lg font-bold text-gray-900">{{ activity_data.get('repaired', {}).get('monthly', {}).values() | sum if activity_data.get('repaired') else 0 }}</div>
-            <div class="text-xs text-gray-500">Repaired</div>
-        </div>
-    </div>
-</div>
-
 <!-- Recent Assets -->
-<div class="bg-white rounded-lg shadow p-4 mb-4">
-    <div class="flex items-center justify-between mb-3">
-        <h3 class="font-semibold text-gray-900">Recent Assets</h3>
-        <a href="/assets" class="text-blue-600 text-sm font-medium">View All</a>
-    </div>
+<div class="bg-white rounded-lg shadow p-4">
+    <h3 class="text-sm font-semibold text-gray-900 mb-3">Recent Assets</h3>
     <div class="space-y-2">
         {% for asset in latest_assets[:5] %}
-        <div class="flex items-center py-2 border-b border-gray-100 last:border-b-0">
-            <div class="bg-blue-100 p-1.5 rounded-lg flex-shrink-0">
-                <i class="fas fa-box text-blue-600 text-xs"></i>
+        <div class="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
+            <div class="flex-1">
+                <div class="text-xs font-medium text-gray-900">{{ asset.get("display_name", "Unnamed") }}</div>
+                <div class="text-xs text-gray-500">{{ asset.get("category_display", "-") }}</div>
             </div>
-            <div class="ml-2 flex-1 min-w-0">
-                <div class="text-xs font-medium text-gray-900 truncate">{{ asset.get("display_name", "Unnamed Asset") }}</div>
-                <div class="text-xs text-gray-500 truncate">{{ asset.get("category_display", "") }}</div>
-            </div>
-            <div class="flex-shrink-0 ml-2">
+            <div class="flex items-center space-x-2">
+                {% if asset.get("owner_type") == "GA" %}
+                    <span class="bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded text-xs font-medium">GA</span>
+                {% elif asset.get("owner_type") == "IT" %}
+                    <span class="bg-cyan-100 text-cyan-800 px-1.5 py-0.5 rounded text-xs font-medium">IT</span>
+                {% endif %}
                 {% set status = asset.get("status", "") %}
                 {% if status == "Active" %}
-                    <span class="px-1.5 py-0.5 text-xs rounded-full bg-green-100 text-green-800 whitespace-nowrap">Active</span>
-                {% elif status == "Under Repair" %}
-                    <span class="px-1.5 py-0.5 text-xs rounded-full bg-red-100 text-red-800 whitespace-nowrap">Repair</span>
-                {% else %}
-                    <span class="px-1.5 py-0.5 text-xs rounded-full bg-gray-100 text-gray-800 whitespace-nowrap">{{ status[:8] }}</span>
+                    <span class="bg-green-100 text-green-800 px-1.5 py-0.5 rounded text-xs font-medium">Active</span>
+                {% elif status == "Damaged" %}
+                    <span class="bg-red-100 text-red-800 px-1.5 py-0.5 rounded text-xs font-medium">Repair</span>
                 {% endif %}
             </div>
         </div>
         {% endfor %}
     </div>
 </div>
-
-
-
 {% endblock %}
 
 {% block scripts %}
 <script>
-    // Chart data
     const chartData = {
         month: {
             labels: {{ monthly_chart_labels | tojson }},
-            values: {{ monthly_chart_values | tojson }},
-            title: 'Monthly Additions'
+            values: {{ monthly_chart_values | tojson }}
         },
         quarter: {
             labels: {{ quarterly_chart_labels | tojson }},
-            values: {{ quarterly_chart_values | tojson }},
-            title: 'Quarterly Additions'
+            values: {{ quarterly_chart_values | tojson }}
         },
         year: {
             labels: {{ yearly_chart_labels | tojson }},
-            values: {{ yearly_chart_values | tojson }},
-            title: 'Yearly Additions'
+            values: {{ yearly_chart_values | tojson }}
         }
     };
-    
+
     let currentPeriod = 'month';
-    
-    // Initialize chart
     const ctx = document.getElementById('mobileChart').getContext('2d');
-    window.mobileChart = new Chart(ctx, {
+    let chart = new Chart(ctx, {
         type: 'line',
         data: {
             labels: chartData[currentPeriod].labels,
             datasets: [{
                 label: 'Assets',
                 data: chartData[currentPeriod].values,
-                backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                backgroundColor: 'rgba(59, 130, 246, 0.1)',
                 borderColor: 'rgba(59, 130, 246, 1)',
                 borderWidth: 2,
                 fill: true,
-                tension: 0.3
+                tension: 0.3,
+                pointRadius: 3
             }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
             scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        precision: 0,
-                        font: { size: 10 }
-                    }
-                },
-                x: {
-                    ticks: {
-                        maxRotation: 45,
-                        font: { size: 9 },
-                        callback: function(val, index) {
-                            // Show fewer labels on mobile
-                            return index % 2 === 0 ? this.getLabelForValue(val) : '';
-                        }
-                    }
-                }
-            },
-            plugins: {
-                legend: { display: false }
+                y: { beginAtZero: true, ticks: { precision: 0, font: { size: 10 } } },
+                x: { ticks: { font: { size: 9 } } }
             }
         }
     });
-    
-    // Handle period change
+
     document.getElementById('chartPeriod').addEventListener('change', function() {
-        const period = this.value;
-        currentPeriod = period;
-        window.mobileChart.data.labels = chartData[period].labels;
-        window.mobileChart.data.datasets[0].data = chartData[period].values;
-        window.mobileChart.update();
+        currentPeriod = this.value;
+        chart.data.labels = chartData[currentPeriod].labels;
+        chart.data.datasets[0].data = chartData[currentPeriod].values;
+        chart.update();
     });
-    
-    // Handle refresh button
-    document.getElementById('refresh-button').addEventListener('click', function() {
-        const refreshIcon = document.getElementById('refresh-icon');
-        refreshIcon.style.animation = 'spin 1s linear infinite';
-        
+
+    document.getElementById('refresh-btn').addEventListener('click', function() {
+        const icon = document.getElementById('refresh-icon');
+        icon.style.animation = 'spin 1s linear infinite';
         setTimeout(() => {
-            refreshIcon.style.animation = '';
-            
-            // Show toast notification
-            const toast = document.createElement('div');
-            toast.className = 'fixed bottom-4 left-4 right-4 bg-green-600 text-white px-4 py-2 rounded-lg shadow-lg z-50';
-            toast.innerHTML = '<div class="flex items-center justify-center"><i class="fas fa-check-circle mr-2"></i> Dashboard refreshed</div>';
-            document.body.appendChild(toast);
-            
-            setTimeout(() => {
-                toast.remove();
-            }, 2000);
+            icon.style.animation = '';
+            location.reload();
         }, 1000);
     });
 </script>

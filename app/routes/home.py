@@ -16,13 +16,17 @@ async def redirect_root():
     return RedirectResponse("/dashboard")
 
 @router.get("/dashboard", response_model=None)
-async def home(request: Request, current_profile = Depends(get_current_profile), error: str = None, error_description: str = None):
+async def home(request: Request, current_profile = Depends(get_current_profile), owner_type: str = None, error: str = None, error_description: str = None):
     try:
         # Summary and chart data
         summary_data = get_summary_data()
         chart_data = get_chart_data()
         all_assets = get_all_assets()
 
+        # Filter by owner_type if specified
+        if owner_type and owner_type in ["GA", "IT"]:
+            all_assets = [asset for asset in all_assets if asset.get("owner_type") == owner_type]
+        
         # Filter out disposed and lost assets for dashboard counts
         active_assets = [asset for asset in all_assets if asset.get("status", "") not in ["Disposed", "Lost"]]
         disposed_assets = [asset for asset in all_assets if asset.get("status", "") == "Disposed"]
@@ -33,6 +37,10 @@ async def home(request: Request, current_profile = Depends(get_current_profile),
         disposed_count = len(disposed_assets)
         lost_count = len(lost_assets)
         damaged_count = len([a for a in all_assets if a.get("status", "") == "Damaged"])
+        
+        # Count assets by owner type
+        ga_count = len([a for a in all_assets if a.get("owner_type") == "GA" and a.get("status", "") not in ["Disposed", "Lost"]])
+        it_count = len([a for a in all_assets if a.get("owner_type") == "IT" and a.get("status", "") not in ["Disposed", "Lost"]])
         
         # Count assets by activity type
         relocated_count = 0  # Will need to get from logs
@@ -149,6 +157,9 @@ async def home(request: Request, current_profile = Depends(get_current_profile),
             "request": request,
             "user": current_profile,
             "total_assets": total_assets,
+            "ga_count": ga_count,
+            "it_count": it_count,
+            "owner_type_filter": owner_type,
             "total_purchase_value": total_purchase_value,
             "total_book_value": total_book_value,
             "total_depreciation_value": total_depreciation_value,
