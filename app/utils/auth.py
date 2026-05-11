@@ -106,9 +106,9 @@ def refresh_supabase_token(refresh_token: str) -> Optional[dict]:
     Uses supabase-py v2 built-in session refresh which is more reliable
     than manual HTTP requests.
     
-    IMPORTANT: Do NOT call set_session() here. SDK already knows about the new
-    session from refresh_session(). Calling set_session() with a refresh_token
-    that may be stale will cause "Invalid Refresh Token" errors on next refresh.
+    IMPORTANT: Never fallback to old refresh_token. If Supabase rotates the token,
+    session.refresh_token must be used. If it's missing, treat as failed refresh
+    and force user to login again.
     """
     try:
         # Use supabase-py v2 built-in refresh method
@@ -116,6 +116,12 @@ def refresh_supabase_token(refresh_token: str) -> Optional[dict]:
         
         if not session or not session.access_token:
             logging.warning("Refresh session returned no tokens")
+            return None
+        
+        # CRITICAL: Supabase must return a new refresh_token after rotation
+        # If missing, don't fallback to old token - that causes "Invalid Refresh Token" errors
+        if not session.refresh_token:
+            logging.warning("Refreshed session did not return a new refresh_token - token rotation may have failed")
             return None
         
         # Protect profile after token refresh
@@ -128,11 +134,11 @@ def refresh_supabase_token(refresh_token: str) -> Optional[dict]:
 
         return {
             "access_token": session.access_token,
-            "refresh_token": session.refresh_token or refresh_token,
+            "refresh_token": session.refresh_token,
             "expires_at": session.expires_at
         }
     except Exception as e:
-        logging.warning(f"Token refresh failed (refresh token may be expired): {type(e).__name__}")
+        logging.warning(f"Token refresh failed: {type(e).__name__}")
         return None
 
 def get_current_profile(request: Request) -> ProfileResponse:
