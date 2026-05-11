@@ -132,43 +132,36 @@ async def change_password_page(request: Request):
         return HTMLResponse(content=html_content)
     
     try:
-        # Verify token with Supabase Auth API using service role key
-        async with httpx.AsyncClient() as client:
-            response = await client.post(
-                f"{config.SUPABASE_URL}/auth/v1/verify",
-                headers={
-                    "apikey": config.SUPABASE_SERVICE_KEY,
-                    "Authorization": f"Bearer {config.SUPABASE_SERVICE_KEY}",
-                    "Content-Type": "application/json",
-                },
-                json={
-                    "type": type_param,
-                    "token_hash": token_hash,
-                },
-                timeout=30,
-            )
+        # Import supabase client
+        from supabase import create_client
+        supabase = create_client(config.SUPABASE_URL, config.SUPABASE_ANON_KEY)
+        
+        # Use SDK method for token verification instead of manual HTTP
+        try:
+            # Use verifyOtp for recovery token verification
+            result = supabase.auth.verify_otp({
+                "type": "recovery",
+                "token_hash": token_hash
+            })
             
-            if response.status_code >= 400:
-                logging.warning(f"Token verification failed: {response.status_code}")
+            if not result.session or not result.session.access_token or not result.session.refresh_token:
+                logging.warning(f"Recovery verification returned incomplete session")
                 template_path = get_template(request, "login_logout.html")
                 return templates.TemplateResponse(template_path, {
                     "request": request,
                     "error": "Link reset password tidak valid atau sudah kadaluarsa."
                 })
             
-            data = response.json()
-            access_token = data.get("access_token")
-            refresh_token = data.get("refresh_token")
+            # SDK already knows about this session - don't call set_session()
+            session = result.session
             
-            # CRITICAL: Both tokens must be present and valid
-            # If refresh_token is missing, token rotation may have failed
-            if not access_token or not refresh_token:
-                logging.warning(f"Token verification incomplete: access_token={bool(access_token)}, refresh_token={bool(refresh_token)}")
-                template_path = get_template(request, "login_logout.html")
-                return templates.TemplateResponse(template_path, {
-                    "request": request,
-                    "error": "Link reset password tidak valid atau sudah kadaluarsa."
-                })
+        except Exception as verify_error:
+            logging.warning(f"Recovery token verification failed: {verify_error}")
+            template_path = get_template(request, "login_logout.html")
+            return templates.TemplateResponse(template_path, {
+                "request": request,
+                "error": "Link reset password tidak valid atau sudah kadaluarsa."
+            })
             
             # Redirect to form with cookies set (matching session_auth.py pattern)
             response_obj = RedirectResponse("/auth/change-password/form", status_code=303)
@@ -178,7 +171,7 @@ async def change_password_page(request: Request):
             # Set sb_access_token (matching session_auth.py)
             response_obj.set_cookie(
                 key="sb_access_token",
-                value=access_token,
+                value=session.access_token,
                 max_age=3600,  # 1 hour
                 **settings
             )
@@ -186,7 +179,7 @@ async def change_password_page(request: Request):
             # Set sb_refresh_token (matching session_auth.py)
             response_obj.set_cookie(
                 key="sb_refresh_token",
-                value=refresh_token,
+                value=session.refresh_token,
                 max_age=86400 * 30,  # 30 days (matching session_auth.py)
                 **settings
             )
