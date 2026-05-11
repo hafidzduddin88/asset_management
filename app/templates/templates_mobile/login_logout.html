@@ -26,7 +26,7 @@
     <div class="max-w-sm w-full space-y-4" x-data="authForm()">
         <!-- Header -->
         <div class="text-center">
-            <h2 class="text-xl font-extrabold text-gray-900" x-text="currentMode === 'login' ? 'Sign In' : currentMode === 'signup' ? 'Create Account' : 'Reset Password'"></h2>
+            <h2 class="text-xl font-extrabold text-gray-900" x-text="currentMode === 'login' ? 'Sign In' : 'Create Account'"></h2>
             <p class="mt-1 text-xs text-gray-600">Asset Management Business Platform</p>
         </div>
 
@@ -49,7 +49,7 @@
                     <label class="ml-2 block text-xs text-gray-900">Remember me</label>
                 </div>
                 <div class="text-xs">
-                    <a href="#" @click="currentMode = 'forgot'" class="font-medium text-blue-600 hover:text-blue-500">
+                    <a href="/forgot-password" class="font-medium text-blue-600 hover:text-blue-500">
                         Forgot password?
                     </a>
                 </div>
@@ -102,24 +102,6 @@
             </div>
         </form>
 
-        <!-- Forgot Password Form -->
-        <form x-show="currentMode === 'forgot'" @submit="handleForgotPassword" class="space-y-3">
-            <input type="email" x-model="forgotEmail" required
-                   class="w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-base"
-                   placeholder="Enter your email address">
-
-            <button type="submit"
-                    class="w-full flex justify-center py-3 px-4 border border-transparent text-base font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 touch-manipulation">
-                Send Reset Link
-            </button>
-
-            <div class="text-center">
-                <a href="#" @click="currentMode = 'login'" class="font-medium text-blue-600 hover:text-blue-500 text-xs">
-                    Back to Sign In
-                </a>
-            </div>
-        </form>
-
         <!-- Messages -->
         {% if error %}
         <div class="bg-red-100 border border-red-400 text-red-700 px-3 py-2 rounded text-xs">
@@ -163,41 +145,11 @@
         function authForm() {
             return {
                 currentMode: 'login',
-                forgotEmail: '',
                 message: { show: false, type: 'success', text: '' },
 
                 showMessage(text, type = 'success') {
                     this.message = { show: true, type, text };
                     setTimeout(() => { this.message.show = false; }, 5000);
-                },
-
-                async handleForgotPassword(event) {
-                    event.preventDefault();
-                    
-                    if (!this.forgotEmail) {
-                        this.showMessage('Please enter your email address', 'error');
-                        return;
-                    }
-
-                    try {
-                        const response = await fetch('/auth/forgot-password', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ email: this.forgotEmail })
-                        });
-
-                        const data = await response.json();
-
-                        if (data.success) {
-                            this.showMessage('Password reset link sent to your email!', 'success');
-                            this.forgotEmail = '';
-                            setTimeout(() => { this.currentMode = 'login'; }, 2000);
-                        } else {
-                            this.showMessage(data.error || 'Failed to send reset link', 'error');
-                        }
-                    } catch (error) {
-                        this.showMessage('Network error. Please try again.', 'error');
-                    }
                 }
             }
         }

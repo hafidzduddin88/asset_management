@@ -26,7 +26,7 @@
     <div class="max-w-lg w-full space-y-6" x-data="authForm()">
         <!-- Header -->
         <div class="text-center">
-            <h2 class="text-3xl font-extrabold text-gray-900" x-text="currentMode === 'login' ? 'Sign In' : currentMode === 'signup' ? 'Create Account' : 'Reset Password'"></h2>
+            <h2 class="text-3xl font-extrabold text-gray-900" x-text="currentMode === 'login' ? 'Sign In' : 'Create Account'"></h2>
             <p class="mt-2 text-sm text-gray-600">Asset Management Business Platform</p>
         </div>
 
@@ -170,34 +170,8 @@
                     setTimeout(() => { this.message.show = false; }, 5000);
                 },
 
-                async handleForgotPassword(event) {
-                    event.preventDefault();
-                    
-                    if (!this.forgotEmail) {
-                        this.showMessage('Please enter your email address', 'error');
-                        return;
-                    }
-
-                    try {
-                        const response = await fetch('/auth/forgot-password', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ email: this.forgotEmail })
-                        });
-
-                        const data = await response.json();
-
-                        if (data.success) {
-                            this.showMessage('Password reset link sent to your email!', 'success');
-                            this.forgotEmail = '';
-                            setTimeout(() => { this.currentMode = 'login'; }, 2000);
-                        } else {
-                            this.showMessage(data.error || 'Failed to send reset link', 'error');
-                        }
-                    } catch (error) {
-                        this.showMessage('Network error. Please try again.', 'error');
-                    }
-                }
+                // Forgot password is handled via separate page now
+                // Users click the "Forgot password?" link to go to /forgot-password
             }
         }
         
