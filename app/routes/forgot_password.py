@@ -157,8 +157,15 @@ async def change_password_page(request: Request):
             access_token = data.get("access_token")
             refresh_token = data.get("refresh_token")
             
+            # CRITICAL: Both tokens must be present and valid
+            # If refresh_token is missing, token rotation may have failed
             if not access_token or not refresh_token:
-                raise Exception("No tokens received from verify")
+                logging.warning(f"Token verification incomplete: access_token={bool(access_token)}, refresh_token={bool(refresh_token)}")
+                template_path = get_template(request, "login_logout.html")
+                return templates.TemplateResponse(template_path, {
+                    "request": request,
+                    "error": "Link reset password tidak valid atau sudah kadaluarsa."
+                })
             
             # Redirect to form with cookies set (matching session_auth.py pattern)
             response_obj = RedirectResponse("/auth/change-password/form", status_code=303)

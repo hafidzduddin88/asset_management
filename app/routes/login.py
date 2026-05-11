@@ -77,6 +77,11 @@ async def login_form(
         result = supabase.auth.sign_in_with_password({"email": email, "password": password})
         session = result.session
 
+        # CRITICAL: Verify session has both tokens
+        if not session or not session.access_token or not session.refresh_token:
+            logging.error(f"Login returned incomplete session for {email}")
+            raise Exception("Invalid session from login")
+
         # Decode token to verify
         payload = decode_supabase_jwt(session.access_token)
         if not payload or not payload.get("sub"):
@@ -134,6 +139,13 @@ async def signup_form(
 
         if not result.user:
             raise Exception("Signup failed")
+        
+        # If session was created (auto-confirm enabled), verify it has both tokens
+        if result.session:
+            if not result.session.access_token or not result.session.refresh_token:
+                logging.warning(f"Signup session incomplete for {email}")
+                # Don't set cookies if tokens are incomplete
+                result.session = None
         
         # Create profile with business unit data
         from app.utils.profile_utils import create_profile_if_not_exists
