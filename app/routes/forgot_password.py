@@ -169,7 +169,7 @@ async def change_password_page(request: Request):
             })
             
             if not result.session or not result.session.access_token or not result.session.refresh_token:
-                logging.warning(f"Recovery verification returned incomplete session")
+                logging.warning(f"Recovery verification returned incomplete session - access_token: {bool(result.session.access_token) if result.session else False}, refresh_token: {bool(result.session.refresh_token) if result.session else False}")
                 template_path = get_template(request, "login_logout.html")
                 return templates.TemplateResponse(template_path, {
                     "request": request,
@@ -250,7 +250,7 @@ async def change_password_submit(
         access_token = request.cookies.get("sb_access_token")
         refresh_token = request.cookies.get("sb_refresh_token")
         
-        logging.info(f"POST change-password - access_token present: {bool(access_token)}, refresh_token present: {bool(refresh_token)}")
+        logging.info(f"POST /auth/change-password - access_token present: {bool(access_token)}, refresh_token present: {bool(refresh_token)}, refresh_token length: {len(refresh_token) if refresh_token else 0}")
         
         if not access_token or not refresh_token:
             template_path = get_template(request, "login_logout.html")

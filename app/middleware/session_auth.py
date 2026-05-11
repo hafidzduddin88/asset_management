@@ -23,6 +23,7 @@ class SessionAuthMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
         # Get the path without query parameters for checking
         path = request.url.path
+        is_secure = request.url.scheme == "https"
         
         # Skip auth for public paths
         if path in self.SKIP_PATHS:
@@ -74,6 +75,7 @@ class SessionAuthMiddleware(BaseHTTPMiddleware):
                                 }
                         else:
                             # Refresh failed - token is invalid, redirect to login
+                            logging.warning(f"Token refresh failed for user {user_info.get('id') if user_info else 'unknown'}")
                             response = RedirectResponse(f"/login?next={quote(path)}", status_code=303)
                             response.delete_cookie("sb_access_token", path="/", httponly=True, secure=is_secure, samesite="lax")
                             response.delete_cookie("sb_refresh_token", path="/", httponly=True, secure=is_secure, samesite="lax")
@@ -92,6 +94,7 @@ class SessionAuthMiddleware(BaseHTTPMiddleware):
                     }
             else:
                 # Refresh failed - token is invalid, redirect to login
+                logging.warning(f"Token refresh failed - no valid tokens available")
                 response = RedirectResponse(f"/login?next={quote(path)}", status_code=303)
                 response.delete_cookie("sb_access_token", path="/", httponly=True, secure=is_secure, samesite="lax")
                 response.delete_cookie("sb_refresh_token", path="/", httponly=True, secure=is_secure, samesite="lax")
