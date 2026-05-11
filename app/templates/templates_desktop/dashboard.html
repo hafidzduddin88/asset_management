@@ -4,143 +4,157 @@
 
 {% block head %}
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        .chart-container {
-            position: relative;
-            height: 250px;
-        }
-        .stat-card {
-            transition: all 0.3s ease;
-        }
-        .stat-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-        }
-        .dashboard-header {
-            background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
-            color: white;
-            border-radius: 0.75rem;
-            padding: 2rem;
-            margin-bottom: 2rem;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-        }
+        .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; }
+        .metric-card { background: white; border-radius: 0.75rem; padding: 1.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #e5e7eb; transition: all 0.3s ease; }
+        .metric-card:hover { transform: translateY(-4px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
+        .metric-value { font-size: 2rem; font-weight: 700; margin: 0.5rem 0; }
+        .metric-label { font-size: 0.875rem; color: #6b7280; font-weight: 500; }
+        .metric-icon { width: 3rem; height: 3rem; border-radius: 0.5rem; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; }
+        .chart-container { position: relative; height: 300px; margin-top: 1rem; }
+        .filter-btn { padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 0.875rem; font-weight: 500; border: 1px solid #e5e7eb; cursor: pointer; transition: all 0.2s; }
+        .filter-btn.active { background: #3b82f6; color: white; border-color: #3b82f6; }
+        .filter-btn:hover:not(.active) { background: #f3f4f6; }
+        .section-title { font-size: 1.125rem; font-weight: 600; color: #111827; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; }
+        .stat-row { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 0; border-bottom: 1px solid #f3f4f6; }
+        .stat-row:last-child { border-bottom: none; }
+        .stat-label { font-size: 0.875rem; color: #6b7280; }
+        .stat-value { font-weight: 600; color: #111827; }
+        .badge { display: inline-block; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; }
+        .badge-green { background: #dcfce7; color: #166534; }
+        .badge-red { background: #fee2e2; color: #991b1b; }
+        .badge-yellow { background: #fef3c7; color: #92400e; }
+        .badge-blue { background: #dbeafe; color: #1e40af; }
+        .badge-amber { background: #fef3c7; color: #b45309; }
+        .badge-cyan { background: #cffafe; color: #164e63; }
+        .asset-row { padding: 1rem; border-bottom: 1px solid #f3f4f6; display: flex; justify-content: space-between; align-items: center; }
+        .asset-row:hover { background: #f9fafb; }
+        .asset-info { flex: 1; }
+        .asset-name { font-weight: 600; color: #111827; font-size: 0.95rem; }
+        .asset-meta { font-size: 0.875rem; color: #6b7280; margin-top: 0.25rem; }
+        .header-section { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; padding: 2rem; border-radius: 0.75rem; margin-bottom: 2rem; }
+        .header-title { font-size: 2rem; font-weight: 700; margin-bottom: 0.5rem; }
+        .header-subtitle { color: #dbeafe; font-size: 0.95rem; }
+        .filter-group { display: flex; gap: 0.5rem; margin-top: 1rem; }
+        .chart-period-btn { padding: 0.375rem 0.75rem; font-size: 0.75rem; border-radius: 0.375rem; border: 1px solid #e5e7eb; background: white; cursor: pointer; transition: all 0.2s; }
+        .chart-period-btn.active { background: #3b82f6; color: white; border-color: #3b82f6; }
     </style>
 {% endblock %}
 
 {% block content %}
-<div class="px-6 lg:px-8 max-w-7xl mx-auto">
+<div class="px-6 lg:px-8 max-w-7xl mx-auto py-8">
     <!-- Header -->
-    <div class="dashboard-header">
+    <div class="header-section">
         <div class="flex items-center justify-between mb-4">
             <div>
-                <h1 class="text-3xl font-bold">
-                    <i class="fas fa-tachometer-alt mr-3"></i>Asset Dashboard
-                </h1>
-                <p class="text-blue-100 mt-1">Real-time asset monitoring and analytics</p>
+                <h1 class="header-title">📊 Asset Dashboard</h1>
+                <p class="header-subtitle">Real-time asset monitoring and analytics</p>
             </div>
-            <button id="refresh-btn" class="px-4 py-2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white rounded-lg font-medium transition-colors">
-                <i id="refresh-icon" class="fas fa-sync-alt mr-2"></i>Refresh
+            <button onclick="location.reload()" class="px-4 py-2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white rounded-lg font-medium transition-colors">
+                <i class="fas fa-sync-alt mr-2"></i>Refresh
             </button>
         </div>
         
-        <!-- Owner Type Filter -->
-        <div class="flex items-center space-x-2">
-            <span class="text-blue-100 text-sm">Filter:</span>
-            <a href="/dashboard" class="px-3 py-1 rounded text-sm font-medium transition-colors {% if not owner_type_filter %}bg-white text-blue-600{% else %}bg-white bg-opacity-20 text-white hover:bg-opacity-30{% endif %}">
-                All Assets
-            </a>
-            <a href="/dashboard?owner_type=GA" class="px-3 py-1 rounded text-sm font-medium transition-colors {% if owner_type_filter == 'GA' %}bg-white text-blue-600{% else %}bg-white bg-opacity-20 text-white hover:bg-opacity-30{% endif %}">
-                GA (Room)
-            </a>
-            <a href="/dashboard?owner_type=IT" class="px-3 py-1 rounded text-sm font-medium transition-colors {% if owner_type_filter == 'IT' %}bg-white text-blue-600{% else %}bg-white bg-opacity-20 text-white hover:bg-opacity-30{% endif %}">
-                IT (User)
-            </a>
+        <!-- Filter -->
+        <div class="filter-group">
+            <a href="/dashboard" class="filter-btn {% if not owner_type_filter %}active{% endif %}">All Assets</a>
+            <a href="/dashboard?owner_type=GA" class="filter-btn {% if owner_type_filter == 'GA' %}active{% endif %}">🏢 GA (Room)</a>
+            <a href="/dashboard?owner_type=IT" class="filter-btn {% if owner_type_filter == 'IT' %}active{% endif %}">💻 IT (User)</a>
         </div>
     </div>
 
     <!-- Key Metrics -->
-    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
-        <!-- GA Assets -->
-        <div class="stat-card bg-white rounded-xl shadow-lg border border-gray-200 p-6">
-            <div class="flex items-center justify-between mb-4">
-                <h3 class="text-sm font-semibold text-gray-600">GA Assets</h3>
-                <div class="bg-amber-100 p-3 rounded-lg">
-                    <i class="fas fa-building text-amber-600 text-lg"></i>
+    <div class="dashboard-grid mb-8">
+        <div class="metric-card">
+            <div class="flex items-start justify-between">
+                <div>
+                    <p class="metric-label">Total Active Assets</p>
+                    <p class="metric-value text-blue-600">{{ total_assets }}</p>
                 </div>
+                <div class="metric-icon bg-blue-100 text-blue-600"><i class="fas fa-box"></i></div>
             </div>
-            <div class="text-3xl font-bold text-amber-600 mb-2">{{ ga_count }}</div>
-            <p class="text-xs text-gray-500">Room-based assets</p>
         </div>
 
-        <!-- IT Assets -->
-        <div class="stat-card bg-white rounded-xl shadow-lg border border-gray-200 p-6">
-            <div class="flex items-center justify-between mb-4">
-                <h3 class="text-sm font-semibold text-gray-600">IT Assets</h3>
-                <div class="bg-cyan-100 p-3 rounded-lg">
-                    <i class="fas fa-laptop text-cyan-600 text-lg"></i>
+        <div class="metric-card">
+            <div class="flex items-start justify-between">
+                <div>
+                    <p class="metric-label">GA Assets (Room-based)</p>
+                    <p class="metric-value text-amber-600">{{ ga_count }}</p>
                 </div>
+                <div class="metric-icon bg-amber-100 text-amber-600"><i class="fas fa-building"></i></div>
             </div>
-            <div class="text-3xl font-bold text-cyan-600 mb-2">{{ it_count }}</div>
-            <p class="text-xs text-gray-500">User-based assets</p>
         </div>
 
-        <!-- Damaged Assets -->
-        <div class="stat-card bg-white rounded-xl shadow-lg border border-gray-200 p-6">
-            <div class="flex items-center justify-between mb-4">
-                <h3 class="text-sm font-semibold text-gray-600">Damaged</h3>
-                <div class="bg-red-100 p-3 rounded-lg">
-                    <i class="fas fa-exclamation-triangle text-red-600 text-lg"></i>
+        <div class="metric-card">
+            <div class="flex items-start justify-between">
+                <div>
+                    <p class="metric-label">IT Assets (User-based)</p>
+                    <p class="metric-value text-cyan-600">{{ it_count }}</p>
                 </div>
+                <div class="metric-icon bg-cyan-100 text-cyan-600"><i class="fas fa-laptop"></i></div>
             </div>
-            <div class="text-3xl font-bold text-red-600 mb-2">{{ damaged_count }}</div>
-            <p class="text-xs text-gray-500">Needs repair</p>
         </div>
 
-        <!-- Disposed Assets -->
-        <div class="stat-card bg-white rounded-xl shadow-lg border border-gray-200 p-6">
-            <div class="flex items-center justify-between mb-4">
-                <h3 class="text-sm font-semibold text-gray-600">Disposed</h3>
-                <div class="bg-gray-100 p-3 rounded-lg">
-                    <i class="fas fa-trash-alt text-gray-600 text-lg"></i>
+        <div class="metric-card">
+            <div class="flex items-start justify-between">
+                <div>
+                    <p class="metric-label">Damaged Assets</p>
+                    <p class="metric-value text-red-600">{{ damaged_count }}</p>
                 </div>
+                <div class="metric-icon bg-red-100 text-red-600"><i class="fas fa-exclamation-triangle"></i></div>
             </div>
-            <div class="text-3xl font-bold text-gray-600 mb-2">{{ disposed_count }}</div>
-            <p class="text-xs text-gray-500">Removed from inventory</p>
+        </div>
+
+        <div class="metric-card">
+            <div class="flex items-start justify-between">
+                <div>
+                    <p class="metric-label">Lost Assets</p>
+                    <p class="metric-value text-yellow-600">{{ lost_count }}</p>
+                </div>
+                <div class="metric-icon bg-yellow-100 text-yellow-600"><i class="fas fa-search"></i></div>
+            </div>
+        </div>
+
+        <div class="metric-card">
+            <div class="flex items-start justify-between">
+                <div>
+                    <p class="metric-label">Disposed Assets</p>
+                    <p class="metric-value text-gray-600">{{ disposed_count }}</p>
+                </div>
+                <div class="metric-icon bg-gray-100 text-gray-600"><i class="fas fa-trash-alt"></i></div>
+            </div>
         </div>
     </div>
 
     <!-- Financial Summary -->
-    <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-6 mb-6">
-        <h3 class="text-lg font-semibold text-gray-900 mb-4">
-            <i class="fas fa-chart-pie mr-2 text-green-600"></i>Financial Summary
-        </h3>
+    <div class="bg-white rounded-lg shadow-lg border border-gray-200 p-6 mb-8">
+        <h2 class="section-title"><i class="fas fa-chart-pie text-green-600"></i>Financial Summary</h2>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div class="text-center">
-                <div class="text-sm text-gray-600 mb-2">Purchase Value</div>
-                <div class="text-2xl font-bold text-green-600">Rp {{ "{:,.0f}".format(total_purchase_value) }}</div>
+            <div class="text-center p-4 bg-gradient-to-br from-green-50 to-green-100 rounded-lg">
+                <p class="text-sm text-gray-600 mb-2">Total Purchase Value</p>
+                <p class="text-2xl font-bold text-green-600">Rp {{ "{:,.0f}".format(total_purchase_value) }}</p>
             </div>
-            <div class="text-center border-l border-r border-gray-200">
-                <div class="text-sm text-gray-600 mb-2">Depreciation</div>
-                <div class="text-2xl font-bold text-orange-600">Rp {{ "{:,.0f}".format(total_depreciation_value) }}</div>
+            <div class="text-center p-4 bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg">
+                <p class="text-sm text-gray-600 mb-2">Total Depreciation</p>
+                <p class="text-2xl font-bold text-orange-600">Rp {{ "{:,.0f}".format(total_depreciation_value) }}</p>
             </div>
-            <div class="text-center">
-                <div class="text-sm text-gray-600 mb-2">Book Value</div>
-                <div class="text-2xl font-bold text-blue-600">Rp {{ "{:,.0f}".format(total_book_value) }}</div>
+            <div class="text-center p-4 bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg">
+                <p class="text-sm text-gray-600 mb-2">Total Book Value</p>
+                <p class="text-2xl font-bold text-blue-600">Rp {{ "{:,.0f}".format(total_book_value) }}</p>
             </div>
         </div>
     </div>
 
-    <!-- Charts -->
-    <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-6">
+    <!-- Charts Section -->
+    <div class="grid grid-cols-1 xl:grid-cols-2 gap-8 mb-8">
         <!-- Asset Additions Chart -->
-        <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
+        <div class="bg-white rounded-lg shadow-lg border border-gray-200 p-6">
             <div class="flex items-center justify-between mb-4">
-                <h3 class="text-lg font-semibold text-gray-900">Asset Additions</h3>
-                <div class="flex space-x-2">
-                    <button class="chart-btn px-2 py-1 text-xs bg-blue-100 text-blue-600 rounded font-medium active" data-period="month">Monthly</button>
-                    <button class="chart-btn px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded font-medium" data-period="quarter">Quarterly</button>
-                    <button class="chart-btn px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded font-medium" data-period="year">Yearly</button>
+                <h2 class="section-title"><i class="fas fa-chart-line text-blue-600"></i>Asset Additions Trend</h2>
+                <div class="flex gap-2">
+                    <button class="chart-period-btn active" data-period="month">Monthly</button>
+                    <button class="chart-period-btn" data-period="quarter">Quarterly</button>
+                    <button class="chart-period-btn" data-period="year">Yearly</button>
                 </div>
             </div>
             <div class="chart-container">
@@ -149,113 +163,103 @@
         </div>
 
         <!-- Category Distribution -->
-        <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
-            <h3 class="text-lg font-semibold text-gray-900 mb-4">
-                <i class="fas fa-tags mr-2 text-green-600"></i>By Category
-            </h3>
-            <div class="space-y-3">
-                {% for category, count in category_counts.items() %}
-                <div class="flex items-center justify-between">
-                    <span class="text-sm text-gray-700">{{ category }}</span>
-                    <span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-bold">{{ count }}</span>
-                </div>
-                {% endfor %}
+        <div class="bg-white rounded-lg shadow-lg border border-gray-200 p-6">
+            <h2 class="section-title"><i class="fas fa-tags text-green-600"></i>Assets by Category</h2>
+            <div class="space-y-3 max-h-80 overflow-y-auto">
+                {% if category_counts %}
+                    {% for category, count in category_counts.items() %}
+                    <div class="stat-row">
+                        <span class="stat-label">{{ category }}</span>
+                        <span class="badge badge-green">{{ count }} assets</span>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-gray-500 text-sm">No categories available</p>
+                {% endif %}
             </div>
         </div>
     </div>
 
     <!-- Location & Status -->
-    <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-6">
+    <div class="grid grid-cols-1 xl:grid-cols-2 gap-8 mb-8">
         <!-- By Location -->
-        <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
-            <h3 class="text-lg font-semibold text-gray-900 mb-4">
-                <i class="fas fa-map-marker-alt mr-2 text-purple-600"></i>By Location
-            </h3>
-            <div class="space-y-3">
-                {% for location, count in location_counts.items() %}
-                <div class="flex items-center justify-between">
-                    <span class="text-sm text-gray-700">{{ location }}</span>
-                    <span class="bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-xs font-bold">{{ count }}</span>
-                </div>
-                {% endfor %}
+        <div class="bg-white rounded-lg shadow-lg border border-gray-200 p-6">
+            <h2 class="section-title"><i class="fas fa-map-marker-alt text-purple-600"></i>Assets by Location</h2>
+            <div class="space-y-3 max-h-80 overflow-y-auto">
+                {% if location_counts %}
+                    {% for location, count in location_counts.items() %}
+                    <div class="stat-row">
+                        <span class="stat-label">{{ location }}</span>
+                        <span class="badge badge-blue">{{ count }} assets</span>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-gray-500 text-sm">No locations available</p>
+                {% endif %}
             </div>
         </div>
 
-        <!-- Status Summary -->
-        <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
-            <h3 class="text-lg font-semibold text-gray-900 mb-4">
-                <i class="fas fa-chart-bar mr-2 text-indigo-600"></i>Status Summary
-            </h3>
+        <!-- Status Overview -->
+        <div class="bg-white rounded-lg shadow-lg border border-gray-200 p-6">
+            <h2 class="section-title"><i class="fas fa-chart-bar text-indigo-600"></i>Asset Status Overview</h2>
             <div class="space-y-3">
-                <div class="flex items-center justify-between">
-                    <span class="text-sm text-gray-700">Active Assets</span>
-                    <span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-bold">{{ total_assets }}</span>
+                <div class="stat-row">
+                    <span class="stat-label">✅ Active</span>
+                    <span class="badge badge-green">{{ total_assets }}</span>
                 </div>
-                <div class="flex items-center justify-between">
-                    <span class="text-sm text-gray-700">Damaged Assets</span>
-                    <span class="bg-red-100 text-red-800 px-3 py-1 rounded-full text-xs font-bold">{{ damaged_count }}</span>
+                <div class="stat-row">
+                    <span class="stat-label">🔧 Damaged</span>
+                    <span class="badge badge-red">{{ damaged_count }}</span>
                 </div>
-                <div class="flex items-center justify-between">
-                    <span class="text-sm text-gray-700">Lost Assets</span>
-                    <span class="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-xs font-bold">{{ lost_count }}</span>
+                <div class="stat-row">
+                    <span class="stat-label">❓ Lost</span>
+                    <span class="badge badge-yellow">{{ lost_count }}</span>
                 </div>
-                <div class="flex items-center justify-between">
-                    <span class="text-sm text-gray-700">Disposed Assets</span>
-                    <span class="bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-xs font-bold">{{ disposed_count }}</span>
+                <div class="stat-row">
+                    <span class="stat-label">🗑️ Disposed</span>
+                    <span class="badge" style="background: #f3f4f6; color: #6b7280;">{{ disposed_count }}</span>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Recent Assets Table -->
-    <div class="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+    <!-- Recent Assets -->
+    <div class="bg-white rounded-lg shadow-lg border border-gray-200 overflow-hidden">
         <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
-            <h3 class="text-lg font-semibold text-gray-900">
-                <i class="fas fa-clock mr-2 text-gray-600"></i>Recent Assets
-            </h3>
+            <h2 class="section-title"><i class="fas fa-clock text-gray-600"></i>Recent Assets</h2>
         </div>
-        <div class="overflow-x-auto">
-            <table class="w-full">
-                <thead class="bg-gray-50 border-b border-gray-200">
-                    <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase">Asset Name</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase">Category</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase">Owner</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase">Location</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase">Status</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-200">
-                    {% for asset in latest_assets %}
-                    <tr class="hover:bg-gray-50 transition-colors">
-                        <td class="px-6 py-4 text-sm text-gray-900">{{ asset.get("display_name", "Unnamed") }}</td>
-                        <td class="px-6 py-4 text-sm text-gray-600">{{ asset.get("category_display", "-") }}</td>
-                        <td class="px-6 py-4 text-sm">
-                            {% if asset.get("owner_type") == "GA" %}
-                                <span class="bg-amber-100 text-amber-800 px-2 py-1 rounded text-xs font-medium">GA</span>
-                            {% elif asset.get("owner_type") == "IT" %}
-                                <span class="bg-cyan-100 text-cyan-800 px-2 py-1 rounded text-xs font-medium">IT</span>
-                            {% endif %}
-                        </td>
-                        <td class="px-6 py-4 text-sm text-gray-600">{{ asset.get("location_display", "-") }}</td>
-                        <td class="px-6 py-4 text-sm">
-                            {% set status = asset.get("status", "") %}
-                            {% if status == "Active" %}
-                                <span class="bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-medium">Active</span>
-                            {% elif status == "Damaged" %}
-                                <span class="bg-red-100 text-red-800 px-2 py-1 rounded text-xs font-medium">Damaged</span>
-                            {% elif status == "Lost" %}
-                                <span class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded text-xs font-medium">Lost</span>
-                            {% elif status == "Disposed" %}
-                                <span class="bg-gray-100 text-gray-800 px-2 py-1 rounded text-xs font-medium">Disposed</span>
-                            {% else %}
-                                <span class="bg-gray-100 text-gray-800 px-2 py-1 rounded text-xs font-medium">{{ status }}</span>
-                            {% endif %}
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+        <div class="divide-y divide-gray-200">
+            {% if latest_assets %}
+                {% for asset in latest_assets %}
+                <div class="asset-row">
+                    <div class="asset-info">
+                        <p class="asset-name">{{ asset.get("display_name", "Unnamed") }}</p>
+                        <p class="asset-meta">
+                            <span class="badge {% if asset.get('owner_type') == 'GA' %}badge-amber{% else %}badge-cyan{% endif %}" style="margin-right: 0.5rem;">
+                                {{ asset.get("owner_type", "N/A") }}
+                            </span>
+                            {{ asset.get("category_display", "-") }} • {{ asset.get("location_display", "-") }}
+                        </p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        {% set status = asset.get("status", "") %}
+                        {% if status == "Active" %}
+                            <span class="badge badge-green">Active</span>
+                        {% elif status == "Damaged" %}
+                            <span class="badge badge-red">Damaged</span>
+                        {% elif status == "Lost" %}
+                            <span class="badge badge-yellow">Lost</span>
+                        {% elif status == "Disposed" %}
+                            <span class="badge" style="background: #f3f4f6; color: #6b7280;">Disposed</span>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="asset-row">
+                    <p class="text-gray-500">No recent assets</p>
+                </div>
+            {% endif %}
         </div>
     </div>
 </div>
@@ -264,18 +268,9 @@
 {% block scripts %}
 <script>
     const chartData = {
-        month: {
-            labels: {{ monthly_chart_labels | tojson }},
-            values: {{ monthly_chart_values | tojson }}
-        },
-        quarter: {
-            labels: {{ quarterly_chart_labels | tojson }},
-            values: {{ quarterly_chart_values | tojson }}
-        },
-        year: {
-            labels: {{ yearly_chart_labels | tojson }},
-            values: {{ yearly_chart_values | tojson }}
-        }
+        month: { labels: {{ monthly_chart_labels | tojson }}, values: {{ monthly_chart_values | tojson }} },
+        quarter: { labels: {{ quarterly_chart_labels | tojson }}, values: {{ quarterly_chart_values | tojson }} },
+        year: { labels: {{ yearly_chart_labels | tojson }}, values: {{ yearly_chart_values | tojson }} }
     };
 
     let currentPeriod = 'month';
@@ -301,38 +296,20 @@
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            plugins: {
-                legend: { display: true, position: 'top' }
-            },
-            scales: {
-                y: { beginAtZero: true, ticks: { precision: 0 } }
-            }
+            plugins: { legend: { display: true, position: 'top' } },
+            scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
         }
     });
 
-    document.querySelectorAll('.chart-btn').forEach(btn => {
+    document.querySelectorAll('.chart-period-btn').forEach(btn => {
         btn.addEventListener('click', function() {
-            document.querySelectorAll('.chart-btn').forEach(b => {
-                b.classList.remove('bg-blue-100', 'text-blue-600', 'active');
-                b.classList.add('bg-gray-100', 'text-gray-600');
-            });
-            this.classList.add('bg-blue-100', 'text-blue-600', 'active');
-            this.classList.remove('bg-gray-100', 'text-gray-600');
-            
+            document.querySelectorAll('.chart-period-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
             currentPeriod = this.dataset.period;
             chart.data.labels = chartData[currentPeriod].labels;
             chart.data.datasets[0].data = chartData[currentPeriod].values;
             chart.update();
         });
-    });
-
-    document.getElementById('refresh-btn').addEventListener('click', function() {
-        const icon = document.getElementById('refresh-icon');
-        icon.style.animation = 'spin 1s linear infinite';
-        setTimeout(() => {
-            icon.style.animation = '';
-            location.reload();
-        }, 1500);
     });
 </script>
 {% endblock %}
