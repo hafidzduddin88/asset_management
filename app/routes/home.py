@@ -20,7 +20,7 @@ async def home(request: Request, current_profile = Depends(get_current_profile),
     try:
         # Summary and chart data
         summary_data = get_summary_data()
-        chart_data = get_chart_data()
+        chart_data = get_chart_data(owner_type)
         all_assets = get_all_assets()
 
         # Filter by owner_type if specified

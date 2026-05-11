@@ -510,8 +510,13 @@ def get_summary_data():
         "total_assets": len(assets)
     }
 
-def get_chart_data():
+def get_chart_data(owner_type=None):
     assets = get_all_assets()
+    
+    # Filter by owner_type if specified
+    if owner_type and owner_type in ["GA", "IT"]:
+        assets = [asset for asset in assets if asset.get("owner_type") == owner_type]
+    
     now = datetime.now()
     supabase = get_supabase()
     
