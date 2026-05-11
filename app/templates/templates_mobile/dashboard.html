@@ -168,35 +168,12 @@
     </div>
 </div>
 
-<!-- Status Overview -->
+<!-- Damaged Assets -->
 <div class="bg-white rounded-lg shadow p-4 mb-4">
-    <h2 class="section-title">📊 Status Overview</h2>
+    <h2 class="section-title">🔧 Damaged Assets</h2>
     <div class="space-y-2">
-        <div class="stat-row">
-            <span class="stat-label">✅ Active</span>
-            <span class="badge badge-green">{{ total_assets }}</span>
-        </div>
-        <div class="stat-row">
-            <span class="stat-label">🔧 Damaged</span>
-            <span class="badge badge-red">{{ damaged_count }}</span>
-        </div>
-        <div class="stat-row">
-            <span class="stat-label">❓ Lost</span>
-            <span class="badge badge-yellow">{{ lost_count }}</span>
-        </div>
-        <div class="stat-row">
-            <span class="stat-label">🗑️ Disposed</span>
-            <span class="badge" style="background: #f3f4f6; color: #6b7280;">{{ disposed_count }}</span>
-        </div>
-    </div>
-</div>
-
-<!-- Recent Assets -->
-<div class="bg-white rounded-lg shadow p-4">
-    <h2 class="section-title">⏰ Recent Assets</h2>
-    <div class="space-y-2">
-        {% if latest_assets %}
-            {% for asset in latest_assets[:8] %}
+        {% if damaged_assets %}
+            {% for asset in damaged_assets %}
             <div class="asset-item">
                 <p class="asset-name">{{ asset.get("display_name", "Unnamed") }}</p>
                 <p class="asset-meta">
@@ -206,21 +183,60 @@
                     {{ asset.get("category_display", "-") }}
                 </p>
                 <div class="mt-1">
-                    {% set status = asset.get("status", "") %}
-                    {% if status == "Active" %}
-                        <span class="badge badge-green">Active</span>
-                    {% elif status == "Damaged" %}
-                        <span class="badge badge-red">Damaged</span>
-                    {% elif status == "Lost" %}
-                        <span class="badge badge-yellow">Lost</span>
-                    {% elif status == "Disposed" %}
-                        <span class="badge" style="background: #f3f4f6; color: #6b7280;">Disposed</span>
-                    {% endif %}
+                    <span class="badge badge-red">Damaged</span>
                 </div>
             </div>
             {% endfor %}
         {% else %}
-            <p class="text-gray-500 text-xs">No recent assets</p>
+            <p class="text-gray-500 text-xs">✅ No damaged assets</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Lost Assets -->
+<div class="bg-white rounded-lg shadow p-4 mb-4">
+    <h2 class="section-title">❓ Lost Assets</h2>
+    <div class="space-y-2">
+        {% if lost_assets %}
+            {% for asset in lost_assets %}
+            <div class="asset-item">
+                <p class="asset-name">{{ asset.get("display_name", "Unnamed") }}</p>
+                <p class="asset-meta">
+                    <span class="badge {% if asset.get('owner_type') == 'GA' %}badge-amber{% else %}badge-cyan{% endif %}" style="margin-right: 0.25rem;">
+                        {{ asset.get("owner_type", "N/A") }}
+                    </span>
+                    {{ asset.get("category_display", "-") }}
+                </p>
+                <div class="mt-1">
+                    <span class="badge badge-yellow">Lost</span>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <p class="text-gray-500 text-xs">✅ No lost assets</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- High Value Assets -->
+<div class="bg-white rounded-lg shadow p-4">
+    <h2 class="section-title">💎 High Value Assets</h2>
+    <div class="space-y-2">
+        {% if high_value_assets %}
+            {% for asset in high_value_assets %}
+            <div class="asset-item">
+                <p class="asset-name">{{ asset.get("display_name", "Unnamed") }}</p>
+                <p class="asset-meta">
+                    <span class="badge {% if asset.get('owner_type') == 'GA' %}badge-amber{% else %}badge-cyan{% endif %}" style="margin-right: 0.25rem;">
+                        {{ asset.get("owner_type", "N/A") }}
+                    </span>
+                    {{ asset.get("category_display", "-") }}
+                </p>
+                <p class="text-xs font-bold text-green-600 mt-1">{{ asset.get("purchase_cost_display", "-") }}</p>
+            </div>
+            {% endfor %}
+        {% else %}
+            <p class="text-gray-500 text-xs">No high value assets</p>
         {% endif %}
     </div>
 </div>

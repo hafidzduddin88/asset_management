@@ -108,15 +108,23 @@ async def home(request: Request, current_profile = Depends(get_current_profile),
             {"label": k, "value": v} for k, v in age_distribution.items()
         ]
 
-        # Format latest assets (excluding disposed assets)
-        latest_assets = sorted(
-            active_assets, 
-            key=lambda a: a.get("purchase_date", ""), 
+        # Get damaged assets needing repair
+        damaged_assets = [a for a in all_assets if a.get("status") == "Damaged"]
+        damaged_assets = sorted(damaged_assets, key=lambda a: a.get("asset_name", ""))[:5]
+        
+        # Get lost assets
+        lost_assets_list = [a for a in all_assets if a.get("status") == "Lost"]
+        lost_assets_list = sorted(lost_assets_list, key=lambda a: a.get("asset_name", ""))[:5]
+        
+        # Get high value assets (top 5 by purchase cost)
+        high_value_assets = sorted(
+            active_assets,
+            key=lambda a: float(a.get("purchase_cost", 0) or 0),
             reverse=True
-        )[:10]
+        )[:5]
         
         # Process assets for display
-        for asset in latest_assets:
+        for asset in damaged_assets + lost_assets_list + high_value_assets:
             asset["display_name"] = asset.get("asset_name", f"Asset #{asset.get('asset_id', 'Unknown')}")
             asset["category_display"] = asset.get("ref_categories", {}).get("category_name", "Not specified") if asset.get("ref_categories") else "Not specified"
             asset["location_display"] = asset.get("ref_locations", {}).get("location_name", "Not specified") if asset.get("ref_locations") else "Not specified"
@@ -177,7 +185,9 @@ async def home(request: Request, current_profile = Depends(get_current_profile),
             "yearly_chart_labels": yearly_chart_labels,
             "yearly_chart_values": yearly_chart_values,
             "age_distribution": age_distribution_list,
-            "latest_assets": latest_assets,
+            "damaged_assets": damaged_assets,
+            "lost_assets": lost_assets_list,
+            "high_value_assets": high_value_assets,
             "activity_data": chart_data.get("activity_data", {}),
             "error_message": error_message
         }
@@ -209,7 +219,9 @@ async def home(request: Request, current_profile = Depends(get_current_profile),
             "yearly_chart_labels": [],
             "yearly_chart_values": [],
             "age_distribution": [],
-            "latest_assets": [],
+            "damaged_assets": [],
+            "lost_assets": [],
+            "high_value_assets": [],
             "activity_data": {},
             "error": "Error loading dashboard data"
         })

@@ -223,14 +223,14 @@
         </div>
     </div>
 
-    <!-- Recent Assets -->
-    <div class="bg-white rounded-lg shadow-lg border border-gray-200 overflow-hidden">
-        <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
-            <h2 class="section-title"><i class="fas fa-clock text-gray-600"></i>Recent Assets</h2>
+    <!-- Damaged Assets Needing Repair -->
+    <div class="bg-white rounded-lg shadow-lg border border-gray-200 overflow-hidden mb-8">
+        <div class="px-6 py-4 border-b border-gray-200 bg-red-50">
+            <h2 class="section-title"><i class="fas fa-tools text-red-600"></i>Damaged Assets Needing Repair</h2>
         </div>
         <div class="divide-y divide-gray-200">
-            {% if latest_assets %}
-                {% for asset in latest_assets %}
+            {% if damaged_assets %}
+                {% for asset in damaged_assets %}
                 <div class="asset-row">
                     <div class="asset-info">
                         <p class="asset-name">{{ asset.get("display_name", "Unnamed") }}</p>
@@ -241,23 +241,73 @@
                             {{ asset.get("category_display", "-") }} • {{ asset.get("location_display", "-") }}
                         </p>
                     </div>
-                    <div class="flex items-center gap-2">
-                        {% set status = asset.get("status", "") %}
-                        {% if status == "Active" %}
-                            <span class="badge badge-green">Active</span>
-                        {% elif status == "Damaged" %}
-                            <span class="badge badge-red">Damaged</span>
-                        {% elif status == "Lost" %}
-                            <span class="badge badge-yellow">Lost</span>
-                        {% elif status == "Disposed" %}
-                            <span class="badge" style="background: #f3f4f6; color: #6b7280;">Disposed</span>
-                        {% endif %}
+                    <span class="badge badge-red">Damaged</span>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="asset-row">
+                    <p class="text-gray-500">✅ No damaged assets</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Lost Assets -->
+    <div class="bg-white rounded-lg shadow-lg border border-gray-200 overflow-hidden mb-8">
+        <div class="px-6 py-4 border-b border-gray-200 bg-yellow-50">
+            <h2 class="section-title"><i class="fas fa-search text-yellow-600"></i>Lost Assets</h2>
+        </div>
+        <div class="divide-y divide-gray-200">
+            {% if lost_assets %}
+                {% for asset in lost_assets %}
+                <div class="asset-row">
+                    <div class="asset-info">
+                        <p class="asset-name">{{ asset.get("display_name", "Unnamed") }}</p>
+                        <p class="asset-meta">
+                            <span class="badge {% if asset.get('owner_type') == 'GA' %}badge-amber{% else %}badge-cyan{% endif %}" style="margin-right: 0.5rem;">
+                                {{ asset.get("owner_type", "N/A") }}
+                            </span>
+                            {{ asset.get("category_display", "-") }} • {{ asset.get("location_display", "-") }}
+                        </p>
+                    </div>
+                    <span class="badge badge-yellow">Lost</span>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="asset-row">
+                    <p class="text-gray-500">✅ No lost assets</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- High Value Assets -->
+    <div class="bg-white rounded-lg shadow-lg border border-gray-200 overflow-hidden mb-8">
+        <div class="px-6 py-4 border-b border-gray-200 bg-green-50">
+            <h2 class="section-title"><i class="fas fa-gem text-green-600"></i>High Value Assets (Top 5)</h2>
+        </div>
+        <div class="divide-y divide-gray-200">
+            {% if high_value_assets %}
+                {% for asset in high_value_assets %}
+                <div class="asset-row">
+                    <div class="asset-info">
+                        <p class="asset-name">{{ asset.get("display_name", "Unnamed") }}</p>
+                        <p class="asset-meta">
+                            <span class="badge {% if asset.get('owner_type') == 'GA' %}badge-amber{% else %}badge-cyan{% endif %}" style="margin-right: 0.5rem;">
+                                {{ asset.get("owner_type", "N/A") }}
+                            </span>
+                            {{ asset.get("category_display", "-") }}
+                        </p>
+                    </div>
+                    <div class="text-right">
+                        <p class="font-bold text-green-600">{{ asset.get("purchase_cost_display", "-") }}</p>
+                        <p class="text-xs text-gray-500">{{ asset.get("purchase_date_display", "-") }}</p>
                     </div>
                 </div>
                 {% endfor %}
             {% else %}
                 <div class="asset-row">
-                    <p class="text-gray-500">No recent assets</p>
+                    <p class="text-gray-500">No high value assets</p>
                 </div>
             {% endif %}
         </div>
