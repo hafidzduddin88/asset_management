@@ -86,10 +86,11 @@ async def forgot_password_submit(request: Request, email: str = Form(...)):
 async def change_password_page(request: Request):
     """Handle Supabase recovery callback and verify token"""
     # Get token_hash and type from query params (Supabase email link format)
+    # Support both modern (token_hash) and legacy (token) formats
     token_hash = request.query_params.get("token_hash")
     type_param = request.query_params.get("type")
     
-    # Handle old token format
+    # Handle legacy token format
     if not token_hash:
         token_hash = request.query_params.get("token")
     
