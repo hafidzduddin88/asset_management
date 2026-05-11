@@ -121,8 +121,7 @@ async def change_password_page(request: Request):
                 "error": "Terjadi kesalahan saat memproses link reset password."
             })
     
-    if (not token_hash and not token) or (not type_param):
-    
+    if (not token_hash and not token) or not type_param:
         template_path = get_template(request, "forgot_password/processing.html")
         return templates.TemplateResponse(template_path, {"request": request})
     
@@ -195,7 +194,6 @@ async def change_password_form(request: Request):
     refresh_token = request.cookies.get("sb_refresh_token")
     
     if not access_token or not refresh_token:
-        # Redirect to forgot password if no valid session
         return RedirectResponse("/forgot-password?error=Session+tidak+valid", status_code=303)
     
     template_path = get_template(request, "forgot_password/reset.html")
