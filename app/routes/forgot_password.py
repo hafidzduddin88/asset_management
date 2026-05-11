@@ -160,9 +160,6 @@ async def change_password_page(request: Request):
             if not access_token or not refresh_token:
                 raise Exception("No tokens received from verify")
             
-            # Update SDK session to keep internal state in sync
-            supabase.auth.set_session(access_token, refresh_token)
-            
             # Redirect to form with cookies set (matching session_auth.py pattern)
             response_obj = RedirectResponse("/auth/change-password/form", status_code=303)
             

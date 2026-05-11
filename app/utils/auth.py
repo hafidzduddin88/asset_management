@@ -105,6 +105,10 @@ def refresh_supabase_token(refresh_token: str) -> Optional[dict]:
     
     Uses supabase-py v2 built-in session refresh which is more reliable
     than manual HTTP requests.
+    
+    IMPORTANT: Do NOT call set_session() here. SDK already knows about the new
+    session from refresh_session(). Calling set_session() with a refresh_token
+    that may be stale will cause "Invalid Refresh Token" errors on next refresh.
     """
     try:
         # Use supabase-py v2 built-in refresh method
@@ -113,9 +117,6 @@ def refresh_supabase_token(refresh_token: str) -> Optional[dict]:
         if not session or not session.access_token:
             logging.warning("Refresh session returned no tokens")
             return None
-        
-        # Update SDK session to keep internal state in sync
-        supabase.auth.set_session(session.access_token, session.refresh_token)
         
         # Protect profile after token refresh
         if session.user and session.user.id:
