@@ -5,7 +5,6 @@ from jose.exceptions import JWTError
 from supabase import create_client, Client
 from typing import Optional, List
 from enum import Enum
-import requests
 import logging
 
 # Cache for last login updates to prevent frequent database writes
@@ -33,6 +32,7 @@ def get_jwks() -> dict:
     now = datetime.now()
     if _jwks_cache is None or (_jwks_cache_time and (now - _jwks_cache_time).total_seconds() > JWKS_CACHE_TTL):
         try:
+            import requests
             jwks_url = f"{config.SUPABASE_URL}/auth/v1/.well-known/jwks.json"
             resp = requests.get(jwks_url, timeout=10)
             resp.raise_for_status()
@@ -101,44 +101,34 @@ def decode_supabase_jwt(token: str) -> Optional[dict]:
         return None
 
 def refresh_supabase_token(refresh_token: str) -> Optional[dict]:
-    """Refresh access/refresh tokens using Supabase API."""
+    """Refresh access/refresh tokens using Supabase Python SDK v2.
+    
+    Uses supabase-py v2 built-in session refresh which is more reliable
+    than manual HTTP requests.
+    """
     try:
-        url = f"{config.SUPABASE_URL}/auth/v1/token?grant_type=refresh_token"
-        headers = {
-            "apikey": config.SUPABASE_ANON_KEY,
-            "Content-Type": "application/json"
-        }
-        payload = {"refresh_token": refresh_token}
-
-        response = requests.post(url, headers=headers, json=payload, timeout=10)
+        # Use supabase-py v2 built-in refresh method
+        session = supabase.auth.refresh_session(refresh_token)
         
-        # Handle 400/401 errors - refresh token is invalid/expired
-        if response.status_code in [400, 401]:
-            logging.warning(f"Refresh token invalid or expired (status {response.status_code})")
+        if not session or not session.access_token:
+            logging.warning("Refresh session returned no tokens")
             return None
         
-        response.raise_for_status()
-        data = response.json()
-        
         # Protect profile after token refresh
-        if "user" in data and data["user"].get("id"):
-            user_id = data["user"]["id"]
+        if session.user and session.user.id:
             try:
                 from app.utils.profile_utils import protect_profile_data
-                protect_profile_data(user_id)
+                protect_profile_data(session.user.id)
             except Exception as e:
                 logging.warning(f"Failed to protect profile after token refresh: {e}")
 
         return {
-            "access_token": data["access_token"],
-            "refresh_token": data.get("refresh_token", refresh_token),
-            "expires_at": data.get("expires_at")
+            "access_token": session.access_token,
+            "refresh_token": session.refresh_token or refresh_token,
+            "expires_at": session.expires_at
         }
-    except requests.exceptions.Timeout:
-        logging.error("Token refresh timeout")
-        return None
     except Exception as e:
-        logging.error(f"Token refresh failed: {e}")
+        logging.warning(f"Token refresh failed (refresh token may be expired): {type(e).__name__}")
         return None
 
 def get_current_profile(request: Request) -> ProfileResponse:
