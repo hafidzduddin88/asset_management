@@ -87,10 +87,42 @@ async def change_password_page(request: Request):
     # Get token_hash and type from query params (Supabase email link format)
     token_hash = request.query_params.get("token_hash")
     type_param = request.query_params.get("type")
+    access_token = request.query_params.get("access_token")
+    refresh_token = request.query_params.get("refresh_token")
     
     # Handle legacy token format
     if not token_hash:
         token_hash = request.query_params.get("token")
+    
+    # If we have access_token and refresh_token from Supabase redirect, use them directly
+    if access_token and refresh_token:
+        try:
+            response_obj = RedirectResponse("/auth/change-password/form", status_code=303)
+            settings = get_cookie_settings(request)
+            
+            response_obj.set_cookie(
+                key="sb_access_token",
+                value=access_token,
+                max_age=3600,
+                **settings
+            )
+            
+            response_obj.set_cookie(
+                key="sb_refresh_token",
+                value=refresh_token,
+                max_age=86400 * 30,
+                **settings
+            )
+            
+            logging.info("Password reset session created from Supabase redirect")
+            return response_obj
+        except Exception as e:
+            logging.error(f"Error setting cookies from Supabase tokens: {str(e)}")
+            template_path = get_template(request, "login_logout.html")
+            return templates.TemplateResponse(template_path, {
+                "request": request,
+                "error": "Terjadi kesalahan saat memproses link reset password."
+            })
     
     if not token_hash or not type_param:
         # Return HTML with JavaScript to handle fragment format

@@ -16,9 +16,8 @@ async def redirect_root():
     return RedirectResponse("/dashboard")
 
 @router.get("/dashboard", response_model=None)
-async def home(request: Request, current_profile = Depends(get_current_profile), owner_type: str = None, error: str = None, error_description: str = None):
+async def home(request: Request, current_profile = Depends(get_current_profile), owner_type: str = None):
     try:
-        # Summary and chart data
         summary_data = get_summary_data()
         chart_data = get_chart_data(owner_type)
         all_assets = get_all_assets()
@@ -153,14 +152,6 @@ async def home(request: Request, current_profile = Depends(get_current_profile),
             else:
                 asset["purchase_cost_display"] = "Not specified"
 
-
-        # Handle email verification errors
-        error_message = None
-        if error == "access_denied" and "otp_expired" in str(error_description):
-            error_message = "Email verification link has expired. Please request a new one."
-        elif error:
-            error_message = "Authentication error occurred. Please try logging in again."
-
         context = {
             "request": request,
             "user": current_profile,
@@ -188,8 +179,7 @@ async def home(request: Request, current_profile = Depends(get_current_profile),
             "damaged_assets": damaged_assets,
             "lost_assets": lost_assets_list,
             "high_value_assets": high_value_assets,
-            "activity_data": chart_data.get("activity_data", {}),
-            "error_message": error_message
+            "activity_data": chart_data.get("activity_data", {})
         }
 
         template_path = get_template(request, "dashboard.html")
