@@ -121,7 +121,8 @@ async def change_password_page(request: Request):
                 "error": "Terjadi kesalahan saat memproses link reset password."
             })
     
-    if not token_hash and not token or not type_param:
+    if (not token_hash and not token) or (not type_param):
+    
         template_path = get_template(request, "forgot_password/processing.html")
         return templates.TemplateResponse(template_path, {"request": request})
     
