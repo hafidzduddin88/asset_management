@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Request, Form
-from fastapi.responses import RedirectResponse, HTMLResponse
+from fastapi.responses import RedirectResponse
 from app.utils.device_detector import get_template
 from app.config import load_config
 from starlette.templating import Jinja2Templates
@@ -125,47 +125,8 @@ async def change_password_page(request: Request):
             })
     
     if not token_hash or not type_param:
-        # Return HTML with JavaScript to handle fragment format
-        html_content = """
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Processing...</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-gray-50 min-h-screen flex items-center justify-center">
-    <div class="text-center">
-        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-        <p class="mt-4 text-gray-600">Memproses reset password...</p>
-    </div>
-    <script>
-        const urlParams = new URLSearchParams(window.location.search);
-        const hash = window.location.hash.substring(1);
-        const hashParams = new URLSearchParams(hash);
-        
-        let error = urlParams.get('error') || urlParams.get('error_code');
-        let errorDescription = urlParams.get('error_description');
-        
-        if (!error && hash) {
-            error = hashParams.get('error') || hashParams.get('error_code');
-            errorDescription = hashParams.get('error_description');
-        }
-        
-        if (error) {
-            const errorMsg = errorDescription || error;
-            window.location.href = '/forgot-password?error=' + encodeURIComponent(errorMsg);
-        } else if (hash && (hashParams.get('access_token') || hashParams.get('refresh_token') || hashParams.get('token_hash') || hashParams.get('token'))) {
-            window.location.href = '/auth/change-password?' + hash;
-        } else {
-            window.location.href = '/forgot-password?error=' + encodeURIComponent('Link tidak valid atau sudah kadaluarsa');
-        }
-    </script>
-</body>
-</html>
-        """
-        return HTMLResponse(content=html_content)
+        template_path = get_template(request, "forgot_password/processing.html")
+        return templates.TemplateResponse(template_path, {"request": request})
     
     try:
         from supabase import create_client
