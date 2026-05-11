@@ -15,20 +15,23 @@ class SessionAuthMiddleware(BaseHTTPMiddleware):
     SKIP_PATHS = {
         "/login", "/signup", "/health", "/favicon.ico",
         "/auth/callback", "/auth/confirm", "/auth/refresh",
-        "/auth/change-password", "/forgot-password"
+        "/auth/change-password", "/auth/change-password/form", "/forgot-password"
     }
     
     SKIP_PREFIXES = {"/static"}
     
     async def dispatch(self, request: Request, call_next):
+        # Get the path without query parameters for checking
+        path = request.url.path
+        
         # Skip auth for public paths
-        if request.url.path in self.SKIP_PATHS:
+        if path in self.SKIP_PATHS:
             # Set empty user state for skipped paths
             request.state.user = None
             return await call_next(request)
             
         # Skip auth for static files
-        if any(request.url.path.startswith(prefix) for prefix in self.SKIP_PREFIXES):
+        if any(path.startswith(prefix) for prefix in self.SKIP_PREFIXES):
             return await call_next(request)
         
         if request.method in ["HEAD", "OPTIONS"]:
@@ -39,7 +42,7 @@ class SessionAuthMiddleware(BaseHTTPMiddleware):
         refresh_token = request.cookies.get("sb_refresh_token")
         
         if not access_token and not refresh_token:
-            return RedirectResponse(f"/login?next={quote(request.url.path)}", status_code=303)
+            return RedirectResponse(f"/login?next={quote(path)}", status_code=303)
         
         user_info = None
         new_tokens = None
@@ -71,7 +74,7 @@ class SessionAuthMiddleware(BaseHTTPMiddleware):
                                 }
                         else:
                             # Refresh failed - token is invalid, redirect to login
-                            response = RedirectResponse(f"/login?next={quote(request.url.path)}", status_code=303)
+                            response = RedirectResponse(f"/login?next={quote(path)}", status_code=303)
                             response.delete_cookie("sb_access_token", httponly=True, secure=not config.APP_URL.startswith("http://localhost"), samesite="lax")
                             response.delete_cookie("sb_refresh_token", httponly=True, secure=not config.APP_URL.startswith("http://localhost"), samesite="lax")
                             return response
@@ -89,14 +92,14 @@ class SessionAuthMiddleware(BaseHTTPMiddleware):
                     }
             else:
                 # Refresh failed - token is invalid, redirect to login
-                response = RedirectResponse(f"/login?next={quote(request.url.path)}", status_code=303)
+                response = RedirectResponse(f"/login?next={quote(path)}", status_code=303)
                 response.delete_cookie("sb_access_token", httponly=True, secure=not config.APP_URL.startswith("http://localhost"), samesite="lax")
                 response.delete_cookie("sb_refresh_token", httponly=True, secure=not config.APP_URL.startswith("http://localhost"), samesite="lax")
                 return response
         
         # Redirect if no valid user
         if not user_info or not user_info.get("id"):
-            return RedirectResponse(f"/login?next={quote(request.url.path)}", status_code=303)
+            return RedirectResponse(f"/login?next={quote(path)}", status_code=303)
         
         # Set user in request state
         request.state.user = user_info

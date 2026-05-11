@@ -82,6 +82,20 @@ async def forgot_password_submit(request: Request, email: str = Form(...)):
 @router.get("/auth/change-password")
 async def change_password_page(request: Request):
     """Handle Supabase recovery callback and verify token"""
+    # Check for errors in query params first (from Supabase)
+    error = request.query_params.get("error") or request.query_params.get("error_code")
+    error_description = request.query_params.get("error_description")
+    
+    if error:
+        # Handle Supabase auth errors directly
+        error_msg = error_description or error
+        if "expired" in error.lower() or "invalid" in error.lower():
+            error_msg = "Link reset password sudah kadaluarsa. Silakan request link baru."
+        
+        # Use proper URL encoding for redirect
+        from urllib.parse import quote_plus
+        return RedirectResponse(f"/forgot-password?error={quote_plus(error_msg)}", status_code=303)
+    
     # Get token_hash and type from query params (Supabase email link format)
     # Support both modern (token_hash) and legacy (token) formats
     token_hash = request.query_params.get("token_hash")
@@ -108,17 +122,31 @@ async def change_password_page(request: Request):
         <p class="mt-4 text-gray-600">Memproses reset password...</p>
     </div>
     <script>
+        // Handle both query params and hash fragments
+        const urlParams = new URLSearchParams(window.location.search);
         const hash = window.location.hash.substring(1);
-        if (hash) {
-            const params = new URLSearchParams(hash);
-            const error = params.get('error');
-            if (error) {
-                window.location.href = '/forgot-password?error=' + encodeURIComponent(params.get('error_description') || error);
-            } else {
-                window.location.href = '/auth/change-password?' + hash;
-            }
+        const hashParams = new URLSearchParams(hash);
+        
+        // Check for errors in query params first
+        let error = urlParams.get('error') || urlParams.get('error_code');
+        let errorDescription = urlParams.get('error_description');
+        
+        // If no error in query params, check hash
+        if (!error && hash) {
+            error = hashParams.get('error') || hashParams.get('error_code');
+            errorDescription = hashParams.get('error_description');
+        }
+        
+        if (error) {
+            // Redirect to forgot password page with error
+            const errorMsg = errorDescription || error;
+            window.location.href = '/forgot-password?error=' + encodeURIComponent(errorMsg);
+        } else if (hash && (hashParams.get('token_hash') || hashParams.get('token'))) {
+            // Valid token in hash, redirect with query params
+            window.location.href = '/auth/change-password?' + hash;
         } else {
-            window.location.href = '/forgot-password?error=' + encodeURIComponent('Link tidak valid');
+            // No valid params, redirect with generic error
+            window.location.href = '/forgot-password?error=' + encodeURIComponent('Link tidak valid atau sudah kadaluarsa');
         }
     </script>
 </body>
