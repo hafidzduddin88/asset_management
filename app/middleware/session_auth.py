@@ -69,6 +69,12 @@ class SessionAuthMiddleware(BaseHTTPMiddleware):
                                     "email": new_payload.get("email", ""),
                                     "exp": new_payload.get("exp")
                                 }
+                        else:
+                            # Refresh failed - token is invalid, redirect to login
+                            response = RedirectResponse(f"/login?next={quote(request.url.path)}", status_code=303)
+                            response.delete_cookie("sb_access_token", httponly=True, secure=not config.APP_URL.startswith("http://localhost"), samesite="lax")
+                            response.delete_cookie("sb_refresh_token", httponly=True, secure=not config.APP_URL.startswith("http://localhost"), samesite="lax")
+                            return response
         
         # Try refresh if no valid access token
         if not user_info and refresh_token:
@@ -81,6 +87,12 @@ class SessionAuthMiddleware(BaseHTTPMiddleware):
                         "email": payload.get("email", ""),
                         "exp": payload.get("exp")
                     }
+            else:
+                # Refresh failed - token is invalid, redirect to login
+                response = RedirectResponse(f"/login?next={quote(request.url.path)}", status_code=303)
+                response.delete_cookie("sb_access_token", httponly=True, secure=not config.APP_URL.startswith("http://localhost"), samesite="lax")
+                response.delete_cookie("sb_refresh_token", httponly=True, secure=not config.APP_URL.startswith("http://localhost"), samesite="lax")
+                return response
         
         # Redirect if no valid user
         if not user_info or not user_info.get("id"):

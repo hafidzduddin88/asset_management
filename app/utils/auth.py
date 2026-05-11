@@ -110,7 +110,13 @@ def refresh_supabase_token(refresh_token: str) -> Optional[dict]:
         }
         payload = {"refresh_token": refresh_token}
 
-        response = requests.post(url, headers=headers, json=payload)
+        response = requests.post(url, headers=headers, json=payload, timeout=10)
+        
+        # Handle 400/401 errors - refresh token is invalid/expired
+        if response.status_code in [400, 401]:
+            logging.warning(f"Refresh token invalid or expired (status {response.status_code})")
+            return None
+        
         response.raise_for_status()
         data = response.json()
         
@@ -128,6 +134,9 @@ def refresh_supabase_token(refresh_token: str) -> Optional[dict]:
             "refresh_token": data.get("refresh_token", refresh_token),
             "expires_at": data.get("expires_at")
         }
+    except requests.exceptions.Timeout:
+        logging.error("Token refresh timeout")
+        return None
     except Exception as e:
         logging.error(f"Token refresh failed: {e}")
         return None
