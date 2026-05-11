@@ -160,6 +160,9 @@ async def change_password_page(request: Request):
             if not access_token or not refresh_token:
                 raise Exception("No tokens received from verify")
             
+            # Update SDK session to keep internal state in sync
+            supabase.auth.set_session(access_token, refresh_token)
+            
             # Redirect to form with cookies set (matching session_auth.py pattern)
             response_obj = RedirectResponse("/auth/change-password/form", status_code=303)
             
@@ -247,6 +250,9 @@ async def change_password_submit(
                 return RedirectResponse("/auth/change-password/form?error=Gagal+mengubah+password", status_code=303)
         
         logging.info("Password updated successfully")
+        
+        # Clear SDK session after password change
+        supabase.auth.sign_out()
         
         # Clear cookies and redirect to login (matching login.py pattern)
         template_path = get_template(request, "login_logout.html")

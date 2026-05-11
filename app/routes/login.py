@@ -82,6 +82,9 @@ async def login_form(
         if not payload or not payload.get("sub"):
             raise Exception("Invalid JWT token received")
         
+        # Update SDK session to keep internal state in sync
+        supabase.auth.set_session(session.access_token, session.refresh_token)
+        
         # Set fresh cookies
         redirect_response = RedirectResponse(url=next or "/", status_code=303)
         set_auth_cookies(redirect_response, session, remember_me)
@@ -134,6 +137,10 @@ async def signup_form(
 
         if not result.user:
             raise Exception("Signup failed")
+        
+        # Update SDK session if session was created (auto-confirm enabled)
+        if result.session:
+            supabase.auth.set_session(result.session.access_token, result.session.refresh_token)
         
         # Create profile with business unit data
         from app.utils.profile_utils import create_profile_if_not_exists

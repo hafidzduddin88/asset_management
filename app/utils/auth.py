@@ -114,6 +114,9 @@ def refresh_supabase_token(refresh_token: str) -> Optional[dict]:
             logging.warning("Refresh session returned no tokens")
             return None
         
+        # Update SDK session to keep internal state in sync
+        supabase.auth.set_session(session.access_token, session.refresh_token)
+        
         # Protect profile after token refresh
         if session.user and session.user.id:
             try:
