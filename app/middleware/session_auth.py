@@ -75,8 +75,8 @@ class SessionAuthMiddleware(BaseHTTPMiddleware):
                         else:
                             # Refresh failed - token is invalid, redirect to login
                             response = RedirectResponse(f"/login?next={quote(path)}", status_code=303)
-                            response.delete_cookie("sb_access_token", httponly=True, secure=not config.APP_URL.startswith("http://localhost"), samesite="lax")
-                            response.delete_cookie("sb_refresh_token", httponly=True, secure=not config.APP_URL.startswith("http://localhost"), samesite="lax")
+                            response.delete_cookie("sb_access_token", path="/", httponly=True, secure=is_secure, samesite="lax")
+                            response.delete_cookie("sb_refresh_token", path="/", httponly=True, secure=is_secure, samesite="lax")
                             return response
         
         # Try refresh if no valid access token
@@ -93,8 +93,8 @@ class SessionAuthMiddleware(BaseHTTPMiddleware):
             else:
                 # Refresh failed - token is invalid, redirect to login
                 response = RedirectResponse(f"/login?next={quote(path)}", status_code=303)
-                response.delete_cookie("sb_access_token", httponly=True, secure=not config.APP_URL.startswith("http://localhost"), samesite="lax")
-                response.delete_cookie("sb_refresh_token", httponly=True, secure=not config.APP_URL.startswith("http://localhost"), samesite="lax")
+                response.delete_cookie("sb_access_token", path="/", httponly=True, secure=is_secure, samesite="lax")
+                response.delete_cookie("sb_refresh_token", path="/", httponly=True, secure=is_secure, samesite="lax")
                 return response
         
         # Redirect if no valid user
@@ -134,6 +134,7 @@ class SessionAuthMiddleware(BaseHTTPMiddleware):
             response.set_cookie(
                 key="sb_access_token",
                 value=new_tokens["access_token"],
+                path="/",
                 httponly=True,
                 secure=is_secure,
                 samesite="lax",
@@ -143,6 +144,7 @@ class SessionAuthMiddleware(BaseHTTPMiddleware):
             response.set_cookie(
                 key="sb_refresh_token", 
                 value=new_tokens["refresh_token"],
+                path="/",
                 httponly=True,
                 secure=is_secure,
                 samesite="lax",

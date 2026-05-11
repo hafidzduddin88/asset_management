@@ -17,7 +17,8 @@ def get_cookie_settings(request: Request) -> dict:
     return {
         "httponly": True,
         "secure": is_secure,
-        "samesite": "lax"
+        "samesite": "lax",
+        "path": "/"
     }
 
 @router.get("/forgot-password")
@@ -185,30 +186,30 @@ async def change_password_page(request: Request):
                 "request": request,
                 "error": "Link reset password tidak valid atau sudah kadaluarsa."
             })
-            
-            # Redirect to form with cookies set (matching session_auth.py pattern)
-            response_obj = RedirectResponse("/auth/change-password/form", status_code=303)
-            
-            settings = get_cookie_settings(request)
-            
-            # Set sb_access_token (matching session_auth.py)
-            response_obj.set_cookie(
-                key="sb_access_token",
-                value=session.access_token,
-                max_age=3600,  # 1 hour
-                **settings
-            )
-            
-            # Set sb_refresh_token (matching session_auth.py)
-            response_obj.set_cookie(
-                key="sb_refresh_token",
-                value=session.refresh_token,
-                max_age=86400 * 30,  # 30 days (matching session_auth.py)
-                **settings
-            )
-            
-            logging.info("Password reset session created successfully")
-            return response_obj
+        
+        # Redirect to form with cookies set (matching session_auth.py pattern)
+        response_obj = RedirectResponse("/auth/change-password/form", status_code=303)
+        
+        settings = get_cookie_settings(request)
+        
+        # Set sb_access_token (matching session_auth.py)
+        response_obj.set_cookie(
+            key="sb_access_token",
+            value=session.access_token,
+            max_age=3600,  # 1 hour
+            **settings
+        )
+        
+        # Set sb_refresh_token (matching session_auth.py)
+        response_obj.set_cookie(
+            key="sb_refresh_token",
+            value=session.refresh_token,
+            max_age=86400 * 30,  # 30 days (matching session_auth.py)
+            **settings
+        )
+        
+        logging.info(f"Password reset session created - access_token: {bool(session.access_token)}, refresh_token: {bool(session.refresh_token)}")
+        return response_obj
             
     except Exception as e:
         logging.error(f"Change password page error: {str(e)}")
@@ -247,8 +248,11 @@ async def change_password_submit(
         
         # Get access token from cookie (set by GET /auth/change-password)
         access_token = request.cookies.get("sb_access_token")
+        refresh_token = request.cookies.get("sb_refresh_token")
         
-        if not access_token:
+        logging.info(f"POST change-password - access_token present: {bool(access_token)}, refresh_token present: {bool(refresh_token)}")
+        
+        if not access_token or not refresh_token:
             template_path = get_template(request, "login_logout.html")
             return templates.TemplateResponse(template_path, {
                 "request": request,
@@ -278,6 +282,8 @@ async def change_password_submit(
         else:
             return RedirectResponse("/auth/change-password/form?error=Session+tidak+valid", status_code=303)
         
+        logging.info(f"Attempting password update with tokens - access_token: {bool(access_token)}, refresh_token: {bool(refresh_token)}")
+        
         logging.info("Password updated successfully")
         
         # Clear SDK session after password change
@@ -292,8 +298,8 @@ async def change_password_submit(
         
         # Clear reset session cookies (matching login.py clear_auth_cookies pattern)
         settings = get_cookie_settings(request)
-        response_obj.delete_cookie("sb_access_token", **{k: v for k, v in settings.items() if k != "httponly"})
-        response_obj.delete_cookie("sb_refresh_token", **{k: v for k, v in settings.items() if k != "httponly"})
+        response_obj.delete_cookie("sb_access_token", path="/", httponly=True, secure=settings["secure"], samesite="lax")
+        response_obj.delete_cookie("sb_refresh_token", path="/", httponly=True, secure=settings["secure"], samesite="lax")
         
         return response_obj
         
