@@ -130,20 +130,26 @@ def get_asset_by_id(asset_id):
         supabase = get_supabase()
         logging.info(f"Querying asset with ID: {asset_id}")
         
-        response = supabase.table(TABLES['ASSETS']).select('''
-            asset_id, asset_name, manufacture, model, serial_number, asset_tag,
-            room_name, notes, item_condition, purchase_date, purchase_cost,
-            warranty, supplier, journal, depreciation_value, residual_percent,
-            residual_value, useful_life, book_value, status, year, photo_url,
-            category_id, asset_type_id, company_id, business_unit_id, location_id, owner_id,
-            assigned_user_id, assigned_user_name, owner_type,
-            ref_categories(category_name, category_code),
-            ref_asset_types(type_name, type_code),
-            ref_locations(location_name, room_name),
-            ref_business_units(business_unit_name),
-            ref_companies(company_name, company_code),
-            ref_owners(owner_name, owner_code)
-        ''').eq('asset_id', asset_id).execute()
+        # Try with full relationships first
+        try:
+            response = supabase.table(TABLES['ASSETS']).select('''
+                asset_id, asset_name, manufacture, model, serial_number, asset_tag,
+                room_name, notes, item_condition, purchase_date, purchase_cost,
+                warranty, supplier, journal, depreciation_value, residual_percent,
+                residual_value, useful_life, book_value, status, year, photo_url,
+                category_id, asset_type_id, company_id, business_unit_id, location_id, owner_id,
+                assigned_user_id, assigned_user_name, owner_type,
+                ref_categories(category_name, category_code),
+                ref_asset_types(type_name, type_code),
+                ref_locations(location_name, room_name),
+                ref_business_units(business_unit_name),
+                ref_companies(company_name, company_code),
+                ref_owners(owner_name, owner_code)
+            ''').eq('asset_id', asset_id).execute()
+        except Exception as e:
+            logging.warning(f"Query with relationships failed: {str(e)}, trying without relationships")
+            # Fallback to simple query without relationships
+            response = supabase.table(TABLES['ASSETS']).select('*').eq('asset_id', asset_id).execute()
         
         logging.info(f"Query response data count: {len(response.data) if response.data else 0}")
         
@@ -153,6 +159,23 @@ def get_asset_by_id(asset_id):
         
         asset = response.data[0]
         logging.info(f"Asset retrieved: {asset.get('asset_name')}")
+        
+        # Fetch relationships separately if not already included
+        if asset.get('category_id') and not asset.get('ref_categories'):
+            try:
+                cat_response = supabase.table('ref_categories').select('category_name, category_code').eq('category_id', asset['category_id']).execute()
+                if cat_response.data:
+                    asset['ref_categories'] = cat_response.data[0]
+            except Exception as e:
+                logging.warning(f"Could not fetch category: {str(e)}")
+        
+        if asset.get('location_id') and not asset.get('ref_locations'):
+            try:
+                loc_response = supabase.table('ref_locations').select('location_name, room_name').eq('location_id', asset['location_id']).execute()
+                if loc_response.data:
+                    asset['ref_locations'] = loc_response.data[0]
+            except Exception as e:
+                logging.warning(f"Could not fetch location: {str(e)}")
         
         if asset.get('assigned_user_id'):
             try:
