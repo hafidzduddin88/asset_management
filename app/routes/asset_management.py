@@ -63,7 +63,7 @@ async def asset_list(
 
 @router.get("/view/{asset_id}", response_class=HTMLResponse)
 async def view_asset(
-    asset_id: str,
+    asset_id: int,
     request: Request,
     current_profile = Depends(get_current_profile)
 ):
