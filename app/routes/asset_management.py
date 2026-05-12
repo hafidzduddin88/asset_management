@@ -69,10 +69,14 @@ async def view_asset(
 ):
     """View asset details as modal popup."""
     try:
+        logging.info(f"Fetching asset details for asset_id: {asset_id}")
         asset = get_asset_by_id(asset_id)
+        
         if not asset:
+            logging.warning(f"Asset {asset_id} not found in database")
             raise HTTPException(status_code=404, detail="Asset not found")
         
+        logging.info(f"Asset found: {asset.get('asset_name')}")
         template_path = get_template(request, "asset_management/modal_view.html")
         return templates.TemplateResponse(
             template_path,
@@ -84,7 +88,7 @@ async def view_asset(
     except HTTPException:
         raise
     except Exception as e:
-        logging.error(f"Error viewing asset {asset_id}: {str(e)}")
+        logging.error(f"Error viewing asset {asset_id}: {type(e).__name__}: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail="Error loading asset details")
 
 @router.get("/edit/{asset_id}", response_class=HTMLResponse)

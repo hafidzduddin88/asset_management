@@ -128,6 +128,8 @@ def _get_all_assets():
 def get_asset_by_id(asset_id):
     try:
         supabase = get_supabase()
+        logging.info(f"Querying asset with ID: {asset_id}")
+        
         response = supabase.table(TABLES['ASSETS']).select('''
             asset_id, asset_name, manufacture, model, serial_number, asset_tag,
             room_name, notes, item_condition, purchase_date, purchase_cost,
@@ -143,11 +145,14 @@ def get_asset_by_id(asset_id):
             ref_owners(owner_name, owner_code)
         ''').eq('asset_id', asset_id).execute()
         
+        logging.info(f"Query response data count: {len(response.data) if response.data else 0}")
+        
         if not response.data:
-            logging.warning(f"Asset {asset_id} not found")
+            logging.warning(f"Asset {asset_id} not found - no data returned")
             return None
         
         asset = response.data[0]
+        logging.info(f"Asset retrieved: {asset.get('asset_name')}")
         
         if asset.get('assigned_user_id'):
             try:
@@ -155,12 +160,13 @@ def get_asset_by_id(asset_id):
                 user_response = supabase.table('profiles').select('full_name, username, email').eq('id', user_id).execute()
                 if user_response.data:
                     asset['assigned_user'] = user_response.data[0]
+                    logging.info(f"Assigned user found: {user_response.data[0].get('full_name')}")
             except Exception as e:
                 logging.error(f"Error fetching assigned user for asset {asset_id}: {str(e)}")
         
         return asset
     except Exception as e:
-        logging.error(f"Error getting asset {asset_id}: {type(e).__name__}: {str(e)}")
+        logging.error(f"Error getting asset {asset_id}: {type(e).__name__}: {str(e)}", exc_info=True)
         return None
 
 def get_reference_data(table_name):
