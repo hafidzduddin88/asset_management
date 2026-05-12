@@ -100,8 +100,6 @@ async def disposal_list_page(
         "assets": disposed_assets
     })
 
-
-
 @router.get("/view/{asset_id}", response_class=HTMLResponse)
 async def view_disposal_details(
     asset_id: str,
@@ -203,4 +201,3 @@ async def submit_disposal_request(
             url=f"/disposal/error?asset_id={asset_id}&error_message=An unexpected error occurred",
             status_code=status.HTTP_303_SEE_OTHER
         )
-
