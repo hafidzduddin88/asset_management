@@ -61,10 +61,10 @@
                                 </div>
                             </div>
                             <div class="mt-3">
-                                <a href="/asset_management/view/{{ asset.get('asset_id', '') }}" 
+                                <button onclick="openAssetModal('{{ asset.get('asset_id', '') }}')" 
                                     class="w-full block text-center bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-3 py-2 rounded-lg text-xs font-semibold transition-all duration-200 touch-manipulation">
                                     <i class="fas fa-eye mr-1"></i>View Details
-                                </a>
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -84,4 +84,8 @@
     </div>
 </div>
 
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/asset-modal.js"></script>
 {% endblock %}
