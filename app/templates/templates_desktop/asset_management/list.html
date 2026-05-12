@@ -177,7 +177,6 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="/static/asset-modal.js"></script>
 <script>
 const assetsData = {{ assets | tojson }};
 
@@ -503,7 +502,7 @@ function changePage(page) {
 }
 
 function viewAssetDetails(assetId) {
-    openAssetModal(assetId);
+    window.location.href = `/asset_management/view/${assetId}`;
 }
 
 function editAsset(assetId) {
