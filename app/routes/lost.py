@@ -21,6 +21,30 @@ async def lost_page(
     from fastapi.responses import RedirectResponse
     return RedirectResponse(url="/asset_management", status_code=302)
 
+@router.get("/list", response_class=HTMLResponse)
+async def lost_list_page(
+    request: Request,
+    current_profile = Depends(get_current_profile)
+):
+    """List all lost assets for viewing."""
+    supabase = get_supabase()
+    
+    response = supabase.table('assets').select('''
+        asset_id, asset_tag, asset_name, status,
+        ref_categories(category_name),
+        ref_locations(location_name, room_name)
+    ''').eq('status', 'Lost').execute()
+    
+    lost_assets = response.data or []
+    
+    template_path = get_template(request, "lost/index.html")
+    return templates.TemplateResponse(template_path, {
+        "request": request,
+        "current_profile": current_profile,
+        "user": current_profile,
+        "assets": lost_assets
+    })
+
 @router.get("/form", response_class=HTMLResponse)
 async def lost_form_page(
     request: Request,

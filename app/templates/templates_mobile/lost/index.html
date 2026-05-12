@@ -1,0 +1,91 @@
+{% extends "templates_mobile/layouts/modern_layout.html" %}
+
+{% block title %}Lost Assets - Admin{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-orange-50 via-white to-red-50">
+    <div class="px-4 py-4">
+        <!-- Header -->
+        <div class="bg-gradient-to-r from-orange-600 via-red-600 to-red-700 rounded-xl shadow-lg p-4 mb-4">
+            <div class="text-center">
+                <div class="bg-white bg-opacity-20 p-2 rounded-lg inline-block mb-2">
+                    <i class="fas fa-search text-xl text-white"></i>
+                </div>
+                <h1 class="text-lg font-bold text-white">Lost Assets</h1>
+                <p class="text-orange-100 text-xs mt-1">View lost assets</p>
+                <div class="bg-white bg-opacity-20 px-2 py-1 rounded-full inline-block mt-2">
+                    <span class="text-xs font-semibold text-white">{{ assets|length }} items</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Assets List -->
+        <div class="bg-white rounded-lg shadow-md overflow-hidden">
+            <div class="bg-gray-50 px-4 py-3 border-b border-gray-200">
+                <h3 class="text-sm font-semibold text-gray-900">Lost Assets</h3>
+                <p class="text-xs text-gray-600">Assets that have been reported as lost</p>
+            </div>
+            
+            {% if assets %}
+            <div class="divide-y divide-gray-100">
+                {% for asset in assets %}
+                <div class="p-4">
+                    <div class="flex items-start space-x-3">
+                        <div class="bg-gradient-to-br from-orange-400 to-red-600 p-2 rounded-lg flex-shrink-0">
+                            <i class="fas fa-box text-white text-sm"></i>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center space-x-2 mb-1">
+                                <h4 class="text-sm font-semibold text-gray-900 truncate">{{ asset.get('asset_name', 'Unknown Asset') }}</h4>
+                                {% set status = asset.get('status', '') %}
+                                {% if status == 'Lost' %}
+                                    <span class="px-2 py-1 bg-orange-100 text-orange-800 text-xs font-semibold rounded-full">
+                                        <i class="fas fa-search mr-1"></i>{{ status }}
+                                    </span>
+                                {% else %}
+                                    <span class="px-2 py-1 bg-gray-100 text-gray-800 text-xs font-semibold rounded-full">{{ status }}</span>
+                                {% endif %}
+                            </div>
+                            <div class="space-y-1 text-xs text-gray-600">
+                                <div class="flex items-center space-x-1">
+                                    <i class="fas fa-hashtag text-gray-400"></i>
+                                    <span>{{ asset.get('asset_id', 'N/A') }}</span>
+                                </div>
+                                <div class="flex items-center space-x-1">
+                                    <i class="fas fa-tag text-gray-400"></i>
+                                    <span>{{ asset.ref_categories.category_name if asset.ref_categories else 'N/A' }}</span>
+                                </div>
+                                <div class="flex items-center space-x-1">
+                                    <i class="fas fa-map-marker-alt text-gray-400"></i>
+                                    <span>{{ asset.ref_locations.location_name if asset.ref_locations else 'N/A' }}</span>
+                                </div>
+                            </div>
+                            <div class="mt-3">
+                                <button onclick="openAssetModal('{{ asset.get('asset_id', '') }}')\" 
+                                    class="w-full block text-center bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-3 py-2 rounded-lg text-xs font-semibold transition-all duration-200 touch-manipulation">
+                                    <i class="fas fa-eye mr-1"></i>View Details
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-12">
+                <div class="bg-gray-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <i class="fas fa-check-circle text-2xl text-gray-400"></i>
+                </div>
+                <h3 class="text-base font-semibold text-gray-900 mb-1">No Lost Assets</h3>
+                <p class="text-sm text-gray-500">No assets have been reported as lost</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/asset-modal.js"></script>
+{% endblock %}
