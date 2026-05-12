@@ -89,6 +89,35 @@ EXPORT_TABLES = {
             ('repair_id', 'Repair ID')
         ])
     },
+    'lost_log': {
+        'name': 'Lost Log',
+        'table': 'lost_log',
+        'columns': OrderedDict([
+            ('asset_name', 'Asset Name'),
+            ('lost_reason', 'Lost Reason'),
+            ('status', 'Status'),
+            ('requested_by_name', 'Reported By'),
+            ('request_date', 'Report Date'),
+            ('notes', 'Notes'),
+            ('lost_log_id', 'Lost Log ID')
+        ])
+    },
+    'disposal_log': {
+        'name': 'Disposal Log',
+        'table': 'disposal_log',
+        'columns': OrderedDict([
+            ('asset_name', 'Asset Name'),
+            ('disposal_reason', 'Disposal Reason'),
+            ('disposal_method', 'Disposal Method'),
+            ('status', 'Status'),
+            ('requested_by_name', 'Requested By'),
+            ('request_date', 'Request Date'),
+            ('approved_by_name', 'Approved By'),
+            ('approved_at', 'Approved Date'),
+            ('notes', 'Notes'),
+            ('disposal_log_id', 'Disposal Log ID')
+        ])
+    },
     'users': {
         'name': 'Users',
         'table': 'profiles',
