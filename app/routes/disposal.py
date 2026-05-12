@@ -102,8 +102,43 @@ async def disposal_list_page(
 
 
 
-@router.post("/submit")
-async def submit_disposal_request(
+@router.get("/view/{asset_id}", response_class=HTMLResponse)
+async def view_disposal_details(
+    asset_id: str,
+    request: Request,
+    current_profile = Depends(get_current_profile)
+):
+    """View disposal log details for disposed asset."""
+    supabase = get_supabase()
+    
+    # Get disposal log entry
+    response = supabase.table('disposal_log').select('''
+        disposal_log_id, asset_id, asset_name, disposal_reason, disposal_method,
+        description, requested_by_name, request_date, status, notes,
+        approved_by_name, approved_at
+    ''').eq('asset_id', asset_id).order('request_date', desc=True).limit(1).execute()
+    
+    disposal_log = response.data[0] if response.data else None
+    if not disposal_log:
+        raise HTTPException(status_code=404, detail="Disposal log not found")
+    
+    # Get asset details
+    asset_response = supabase.table('assets').select('''
+        asset_id, asset_name, asset_tag, status,
+        ref_categories(category_name),
+        ref_locations(location_name, room_name)
+    ''').eq('asset_id', asset_id).execute()
+    
+    asset = asset_response.data[0] if asset_response.data else None
+    
+    template_path = get_template(request, "disposal/modal_view.html")
+    return templates.TemplateResponse(template_path, {
+        "request": request,
+        "disposal_log": disposal_log,
+        "asset": asset
+    })
+
+
     request: Request,
     asset_id: str = Form(...),
     disposal_reason: str = Form(...),
