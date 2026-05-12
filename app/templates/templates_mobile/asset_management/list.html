@@ -107,8 +107,6 @@
     <!-- Pagination buttons will be populated here -->
 </div>
 
-
-
 {% endblock %}
 
 {% block scripts %}
@@ -348,11 +346,11 @@ function displayAssets() {
                         <i class="fas fa-wrench mr-1"></i>Repair
                     </button>
                     ` : ''}
-                    {% if user.role == 'admin' %}
+                    ${window.userRole === 'admin' ? `
                     <button onclick="event.stopPropagation(); editAsset(${asset.id})" class="text-green-600 hover:text-green-800 text-xs font-medium px-2 py-1 rounded transition-all duration-150 active:bg-green-100 active:scale-95 transform">
                         <i class="fas fa-edit mr-1"></i>Edit
                     </button>
-                    {% endif %}
+                    ` : ''}
                     ` : ''}
                 </div>
             </div>
@@ -491,5 +489,7 @@ function refreshData() {
     }, 500);
 }
 
+// Set user role from backend
+window.userRole = '{{ user.role if user else "staff" }}';
 </script>
 {% endblock %}
