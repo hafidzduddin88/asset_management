@@ -169,13 +169,13 @@ function getCookie(name) {
 }
 
 function deleteCookie(name) {
-    document.cookie = name + '=; Path=/; Max-Age=0; HttpOnly=false; SameSite=lax';
+    document.cookie = name + '=; Path=/; Max-Age=0; SameSite=lax';
 }
 
 const flashCookie = getCookie('flash');
 if (flashCookie) {
     try {
-        const flashData = JSON.parse(decodeURIComponent(flashCookie));
+        const flashData = JSON.parse(flashCookie);
         const flashDiv = document.getElementById('flash-message');
         const messageDiv = flashDiv.querySelector('div');
         const textDiv = flashDiv.querySelector('.text-sm');

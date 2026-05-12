@@ -14,7 +14,7 @@ def set_flash(response: Union[Response, StarletteResponse], message: str, catego
     response.set_cookie(
         key="flash",
         value=json.dumps(flash_data),
-        httponly=True,
+        httponly=False,
         max_age=30,  # 30 seconds
         samesite="lax",
         secure=False  # Set to False for development
