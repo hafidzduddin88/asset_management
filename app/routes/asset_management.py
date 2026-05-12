@@ -67,17 +67,16 @@ async def view_asset(
     request: Request,
     current_profile = Depends(get_current_profile)
 ):
-    """View asset details."""
+    """View asset details as modal popup."""
     asset = get_asset_by_id(asset_id)
     if not asset:
         raise HTTPException(status_code=404, detail="Asset not found")
     
-    template_path = get_template(request, "asset_management/view.html")
+    template_path = get_template(request, "asset_management/modal_view.html")
     return templates.TemplateResponse(
         template_path,
         {
             "request": request,
-            "user": current_profile,
             "asset": asset
         }
     )
