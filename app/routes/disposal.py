@@ -138,7 +138,8 @@ async def view_disposal_details(
         "asset": asset
     })
 
-
+@router.post("/submit")
+async def submit_disposal_request(
     request: Request,
     asset_id: str = Form(...),
     disposal_reason: str = Form(...),
@@ -175,18 +176,16 @@ async def view_disposal_details(
         disposal_log_data = {
             "asset_id": int(asset_id),
             "asset_name": asset.get('asset_name', ''),
-            "asset_tag": asset.get('asset_tag', ''),
             "disposal_reason": disposal_reason,
-            "condition_description": description or '',
             "disposal_method": disposal_method,
+            "description": description or '',
             "notes": notes or '',
-            "requested_by_id": current_profile.id,
+            "requested_by": current_profile.id,
             "requested_by_name": current_profile.full_name or current_profile.username,
-            "requested_by_role": current_profile.role,
             "status": "pending"
         }
         
-        supabase.table('disposal_request_log').insert(disposal_log_data).execute()
+        supabase.table('disposal_log').insert(disposal_log_data).execute()
         
         if approval_success:
             return RedirectResponse(
