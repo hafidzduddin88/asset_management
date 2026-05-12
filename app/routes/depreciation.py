@@ -22,7 +22,7 @@ async def depreciation_page(request: Request, current_profile = Depends(get_curr
     return templates.TemplateResponse(template_path, {
         "request": request,
         "user": current_profile,
-        "current_year": datetime.now().year
+        "now": datetime.now()
     })
 
 @router.post("/update")
