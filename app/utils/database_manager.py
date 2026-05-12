@@ -585,7 +585,7 @@ def get_chart_data(owner_type=None):
         damage_logs = supabase.table('damage_log').select('created_at').gte('created_at', start_date_monthly.isoformat()).execute().data or []
         repair_logs = supabase.table('repair_log').select('created_at').gte('created_at', start_date_monthly.isoformat()).execute().data or []
         relocation_logs = supabase.table('relocation_log').select('created_at').gte('created_at', start_date_monthly.isoformat()).execute().data or []
-        disposal_logs = supabase.table('disposal_log').select('created_at').gte('created_at', start_date_monthly.isoformat()).execute().data or []
+        disposal_logs = supabase.table('disposal_log').select('approved_at').gte('approved_at', start_date_monthly.isoformat()).execute().data or []
         lost_logs = supabase.table('lost_log').select('created_at').gte('created_at', start_date_monthly.isoformat()).execute().data or []
         
         # Process each log type
@@ -613,8 +613,11 @@ def get_chart_data(owner_type=None):
                     quarter_key = f"Q{quarter} {year}"
                     activity_data[activity_type]['quarterly'][quarter_key] = 0
             
+            # Determine which date column to use
+            date_column = 'approved_at' if activity_type == 'disposed' else 'created_at'
+            
             for log in logs:
-                date_str = log.get('created_at')
+                date_str = log.get(date_column)
                 if date_str:
                     try:
                         dt = datetime.fromisoformat(date_str.replace('Z', '+00:00'))
