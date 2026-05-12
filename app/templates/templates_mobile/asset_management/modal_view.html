@@ -74,11 +74,11 @@
                 <div class="grid grid-cols-2 gap-3 sm:gap-4">
                     <div>
                         <p class="text-xs font-semibold text-gray-500 uppercase">Purchase Cost</p>
-                        <p class="text-sm font-bold text-green-600">Rp {{ "{:,.0f}".format(float(asset.get('purchase_cost', 0))) }}</p>
+                        <p class="text-sm font-bold text-green-600">Rp {{ (asset.get('purchase_cost', 0) | int | string) | replace(',', '.') }}</p>
                     </div>
                     <div>
                         <p class="text-xs font-semibold text-gray-500 uppercase">Book Value</p>
-                        <p class="text-sm font-bold text-blue-600">Rp {{ "{:,.0f}".format(float(asset.get('book_value', 0))) }}</p>
+                        <p class="text-sm font-bold text-blue-600">Rp {{ (asset.get('book_value', 0) | int | string) | replace(',', '.') }}</p>
                     </div>
                 </div>
             </div>
