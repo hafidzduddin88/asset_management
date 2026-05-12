@@ -414,11 +414,6 @@ function displayAssets() {
                             <i class="fas fa-wrench"></i>
                         </button>
                         ` : ''}
-                        ${window.userRole === 'admin' ? `
-                        <button onclick="editAsset(${asset.id})" class="text-green-600 hover:text-green-900 p-1 hover:bg-green-50 rounded transition-all duration-150 active:scale-95 transform" title="Edit Asset">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                        ` : ''}
                         ` : ''}
                     </div>
                 </td>

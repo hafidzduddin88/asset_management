@@ -77,7 +77,8 @@ async def view_asset(
         template_path,
         {
             "request": request,
-            "asset": asset
+            "asset": asset,
+            "user": current_profile
         }
     )
 
