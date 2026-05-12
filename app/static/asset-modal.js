@@ -1,11 +1,22 @@
 /**
  * Asset Modal Helper
  * Opens asset details in a modal popup
+ * @param {string} urlOrAssetId - Full URL path (e.g., '/disposal/view/353') or just asset ID
  */
 
-async function openAssetModal(assetId) {
+async function openAssetModal(urlOrAssetId) {
     try {
-        const response = await fetch(`/asset_management/view/${assetId}`);
+        // Determine the URL to fetch
+        let url;
+        if (urlOrAssetId.startsWith('/')) {
+            // Full path provided
+            url = urlOrAssetId;
+        } else {
+            // Just asset ID provided, use default asset_management endpoint
+            url = `/asset_management/view/${urlOrAssetId}`;
+        }
+        
+        const response = await fetch(url);
         if (!response.ok) {
             throw new Error('Failed to load asset details');
         }
