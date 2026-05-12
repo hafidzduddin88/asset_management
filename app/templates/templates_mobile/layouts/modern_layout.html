@@ -177,6 +177,9 @@
                         <a href="/disposal" class="mobile-nav-item {% if request.url.path == '/disposal' %}bg-primary-50 text-primary-700{% else %}text-gray-600{% endif %} block pl-6 pr-4 py-2 text-sm">
                             <i class="fas fa-trash mr-3 w-4"></i>Disposal
                         </a>
+                        <a href="/lost/list" class="mobile-nav-item {% if '/lost' in request.url.path %}bg-primary-50 text-primary-700{% else %}text-gray-600{% endif %} block pl-6 pr-4 py-2 text-sm">
+                            <i class="fas fa-search mr-3 w-4"></i>Lost Assets
+                        </a>
                         <a href="/user_management" class="mobile-nav-item {% if '/user_management' in request.url.path %}bg-primary-50 text-primary-700{% else %}text-gray-600{% endif %} block pl-6 pr-4 py-2 text-sm">
                             <i class="fas fa-users mr-3 w-4"></i>Users
                         </a>
