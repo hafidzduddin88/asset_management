@@ -143,16 +143,24 @@ def get_asset_by_id(asset_id):
             ref_owners(owner_name, owner_code)
         ''').eq('asset_id', asset_id).execute()
         
-        # If asset has assigned_user_id, fetch user details
-        if response.data and response.data[0].get('assigned_user_id'):
-            user_id = response.data[0]['assigned_user_id']
-            user_response = supabase.table('profiles').select('full_name, username, email').eq('id', user_id).execute()
-            if user_response.data:
-                response.data[0]['assigned_user'] = user_response.data[0]
+        if not response.data:
+            logging.warning(f"Asset {asset_id} not found")
+            return None
         
-        return response.data[0] if response.data else None
+        asset = response.data[0]
+        
+        if asset.get('assigned_user_id'):
+            try:
+                user_id = asset.get('assigned_user_id')
+                user_response = supabase.table('profiles').select('full_name, username, email').eq('id', user_id).execute()
+                if user_response.data:
+                    asset['assigned_user'] = user_response.data[0]
+            except Exception as e:
+                logging.error(f"Error fetching assigned user for asset {asset_id}: {str(e)}")
+        
+        return asset
     except Exception as e:
-        logging.error(f"Error getting asset {asset_id}: {type(e).__name__}")
+        logging.error(f"Error getting asset {asset_id}: {type(e).__name__}: {str(e)}")
         return None
 
 def get_reference_data(table_name):

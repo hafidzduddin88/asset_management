@@ -68,18 +68,24 @@ async def view_asset(
     current_profile = Depends(get_current_profile)
 ):
     """View asset details as modal popup."""
-    asset = get_asset_by_id(asset_id)
-    if not asset:
-        raise HTTPException(status_code=404, detail="Asset not found")
-    
-    template_path = get_template(request, "asset_management/modal_view.html")
-    return templates.TemplateResponse(
-        template_path,
-        {
-            "request": request,
-            "asset": asset
-        }
-    )
+    try:
+        asset = get_asset_by_id(asset_id)
+        if not asset:
+            raise HTTPException(status_code=404, detail="Asset not found")
+        
+        template_path = get_template(request, "asset_management/modal_view.html")
+        return templates.TemplateResponse(
+            template_path,
+            {
+                "request": request,
+                "asset": asset
+            }
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Error viewing asset {asset_id}: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error loading asset details")
 
 @router.get("/edit/{asset_id}", response_class=HTMLResponse)
 async def edit_asset_form(
