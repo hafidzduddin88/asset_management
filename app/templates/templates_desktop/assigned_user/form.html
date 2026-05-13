@@ -3,71 +3,64 @@
 {% block title %}{% if mode == 'edit' %}Edit{% else %}Add{% endif %} Assigned User{% endblock %}
 
 {% block content %}
-<div class="max-w-4xl mx-auto px-6 py-8">
-    <!-- Header -->
-    <div class="bg-blue-600 rounded-lg p-4 mb-6">
-        <h1 class="text-xl font-bold text-white">{% if mode == 'edit' %}Edit Assigned User{% else %}Add New Assigned User{% endif %}</h1>
-        <p class="text-blue-100 text-sm">{% if mode == 'edit' %}Update user information{% else %}Create a new assigned user for IT assets{% endif %}</p>
-    </div>
-
-    <!-- Form -->
-    <div class="bg-white rounded-lg shadow p-6">
+<div class="py-8">
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center justify-between mb-8">
+            <div class="flex items-center">
+                <a href="/assigned-users" class="mr-4 text-blue-600 hover:text-blue-900">
+                    <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                    </svg>
+                </a>
+                <h1 class="text-3xl font-bold text-gray-900">{% if mode == 'edit' %}Edit Assigned User{% else %}Add New Assigned User{% endif %}</h1>
+            </div>
+        </div>
+        
         {% if error %}
-        <div class="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
-            <i class="fas fa-exclamation-circle mr-2"></i>{{ error }}
+        <div class="mb-6 rounded-md bg-red-50 p-4">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <svg class="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                    </svg>
+                </div>
+                <div class="ml-3">
+                    <h3 class="text-sm font-medium text-red-800">{{ error }}</h3>
+                </div>
+            </div>
         </div>
         {% endif %}
-
-        <form method="POST" class="space-y-6">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <!-- Name -->
+        
+        <form method="POST" class="bg-white shadow-xl rounded-lg p-8">
+            <div class="space-y-6">
                 <div>
                     <label for="assigned_user_name" class="block text-sm font-medium text-gray-700 mb-2">User Name *</label>
-                    <input 
-                        type="text" 
-                        id="assigned_user_name" 
-                        name="assigned_user_name" 
-                        required
+                    <input type="text" name="assigned_user_name" id="assigned_user_name" required
                         value="{% if user %}{{ user.assigned_user_name }}{% endif %}"
-                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="e.g., John Doe"
-                    >
+                        class="block w-full border border-gray-300 rounded-md px-4 py-3 text-sm focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="e.g., John Doe">
                 </div>
-
-                <!-- Email -->
+                
                 <div>
                     <label for="email" class="block text-sm font-medium text-gray-700 mb-2">Email</label>
-                    <input 
-                        type="email" 
-                        id="email" 
-                        name="email"
+                    <input type="email" name="email" id="email"
                         value="{% if user %}{{ user.email or '' }}{% endif %}"
-                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="john@example.com"
-                    >
+                        class="block w-full border border-gray-300 rounded-md px-4 py-3 text-sm focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="john@example.com">
                 </div>
-
-                <!-- Phone -->
+                
                 <div>
                     <label for="phone" class="block text-sm font-medium text-gray-700 mb-2">Phone</label>
-                    <input 
-                        type="tel" 
-                        id="phone" 
-                        name="phone"
+                    <input type="tel" name="phone" id="phone"
                         value="{% if user %}{{ user.phone or '' }}{% endif %}"
-                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="+62 812 3456 7890"
-                    >
+                        class="block w-full border border-gray-300 rounded-md px-4 py-3 text-sm focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="+62 812 3456 7890">
                 </div>
-
-                <!-- Company -->
+                
                 <div>
                     <label for="company_name" class="block text-sm font-medium text-gray-700 mb-2">Company</label>
-                    <select 
-                        id="company_name" 
-                        name="company_name"
-                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
+                    <select name="company_name" id="company_name"
+                        class="block w-full border border-gray-300 rounded-md px-4 py-3 text-sm focus:ring-blue-500 focus:border-blue-500">
                         <option value="">Select Company</option>
                         {% for company in companies %}
                         <option value="{{ company }}" {% if user and user.ref_companies and user.ref_companies.company_name == company %}selected{% endif %}>
@@ -76,15 +69,11 @@
                         {% endfor %}
                     </select>
                 </div>
-
-                <!-- Business Unit -->
+                
                 <div>
                     <label for="business_unit_name" class="block text-sm font-medium text-gray-700 mb-2">Business Unit</label>
-                    <select 
-                        id="business_unit_name" 
-                        name="business_unit_name"
-                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
+                    <select name="business_unit_name" id="business_unit_name"
+                        class="block w-full border border-gray-300 rounded-md px-4 py-3 text-sm focus:ring-blue-500 focus:border-blue-500">
                         <option value="">Select Business Unit</option>
                         {% for bu in business_units %}
                         <option value="{{ bu }}" {% if user and user.ref_business_units and user.ref_business_units.business_unit_name == bu %}selected{% endif %}>
@@ -93,30 +82,22 @@
                         {% endfor %}
                     </select>
                 </div>
-
-                <!-- Status -->
+                
                 <div>
                     <label for="status" class="block text-sm font-medium text-gray-700 mb-2">Status *</label>
-                    <select 
-                        id="status" 
-                        name="status"
-                        required
-                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
+                    <select name="status" id="status" required
+                        class="block w-full border border-gray-300 rounded-md px-4 py-3 text-sm focus:ring-blue-500 focus:border-blue-500">
                         <option value="active" {% if not user or user.status == 'active' %}selected{% endif %}>Active</option>
                         <option value="inactive" {% if user and user.status == 'inactive' %}selected{% endif %}>Inactive</option>
                     </select>
                 </div>
             </div>
-
-            <!-- Buttons -->
-            <div class="flex justify-end space-x-4 mt-6">
-                <a href="/assigned-users" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">Cancel</a>
-                <button 
-                    type="submit" 
-                    class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
-                >
-                    <i class="fas fa-save mr-2"></i> 
+            
+            <div class="mt-8 flex justify-end space-x-4 pt-6 border-t border-gray-200">
+                <a href="/assigned-users" class="px-6 py-3 bg-gray-300 text-gray-700 rounded-md text-sm font-medium hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+                    Cancel
+                </a>
+                <button type="submit" class="px-6 py-3 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                     {% if mode == 'edit' %}Update{% else %}Add{% endif %} User
                 </button>
             </div>
