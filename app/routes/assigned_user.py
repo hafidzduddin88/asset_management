@@ -41,6 +41,7 @@ async def assigned_users_list(request: Request, current_profile = Depends(get_cu
         })
 
 @router.get("/add")
+@router.get("/form")
 async def add_assigned_user_page(request: Request, current_profile = Depends(get_current_profile)):
     """Display add assigned user form"""
     if current_profile.role != "admin":
