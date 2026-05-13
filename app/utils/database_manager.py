@@ -864,6 +864,72 @@ def update_assigned_user(assigned_user_id, user_data):
         logging.error(f"Error updating assigned user: {str(e)}")
         raise
 
+def get_assigned_users_by_company_and_unit(company_name=None, business_unit_name=None):
+    """Get assigned users filtered by company and business unit"""
+    try:
+        supabase = get_supabase()
+        query = supabase.table('ref_assigned_user').select('''
+            assigned_user_id,
+            assigned_user_name,
+            company_id,
+            business_unit_id,
+            ref_companies(company_name),
+            ref_business_units(business_unit_name)
+        ''')
+        
+        if company_name:
+            # Get company_id first
+            comp_response = supabase.table('ref_companies').select('company_id').eq('company_name', company_name).execute()
+            if comp_response.data:
+                company_id = comp_response.data[0]['company_id']
+                query = query.eq('company_id', company_id)
+        
+        if business_unit_name:
+            # Get business_unit_id first
+            unit_response = supabase.table('ref_business_units').select('business_unit_id').eq('business_unit_name', business_unit_name).execute()
+            if unit_response.data:
+                business_unit_id = unit_response.data[0]['business_unit_id']
+                query = query.eq('business_unit_id', business_unit_id)
+        
+        response = query.order('assigned_user_name').execute()
+        return response.data
+    except Exception as e:
+        logging.error(f"Error getting assigned users by company/unit: {str(e)}")
+        return []
+
+def get_assigned_users_by_company_and_unit(company_name=None, business_unit_name=None):
+    """Get assigned users filtered by company and business unit"""
+    try:
+        supabase = get_supabase()
+        query = supabase.table('ref_assigned_user').select('''
+            assigned_user_id,
+            assigned_user_name,
+            company_id,
+            business_unit_id,
+            ref_companies(company_name),
+            ref_business_units(business_unit_name)
+        ''')
+        
+        if company_name:
+            # Get company_id first
+            comp_response = supabase.table('ref_companies').select('company_id').eq('company_name', company_name).execute()
+            if comp_response.data:
+                company_id = comp_response.data[0]['company_id']
+                query = query.eq('company_id', company_id)
+        
+        if business_unit_name:
+            # Get business_unit_id first
+            unit_response = supabase.table('ref_business_units').select('business_unit_id').eq('business_unit_name', business_unit_name).execute()
+            if unit_response.data:
+                business_unit_id = unit_response.data[0]['business_unit_id']
+                query = query.eq('business_unit_id', business_unit_id)
+        
+        response = query.order('assigned_user_name').execute()
+        return response.data
+    except Exception as e:
+        logging.error(f"Error getting assigned users by company/unit: {str(e)}")
+        return []
+
 def delete_assigned_user(assigned_user_id):
     """Delete assigned user"""
     try:

@@ -176,12 +176,12 @@
         
         </div>
         
-        <!-- Dynamic Fields: GA (Location/Room) or IT (PT/Assigned User) -->
+        <!-- Dynamic Fields: GA (Location/Room) or IT (Assigned User) -->
         <div id="owner-type-fields">
-            <div class="grid grid-cols-2 gap-3">
-                <!-- First Field: Location (GA) or PT (IT) -->
+            <!-- GA Fields: Location & Room -->
+            <div id="ga-fields" class="grid grid-cols-1 gap-3">
                 <div>
-                    <label for="location_field" id="location_label" class="block text-sm font-medium text-gray-700 required-field">Location</label>
+                    <label for="location_field" class="block text-sm font-medium text-gray-700 required-field">Location</label>
                     <select name="location_name" id="location_field"
                         class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500">
                         <option value="">Select Location</option>
@@ -191,19 +191,26 @@
                     </select>
                 </div>
                 
-                <!-- Second Field: Room (GA) or Assigned User Name (IT) -->
                 <div>
-                    <label for="room_field" id="room_label" class="block text-sm font-medium text-gray-700 required-field">Room</label>
+                    <label for="room_field" class="block text-sm font-medium text-gray-700 required-field">Room</label>
                     <select name="room_name" id="room_field"
                         class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500">
                         <option value="">Select Room</option>
                     </select>
                 </div>
             </div>
+            
+            <!-- IT Fields: Assigned User Name -->
+            <div id="it-fields" class="hidden">
+                <div>
+                    <label for="assigned_user_field" class="block text-sm font-medium text-gray-700 required-field">Assigned User Name</label>
+                    <select name="assigned_user_name" id="assigned_user_field"
+                        class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500">
+                        <option value="">Select Assigned User</option>
+                    </select>
+                </div>
+            </div>
         </div>
-        
-        <!-- Hidden field for IT assigned_user_name -->
-        <input type="hidden" name="assigned_user_name" id="assigned_user_name_hidden">
         
         <div class="space-y-6">
         
@@ -274,104 +281,91 @@ function updateSecondField() {
     
     roomField.innerHTML = '<option value="">Select...</option>';
     
-    if (ownerType === 'GA') {
-        // GA: Location → Room
-        if (selectedValue && locationsData[selectedValue]) {
-            locationsData[selectedValue].forEach(room => {
-                const option = document.createElement('option');
-                option.value = room;
-                option.textContent = room;
-                roomField.appendChild(option);
-            });
-        }
-    } else {
-        // IT: PT → Assigned User Name
-        if (selectedValue && assignedUsersData[selectedValue]) {
-            assignedUsersData[selectedValue].forEach(user => {
-                const option = document.createElement('option');
-                option.value = user.assigned_user_name;
-                option.textContent = user.assigned_user_name;
-                roomField.appendChild(option);
-            });
-        }
+    if (ownerType === 'GA' && selectedValue && locationsData[selectedValue]) {
+        locationsData[selectedValue].forEach(room => {
+            const option = document.createElement('option');
+            option.value = room;
+            option.textContent = room;
+            roomField.appendChild(option);
+        });
     }
+}
+
+function updateAssignedUsers() {
+    const ownerType = document.getElementById('owner_type').value;
+    if (ownerType !== 'IT') return;
+    
+    const companyName = document.getElementById('company_name').value;
+    const businessUnitName = document.getElementById('business_unit_name').value;
+    const assignedUserField = document.getElementById('assigned_user_field');
+    
+    assignedUserField.innerHTML = '<option value="">Select Assigned User</option>';
+    
+    if (!companyName) return;
+    
+    // Filter assigned users based on company and business unit
+    const allUsers = [];
+    Object.entries(assignedUsersData).forEach(([company, users]) => {
+        if (company === companyName) {
+            users.forEach(user => {
+                // If business unit is selected, filter by it
+                if (businessUnitName) {
+                    if (user.business_unit_name === businessUnitName) {
+                        allUsers.push(user.assigned_user_name);
+                    }
+                } else {
+                    // If no business unit selected, show all users from this company
+                    allUsers.push(user.assigned_user_name);
+                }
+            });
+        }
+    });
+    
+    allUsers.sort();
+    allUsers.forEach(userName => {
+        const option = document.createElement('option');
+        option.value = userName;
+        option.textContent = userName;
+        assignedUserField.appendChild(option);
+    });
 }
 
 function toggleOwnerTypeFields() {
     const ownerType = document.getElementById('owner_type').value;
-    const locationLabel = document.getElementById('location_label');
-    const roomLabel = document.getElementById('room_label');
-    const locationField = document.getElementById('location_field');
-    const roomField = document.getElementById('room_field');
-    
-    // Clear selections
-    locationField.value = '';
-    roomField.innerHTML = '<option value="">Select...</option>';
+    const gaFields = document.getElementById('ga-fields');
+    const itFields = document.getElementById('it-fields');
     
     if (ownerType === 'IT') {
-        // Change labels to PT and Assigned User Name
-        locationLabel.textContent = 'PT';
-        roomLabel.textContent = 'Assigned User Name';
-        
-        // Populate PT dropdown
-        locationField.innerHTML = '<option value="">Select PT</option>';
-        Object.keys(assignedUsersData).forEach(pt => {
-            const option = document.createElement('option');
-            option.value = pt;
-            option.textContent = pt;
-            locationField.appendChild(option);
-        });
-        
-        // Update name attributes for IT
-        locationField.removeAttribute('name');
-        roomField.removeAttribute('name');
+        gaFields.classList.add('hidden');
+        itFields.classList.remove('hidden');
+        updateAssignedUsers();
     } else {
-        // Change labels back to Location and Room
-        locationLabel.textContent = 'Location';
-        roomLabel.textContent = 'Room';
-        
-        // Populate Location dropdown
-        locationField.innerHTML = '<option value="">Select Location</option>';
-        Object.keys(locationsData).forEach(location => {
-            const option = document.createElement('option');
-            option.value = location;
-            option.textContent = location;
-            locationField.appendChild(option);
-        });
-        
-        // Restore name attributes for GA
-        locationField.setAttribute('name', 'location_name');
-        roomField.setAttribute('name', 'room_name');
+        gaFields.classList.remove('hidden');
+        itFields.classList.add('hidden');
+        document.getElementById('location_field').value = '';
+        document.getElementById('room_field').innerHTML = '<option value="">Select Room</option>';
     }
 }
 
 function confirmAssetSubmission() {
     const ownerType = document.getElementById('owner_type').value;
-    const locationField = document.getElementById('location_field').value;
-    const roomField = document.getElementById('room_field').value;
-    
-    // Set hidden field for IT assigned_user_name
-    if (ownerType === 'IT') {
-        document.getElementById('assigned_user_name_hidden').value = roomField;
-    } else {
-        document.getElementById('assigned_user_name_hidden').value = '';
-    }
-    
     const formData = {
         asset_name: document.getElementById('asset_name').value,
         category_name: document.getElementById('category_name').value,
         type_name: document.getElementById('type_name').value,
         company_name: document.getElementById('company_name').value,
         purchase_cost: document.getElementById('purchase_cost').value,
-        owner_name: document.getElementById('owner_name').value,
         owner_type: ownerType
     };
     
     let locationInfo = '';
     if (ownerType === 'IT') {
-        locationInfo = `• PT: ${locationField}\n• Assigned To: ${roomField || 'Not specified'}`;
+        const assignedUser = document.getElementById('assigned_user_field').value;
+        locationInfo = `• Assigned User: ${assignedUser || 'Not specified'}`;
     } else {
-        locationInfo = `• Location: ${locationField}\n• Room: ${roomField}`;
+        const location = document.getElementById('location_field').value;
+        const room = document.getElementById('room_field').value;
+        locationInfo = `• Location: ${location}\n• Room: ${room}`;
     }
     
     const details = `Asset Registration Confirmation\n\nAsset Details:\n• Name: ${formData.asset_name}\n• Category: ${formData.category_name}\n• Type: ${formData.type_name}\n• Company: ${formData.company_name}\n${locationInfo}\n• Purchase Cost: Rp ${formData.purchase_cost}\n• Owner: ${formData.owner_type}\n\n⚠️ This will create a new asset registration request that requires approval.\n\nProceed with submission?`;
@@ -434,6 +428,8 @@ document.getElementById('photo').addEventListener('change', async function(e) {
 document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('category_name').addEventListener('change', updateTypes);
     document.getElementById('location_field').addEventListener('change', updateSecondField);
+    document.getElementById('company_name').addEventListener('change', updateAssignedUsers);
+    document.getElementById('business_unit_name').addEventListener('change', updateAssignedUsers);
     toggleOwnerTypeFields(); // Initialize on page load
 });
 </script>
