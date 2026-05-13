@@ -99,12 +99,10 @@
                         </form>
                         
                         <!-- Reset Password -->
-                        <form method="POST" action="/user_management/reset_password/{{ user_item.id }}" class="inline"
-                              onsubmit="return confirm('Are you sure you want to reset password to 654321 for {{ user_item.username }}?')">
-                            <button type="submit" class="inline-flex items-center px-3 py-2 border border-gray-300 text-sm font-medium rounded text-gray-700 bg-white hover:bg-gray-50">
-                                Reset Password
-                            </button>
-                        </form>
+                        <button type="button" class="inline-flex items-center px-3 py-2 border border-gray-300 text-sm font-medium rounded text-gray-700 bg-white hover:bg-gray-50" 
+                                onclick="showResetPasswordModal('{{ user_item.id }}', '{{ user_item.username }}', '{{ user_item.full_name or user_item.username }}')">
+                            Reset Password
+                        </button>
                         
                         <!-- Change Role -->
                         <form method="POST" action="/user_management/change_role/{{ user_item.id }}" class="inline flex items-center space-x-2"
@@ -160,7 +158,106 @@
     </div>
 </div>
 
+<!-- Reset Password Confirmation Modal -->
+<div id="resetPasswordModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+        <div class="bg-gradient-to-r from-orange-500 to-red-600 px-6 py-4 rounded-t-lg">
+            <h3 class="text-lg font-bold text-white flex items-center">
+                <i class="fas fa-exclamation-triangle mr-3"></i>
+                Reset Password
+            </h3>
+        </div>
+        <div class="px-6 py-4">
+            <p class="text-gray-700 mb-2">Are you sure you want to reset password to <strong>654321</strong> for:</p>
+            <p class="text-gray-900 font-semibold mb-4" id="resetUserName"></p>
+            <p class="text-sm text-gray-600">This action cannot be undone.</p>
+        </div>
+        <div class="bg-gray-50 px-6 py-4 rounded-b-lg flex justify-end space-x-3">
+            <button type="button" onclick="closeResetPasswordModal()" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100 font-medium">
+                Cancel
+            </button>
+            <button type="button" onclick="confirmResetPassword()" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium">
+                Reset Password
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Success Report Modal -->
+<div id="successReportModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+        <div class="bg-gradient-to-r from-green-500 to-emerald-600 px-6 py-4 rounded-t-lg">
+            <h3 class="text-lg font-bold text-white flex items-center">
+                <i class="fas fa-check-circle mr-3"></i>
+                Success
+            </h3>
+        </div>
+        <div class="px-6 py-4">
+            <p class="text-gray-700" id="successMessage"></p>
+        </div>
+        <div class="bg-gray-50 px-6 py-4 rounded-b-lg flex justify-end">
+            <button type="button" onclick="closeSuccessReportModal()" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium">
+                OK
+            </button>
+        </div>
+    </div>
+</div>
+
 <script>
+let currentResetUserId = null;
+
+function showResetPasswordModal(userId, username, fullName) {
+    currentResetUserId = userId;
+    document.getElementById('resetUserName').textContent = fullName + ' (' + username + ')';
+    document.getElementById('resetPasswordModal').classList.remove('hidden');
+}
+
+function closeResetPasswordModal() {
+    document.getElementById('resetPasswordModal').classList.add('hidden');
+    currentResetUserId = null;
+}
+
+async function confirmResetPassword() {
+    if (!currentResetUserId) return;
+    
+    try {
+        const response = await fetch(`/user_management/reset_password/${currentResetUserId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        const data = await response.json();
+        
+        closeResetPasswordModal();
+        
+        if (data.success) {
+            showSuccessReportModal(data.message);
+        } else {
+            alert('Error: ' + data.message);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Failed to reset password');
+        closeResetPasswordModal();
+    }
+}
+
+function showSuccessReportModal(message) {
+    document.getElementById('successMessage').textContent = message;
+    document.getElementById('successReportModal').classList.remove('hidden');
+    
+    // Auto-close after 5 seconds
+    setTimeout(() => {
+        closeSuccessReportModal();
+    }, 5000);
+}
+
+function closeSuccessReportModal() {
+    document.getElementById('successReportModal').classList.add('hidden');
+}
+
 // Display flash messages from cookie
 function getCookie(name) {
     const value = `; ${document.cookie}`;

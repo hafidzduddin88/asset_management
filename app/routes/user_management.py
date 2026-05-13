@@ -1,6 +1,6 @@
 # app/routes/user_management.py
 from fastapi import APIRouter, Depends, Request, Form, HTTPException, status
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from supabase import create_client
 from app.config import load_config
@@ -180,7 +180,7 @@ async def reset_password(
         # Get user from profiles
         user_response = supabase.table("profiles").select("username, full_name").eq("id", user_id).execute()
         if not user_response.data:
-            raise HTTPException(status_code=404, detail="User not found")
+            return JSONResponse({"success": False, "message": "User not found"}, status_code=404)
         
         user_data = user_response.data[0]
         user_email = user_data["username"]
@@ -198,15 +198,11 @@ async def reset_password(
             "details": f"Reset password for {user_name} ({user_email}) to default"
         }).execute()
         
-        response = RedirectResponse(url="/user_management", status_code=status.HTTP_303_SEE_OTHER)
-        set_flash(response, f"Password reset to 654321 for {user_name}", "success")
-        return response
+        return JSONResponse({"success": True, "message": f"Password reset to 654321 for {user_name}"})
         
     except Exception as e:
         logging.error(f"Failed to reset password: {e}")
-        response = RedirectResponse(url="/user_management", status_code=status.HTTP_303_SEE_OTHER)
-        set_flash(response, "Failed to send reset email", "error")
-        return response
+        return JSONResponse({"success": False, "message": "Failed to reset password"}, status_code=500)
 
 @router.post("/toggle_status/{user_id}")
 async def toggle_user_status(
