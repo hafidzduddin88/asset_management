@@ -14,8 +14,8 @@ templates = Jinja2Templates(directory="app/templates")
 
 @router.get("/")
 async def assigned_users_list(request: Request, current_profile = Depends(get_current_profile)):
-    """List all assigned users (superuser only)"""
-    if current_profile.role != "superuser":
+    """List all assigned users (admin only)"""
+    if current_profile.role != "admin":
         return RedirectResponse("/", status_code=303)
     
     try:
@@ -41,7 +41,7 @@ async def assigned_users_list(request: Request, current_profile = Depends(get_cu
 @router.get("/add")
 async def add_assigned_user_page(request: Request, current_profile = Depends(get_current_profile)):
     """Display add assigned user form"""
-    if current_profile.role != "superuser":
+    if current_profile.role != "admin":
         return RedirectResponse("/", status_code=303)
     
     dropdown_options = get_dropdown_options()
@@ -65,7 +65,7 @@ async def add_assigned_user_submit(
     status: str = Form("active")
 ):
     """Add new assigned user"""
-    if current_profile.role != "superuser":
+    if current_profile.role != "admin":
         return RedirectResponse("/", status_code=303)
     
     try:
@@ -100,7 +100,7 @@ async def edit_assigned_user_page(
     current_profile = Depends(get_current_profile)
 ):
     """Display edit assigned user form"""
-    if current_profile.role != "superuser":
+    if current_profile.role != "admin":
         return RedirectResponse("/", status_code=303)
     
     try:
@@ -134,7 +134,7 @@ async def edit_assigned_user_submit(
     status: str = Form("active")
 ):
     """Update assigned user"""
-    if current_profile.role != "superuser":
+    if current_profile.role != "admin":
         return RedirectResponse("/", status_code=303)
     
     try:
@@ -171,7 +171,7 @@ async def delete_assigned_user_submit(
     current_profile = Depends(get_current_profile)
 ):
     """Delete assigned user"""
-    if current_profile.role != "superuser":
+    if current_profile.role != "admin":
         return RedirectResponse("/", status_code=303)
     
     try:
