@@ -36,7 +36,7 @@
                 <div>
                     <label for="assigned_user_name" class="block text-sm font-medium text-gray-700 mb-2">User Name *</label>
                     <input type="text" name="assigned_user_name" id="assigned_user_name" required
-                        value="{% if user %}{{ user.assigned_user_name }}{% endif %}"
+                        value="{% if user and user.assigned_user_name %}{{ user.assigned_user_name }}{% endif %}"
                         class="block w-full border border-gray-300 rounded-md px-4 py-3 text-sm focus:ring-blue-500 focus:border-blue-500"
                         placeholder="e.g., John Doe">
                 </div>
@@ -44,7 +44,7 @@
                 <div>
                     <label for="email" class="block text-sm font-medium text-gray-700 mb-2">Email</label>
                     <input type="email" name="email" id="email"
-                        value="{% if user %}{{ user.email or '' }}{% endif %}"
+                        value="{% if user and user.email %}{{ user.email }}{% endif %}"
                         class="block w-full border border-gray-300 rounded-md px-4 py-3 text-sm focus:ring-blue-500 focus:border-blue-500"
                         placeholder="john@example.com">
                 </div>
@@ -52,7 +52,7 @@
                 <div>
                     <label for="phone" class="block text-sm font-medium text-gray-700 mb-2">Phone</label>
                     <input type="tel" name="phone" id="phone"
-                        value="{% if user %}{{ user.phone or '' }}{% endif %}"
+                        value="{% if user and user.phone %}{{ user.phone }}{% endif %}"
                         class="block w-full border border-gray-300 rounded-md px-4 py-3 text-sm focus:ring-blue-500 focus:border-blue-500"
                         placeholder="+62 812 3456 7890">
                 </div>
@@ -87,7 +87,7 @@
                     <label for="status" class="block text-sm font-medium text-gray-700 mb-2">Status *</label>
                     <select name="status" id="status" required
                         class="block w-full border border-gray-300 rounded-md px-4 py-3 text-sm focus:ring-blue-500 focus:border-blue-500">
-                        <option value="active" {% if not user or user.status == 'active' %}selected{% endif %}>Active</option>
+                        <option value="active" {% if not user or (user and user.status == 'active') %}selected{% endif %}>Active</option>
                         <option value="inactive" {% if user and user.status == 'inactive' %}selected{% endif %}>Inactive</option>
                     </select>
                 </div>
