@@ -25,6 +25,7 @@ async def assigned_users_list(request: Request, current_profile = Depends(get_cu
         template_path = get_template(request, "assigned_user/list.html")
         return templates.TemplateResponse(template_path, {
             "request": request,
+            "user": current_profile,
             "users": users,
             "companies": dropdown_options.get("companies", []),
             "business_units": dropdown_options.get("business_units", [])
@@ -34,6 +35,7 @@ async def assigned_users_list(request: Request, current_profile = Depends(get_cu
         template_path = get_template(request, "assigned_user/list.html")
         return templates.TemplateResponse(template_path, {
             "request": request,
+            "user": current_profile,
             "users": [],
             "error": "Error loading assigned users"
         })
@@ -48,6 +50,7 @@ async def add_assigned_user_page(request: Request, current_profile = Depends(get
     template_path = get_template(request, "assigned_user/form.html")
     return templates.TemplateResponse(template_path, {
         "request": request,
+        "user": current_profile,
         "companies": dropdown_options.get("companies", []),
         "business_units": dropdown_options.get("business_units", []),
         "mode": "add"
@@ -104,6 +107,7 @@ async def add_assigned_user_submit(
         template_path = get_template(request, "assigned_user/form.html")
         return templates.TemplateResponse(template_path, {
             "request": request,
+            "user": current_profile,
             "companies": dropdown_options.get("companies", []),
             "business_units": dropdown_options.get("business_units", []),
             "mode": "add",
@@ -129,7 +133,8 @@ async def edit_assigned_user_page(
         template_path = get_template(request, "assigned_user/form.html")
         return templates.TemplateResponse(template_path, {
             "request": request,
-            "user": user,
+            "user": current_profile,
+            "users": [user],
             "companies": dropdown_options.get("companies", []),
             "business_units": dropdown_options.get("business_units", []),
             "mode": "edit"
@@ -191,7 +196,8 @@ async def edit_assigned_user_submit(
         template_path = get_template(request, "assigned_user/form.html")
         return templates.TemplateResponse(template_path, {
             "request": request,
-            "user": user,
+            "user": current_profile,
+            "users": [user],
             "companies": dropdown_options.get("companies", []),
             "business_units": dropdown_options.get("business_units", []),
             "mode": "edit",
