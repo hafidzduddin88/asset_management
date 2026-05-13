@@ -134,8 +134,8 @@ async def edit_assigned_user_page(
         template_path = get_template(request, "assigned_user/form.html")
         return templates.TemplateResponse(template_path, {
             "request": request,
-            "user": user,
-            "current_profile": current_profile,
+            "user": current_profile,
+            "assigned_user": user,
             "companies": dropdown_options.get("companies", []),
             "business_units": dropdown_options.get("business_units", []),
             "mode": "edit"
@@ -197,8 +197,8 @@ async def edit_assigned_user_submit(
         template_path = get_template(request, "assigned_user/form.html")
         return templates.TemplateResponse(template_path, {
             "request": request,
-            "user": user,
-            "current_profile": current_profile,
+            "user": current_profile,
+            "assigned_user": user,
             "companies": dropdown_options.get("companies", []),
             "business_units": dropdown_options.get("business_units", []),
             "mode": "edit",
