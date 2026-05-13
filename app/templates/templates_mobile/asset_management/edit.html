@@ -138,20 +138,11 @@
             <!-- IT Fields (User Assignment) -->
             <div id="it-fields" style="display: none;">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Assigned To User</label>
-                    <input type="text" name="assigned_user_name" id="assigned_user_name" 
-                           list="users-list"
-                           value="{{ asset.assigned_user_name or '' }}"
-                           placeholder="Type user name or username..."
-                           class="w-full px-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <datalist id="users-list">
-                        {% if users %}
-                            {% for user in users %}
-                            <option value="{{ user.full_name }}">{{ user.username }}{% if user.business_unit_name %} - {{ user.business_unit_name }}{% endif %}</option>
-                            {% endfor %}
-                        {% endif %}
-                    </datalist>
-                    <p class="text-xs text-gray-500 mt-1">Type user's full name or username. System will auto-resolve to user ID.</p>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Assigned User Name</label>
+                    <select name="assigned_user_name" id="assigned_user_name" class="w-full px-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">Select Assigned User</option>
+                    </select>
+                    <p class="text-xs text-gray-500 mt-1">Filtered by selected company and business unit</p>
                 </div>
             </div>
 
@@ -172,6 +163,8 @@
 
 <script>
 const locationsData = {{ dropdown_options.locations | tojson if dropdown_options and dropdown_options.locations else '{}' }};
+const assignedUsersData = {{ dropdown_options.assigned_users | tojson if dropdown_options and dropdown_options.assigned_users else '{}' }};
+const currentAssignedUser = '{{ asset.assigned_user_name or "" }}';
 
 function updateRooms() {
     const locationSelect = document.getElementById('location_ga');
@@ -189,6 +182,48 @@ function updateRooms() {
     }
 }
 
+function updateAssignedUsers() {
+    const ownerType = document.getElementById('owner_type').value;
+    if (ownerType !== 'IT') return;
+    
+    const companyName = document.getElementById('company').value;
+    const businessUnitName = document.getElementById('bisnis_unit').value;
+    const assignedUserField = document.getElementById('assigned_user_name');
+    
+    assignedUserField.innerHTML = '<option value="">Select Assigned User</option>';
+    
+    if (!companyName) return;
+    
+    // Filter assigned users based on company and business unit
+    const allUsers = [];
+    Object.entries(assignedUsersData).forEach(([company, users]) => {
+        if (company === companyName) {
+            users.forEach(user => {
+                // If business unit is selected, filter by it
+                if (businessUnitName) {
+                    if (user.business_unit_name === businessUnitName) {
+                        allUsers.push(user.assigned_user_name);
+                    }
+                } else {
+                    // If no business unit selected, show all users from this company
+                    allUsers.push(user.assigned_user_name);
+                }
+            });
+        }
+    });
+    
+    allUsers.sort();
+    allUsers.forEach(userName => {
+        const option = document.createElement('option');
+        option.value = userName;
+        option.textContent = userName;
+        if (userName === currentAssignedUser) {
+            option.selected = true;
+        }
+        assignedUserField.appendChild(option);
+    });
+}
+
 function toggleAssignmentFields() {
     const ownerType = document.getElementById('owner_type').value;
     const gaFields = document.getElementById('ga-fields');
@@ -200,6 +235,7 @@ function toggleAssignmentFields() {
         document.getElementById('assigned_user_name').required = true;
         document.getElementById('location_ga').required = false;
         document.getElementById('room_ga').required = false;
+        updateAssignedUsers();
     } else {
         gaFields.style.display = 'block';
         itFields.style.display = 'none';
@@ -211,6 +247,8 @@ function toggleAssignmentFields() {
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('company').addEventListener('change', updateAssignedUsers);
+    document.getElementById('bisnis_unit').addEventListener('change', updateAssignedUsers);
     toggleAssignmentFields();
 });
 </script>
