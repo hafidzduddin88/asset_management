@@ -796,3 +796,81 @@ def update_approval_status(approval_id, status, approved_by, approved_by_name=''
     except Exception as e:
         logging.error(f"Error updating approval status: {str(e)}")
         return False
+
+
+def get_assigned_users():
+    """Get all assigned users with relationships"""
+    try:
+        supabase = get_supabase()
+        response = supabase.table('ref_assigned_user').select('''
+            assigned_user_id,
+            assigned_user_name,
+            email,
+            phone,
+            company_id,
+            business_unit_id,
+            status,
+            created_at,
+            updated_at,
+            ref_companies(company_id, company_name),
+            ref_business_units(business_unit_id, business_unit_name)
+        ''').order('assigned_user_name').execute()
+        return response.data
+    except Exception as e:
+        logging.error(f"Error getting assigned users: {str(e)}")
+        return []
+
+def get_assigned_user_by_id(assigned_user_id):
+    """Get assigned user by ID"""
+    try:
+        supabase = get_supabase()
+        response = supabase.table('ref_assigned_user').select('''
+            assigned_user_id,
+            assigned_user_name,
+            email,
+            phone,
+            company_id,
+            business_unit_id,
+            status,
+            created_at,
+            updated_at,
+            ref_companies(company_id, company_name),
+            ref_business_units(business_unit_id, business_unit_name)
+        ''').eq('assigned_user_id', assigned_user_id).execute()
+        return response.data[0] if response.data else None
+    except Exception as e:
+        logging.error(f"Error getting assigned user: {str(e)}")
+        return None
+
+def add_assigned_user(user_data):
+    """Add new assigned user"""
+    try:
+        supabase = get_supabase()
+        response = supabase.table('ref_assigned_user').insert(user_data).execute()
+        invalidate_cache()
+        return True
+    except Exception as e:
+        logging.error(f"Error adding assigned user: {str(e)}")
+        raise
+
+def update_assigned_user(assigned_user_id, user_data):
+    """Update assigned user"""
+    try:
+        supabase = get_supabase()
+        response = supabase.table('ref_assigned_user').update(user_data).eq('assigned_user_id', assigned_user_id).execute()
+        invalidate_cache()
+        return True
+    except Exception as e:
+        logging.error(f"Error updating assigned user: {str(e)}")
+        raise
+
+def delete_assigned_user(assigned_user_id):
+    """Delete assigned user"""
+    try:
+        supabase = get_supabase()
+        response = supabase.table('ref_assigned_user').delete().eq('assigned_user_id', assigned_user_id).execute()
+        invalidate_cache()
+        return True
+    except Exception as e:
+        logging.error(f"Error deleting assigned user: {str(e)}")
+        raise
