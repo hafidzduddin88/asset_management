@@ -60,8 +60,8 @@ async def add_assigned_user_submit(
     assigned_user_name: str = Form(...),
     email: str = Form(None),
     phone: str = Form(None),
-    company_id: int = Form(None),
-    business_unit_id: int = Form(None),
+    company_name: str = Form(None),
+    business_unit_name: str = Form(None),
     status: str = Form("active")
 ):
     """Add new assigned user"""
@@ -69,12 +69,29 @@ async def add_assigned_user_submit(
         return RedirectResponse("/", status_code=303)
     
     try:
+        from app.utils.database_manager import get_supabase
+        supabase = get_supabase()
+        
+        # Resolve company_name to company_id
+        company_id = None
+        if company_name:
+            comp_response = supabase.table('ref_companies').select('company_id').eq('company_name', company_name).execute()
+            if comp_response.data:
+                company_id = comp_response.data[0]['company_id']
+        
+        # Resolve business_unit_name to business_unit_id
+        business_unit_id = None
+        if business_unit_name:
+            unit_response = supabase.table('ref_business_units').select('business_unit_id').eq('business_unit_name', business_unit_name).execute()
+            if unit_response.data:
+                business_unit_id = unit_response.data[0]['business_unit_id']
+        
         user_data = {
             "assigned_user_name": assigned_user_name,
             "email": email,
             "phone": phone,
-            "company_id": company_id if company_id else None,
-            "business_unit_id": business_unit_id if business_unit_id else None,
+            "company_id": company_id,
+            "business_unit_id": business_unit_id,
             "status": status
         }
         
@@ -129,8 +146,8 @@ async def edit_assigned_user_submit(
     assigned_user_name: str = Form(...),
     email: str = Form(None),
     phone: str = Form(None),
-    company_id: int = Form(None),
-    business_unit_id: int = Form(None),
+    company_name: str = Form(None),
+    business_unit_name: str = Form(None),
     status: str = Form("active")
 ):
     """Update assigned user"""
@@ -138,12 +155,29 @@ async def edit_assigned_user_submit(
         return RedirectResponse("/", status_code=303)
     
     try:
+        from app.utils.database_manager import get_supabase
+        supabase = get_supabase()
+        
+        # Resolve company_name to company_id
+        company_id = None
+        if company_name:
+            comp_response = supabase.table('ref_companies').select('company_id').eq('company_name', company_name).execute()
+            if comp_response.data:
+                company_id = comp_response.data[0]['company_id']
+        
+        # Resolve business_unit_name to business_unit_id
+        business_unit_id = None
+        if business_unit_name:
+            unit_response = supabase.table('ref_business_units').select('business_unit_id').eq('business_unit_name', business_unit_name).execute()
+            if unit_response.data:
+                business_unit_id = unit_response.data[0]['business_unit_id']
+        
         user_data = {
             "assigned_user_name": assigned_user_name,
             "email": email,
             "phone": phone,
-            "company_id": company_id if company_id else None,
-            "business_unit_id": business_unit_id if business_unit_id else None,
+            "company_id": company_id,
+            "business_unit_id": business_unit_id,
             "status": status
         }
         

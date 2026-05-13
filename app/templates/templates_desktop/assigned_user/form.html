@@ -75,16 +75,16 @@
 
                 <!-- Company -->
                 <div>
-                    <label for="company_id" class="block text-sm font-medium text-gray-700">Company</label>
+                    <label for="company_name" class="block text-sm font-medium text-gray-700">Company</label>
                     <select 
-                        id="company_id" 
-                        name="company_id"
+                        id="company_name" 
+                        name="company_name"
                         class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                     >
                         <option value="">Select Company</option>
                         {% for company in companies %}
-                        <option value="{{ company.company_id }}" {% if user and user.company_id == company.company_id %}selected{% endif %}>
-                            {{ company.company_name }}
+                        <option value="{{ company }}" {% if user and user.ref_companies and user.ref_companies.company_name == company %}selected{% endif %}>
+                            {{ company }}
                         </option>
                         {% endfor %}
                     </select>
@@ -92,16 +92,16 @@
 
                 <!-- Business Unit -->
                 <div>
-                    <label for="business_unit_id" class="block text-sm font-medium text-gray-700">Business Unit</label>
+                    <label for="business_unit_name" class="block text-sm font-medium text-gray-700">Business Unit</label>
                     <select 
-                        id="business_unit_id" 
-                        name="business_unit_id"
+                        id="business_unit_name" 
+                        name="business_unit_name"
                         class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                     >
                         <option value="">Select Business Unit</option>
                         {% for bu in business_units %}
-                        <option value="{{ bu.business_unit_id }}" {% if user and user.business_unit_id == bu.business_unit_id %}selected{% endif %}>
-                            {{ bu.business_unit_name }}
+                        <option value="{{ bu }}" {% if user and user.ref_business_units and user.ref_business_units.business_unit_name == bu %}selected{% endif %}>
+                            {{ bu }}
                         </option>
                         {% endfor %}
                     </select>
