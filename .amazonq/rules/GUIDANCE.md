@@ -19,7 +19,7 @@ Registration → Active → Damaged → Repair → Active/Disposed
 ```
 
 #### User Roles & Permissions
-- **Admin**: Full system access, approves staff/manager requests
+- **Admin**: Full system access, approves staff/manager requests, manages assigned users, can edit assets
 - **Manager**: Asset operations, approves admin requests  
 - **Staff**: Basic operations, submit requests for approval
 
@@ -39,6 +39,7 @@ Registration → Active → Damaged → Repair → Active/Disposed
 6. **Bulk Update**: 3-step workflow with filters and Excel import
 7. **Forgot Password**: Email recovery with secure token verification
 8. **Approval System**: Hierarchical approval workflow (single approval for disposal)
+9. **Assigned Users Management**: Admin-only CRUD for IT user database
 
 ### 3. Architecture Patterns
 
@@ -46,6 +47,7 @@ Registration → Active → Damaged → Repair → Active/Disposed
 ```
 /routes/
 ├── asset_management.py # Asset CRUD with owner support
+├── assigned_user.py    # Assigned user CRUD (admin only)
 ├── damage.py          # Asset Issues (damage/lost/disposal pages)
 ├── disposal.py        # Disposal requests & disposed assets list
 ├── repair.py          # Asset Repair completion
@@ -60,14 +62,16 @@ Registration → Active → Damaged → Repair → Active/Disposed
 ```
 /templates/
 ├── templates_desktop/  # Full-featured desktop UI
+│   └── assigned_user/  # Assigned user management pages
 └── templates_mobile/   # Optimized mobile UI
+    └── assigned_user/  # Mobile assigned user pages
 ```
 
 #### Database Integration
 - **Primary DB**: Supabase PostgreSQL with foreign keys
 - **Owner Type Fields**: owner_type, assigned_user_id, assigned_user_name
 - **Log Tables**: Comprehensive audit trail (damage_log, repair_log, etc.)
-- **Reference Tables**: Categories, locations, business units
+- **Reference Tables**: Categories, locations, business units, assigned_users
 - **Auto-resolution**: User names resolve to UUIDs (full_name → username)
 
 ### 4. Development Guidelines
@@ -82,6 +86,10 @@ Registration → Active → Damaged → Repair → Active/Disposed
 - **Filter Support**: Owner filter in list pages and bulk update
 - **Export Integration**: Excel exports include owner and assigned_user_name columns
 - **UI Labels**: "Owner" field with "GA" or "IT" options (help text: "GA: Room-based | IT: User-based")
+- **Assigned Users Database**: Admin-only management of IT user database
+  - Add/Edit/Delete assigned users with company and business unit
+  - Used for IT asset owner assignment
+  - Searchable list with view details modal
 
 #### Bulk Update Workflow (IMPORTANT)
 - **Step 1**: Export assets with filters (category, type, location, room, owner, status)
@@ -97,6 +105,13 @@ Registration → Active → Damaged → Repair → Active/Disposed
 - **No Execution Step**: Approval directly sets status to "Disposed"
 - **Status**: "Damaged" (not "Under Repair"), no "To be Disposed" status
 
+#### Edit Asset Modal (IMPORTANT)
+- **Location**: Inside asset view detail modal (footer, left side)
+- **Visibility**: Admin-only, only when asset status is NOT Disposed/Lost
+- **Functionality**: Direct edit button replaces need to navigate to separate edit page
+- **Conditional Display**: Jinja2 conditional checks role and asset status
+- **Template Variable Handling**: Pass `current_profile` as `user` for navbar, separate data objects for form pre-fill
+
 #### Code Style
 - **Modular**: Each feature in separate route file
 - **Responsive**: Desktop and mobile templates
@@ -105,9 +120,10 @@ Registration → Active → Damaged → Repair → Active/Disposed
 
 #### Key Files to Understand
 1. **`main.py`**: Application entry point and route registration
-2. **`database_manager.py`**: All Supabase operations
+2. **`database_manager.py`**: All Supabase operations including assigned user CRUD
 3. **`session_auth.py`**: JWT authentication middleware
 4. **`device_detector.py`**: Mobile/desktop template routing
+5. **`assigned_user.py`**: Assigned user management routes
 
 #### Common Patterns
 ```python
@@ -127,6 +143,13 @@ approval_data = {
     "requires_admin_approval": True if role in ['staff', 'manager'] else False,
     "requires_manager_approval": True if role == 'admin' else False
 }
+
+# Template variable handling for forms
+return templates.TemplateResponse(template_path, {
+    "user": current_profile,  # For navbar display
+    "assigned_user": assigned_user_data,  # For form pre-fill
+    "request": request
+})
 ```
 
 ### 5. Current System State
@@ -143,8 +166,10 @@ approval_data = {
 - **Token Refresh**: supabase-py v2 SDK method with improved error handling
 - Direct action buttons replacing dropdown menus
 - Dedicated asset view pages with image zoom functionality
+- **Edit Asset Modal**: Direct edit button in asset view (admin only, non-disposed assets)
 - Compact dashboard with monthly/quarterly/yearly analytics
 - User management with business unit terminology
+- **Assigned Users Management**: Admin-only CRUD for IT user database
 - Export to Excel with owner and assigned_user_name columns
 - PWA support with offline capability
 - Profile protection against overwrites during authentication
@@ -181,12 +206,20 @@ response = supabase.table('assets').select('''
 # Insert with approval workflow
 approval_data = {...}
 add_approval_request(approval_data)
+
+# Assigned user operations
+assigned_users = get_assigned_users()
+assigned_user = get_assigned_user_by_id(user_id)
+add_assigned_user(name, company, business_unit)
+update_assigned_user(user_id, name, company, business_unit)
+delete_assigned_user(user_id)
 ```
 
 #### Template Updates
 - Always update both desktop and mobile versions
 - Use `get_template(request, "path")` for device detection
 - Follow existing component patterns
+- Distinguish between `user` (current_profile) and data objects for form pre-fill
 
 ### 7. Troubleshooting
 
@@ -197,6 +230,7 @@ add_approval_request(approval_data)
 - **Chart errors**: Ensure data format matches Chart.js requirements
 - **Profile overwrites**: Check profile protection in auth.py and middleware
 - **Full name changes**: Verify last_login_at updates preserve existing full_name
+- **Template variable errors**: Ensure navbar receives `user` (current_profile) and forms receive separate data objects
 
 #### Debug Steps
 1. Check logs for specific error messages
@@ -204,6 +238,7 @@ add_approval_request(approval_data)
 3. Test with different user roles
 4. Check both desktop and mobile templates
 5. Verify profile protection mechanisms are working
+6. Verify template variable naming (user vs data objects)
 
 ### 8. Environment Setup
 
@@ -236,6 +271,7 @@ docker build -t ambp .
 - **Database**: `app/utils/database_manager.py` - All DB operations
 - **Auth**: `app/middleware/session_auth.py` - Authentication
 - **Forgot Password**: `app/routes/forgot_password.py` - Email recovery flow
+- **Assigned Users**: `app/routes/assigned_user.py` - User management routes
 
 ### Key Concepts
 - **Owner System**: GA (room-based) vs IT (user-based) asset assignment
@@ -250,6 +286,8 @@ docker build -t ambp .
 - **Supabase Integration**: PostgreSQL with foreign keys and comprehensive logging
 - **Profile Protection**: Prevents full_name overwrites during authentication
 - **Compact Design**: Optimized spacing and sizing for better UX
+- **Assigned Users**: Admin-only IT user database for asset assignment
+- **Edit Asset Modal**: Direct edit in asset view (admin only, non-disposed)
 
 ### Recent Optimizations
 - **Requirements**: Reduced from 25+ to 11 essential packages
@@ -273,5 +311,14 @@ docker build -t ambp .
   - ✅ Graceful cookie cleanup on refresh failure
   - ✅ No schema changes required
   - ✅ Fully backward compatible
+- **Assigned Users Management**: Admin-only CRUD for IT user database
+  - ✅ Add/Edit/Delete assigned users
+  - ✅ Company and business unit integration
+  - ✅ Searchable list with view details modal
+  - ✅ Desktop and mobile templates
+- **Edit Asset Modal**: Direct edit button in asset view
+  - ✅ Admin-only visibility
+  - ✅ Conditional display based on asset status
+  - ✅ Positioned in modal footer (left side)
 
 This guidance should help you quickly understand and work with the AMBP system effectively.

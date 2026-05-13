@@ -14,6 +14,8 @@
 - **PWA Support** - Offline-friendly, mobile-ready application
 - **Export Reports** - Excel with optimized column ordering
 - **Google Drive Integration** - Asset photo storage and management
+- **Assigned Users Management** - Admin-only IT user database for asset assignment
+- **Edit Asset Modal** - Direct edit button in asset view (admin only, non-disposed assets)
 
 ## Backend Architecture
 - **FastAPI + Uvicorn** - Modern Python web framework
@@ -54,7 +56,7 @@
   - Fragment URL handling for email links with JavaScript redirect
   - Security best practice: Don't expose whether email exists
 - **Role-Based Access Control:**
-  - **Admin:** Full system access, user management, approves staff/manager requests
+  - **Admin:** Full system access, user management, assigned user management, can edit assets
   - **Manager:** Asset operations, approves admin requests
   - **Staff:** Basic operations, submit requests for approval
 
@@ -87,6 +89,15 @@
 - **Export Integration** - Owner and assigned user in Excel exports
 - **UI Labels** - "Owner" field with "GA" or "IT" options (help text: "GA: Room-based | IT: User-based")
 
+## Assigned Users Management
+**Admin-Only IT User Database:**
+- Add/Edit/Delete assigned users with company and business unit
+- Used for IT asset owner assignment
+- Searchable list with view details modal
+- Desktop and mobile templates with modern layout
+- No foreign key constraints allow clean deletion
+- Form pre-fill for edit operations
+
 ## Asset Issue Management
 **Integrated Issue Reporting:**
 - **Damage Reports** - Report asset damage (status: "Damaged")
@@ -99,6 +110,14 @@
 - Asset status automatically updated upon approval
 - Complete audit trail with timestamps and approvers
 - Disposal: User → Request → Admin/Manager Approve → Status: Disposed
+
+## Edit Asset Modal
+**Direct Asset Editing:**
+- Located in asset view detail modal (footer, left side)
+- Admin-only visibility
+- Only visible when asset status is NOT Disposed/Lost
+- Direct edit button replaces need to navigate to separate edit page
+- Conditional display via Jinja2 template logic
 
 ---
 
@@ -144,6 +163,11 @@
 - Proper indexing for performance
 - Cache management for reference data
 
+**Template Variables:**
+- Pass `current_profile` as `user` for navbar display
+- Pass separate data objects for form pre-fill (e.g., `assigned_user`)
+- Prevents AttributeError when navbar accesses profile attributes
+
 ---
 
 ## Commit Standards
@@ -168,6 +192,8 @@ feat: add direct action buttons replacing dropdown menus
 feat: implement dedicated asset view pages with image zoom
 feat: add Owner Type differentiation for GA vs IT assets
 feat: implement bulk update workflow with Excel import
+feat: add assigned users management for IT user database
+feat: add edit asset button in modal for admin users
 ```
 
 ### Bug Fixes
@@ -184,6 +210,7 @@ fix: asset search pagination limit
 fix: template path resolution for mobile devices
 fix: modal cleanup and unused component removal
 fix: currency format display to Rupiah throughout application
+fix: template variable conflict in navbar for assigned user forms
 ```
 
 ### Code Quality

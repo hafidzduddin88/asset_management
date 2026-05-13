@@ -5,6 +5,7 @@ ambp/
 ├── .amazonq/                     # Amazon Q AI Assistant rules
 │   └── rules/                    # Project-specific AI rules
 │       ├── Rules_Create.md       # System features and guidelines
+│       ├── GUIDANCE.md           # Amazon Q guidance for new sessions
 │       └── structure.md          # Project structure documentation
 │
 ├── app/                          # Main application directory
@@ -16,6 +17,7 @@ ambp/
 │   │   ├── __init__.py
 │   │   ├── approvals.py          # Approval workflow management
 │   │   ├── asset_management.py   # Asset CRUD with owner_type support
+│   │   ├── assigned_user.py      # Assigned user CRUD (admin only)
 │   │   ├── assets.py             # Asset listing and search
 │   │   ├── bulk_update.py        # 3-step bulk update workflow
 │   │   ├── damage.py             # Asset issues (damage/lost/disposal)
@@ -49,6 +51,7 @@ ambp/
 │   │   │   ├── components/       # Reusable UI components
 │   │   │   ├── layouts/          # Base layout templates
 │   │   │   ├── approvals/        # Approval management pages
+│   │   │   ├── assigned_user/    # Assigned user management pages
 │   │   │   ├── assets/           # Asset listing and details
 │   │   │   ├── damage/           # Asset issues reporting
 │   │   │   ├── repair/           # Asset repair completion
@@ -58,6 +61,7 @@ ambp/
 │   │   └── templates_mobile/     # Mobile-optimized templates
 │   │       ├── components/       # Mobile UI components
 │   │       ├── layouts/          # Mobile layout templates
+│   │       ├── assigned_user/    # Mobile assigned user pages
 │   │       └── ...               # Mirror of desktop structure
 │   │
 │   ├── utils/                    # Utility functions
@@ -89,7 +93,7 @@ ambp/
 ## Key Components
 
 ### Backend Architecture
-- **FastAPI Routes**: Modular organization by feature (18+ route modules)
+- **FastAPI Routes**: Modular organization by feature (19+ route modules)
 - **Database**: Supabase PostgreSQL with foreign key relationships
 - **Owner Type System**: GA (room-based) vs IT (user-based) asset assignment
 - **Authentication**: JWT-based session middleware with Argon2 hashing
@@ -114,12 +118,15 @@ ambp/
 - **Forgot Password**: Email-based password recovery with secure token verification
 - **Dashboard Analytics**: Real-time charts and metrics
 - **User Management**: Role-based access with business unit integration
+- **Assigned Users Management**: Admin-only IT user database for asset assignment
 - **Export System**: Excel with owner_type and assigned_user_name columns
 - **Approval Workflows**: Hierarchical approval system (Admin ↔ Manager)
+- **Edit Asset Modal**: Direct edit button in asset view (admin only, non-disposed)
 - **Direct Actions**: Clean UI with dedicated view pages
 
 ### Database Schema
 - **Assets Table**: Core asset data with owner_type, assigned_user_id, assigned_user_name
+- **Assigned Users Table**: IT user database with company and business unit
 - **Log Tables**: Comprehensive audit trail (damage_log, repair_log, etc.)
 - **Reference Tables**: Categories, locations, business units, companies
 - **Approvals Table**: Workflow management with role-based routing
@@ -150,9 +157,48 @@ ambp/
 - **`/middleware`**: Request/response processing
 - **`/static`**: CSS, JS, images, PWA files
 
+### Route Modules Overview
+- **`assigned_user.py`**: Admin-only CRUD for IT user database (list, add, edit, delete)
+- **`asset_management.py`**: Asset CRUD with owner type support and approval workflow
+- **`assets.py`**: Asset listing, search, and filtering
+- **`approvals.py`**: Approval workflow management and routing
+- **`bulk_update.py`**: 3-step bulk update workflow with Excel import
+- **`damage.py`**: Asset damage reporting with approval
+- **`disposal.py`**: Asset disposal requests and disposed assets list
+- **`repair.py`**: Asset repair completion reporting
+- **`depreciation.py`**: SuperAdmin depreciation value updates
+- **`export.py`**: Excel export with optimized columns
+- **`forgot_password.py`**: Email-based password recovery flow
+- **`home.py`**: Dashboard with analytics and charts
+- **`login.py`**: Authentication and session management
+- **`user_management.py`**: User administration (admin only)
+- **`profile.py`**: User profile management
+- **`relocation.py`**: Asset relocation workflow
+- **`logs.py`**: Audit trail and activity logs
+- **`health.py`**: Health checks and monitoring
+- **`offline.py`**: PWA offline support
+
+### Template Organization
+**Desktop Templates** (`templates_desktop/`):
+- `assigned_user/list.html` - Assigned users list with Name, Company, Business Unit
+- `assigned_user/form.html` - Add/Edit assigned user form
+- `assets/view.html` - Asset detail view with edit modal (admin only)
+- `assets/list.html` - Asset listing with filters
+- `damage/index.html` - Damage reporting page
+- `repair/index.html` - Repair completion page
+- `disposal/form.html` - Disposal request form
+- `approvals/index.html` - Approval management
+- `layouts/modern_layout.html` - Modern menu layout for management pages
+
+**Mobile Templates** (`templates_mobile/`):
+- Mirror structure of desktop with optimized layouts
+- Card-based UI for better mobile experience
+- Touch-friendly buttons and interactions
+
 ### Integration Points
 - **Supabase**: Primary database with real-time capabilities
 - **Google Drive**: Asset photo storage and management
 - **Chart.js**: Dashboard analytics and visualizations
 - **Alpine.js**: Client-side reactivity and interactions
 - **HTMX**: Dynamic content loading without full page refreshes
+- **Jinja2**: Server-side template rendering with conditional logic

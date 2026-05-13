@@ -27,6 +27,7 @@
 - 🔐 **Password Recovery** - Email-based with secure token
 - ✅ **Approval System** - Hierarchical Admin ↔ Manager
 - 👤 **User Management** - Business unit integration
+- 👨💼 **Assigned Users** - IT user database for asset assignment
 
 ### 🚀 Advanced Features
 - 📱 **PWA Support** - Offline-ready with install prompts
@@ -36,6 +37,7 @@
 - 📋 **Audit Trail** - Comprehensive logging
 - 💱 **Rupiah Format** - Local currency display
 - 🔍 **Smart Filters** - GA/IT filtering in all pages
+- 🛡️ **Edit Asset Modal** - Direct edit button in asset view (admin only, non-disposed assets)
 
 ---
 
@@ -91,6 +93,13 @@ docker run -p 8000:8000 --env-file .env ghcr.io/hafidzduddin88/ambp:latest
 - ✅ Auto-resolution: User name → UUID (full_name → username)
 - ✅ Owner filter in list pages and bulk update
 - ✅ Excel export includes owner and assigned user
+- ✅ Assigned Users database for IT asset management (admin only)
+
+**Assigned Users Management:**
+- Admin-only feature for managing IT user database
+- Add/Edit/Delete assigned users with company and business unit
+- Used for IT asset owner assignment
+- Searchable list with view details modal
 
 ---
 
@@ -98,7 +107,7 @@ docker run -p 8000:8000 --env-file .env ghcr.io/hafidzduddin88/ambp:latest
 
 | Role | Permissions | Approval |
 |------|-------------|----------|
-| **Admin** | Full system access, User management | Manager approval |
+| **Admin** | Full system access, User/Assigned User management, Edit assets | Manager approval |
 | **Manager** | Asset operations, Approve admin requests | Admin approval |
 | **Staff** | Basic operations, Submit requests | Admin approval |
 
